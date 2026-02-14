@@ -1,0 +1,1169 @@
+---
+import MenuNav from '../components/MenuNav.astro';
+import AppFooter from '../components/AppFooter.astro';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+let user = null;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="XP Planning Game" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <title>Planning GameXP - {title}</title>
+    <link rel="manifest" href="/manifest.json">
+    <!-- Import Maps for npm packages -->
+    <script type="importmap">
+    {
+      "imports": {
+        "lit": "https://cdn.jsdelivr.net/npm/lit@3.2.1/+esm",
+        "lit/": "https://cdn.jsdelivr.net/npm/lit@3.2.1/",
+        "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3.2.1/+esm",
+        "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3.2.1/",
+        "@lit/reactive-element": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.0.4/+esm",
+        "@lit/reactive-element/": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.0.4/",
+        "@manufosela/slide-notification": "https://unpkg.com/@manufosela/slide-notification@2.1.0/src/slide-notification.js",
+        "@manufosela/multi-select": "https://unpkg.com/@manufosela/multi-select@2.1.0/src/multi-select.js",
+        "@manufosela/app-modal": "https://unpkg.com/@manufosela/app-modal@2.2.0/src/app-modal.js"
+      }
+    }
+    </script>
+    <!-- Precargar módulos críticos para evitar retrasos en el renderizado -->
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/lit@3.2.1/+esm" />
+    <link rel="modulepreload" href="/firebase-config.js" />
+    <!-- System Capabilities Lit Components - UMD Bundle para SSG -->
+    <script src="https://cdn.jsdelivr.net/npm/@system-capabilities/lit@1.1.1/dist/system-capabilities-lit.umd.min.js"></script>
+  </head>
+  <body data-user-email={user || ''} data-authenticated="false">
+    <header>
+      <a href="/" class="header-logos">
+        <img src="/images/logo_geniova.png" alt="Geniova Logo" class="logo" />
+        <img src="/images/icono_PGame.png" alt="Planning Game" class="planning-game-icon" />
+      </a>
+      <div class="header-title-container">
+        <h1>Planning Game</h1>
+        <system-status
+          id="systemStatusIndicator"
+          size="medium"
+          autoCheck
+          showTooltip
+        ></system-status>
+      </div>
+      <div class="user-info">
+        <theme-toggle></theme-toggle>
+        <notification-bell id="notificationBell" class="hidden"></notification-bell>
+        <span id="user-status">Cargando...</span>
+        <div class="auth-actions">
+          <button id="microsoftLoginButton" class="login-button hidden">Sign in with Microsoft</button>
+          <button id="emailLoginToggle" class="secondary-button hidden">Entrar con email</button>
+          <form id="emailLoginForm" class="email-login-form hidden">
+            <label class="sr-only" for="emailLoginInput">Correo electrónico</label>
+            <input id="emailLoginInput" name="email" type="email" placeholder="Correo electrónico" autocomplete="username" required />
+            <label class="sr-only" for="emailLoginPassword">Contraseña</label>
+            <input id="emailLoginPassword" name="password" type="password" placeholder="Contraseña" autocomplete="current-password" required />
+            <div class="email-login-actions">
+              <button type="submit" class="login-button">Entrar</button>
+              <button type="button" id="emailLoginCancel" class="secondary-button">Cancelar</button>
+            </div>
+            <p id="emailLoginError" class="error-message hidden"></p>
+            <p class="form-helper-text">
+              ¿No tienes cuenta?
+              <button type="button" id="emailRegisterLink" class="link-button">Solicitar acceso</button>
+            </p>
+          </form>
+          <form id="emailRegisterForm" class="email-register-form hidden">
+            <h2>Solicitar acceso</h2>
+            <p class="form-helper-text">Al enviar la solicitud, el equipo aprobará tu cuenta antes de que puedas acceder.</p>
+            <label class="sr-only" for="emailRegisterName">Nombre completo</label>
+            <input id="emailRegisterName" name="fullName" type="text" placeholder="Nombre completo" autocomplete="name" required />
+            <label class="sr-only" for="emailRegisterEmail">Correo electrónico</label>
+            <input id="emailRegisterEmail" name="email" type="email" placeholder="Correo electrónico corporativo" autocomplete="email" required />
+            <label class="sr-only" for="emailRegisterPassword">Contraseña deseada</label>
+            <input id="emailRegisterPassword" name="password" type="password" placeholder="Contraseña (mínimo 6 caracteres)" autocomplete="new-password" minlength="6" required />
+            <div class="email-login-actions">
+              <button type="submit" id="emailRegisterSubmit" class="login-button">Enviar solicitud</button>
+              <button type="button" id="emailRegisterCancel" class="secondary-button">Cancelar</button>
+            </div>
+            <p id="emailRegisterError" class="error-message hidden"></p>
+            <p id="emailRegisterSuccess" class="success-message hidden">Solicitud enviada. Revisaremos tus datos y te avisaremos por correo.</p>
+            <p class="form-helper-text">
+              ¿Ya tienes cuenta?
+              <button type="button" id="emailRegisterToLogin" class="link-button">Volver a iniciar sesión</button>
+            </p>
+          </form>
+          <button id="logoutButton" class="logout-button hidden">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <MenuNav currentPath={Astro.url.pathname} />
+
+    <div id="welcomeMessage" class="welcome-container hidden">
+      <div class="welcome-content">
+        <img src="/images/logo_PGame.png" alt="Planning Game Logo" class="welcome-logo" />
+        <h1 class="welcome-title"></h1>
+        <p class="welcome-subtitle"></p>
+      </div>
+    </div>
+
+    <main id="mainContainer" class="hidden">
+      <div id="mainLoader" class="main-loader">
+        <div class="spinner"></div>
+      </div>
+      <slot />
+    </main>
+
+    <AppFooter />
+
+    <script>
+      // Ocultar spinner cuando aparezca cualquier contenido visible en main
+      (function() {
+        const loader = document.getElementById('mainLoader');
+        const main = document.getElementById('mainContainer');
+        if (!loader || !main) return;
+
+        const observer = new MutationObserver(function() {
+          // Buscar cualquier elemento visible que no sea el loader
+          const children = main.children;
+          for (let i = 0; i < children.length; i++) {
+            const child = children[i];
+            if (child.id !== 'mainLoader' && child.offsetHeight > 0) {
+              loader.classList.add('hidden');
+              observer.disconnect();
+              return;
+            }
+          }
+        });
+
+        observer.observe(main, { childList: true, subtree: true, attributes: true });
+      })();
+    </script>
+
+    <script type="module">
+      import { LazyLoader } from '/js/utils/lazy-loader.js';
+      import { UserDisplayUtils } from '/js/utils/user-display-utils.js';
+      import { APP_CONSTANTS } from '/js/constants/app-constants.js';
+  import '/js/services/notification-service.js';
+  import '/js/debug-notifications.js';
+  import { database, ref, onValue, auth, microsoftProvider, signOut, signInWithPopup, signInWithEmailAndPassword, functions, httpsCallable, app, get } from '/firebase-config.js';
+  import { encodeEmailForFirebase } from '/js/utils/email-sanitizer.js';
+      import { SYSTEM_REQUIREMENTS } from '/js/config/system-requirements-config.js';
+
+      // Theme system - loaded globally so <theme-toggle> works on all pages
+      import '/js/wc/ThemeToggle.js';
+      import { ThemeLoaderService } from '/js/services/theme-loader-service.js';
+      import { ThemeManagerService } from '/js/services/theme-manager-service.js';
+      ThemeLoaderService.loadAndApply().catch(() => {});
+      ThemeManagerService.init();
+
+      // Version check - detect new deployments and notify users on all pages
+      import '/js/wc/VersionUpdateModal.js';
+      import { versionCheckService } from '/js/services/version-check-service.js';
+      import { version as APP_VERSION } from '/js/version.js';
+      versionCheckService.init(APP_VERSION);
+      if (!document.querySelector('version-update-modal')) {
+        document.body.appendChild(document.createElement('version-update-modal'));
+      }
+
+      let userStatusElement;
+      let microsoftLoginButton;
+      let emailLoginToggle;
+      let emailLoginForm;
+      let emailLoginInput;
+      let emailLoginPassword;
+      let emailLoginError;
+      let emailLoginCancel;
+      let emailRegisterForm;
+      let emailRegisterName;
+      let emailRegisterEmail;
+      let emailRegisterPassword;
+      let emailRegisterError;
+      let emailRegisterSuccess;
+      let emailRegisterCancel;
+      let emailRegisterSubmit;
+      let emailRegisterLink;
+      let emailRegisterToLogin;
+      let logoutButton;
+      let mainContainer;
+      let welcomeMessage;
+      let pagePath;
+      let menuNav;
+      let projectSelected = '';
+      let theUser;
+      let DOMisLoaded = false;
+      let requestAccessCallable = null;
+
+      // Make Firebase modules available globally for debugging
+      window.database = database;
+      window.ref = ref;
+      window.get = get;
+      window.auth = auth;
+
+      function updatePageTitle(projectId) {
+        const baseTitle = 'Planning GameXP';
+        const pageTitle = document.querySelector('h1').textContent;
+        document.title = projectId ? `${baseTitle} - ${projectId} - ${pageTitle}` : `${baseTitle} - ${pageTitle}`;
+      }
+
+      const EMAIL_AUTH_ERROR_MESSAGES = {
+        'auth/invalid-email': 'El correo electrónico no es válido.',
+        'auth/user-disabled': 'Este usuario está deshabilitado. Contacta con un administrador.',
+        'auth/user-not-found': 'No existe ningún usuario con ese correo.',
+        'auth/wrong-password': 'La contraseña es incorrecta.',
+        'auth/invalid-credential': 'Credenciales no válidas. Revisa el correo y la contraseña.',
+        'auth/too-many-requests': 'Has realizado demasiados intentos. Espera unos segundos y vuelve a intentarlo.',
+        'auth/network-request-failed': 'No se puede contactar con el servidor. Revisa tu conexión a internet.'
+      };
+
+      const ACCOUNT_REQUEST_ERROR_MESSAGES = {
+        'invalid-argument': 'Revisa los datos introducidos y vuelve a intentarlo.',
+        'already-exists': 'Ya existe una solicitud activa o un usuario con este correo.',
+        'failed-precondition': 'Este correo no pertenece a un dominio permitido.',
+        'resource-exhausted': 'Has superado el número de intentos. Espera un momento antes de reintentarlo.',
+        'internal': 'No se ha podido registrar la solicitud en el servidor. Inténtalo de nuevo más tarde.',
+        default: 'No se ha podido enviar la solicitud. Inténtalo más tarde o contacta con soporte.'
+      };
+
+      // Función de autenticación con Microsoft
+      async function authenticateWithMicrosoft() {
+        try {
+          await signInWithPopup(auth, microsoftProvider);
+        } catch (error) {
+          console.error('[Auth] Authentication error:', error.code, error.message);
+
+          // Detect OAuth provider configuration errors (expired credentials, invalid config)
+          const isProviderError =
+            error.code === 'auth/invalid-credential' ||
+            error.code === 'auth/operation-not-allowed' ||
+            error.code === 'auth/internal-error' ||
+            (error.message && error.message.includes('400'));
+
+          if (isProviderError) {
+            const notification = document.createElement('slide-notification');
+            notification.message = 'Error de autenticación. Si el problema persiste, contacta al administrador (posibles credenciales expiradas).';
+            notification.type = 'error';
+            notification.timetohide = 8000;
+            document.body.appendChild(notification);
+          } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+            // User closed the popup or multiple popups, no need to show error
+            return;
+          } else {
+            const notification = document.createElement('slide-notification');
+            notification.message = 'Error de autenticación. Por favor, inténtalo de nuevo.';
+            notification.type = 'error';
+            document.body.appendChild(notification);
+          }
+        }
+      }
+
+      const normalizeEmail = (email) => (email || '').toString().trim().toLowerCase();
+      const legacyEncodeEmail = (email) => normalizeEmail(email).replace(/[@.#$\[\]\/]/g, '_');
+
+      window.isAppAdmin = false;
+
+      async function updateAppAdminAccess(user) {
+        if (!user?.email) {
+          resetAppAdminAccess();
+          return;
+        }
+
+        const normalizedEmail = normalizeEmail(user.email);
+        const encodedEmail = encodeEmailForFirebase(normalizedEmail || user.email);
+        const legacyEncodedEmail = legacyEncodeEmail(user.email);
+        if (!encodedEmail) {
+          resetAppAdminAccess();
+          return;
+        }
+
+          try {
+            let hasAccess = false;
+
+            // First check: Super Admin from environment variable
+            let superAdminEmail = '';
+            try {
+              const firebaseConfigModule = await import('/firebase-config.js');
+              superAdminEmail = normalizeEmail(firebaseConfigModule.superAdminEmail || '');
+            } catch (error) {
+            }
+
+            if (superAdminEmail && normalizedEmail === superAdminEmail) {
+              hasAccess = true;
+            }
+
+            // Second check: appAdmins from Firebase (only if not already granted)
+            if (!hasAccess) {
+              const appAdminsRef = ref(database, '/data/appAdmins');
+              const snapshot = await get(appAdminsRef);
+              if (snapshot.exists()) {
+                const value = snapshot.val();
+                if (Array.isArray(value)) {
+                  hasAccess = value.some(candidate => {
+                    const normalizedCandidate = normalizeEmail(candidate);
+                    return candidate === encodedEmail || normalizedCandidate === normalizedEmail;
+                  });
+                } else if (typeof value === 'object') {
+                  const candidates = [
+                    ...Object.keys(value),
+                    ...Object.values(value)
+                  ];
+                  hasAccess = candidates.some(candidate => {
+                    const normalizedCandidate = normalizeEmail(candidate);
+                    return candidate === encodedEmail || normalizedCandidate === normalizedEmail;
+                  });
+                }
+              }
+            }
+
+            // NOTE: /data/superAdminEmails is DEPRECATED and no longer used
+            // SuperAdmin is only the ONE defined in .env (superAdminEmail)
+            // AppAdmins are those in /data/appAdmins
+
+            window.isAppAdmin = hasAccess;
+        } catch (error) {
+          window.isAppAdmin = false;
+        }
+
+        document.dispatchEvent(new CustomEvent('app-admin-status-changed', {
+          detail: { isAppAdmin: window.isAppAdmin }
+        }));
+      }
+
+      function resetAppAdminAccess() {
+        window.isAppAdmin = false;
+        document.dispatchEvent(new CustomEvent('app-admin-status-changed', {
+          detail: { isAppAdmin: false }
+        }));
+      }
+
+      function showEmailLoginForm() {
+        if (!emailLoginForm || !emailLoginToggle) return;
+        emailLoginForm.classList.remove('hidden');
+        emailLoginToggle.classList.add('hidden');
+        hideEmailLoginError();
+        requestAnimationFrame(() => emailLoginInput?.focus());
+      }
+
+      function hideEmailLoginForm({ resetForm = false, showToggle = true } = {}) {
+        if (!emailLoginForm || !emailLoginToggle) return;
+        emailLoginForm.classList.add('hidden');
+        if (showToggle) {
+          emailLoginToggle.classList.remove('hidden');
+        } else {
+          emailLoginToggle.classList.add('hidden');
+        }
+        if (resetForm) {
+          emailLoginForm.reset();
+          hideEmailLoginError();
+        }
+      }
+
+      function hideEmailLoginError() {
+        if (!emailLoginError) return;
+        emailLoginError.textContent = '';
+        emailLoginError.classList.add('hidden');
+      }
+
+      function showEmailLoginError(message) {
+        if (!emailLoginError) return;
+        emailLoginError.textContent = message;
+        emailLoginError.classList.remove('hidden');
+      }
+
+      function showEmailRegisterForm() {
+        if (!emailRegisterForm) return;
+        hideEmailLoginForm({ resetForm: false, showToggle: false });
+        emailRegisterForm.classList.remove('hidden');
+        hideEmailRegisterFeedback();
+        requestAnimationFrame(() => emailRegisterName?.focus());
+      }
+
+      function hideEmailRegisterForm({ resetForm = false, showLoginToggle = true } = {}) {
+        if (!emailRegisterForm) return;
+        emailRegisterForm.classList.add('hidden');
+        if (resetForm) {
+          emailRegisterForm.reset();
+        }
+        hideEmailRegisterFeedback();
+        setEmailRegisterSubmitting(false);
+        if (showLoginToggle) {
+          emailLoginToggle?.classList.remove('hidden');
+        }
+      }
+
+      function hideEmailRegisterFeedback() {
+        if (emailRegisterError) {
+          emailRegisterError.textContent = '';
+          emailRegisterError.classList.add('hidden');
+        }
+        if (emailRegisterSuccess) {
+          emailRegisterSuccess.classList.add('hidden');
+        }
+      }
+
+      function showEmailRegisterError(message) {
+        if (!emailRegisterError) return;
+        emailRegisterError.textContent = message;
+        emailRegisterError.classList.remove('hidden');
+        if (emailRegisterSuccess) {
+          emailRegisterSuccess.classList.add('hidden');
+        }
+      }
+
+      function showEmailRegisterSuccess(message) {
+        if (!emailRegisterSuccess) return;
+        emailRegisterSuccess.textContent = message;
+        emailRegisterSuccess.classList.remove('hidden');
+        if (emailRegisterError) {
+          emailRegisterError.classList.add('hidden');
+        }
+      }
+
+      function setEmailRegisterSubmitting(isSubmitting) {
+        if (!emailRegisterSubmit) return;
+        emailRegisterSubmit.disabled = isSubmitting;
+        emailRegisterSubmit.textContent = isSubmitting ? 'Enviando...' : 'Enviar solicitud';
+        if (emailRegisterForm) {
+          const inputs = emailRegisterForm.querySelectorAll('input, select, textarea, button');
+          inputs.forEach((input) => {
+            if (input instanceof HTMLButtonElement && input.type === 'button') return;
+            input.disabled = isSubmitting;
+          });
+        }
+      }
+
+      function getRequestAccessCallable() {
+        if (!functions || !httpsCallable) return null;
+        if (!requestAccessCallable) {
+          try {
+            requestAccessCallable = httpsCallable(functions, 'requestEmailAccess');
+          } catch (error) {
+            requestAccessCallable = null;
+          }
+        }
+        return requestAccessCallable;
+      }
+
+      async function authenticateWithEmail(event) {
+        event.preventDefault();
+        if (!emailLoginInput || !emailLoginPassword) return;
+
+        hideEmailLoginError();
+
+        const email = emailLoginInput.value.trim();
+        const password = emailLoginPassword.value;
+
+        if (!email || !password) {
+          showEmailLoginError('Introduce un correo y una contraseña.');
+          return;
+        }
+
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+          const message = EMAIL_AUTH_ERROR_MESSAGES[error.code] || 'Ha ocurrido un error al iniciar sesión. Inténtalo de nuevo.';
+          showEmailLoginError(message);
+        }
+      }
+
+      async function submitEmailRegistration(event) {
+        event.preventDefault();
+        if (!emailRegisterForm || !emailRegisterEmail || !emailRegisterPassword) return;
+
+        hideEmailRegisterFeedback();
+
+        const fullName = (emailRegisterName?.value || '').trim();
+        const email = emailRegisterEmail.value.trim().toLowerCase();
+        const password = emailRegisterPassword.value;
+
+        if (!fullName || !email || !password) {
+          showEmailRegisterError('Completa todos los campos obligatorios antes de enviar.');
+          return;
+        }
+
+        if (password.length < 6) {
+          showEmailRegisterError('La contraseña debe tener al menos 6 caracteres.');
+          return;
+        }
+
+        const allowedDomains = Array.isArray(APP_CONSTANTS.AUTH_ALLOWED_EMAIL_DOMAINS)
+          ? APP_CONSTANTS.AUTH_ALLOWED_EMAIL_DOMAINS
+          : [];
+        const emailDomain = email.split('@')[1];
+        if (!emailDomain || !allowedDomains.includes(emailDomain)) {
+          showEmailRegisterError('El correo debe pertenecer a un dominio autorizado por la compañía.');
+          return;
+        }
+
+        const callable = getRequestAccessCallable();
+        if (!callable) {
+          showEmailRegisterError('Servicio no disponible temporalmente. Inténtalo más tarde.');
+          return;
+        }
+
+        setEmailRegisterSubmitting(true);
+
+        try {
+          await callable({
+            fullName,
+            email,
+            password
+          });
+
+          showEmailRegisterSuccess('Solicitud enviada. Revisaremos tus datos y activaremos la cuenta cuando sea aprobada.');
+          if (emailRegisterForm) {
+            emailRegisterForm.reset();
+          }
+        } catch (error) {
+          const errorCode = error?.code?.replace('functions/', '');
+          const message = ACCOUNT_REQUEST_ERROR_MESSAGES[errorCode] || ACCOUNT_REQUEST_ERROR_MESSAGES.default;
+          showEmailRegisterError(message);
+        } finally {
+          setEmailRegisterSubmitting(false);
+        }
+      }
+
+      function addProjectToLinks(projectId) {
+        const links = [...document.querySelectorAll('.menu-nav .nav-link')].slice(1);
+        links.forEach((link) => {
+          try {
+            const url = new URL(link.href, window.location.origin);
+            url.searchParams.set('projectId', projectId);
+            link.href = url.toString();
+          } catch (e) {
+            // Si algo falla, no romper la navegación
+          }
+        });
+        updatePageTitle(projectId);
+      }
+
+
+      function notSignedIn() {
+        getDomElements();
+        theUser = null;
+        window.currentUser = null; // Limpiar también window.currentUser
+        resetAppAdminAccess();
+        document.body.setAttribute('data-authenticated', 'false');
+
+        // Redirect to home if on a protected page
+        const protectedPages = ['/adminproject', '/dashboard', '/sprintview', '/development', '/wip', '/proposals'];
+        const currentPath = window.location.pathname;
+        if (protectedPages.some(page => currentPath.startsWith(page))) {
+          window.location.href = '/';
+          return;
+        }
+
+        userStatusElement.textContent = 'Not signed in';
+        microsoftLoginButton?.classList.remove('hidden');
+        emailLoginToggle?.classList.remove('hidden');
+        hideEmailLoginForm({ resetForm: true });
+        hideEmailRegisterForm({ resetForm: true });
+        logoutButton.classList.add('hidden');
+        mainContainer.classList.add('hidden');
+        if (welcomeMessage) {
+          welcomeMessage.classList.remove('hidden');
+        }
+        const notificationBell = document.getElementById('notificationBell');
+        if (notificationBell) {
+          notificationBell.classList.add('hidden');
+        }
+
+        // Notify menu about user sign out
+        document.dispatchEvent(new CustomEvent('user-signed-out'));
+      }
+
+      function signedIn(user) {
+        getDomElements();
+        theUser = user;
+        window.currentUser = user; // Añadir para que lo use NotificationBell
+        document.body.setAttribute('data-authenticated', 'true');
+        const userName = user.displayName || user.email || 'Usuario sin nombre';
+        userStatusElement.textContent = `Signed in as ${userName}`;
+        microsoftLoginButton?.classList.add('hidden');
+        emailLoginToggle?.classList.add('hidden');
+        hideEmailLoginForm({ resetForm: true, showToggle: false });
+        hideEmailRegisterForm({ resetForm: true, showLoginToggle: false });
+        logoutButton.classList.remove('hidden');
+        mainContainer.classList.remove('hidden');
+        if (welcomeMessage) {
+          welcomeMessage.classList.add('hidden');
+        }
+        // Navigation allowed - MenuNav SSR handles this automatically
+        if (pagePath !== '/') {
+          addProjectToLinks(projectSelected);
+        }
+        document.body.dataset.userEmail = user.email || '';
+
+        // Show notification bell
+        const notificationBell = document.getElementById('notificationBell');
+        if (notificationBell) {
+          notificationBell.classList.remove('hidden');
+        }
+
+        // Notify notification bell about user authentication
+        document.dispatchEvent(new CustomEvent('user-authenticated', {
+          detail: { user: user }
+        }));
+
+        updateAppAdminAccess(user);
+
+        // Initialize FCM for push notifications
+        if (window.pushNotificationService) {
+          window.pushNotificationService.reinitializeForUser(user.email).catch(error => {
+          });
+        }
+      }
+
+
+      function getDomElements() {
+        userStatusElement = document.getElementById('user-status');
+        microsoftLoginButton = document.getElementById('microsoftLoginButton');
+        emailLoginToggle = document.getElementById('emailLoginToggle');
+        emailLoginForm = document.getElementById('emailLoginForm');
+        emailLoginInput = document.getElementById('emailLoginInput');
+        emailLoginPassword = document.getElementById('emailLoginPassword');
+        emailLoginError = document.getElementById('emailLoginError');
+        emailLoginCancel = document.getElementById('emailLoginCancel');
+        emailRegisterForm = document.getElementById('emailRegisterForm');
+        emailRegisterName = document.getElementById('emailRegisterName');
+        emailRegisterEmail = document.getElementById('emailRegisterEmail');
+        emailRegisterPassword = document.getElementById('emailRegisterPassword');
+        emailRegisterError = document.getElementById('emailRegisterError');
+        emailRegisterSuccess = document.getElementById('emailRegisterSuccess');
+        emailRegisterCancel = document.getElementById('emailRegisterCancel');
+        emailRegisterSubmit = document.getElementById('emailRegisterSubmit');
+        emailRegisterLink = document.getElementById('emailRegisterLink');
+        emailRegisterToLogin = document.getElementById('emailRegisterToLogin');
+        logoutButton = document.getElementById('logoutButton');
+        mainContainer = document.getElementById('mainContainer');
+        welcomeMessage = document.getElementById('welcomeMessage');
+        menuNav = document.getElementById('menunav');
+      }
+
+      async function DOMContentLoadedActions() {
+        // Initialize theme system before anything else renders
+        await ThemeLoaderService.loadAndApply();
+        ThemeManagerService.init();
+
+        getDomElements();
+        pagePath = window.location.pathname;
+        if (microsoftLoginButton) {
+          microsoftLoginButton.addEventListener('click', authenticateWithMicrosoft);
+        }
+        if (emailLoginToggle) {
+          emailLoginToggle.addEventListener('click', showEmailLoginForm);
+        }
+        if (emailLoginForm) {
+          emailLoginForm.addEventListener('submit', authenticateWithEmail);
+        }
+        if (emailLoginCancel) {
+          emailLoginCancel.addEventListener('click', () => hideEmailLoginForm({ resetForm: true }));
+        }
+        if (emailRegisterForm) {
+          emailRegisterForm.addEventListener('submit', submitEmailRegistration);
+        }
+        if (emailRegisterCancel) {
+          emailRegisterCancel.addEventListener('click', () => hideEmailRegisterForm({ resetForm: true }));
+        }
+        if (emailRegisterLink) {
+          emailRegisterLink.addEventListener('click', showEmailRegisterForm);
+        }
+        if (emailRegisterToLogin) {
+          emailRegisterToLogin.addEventListener('click', () => {
+            hideEmailRegisterForm({ resetForm: false, showLoginToggle: false });
+            showEmailLoginForm();
+          });
+        }
+        if (logoutButton) {
+          logoutButton.addEventListener('click', () => signOut(auth));
+        }
+        await getProjectIdFromURLparamProjectId();
+        
+        // Set welcome messages from constants
+        const welcomeTitle = document.querySelector('.welcome-title');
+        const welcomeSubtitle = document.querySelector('.welcome-subtitle');
+        if (welcomeTitle) welcomeTitle.textContent = APP_CONSTANTS.WELCOME_MESSAGES.TITLE;
+        if (welcomeSubtitle) welcomeSubtitle.textContent = APP_CONSTANTS.WELCOME_MESSAGES.SUBTITLE;
+        
+        // Wait for MenuNav SSR to initialize
+        if (window.menuNavSSR) {
+          window.menuNavSSR.updateNavLinks();
+          window.menuNavSSR.markActiveLinkByURL();
+        } else {
+          // Fallback if MenuNav SSR not ready yet
+          setTimeout(() => {
+            if (window.menuNavSSR) {
+              window.menuNavSSR.updateNavLinks();
+              window.menuNavSSR.markActiveLinkByURL();
+            }
+          }, 100);
+        }
+        
+        // Load page-specific components with lazy loading
+        const currentPage = pagePath.split('/')[1] || 'index';
+        LazyLoader.loadPageComponents(currentPage);
+        
+        DOMisLoaded = true;
+        
+        // Set initial state and listen for changes
+        auth.onAuthStateChanged((user) => {
+          if (user) {
+            signedIn(user);
+          } else {
+            notSignedIn();
+          }
+        });
+      }
+
+      function getProjectIdFromURLparamProjectId() {
+        const projectId = new URLSearchParams(window.location.search).get('projectId');
+        if (projectId) {
+          projectSelected = projectId;
+          updatePageTitle(projectId);
+        }
+      }
+
+      // Configurar requisitos del sistema usando el componente del paquete
+      function initSystemRequirementsChecker() {
+        try {
+
+          // Obtener el componente system-status
+          const statusIndicator = document.getElementById('systemStatusIndicator');
+
+          if (statusIndicator) {
+            // Configurar requisitos desde nuestra configuración
+            statusIndicator.requirements = {
+              features: SYSTEM_REQUIREMENTS.features.required.reduce((acc, feature) => {
+                acc[feature] = true;
+                return acc;
+              }, {}),
+              device: {
+                minMemory: SYSTEM_REQUIREMENTS.memory.minimum / 1024, // Convertir MB a GB
+                minCores: 2
+              },
+              screen: {
+                minWidth: SYSTEM_REQUIREMENTS.screen.minWidth,
+                minHeight: SYSTEM_REQUIREMENTS.screen.minHeight
+              }
+            };
+
+            // Escuchar eventos del componente
+            statusIndicator.addEventListener('status-change', (e) => {
+              if (e.detail.failures && e.detail.failures.length > 0) {
+              }
+            });
+
+            statusIndicator.addEventListener('click', (e) => {
+            });
+
+          } else {
+          }
+        } catch (error) {
+        }
+      }
+
+      // Inicializar verificación de requisitos cuando el DOM esté listo
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          DOMContentLoadedActions();
+          // Esperar un poco para que el componente se registre
+          setTimeout(initSystemRequirementsChecker, 100);
+        });
+      } else {
+        // DOM ya está listo
+        setTimeout(initSystemRequirementsChecker, 100);
+      }
+
+      document.addEventListener('DOMContentLoaded', DOMContentLoadedActions); // Acciones al cargar el DOM
+    </script>
+
+    <style is:global>
+      :root {
+        --primary-color: #4a9eff;
+        --secondary-color: #357ae8;
+        --terciary-color: #f5f7fa;
+        --geniova-color: #ec3e95;
+        --background-color: var(--bg-secondary, #f5f7fa);
+
+        /* Aliases: map legacy variable names used by components to design system tokens */
+        --text-color: var(--text-primary, #1f2937);
+        --border-color: var(--border-default, #dee2e6);
+      }
+
+      /*
+       * Note: Design tokens (--brand-primary, --bg-primary, --modal-*, --notification-*, etc.)
+       * are injected globally by ThemeManagerService from the design system.
+       * See: /public/js/ui/styles/tokens/ for token definitions.
+       */
+
+      /* Force 0 padding on all modal bodies */
+      app-modal {
+        --modal-body-padding: 0;
+      }
+
+      /* Spinner para zona central */
+      .main-loader {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+        width: 100%;
+      }
+
+      .main-loader .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--terciary-color);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .main-loader.hidden {
+        display: none;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      button, input, select, textarea {
+        color: inherit;
+      }
+
+      html {
+        font-family: system-ui, sans-serif;
+        background: var(--background-color);
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        color: var(--text-primary, #1f2937);
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: var(--primary-color, #4a9eff);
+        padding: 0.5rem 1.5rem;
+        color: var(--text-on-primary, white);
+        border-bottom: 2px solid var(--primary-color-dark, #357ae8);
+      }
+
+      .header-title-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      header h1 {
+        color: var(--terciary-color);
+        margin: 0;
+      }
+
+      system-status {
+        display: flex;
+        align-items: center;
+      }
+
+      main {
+        flex: 1;
+        padding: 2rem;
+        padding-bottom: 5rem;
+      }
+
+      main h2 {
+        width: 100%;
+        text-align: center;
+        padding-bottom: 1rem;
+        background: var(--secondary-color);
+        color: white;
+      }
+
+      main stoy-card {
+        margin-bottom: 1rem;
+      }
+
+
+      .header-logos {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+      }
+
+      .logo {
+        height: 50px;
+        width: auto;
+      }
+
+      .planning-game-icon {
+        height: 55px;
+        width: auto;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        position: relative;
+      }
+
+      .auth-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        position: relative;
+      }
+
+      .login-button, .logout-button {
+        padding: 8px 12px;
+        background: var(--primary-color, #4a9eff);
+        color: var(--text-on-primary, white);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .login-button {
+        background: var(--geniova-color);
+      }
+      .login-button:hover {
+        background: var(--geniova-color-light, #fc6ec5);
+      }
+
+      .logout-button {
+        background: var(--secondary-color);
+      }
+      .logout-button:hover {
+        background: var(--primary-color-dark, #3a8eef);
+      }
+
+      .secondary-button {
+        padding: 8px 12px;
+        background: transparent;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .secondary-button:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .link-button {
+        border: none;
+        background: transparent;
+        color: var(--secondary-color);
+        cursor: pointer;
+        padding: 0;
+        margin-left: 0.25rem;
+        text-decoration: underline;
+        font: inherit;
+      }
+
+      .link-button:hover {
+        color: var(--primary-color);
+      }
+
+      .email-login-form {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: var(--bg-primary, white);
+        color: var(--text-primary, #1f2937);
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: var(--shadow-xl, 0 8px 20px rgba(0, 0, 0, 0.15));
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        width: min(320px, 80vw);
+        z-index: 100;
+      }
+
+      .email-login-form input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-default, #d1d5db);
+        border-radius: 4px;
+        font-size: 0.95rem;
+        background: var(--input-bg, white);
+        color: var(--input-text, inherit);
+      }
+
+      .email-login-form input:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+      }
+
+      .email-login-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+      }
+
+      .email-login-form .secondary-button {
+        color: var(--secondary-color);
+        border: 1px solid var(--secondary-color);
+      }
+
+      .email-login-form .secondary-button:hover {
+        background: var(--hover-overlay, rgba(74, 158, 255, 0.1));
+      }
+
+      .email-register-form {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: var(--bg-primary, white);
+        color: var(--text-primary, #1f2937);
+        padding: 1.25rem;
+        border-radius: 10px;
+        box-shadow: var(--shadow-xl, 0 10px 24px rgba(0, 0, 0, 0.18));
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        width: min(360px, 90vw);
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 110;
+      }
+
+      .email-register-form h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--text-primary, #1f2937);
+      }
+
+      .email-register-form input,
+      .email-register-form select,
+      .email-register-form textarea {
+        width: 100%;
+        padding: 0.55rem 0.75rem;
+        border: 1px solid var(--border-default, #d1d5db);
+        border-radius: 4px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        background: var(--input-bg, white);
+        color: var(--input-text, inherit);
+      }
+
+      .email-register-form select {
+        background-color: var(--select-bg, #fff);
+      }
+
+      .email-register-form textarea {
+        resize: vertical;
+        min-height: 90px;
+      }
+
+      .email-register-form input:focus,
+      .email-register-form select:focus,
+      .email-register-form textarea:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+      }
+
+      .email-register-form .secondary-button {
+        color: var(--secondary-color);
+        border: 1px solid var(--secondary-color);
+      }
+
+      .email-register-form .secondary-button:hover {
+        background: var(--hover-overlay, rgba(74, 158, 255, 0.1));
+      }
+
+      .error-message {
+        color: var(--color-error, #b91c1c);
+        font-size: 0.85rem;
+        text-align: left;
+      }
+
+      .success-message {
+        color: var(--color-success, #047857);
+        font-size: 0.85rem;
+        text-align: left;
+      }
+
+      .form-helper-text {
+        font-size: 0.85rem;
+        color: var(--text-muted, #6b7280);
+        margin-bottom: 0.25rem;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .welcome-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        min-height: calc(100vh - 200px);
+        text-align: center;
+      }
+
+      .welcome-content {
+        padding: 3rem;
+        background: var(--bg-primary, white);
+        border-radius: 12px;
+        box-shadow: var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.1));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .welcome-logo {
+        width: 150px;
+        height: auto;
+        margin-bottom: 2rem;
+      }
+
+      .welcome-title {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        font-weight: 300;
+        text-align: center;
+      }
+
+      .welcome-subtitle {
+        font-size: 1.5rem;
+        color: var(--text-muted, #666);
+        margin: 0;
+        text-align: center;
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Descarga protegida</title>
+    <style>
+      :root {
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: var(--bg-secondary, #f5f5f5);
+        color: var(--text-primary, #111);
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, var(--bg-secondary, #f5f7fb), var(--bg-accent, #fef6fb));
+      }
+
+      .share-wrapper {
+        width: 100%;
+        max-width: 480px;
+        background: var(--bg-primary, #fff);
+        border-radius: 16px;
+        box-shadow: 0 20px 60px var(--shadow-color, rgba(43, 24, 76, 0.12));
+        padding: 2.5rem;
+        box-sizing: border-box;
+      }
+
+      .logo {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: var(--geniova-color, #ec3e95);
+        letter-spacing: 0.08em;
+      }
+
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 1.5rem;
+        color: var(--text-primary, #1f1f1f);
+        text-align: center;
+      }
+
+      p.subtitle {
+        margin: 0 0 1.5rem;
+        text-align: center;
+        color: var(--text-secondary, #5c5c5c);
+      }
+
+      .file-card {
+        border: 1px solid var(--border-subtle, #eee);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        background: var(--bg-subtle, #fafafa);
+      }
+
+      .file-name {
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+      }
+
+      .file-meta {
+        font-size: 0.9rem;
+        color: var(--text-secondary, #555);
+      }
+
+      .file-badges {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+
+      .app-badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .badge-release {
+        background: #28a745;
+        color: #fff;
+      }
+
+      .badge-canary {
+        background: #ffc107;
+        color: #000;
+      }
+
+      .changelog-section {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: var(--bg-secondary, #f8f9fa);
+        border-radius: 8px;
+        border: 1px solid var(--border-subtle, #e9ecef);
+      }
+
+      .changelog-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary, #333);
+        margin-bottom: 0.5rem;
+      }
+
+      .changelog-content {
+        font-size: 0.85rem;
+        color: var(--text-secondary, #555);
+        white-space: pre-wrap;
+        line-height: 1.5;
+      }
+
+      .status {
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+
+      .status.error {
+        background: var(--status-error-bg, #fde8ec);
+        color: var(--status-error-text, #a9183f);
+        border: 1px solid var(--status-error-border, #f8cdd8);
+      }
+
+      .status.info {
+        background: var(--status-info-bg, #eef4ff);
+        color: var(--status-info-text, #0f52bd);
+        border: 1px solid var(--status-info-border, #d4e3ff);
+      }
+
+      form {
+        display: none;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+
+      label {
+        font-size: 0.9rem;
+        color: var(--text-secondary, #444);
+      }
+
+      input[type='password'] {
+        width: 100%;
+        padding: 0.75rem 0.85rem;
+        border-radius: 10px;
+        border: 1px solid var(--input-border, #dcdcdc);
+        font-size: 1rem;
+        background: var(--input-bg, #fff);
+        color: var(--text-primary, #111);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      input[type='password']:focus {
+        outline: none;
+        border-color: var(--geniova-color, #ec3e95);
+        box-shadow: 0 0 0 3px rgba(236, 62, 149, 0.1);
+      }
+
+      button[type='submit'] {
+        background: var(--geniova-color, #ec3e95);
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 1rem;
+        padding: 0.85rem;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+      }
+
+      button[type='submit']:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .download-hint {
+        font-size: 0.85rem;
+        color: var(--text-muted, #666);
+        text-align: center;
+        margin-top: 0.75rem;
+        display: none;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-primary: #1a1a2e;
+          --bg-secondary: #16213e;
+          --bg-accent: #1a1a2e;
+          --bg-subtle: #1e2a45;
+          --text-primary: #e0e0e0;
+          --text-secondary: #a0a0b0;
+          --border-subtle: #2a2a4a;
+          --shadow-color: rgba(0, 0, 0, 0.3);
+          --geniova-color: #ec3e95;
+          --input-border: #3a3a5a;
+          --input-bg: #1e2a45;
+          --status-error-bg: rgba(169, 24, 63, 0.2);
+          --status-error-text: #f5a6ae;
+          --status-error-border: rgba(169, 24, 63, 0.3);
+          --status-info-bg: rgba(15, 82, 189, 0.2);
+          --status-info-text: #8ec8ff;
+          --status-info-border: rgba(15, 82, 189, 0.3);
+          --text-muted: #8888a0;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .share-wrapper {
+          padding: 1.75rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="share-wrapper">
+      <div class="logo">PLANNING·GAME</div>
+      <h1>Descarga protegida</h1>
+      <p class="subtitle">Introduce la contraseña para acceder al archivo compartido.</p>
+
+      <div class="file-card">
+        <div class="file-name" id="fileName">Archivo pendiente de cargar…</div>
+        <div class="file-badges" id="fileBadges" style="display: none;"></div>
+        <div class="file-meta" id="fileMeta"></div>
+        <div class="changelog-section" id="changelogSection" style="display: none;">
+          <div class="changelog-title">📋 Novedades de esta versión</div>
+          <div class="changelog-content" id="changelogContent"></div>
+        </div>
+      </div>
+
+      <div class="status info" id="statusMessage">Validando enlace seguro…</div>
+
+      <form id="passwordForm">
+        <label for="sharePassword">Contraseña</label>
+        <input
+          type="password"
+          id="sharePassword"
+          name="sharePassword"
+          autocomplete="off"
+          minlength="4"
+          required
+        />
+        <button type="submit" id="downloadBtn">Desbloquear y descargar</button>
+        <div class="download-hint" id="downloadHint">
+          Si la descarga no comienza automáticamente, copia el enlace que aparecerá en pantalla.
+        </div>
+      </form>
+    </main>
+
+    <script type="module">
+      import { database } from '/firebase-config.js';
+      import { ref, get, runTransaction, push, set } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+      import { toFirebaseKey } from '/js/utils/firebase-key-utils.js';
+
+      const shareId = new URL(window.location.href).searchParams.get('shareId') || '';
+
+      const fileNameEl = document.getElementById('fileName');
+      const fileMetaEl = document.getElementById('fileMeta');
+      const fileBadgesEl = document.getElementById('fileBadges');
+      const changelogSectionEl = document.getElementById('changelogSection');
+      const changelogContentEl = document.getElementById('changelogContent');
+      const statusEl = document.getElementById('statusMessage');
+      const formEl = document.getElementById('passwordForm');
+      const passwordInput = document.getElementById('sharePassword');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const downloadHint = document.getElementById('downloadHint');
+
+      let shareData = null;
+      let appMetadata = null;
+
+      const toHex = (buffer) =>
+        Array.from(new Uint8Array(buffer))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('');
+
+      async function hashPassword(password, salt) {
+        const encoder = new TextEncoder();
+        const payload = encoder.encode(`${salt}:${password}`);
+        const digest = await crypto.subtle.digest('SHA-256', payload);
+        return toHex(digest);
+      }
+
+      function setStatus(message, type = 'info') {
+        statusEl.textContent = message;
+        statusEl.className = `status ${type}`;
+      }
+
+      function formatMeta(share) {
+        const parts = [];
+        if (share.projectId) {
+          parts.push(`Proyecto: ${share.projectId}`);
+        }
+        if (share.sizeLabel) {
+          parts.push(`Tamaño: ${share.sizeLabel}`);
+        }
+        if (share.createdAt) {
+          const date = new Date(share.createdAt);
+          parts.push(`Compartido: ${date.toLocaleDateString('es-ES')}`);
+        }
+        return parts.join(' · ');
+      }
+
+      async function trackDownload(share) {
+        if (!share?.projectId || !share?.fileName) {
+          return;
+        }
+
+        try {
+          const fileKey = toFirebaseKey(share.fileName);
+          const statsRef = ref(database, `/appDownloads/${share.projectId}/${fileKey}`);
+          await runTransaction(statsRef, (current) => {
+            const next = current && typeof current === 'object' ? { ...current } : {};
+            next.count = (Number(next.count) || 0) + 1;
+            next.fileName = share.fileName;
+            next.lastDownloadedAt = new Date().toISOString();
+            next.lastSource = 'share';
+            return next;
+          });
+
+          const eventRef = push(ref(database, `/appDownloadEvents/${share.projectId}/${fileKey}`));
+          await set(eventRef, {
+            downloadedAt: new Date().toISOString(),
+            fileName: share.fileName,
+            source: 'share'
+          });
+        } catch (error) {
+        }
+      }
+
+      async function loadShare() {
+        if (!shareId) {
+          setStatus('El enlace compartido no es válido.', 'error');
+          return;
+        }
+
+        try {
+          const shareRef = ref(database, `/publicAppShares/${shareId}`);
+          const snapshot = await get(shareRef);
+
+          if (!snapshot.exists()) {
+            setStatus('No se encontró el recurso solicitado o ya fue revocado.', 'error');
+            return;
+          }
+
+          shareData = snapshot.val();
+          fileNameEl.textContent = shareData.fileName || 'Archivo compartido';
+          fileMetaEl.textContent = formatMeta(shareData);
+
+          // Load app metadata if available
+          if (shareData.projectId && shareData.fileName) {
+            try {
+              const fileKey = toFirebaseKey(shareData.fileName);
+              const metadataRef = ref(database, `/appMetadata/${shareData.projectId}/${fileKey}`);
+              const metadataSnapshot = await get(metadataRef);
+
+              if (metadataSnapshot.exists()) {
+                appMetadata = metadataSnapshot.val();
+
+                // Check if app is deprecated
+                if (appMetadata.status === 'deprecated') {
+                  setStatus('Esta aplicación ha sido descatalogada y ya no está disponible para descargar.', 'error');
+                  return;
+                }
+
+                // Show badges
+                const typeEmoji = appMetadata.type === 'canary' ? '🐤' : '🚀';
+                const typeName = appMetadata.type === 'canary' ? 'Canary' : 'Release';
+                fileBadgesEl.innerHTML = `<span class="app-badge badge-${appMetadata.type}">${typeEmoji} ${typeName}</span>`;
+                fileBadgesEl.style.display = 'flex';
+
+                // Show changelog if available
+                if (appMetadata.changelog) {
+                  changelogContentEl.textContent = appMetadata.changelog;
+                  changelogSectionEl.style.display = 'block';
+                }
+              }
+            } catch (metaError) {
+              // Metadata not available, continue without it (legacy apps)
+            }
+          }
+
+          formEl.style.display = 'flex';
+          setStatus('Introduce la contraseña recibida para iniciar la descarga.', 'info');
+          passwordInput.focus();
+        } catch (error) {
+          setStatus('No se pudo cargar la información del archivo compartido.', 'error');
+        }
+      }
+
+      formEl.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!shareData) {
+          return;
+        }
+
+        const password = passwordInput.value.trim();
+        if (!password) {
+          return;
+        }
+
+        downloadBtn.disabled = true;
+        setStatus('Verificando contraseña…', 'info');
+
+        try {
+          const hashed = await hashPassword(password, shareData.salt);
+          if (hashed !== shareData.passwordHash) {
+            downloadBtn.disabled = false;
+            setStatus('Contraseña incorrecta. Inténtalo de nuevo.', 'error');
+            passwordInput.focus();
+            passwordInput.select();
+            return;
+          }
+
+          setStatus('Contraseña correcta. Preparando descarga…', 'info');
+          downloadHint.style.display = 'block';
+
+          const downloadUrl = shareData.downloadURL;
+          if (!downloadUrl) {
+            throw new Error('No hay URL de descarga disponible.');
+          }
+
+          await trackDownload(shareData);
+
+          setTimeout(() => {
+            window.location.href = downloadUrl;
+          }, 400);
+        } catch (error) {
+          setStatus('No se pudo validar la contraseña o iniciar la descarga.', 'error');
+          downloadBtn.disabled = false;
+        }
+      });
+
+      loadShare();
+    </script>
+  </body>
+</html>

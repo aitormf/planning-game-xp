@@ -1,0 +1,198 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Home">
+  <div class="landing-container">
+    <div class="hero-section">
+      <img src="/images/logo_PGame.png" alt="Planning Game" class="hero-logo" />
+      <h1 class="hero-title">Planning Game<span class="xp">XP</span></h1>
+      <p class="hero-subtitle">Gestión ágil de proyectos con prácticas eXtreme Programming</p>
+
+      <div class="cta-buttons">
+        <a href="/projects" class="cta-primary">Ver Proyectos</a>
+        <a href="/doc/" class="cta-secondary">Documentación</a>
+      </div>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">📋</div>
+          <h3>Gestión de Tareas</h3>
+          <p>Organiza user stories, bugs y epics con tableros Kanban</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🚀</div>
+          <h3>Sprints</h3>
+          <p>Planifica y gestiona sprints con puntos de desarrollo y negocio</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">👥</div>
+          <h3>Colaboración</h3>
+          <p>Trabajo en equipo en tiempo real con notificaciones push</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">📊</div>
+          <h3>Métricas</h3>
+          <p>Dashboards y gráficos de progreso para seguimiento de proyectos</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .landing-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 200px);
+    padding: 2rem;
+  }
+
+  .hero-section {
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .hero-logo {
+    width: 140px;
+    height: auto;
+    margin-bottom: 1.5rem;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .hero-title {
+    font-size: 3.5rem;
+    font-weight: 300;
+    color: var(--primary-color, #4a9eff);
+    margin: 0 0 0.5rem;
+  }
+
+  .hero-title .xp {
+    font-weight: 700;
+    color: var(--geniova-color, #ec3e95);
+  }
+
+  .hero-subtitle {
+    font-size: 1.35rem;
+    color: var(--text-muted, #6b7280);
+    margin: 0 0 2.5rem;
+    font-weight: 400;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 3.5rem;
+  }
+
+  .cta-primary,
+  .cta-secondary {
+    padding: 0.9rem 2rem;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s ease;
+  }
+
+  .cta-primary {
+    background: var(--geniova-color, #ec3e95);
+    color: white;
+    box-shadow: 0 4px 14px rgba(236, 62, 149, 0.3);
+  }
+
+  .cta-primary:hover {
+    background: #d63384;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(236, 62, 149, 0.4);
+  }
+
+  .cta-secondary {
+    background: var(--bg-primary, white);
+    color: var(--primary-color, #4a9eff);
+    border: 2px solid var(--primary-color, #4a9eff);
+  }
+
+  .cta-secondary:hover {
+    background: var(--primary-color, #4a9eff);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  .features {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .feature {
+    background: var(--bg-primary, white);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.06));
+    transition: all 0.25s ease;
+    border: 1px solid var(--border-subtle, #f1f3f5);
+    flex: 0 1 200px;
+    min-width: 180px;
+  }
+
+  .feature:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg, 0 8px 20px rgba(0, 0, 0, 0.1));
+  }
+
+  .feature-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .feature h3 {
+    font-size: 1rem;
+    color: var(--text-primary, #1f2937);
+    margin: 0 0 0.5rem;
+    font-weight: 600;
+  }
+
+  .feature p {
+    font-size: 0.85rem;
+    color: var(--text-muted, #6b7280);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 640px) {
+    .hero-title {
+      font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+    }
+
+    .cta-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .cta-primary,
+    .cta-secondary {
+      width: 100%;
+      max-width: 280px;
+      text-align: center;
+    }
+
+    .feature {
+      flex: 1 1 100%;
+    }
+  }
+</style>

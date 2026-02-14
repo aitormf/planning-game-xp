@@ -1,0 +1,124 @@
+{
+  "rules": {
+    ".read": "auth != null && auth.token.email.matches(/.*@YOUR_DOMAIN\\.com$/)",
+    ".write": "auth != null && auth.token.email.matches(/.*@YOUR_DOMAIN\\.com$/)",
+    "appConfig": {
+      ".read": true
+    },
+    "publicAppShares": {
+      "$shareId": {
+        ".read": "true",
+        ".write": "auth != null && auth.token.email.matches(/.*@YOUR_DOMAIN\\.com$/)"
+      }
+    },
+    "notifications": {
+      "$userEmail": {
+        ".read": "$userEmail === auth.token.email.replace('.', '_').replace('.', '_').replace('.', '_').replace('#', '_').replace('$', '_').replace('[', '_').replace(']', '_')",
+        ".write": "auth != null",
+        "$notificationId": {
+          ".validate": "newData.hasChildren(['id', 'title', 'message', 'type', 'read', 'timestamp'])"
+        }
+      }
+    },
+    "userTokens": {
+      "$userEmail": {
+        ".read": "$userEmail === auth.token.email.replace('.', '_').replace('#', '_').replace('$', '_').replace('[', '_').replace(']', '_')",
+        ".write": "$userEmail === auth.token.email.replace('.', '_').replace('#', '_').replace('$', '_').replace('[', '_').replace(']', '_')"
+      }
+    },
+    "data": {
+      "projectsByUser": {
+        "$encodedUserEmail": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.token.email != null"
+        }
+      },
+      "defaultProjects": {
+        ".read": "auth != null"
+      },
+      "appUploaders": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.token.isAppAdmin === true"
+      },
+      "canaryUsers": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.token.isAppAdmin === true"
+      },
+      "betaUsers": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.token.isAppAdmin === true"
+      },
+      "appAdmins": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.token.isAppAdmin === true"
+      },
+      "wip": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "$developerKey": {
+          ".validate": "newData.hasChildren(['taskId', 'startedAt', 'projectId'])"
+        }
+      },
+      "wipTimelineState": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "$developerKey": {
+          ".validate": "newData.hasChildren(['status', 'startedAt'])"
+        }
+      },
+      "wipTimeline": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "$developerKey": {
+          "$entryId": {
+            ".validate": "newData.hasChildren(['status','startedAt'])"
+          }
+        }
+      }
+    },
+    "history": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$project": {
+        "$cardType": {
+          "$cardId": {
+            ".indexOn": "timestamp"
+          }
+        }
+      }
+    },
+    "developerBacklogs": {
+      "$developerId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "docs": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$docId": {
+        ".validate": "newData.hasChildren(['title', 'content', 'path', 'section'])"
+      }
+    },
+    "docs-history": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$docId": {
+        "$historyId": {
+          ".validate": "newData.hasChildren(['title', 'content', 'timestamp', 'changedBy', 'action'])"
+        }
+      }
+    },
+    "docs-trash": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "doc-sections": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$sectionId": {
+        ".validate": "newData.hasChildren(['name', 'slug', 'order'])"
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "@azure/identity": "^4.11.1",
+    "@azure/msal-node": "^2.9.2",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "axios": "^1.6.2",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^7.0.2",
+    "form-data": "^4.0.4",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "overrides": {
+    "fast-xml-parser": "5.3.4"
+  },
+  "private": true
+}

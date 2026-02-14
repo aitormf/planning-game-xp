@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicializar Super Admin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .success {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+            display: none;
+        }
+        .error {
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #f44336;
+            display: none;
+        }
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #3a8eef;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .log {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        .log-line {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Inicializar Super Admin</h1>
+
+        <div class="info">
+            <p><strong>Email a configurar:</strong> <code id="adminEmail">loading...</code></p>
+            <p>Este script añadirá tu email a la lista de super admins en Firebase Realtime Database.</p>
+            <p><small>El email se lee de la variable <code>PUBLIC_SUPER_ADMIN_EMAIL</code> en firebase-config.js</small></p>
+        </div>
+
+        <button id="initButton" onclick="initializeSuperAdmin()">Inicializar Super Admin</button>
+
+        <div id="successMessage" class="success">
+            ✅ <strong>¡Super Admin inicializado correctamente!</strong><br>
+            Ahora puedes acceder a la sección Development.
+        </div>
+
+        <div id="errorMessage" class="error">
+            ❌ <strong>Error al inicializar super admin</strong><br>
+            <span id="errorDetail"></span>
+        </div>
+
+        <div id="logContainer" class="log"></div>
+    </div>
+
+    <script type="module">
+        window.initializeSuperAdmin = async function() {
+            const button = document.getElementById('initButton');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const errorDetail = document.getElementById('errorDetail');
+            const logContainer = document.getElementById('logContainer');
+
+            // Reset UI
+            button.disabled = true;
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            logContainer.style.display = 'block';
+            logContainer.innerHTML = '';
+
+            function log(message, type = 'info') {
+                const line = document.createElement('div');
+                line.className = 'log-line';
+                const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : '🔍';
+                line.textContent = `${prefix} ${message}`;
+                logContainer.appendChild(line);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            try {
+                log('Importando configuración de Firebase...');
+                const [{ database, ref, set, get }, { encodeEmailForFirebase }] = await Promise.all([
+                    import('./firebase-config.js'),
+                    import('./js/utils/email-sanitizer.js')
+                ]);
+
+                // Read email from firebase-config or environment
+                const configModule = await import('./firebase-config.js');
+                const email = configModule.superAdminEmail || prompt('Introduce el email del Super Admin:');
+                if (!email) throw new Error('Se requiere un email para configurar el Super Admin');
+                document.getElementById('adminEmail').textContent = email;
+                log(`Email a configurar: ${email}`);
+
+                // Encode email for Firebase path (canonical + legacy fallback)
+                const normalizedEmail = email.trim().toLowerCase();
+                const encodedEmail = encodeEmailForFirebase(normalizedEmail);
+                const legacyEncodedEmail = normalizedEmail
+                    .replace(/@/g, '_')
+                    .replace(/\./g, '_')
+                    .replace(/#/g, '_')
+                    .replace(/\$/g, '_')
+                    .replace(/\[/g, '_')
+                    .replace(/]/g, '_');
+
+                const emailKeys = [encodedEmail, legacyEncodedEmail].filter(Boolean);
+                log(`Email codificado: ${emailKeys.join(' | ')}`);
+
+                // Check if already exists
+                log('Verificando si el super admin ya existe...');
+                let snapshot = null;
+                for (const key of emailKeys) {
+                    const checkRef = ref(database, `/data/superAdminEmails/${key}`);
+                    snapshot = await get(checkRef);
+                    if (snapshot.exists()) break;
+                }
+
+                if (snapshot.exists()) {
+                    log('El super admin ya estaba configurado', 'success');
+                    successMessage.style.display = 'block';
+                    button.textContent = '✅ Ya inicializado';
+                    return;
+                }
+
+                // Set super admin
+                log('Añadiendo super admin a Firebase...');
+                const superAdminRef = ref(database, `/data/superAdminEmails/${emailKeys[0]}`);
+                await set(superAdminRef, true);
+
+                log('Super admin inicializado correctamente', 'success');
+                log('Puedes cerrar esta ventana y recargar la aplicación', 'success');
+
+                successMessage.style.display = 'block';
+                button.textContent = '✅ Inicializado correctamente';
+
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                errorDetail.textContent = error.message;
+                errorMessage.style.display = 'block';
+                button.disabled = false;
+                button.textContent = '🔄 Reintentar';
+            }
+        };
+    </script>
+</body>
+</html>

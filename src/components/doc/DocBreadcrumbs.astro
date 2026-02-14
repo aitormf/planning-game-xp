@@ -1,0 +1,74 @@
+---
+const segments = Astro.url.pathname
+  .split('/')
+  .filter(Boolean)
+  .slice(1);
+
+const labels: Record<string, string> = {
+  'doc': 'Docs',
+  'git': 'Git',
+  'deploy': 'Deploy',
+  'ai': 'IA',
+  'planninggame': 'PlanningGame',
+  'workflow': 'Flujo de trabajo',
+  'pr-quality-gates': 'Calidad en PR',
+  'transition': 'Plan de transición',
+  'vercel': 'Vercel',
+  'pr-review-openai': 'Revisión PR',
+  'integration': 'Integración'
+};
+
+function getLabel(segment: string): string {
+  return labels[segment] || segment;
+}
+---
+
+{segments.length > 0 && (
+  <nav class="breadcrumbs" aria-label="breadcrumb">
+    <a href="/doc" class="breadcrumb-item">Docs</a>
+    {segments.map((segment, index) => {
+      const href = '/doc/' + segments.slice(0, index + 1).join('/');
+      const isLast = index === segments.length - 1;
+      return (
+        <>
+          <span class="separator">/</span>
+          {isLast ? (
+            <span class="breadcrumb-item current">{getLabel(segment)}</span>
+          ) : (
+            <a href={href} class="breadcrumb-item">{getLabel(segment)}</a>
+          )}
+        </>
+      );
+    })}
+  </nav>
+)}
+
+<style>
+  .breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    font-size: 0.875rem;
+  }
+
+  .breadcrumb-item {
+    color: var(--text-muted, #64748b);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .breadcrumb-item:hover {
+    color: #2563eb;
+  }
+
+  .breadcrumb-item.current {
+    color: var(--text-primary, #1a1a2e);
+    font-weight: 500;
+  }
+
+  .separator {
+    color: var(--text-disabled, #cbd5e1);
+    font-size: 0.75rem;
+  }
+</style>

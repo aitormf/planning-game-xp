@@ -1,0 +1,45 @@
+# PENDIENTE
+
+- En el proyecto del planning game del mcp veo como validador "Stk 0014" en luga de Mánu Fosela, esto es un error del MCP o del planning? el planning debe permitir insertar un id existente de un validator.
+- Quitar el boton "Gestion"
+- La seccion Config, es global o por proyectos? ADRs? ambos deben ser global y por proyectos. Por cada proyecto poder seleccionar de lo que exista y luego añadir los que se quieran.
+Hay que crear una fuente de ADRs y de Agents/prompts/Instructions para poder insertar en los proyectos que no tengan. Ahora lo veo vacio y puedo añadir ADR, pero tengo que subirlo yo, que está bien, pero la opcion buena es dejar añadir ADRs que ya existan, que los marque de una lista y se añadan al proyecto. Si lo tenemos repositado/guardado en la propia app si se modifica se actualiza para todos, por tanto hará falta un sitio donde gestionar los ADRs que se debe poder acceder desde la propia seccion de ADRs.
+- Quiero implementar una nueva funcionalidad: cuando se crea un proyecto con create_project, el MCP debe poder generar un fichero de instrucciones estándar para agentes IA en el repositorio del proyecto.
+  Contexto:
+  Usamos Planning Game MCP para gestionar tareas de desarrollo. Los desarrolladores (humanos o agentes IA como Claude Code) deben seguir
+   un flujo de trabajo estándar al implementar tareas. Actualmente estas reglas las metemos manualmente en un CLAUDE.md en cada repo.
+  Quiero automatizarlo.
+
+  Requisitos:
+
+  1.Nuevo tool generate_agent_instructions que genere un fichero con las instrucciones de flujo de trabajo para un proyecto.
+  Parámetros:
+  - projectId (requerido) - Para obtener los datos del proyecto (nombre, abbreviation, developers, sprints, epics)
+  - outputPath (opcional, default: CLAUDE.md) - Nombre del fichero. Puede ser CLAUDE.md, .cursorrules,
+  .github/copilot-instructions.md, etc. según la IA que use el equipo
+  - format (opcional, default: claude) - Formato de salida: claude, cursor, copilot, generic
+
+  2.Contenido del fichero generado - Debe incluir dinámicamente:
+  - Flujo de trabajo obligatorio (crear tarea → rellenar campos → In Progress → implementar → bump versión → commit → To Validate)
+  - Datos fijos del proyecto extraídos de Planning Game: projectId, developers, validators, sprint activo, epics disponibles
+  - Las developmentInstructions globales que ya existen en global_config (las de commits pequeños, guías de estilo, seguridad, etc.)
+  - Convenciones de commits (conventional commits, versionado semántico)
+  - Reglas de idioma:
+    - Comentarios de código en español
+    - Variables, métodos, funciones y nombres de código en inglés
+    - Mensajes de error en español (salvo que la aplicación tenga multiidioma)
+    - Commits en español o inglés, pero consistente dentro del mismo mensaje
+  - NUNCA incluir referencias a Claude ni a ninguna IA en commits, comentarios de código ni PRs
+  
+  3.El contenido debe generarse dinámicamente, no ser un template estático. Si se añade un nuevo developer o sprint al proyecto, al
+  regenerar el fichero debe reflejar los cambios.
+  
+  4.El fichero NO se escribe en disco directamente (el MCP no tiene acceso al repo). El tool devuelve el contenido como string para que
+   el agente/desarrollador lo escriba en su repo con la herramienta Write.
+  
+  5.Considerar añadir una opción en create_project para generar automáticamente estas instrucciones al crear el proyecto (parámetro
+  opcional generateAgentInstructions: true).
+
+  Ejemplo de uso:
+  generate_agent_instructions({ projectId: "Portal de Incidencias", format: "claude" })
+  → Devuelve el contenido del CLAUDE.md con todos los datos del proyecto inyectados

@@ -1,0 +1,61 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Colores para output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo "${BLUE}🔍 Ejecutando verificación de sintaxis pre-commit...${NC}"
+
+# Ejecutar verificación de sintaxis
+npm run syntax:check
+
+# Verificar si el comando fue exitoso
+if [ $? -ne 0 ]; then
+  echo "${RED}❌ Commit bloqueado: Se encontraron errores de sintaxis en archivos JavaScript${NC}"
+  echo "${YELLOW}💡 Corrige los errores antes de hacer commit${NC}"
+  exit 1
+fi
+
+echo "${BLUE}🧪 Ejecutando tests pre-commit...${NC}"
+
+# Ejecutar tests
+npm test
+
+# Verificar si los tests pasaron
+if [ $? -ne 0 ]; then
+  echo "${RED}❌ Commit bloqueado: Algunos tests fallaron${NC}"
+  echo "${YELLOW}💡 Corrige los tests antes de hacer commit${NC}"
+  exit 1
+fi
+
+echo "${GREEN}✅ Tests completados${NC}"
+
+echo "${BLUE}🔒 Ejecutando verificación de seguridad pre-commit...${NC}"
+
+# Ejecutar verificación de seguridad con auto-fix
+npm run security:fix
+
+# Verificar si el comando fue exitoso
+if [ $? -ne 0 ]; then
+  echo "${RED}❌ Commit bloqueado: Se encontraron vulnerabilidades de seguridad críticas${NC}"
+  echo "${YELLOW}💡 Revisa los mensajes anteriores para más detalles${NC}"
+  exit 1
+fi
+
+# Verificar si package-lock.json fue modificado
+if git diff --name-only --cached | grep -q "package-lock.json"; then
+  echo "${GREEN}✅ package-lock.json incluido en el commit${NC}"
+elif git diff --name-only | grep -q "package-lock.json"; then
+  echo "${YELLOW}⚠️  package-lock.json fue modificado pero no está en el commit${NC}"
+  echo "${YELLOW}💡 Ejecuta: git add package-lock.json${NC}"
+  
+  # Auto-agregar package-lock.json si fue modificado
+  git add package-lock.json
+  echo "${GREEN}✅ package-lock.json agregado automáticamente al commit${NC}"
+fi
+
+echo "${GREEN}✅ Verificación de seguridad completada${NC}"

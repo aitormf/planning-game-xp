@@ -1,0 +1,158 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import DocSidebar from './DocSidebar.astro';
+import DocBreadcrumbs from './DocBreadcrumbs.astro';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'Documentación' } = Astro.props;
+---
+
+<Layout title={title}>
+  <div class="doc-page-wrapper">
+    <aside class="doc-page-sidebar" transition:persist>
+      <DocSidebar />
+    </aside>
+    <div class="doc-page-content" transition:animate="slide">
+      <DocBreadcrumbs />
+      <article class="doc-page-article">
+        <slot />
+      </article>
+    </div>
+  </div>
+</Layout>
+
+<style is:inline>
+  /* Reset del padding del main para la página de docs */
+  .doc-page-wrapper {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 160px);
+    margin: -2rem -2rem -5rem -2rem;
+  }
+
+  .doc-page-sidebar {
+    background: var(--sidebar-bg, #fff);
+    border-right: 1px solid var(--border-default, #e5e7eb);
+    padding: 1.5rem;
+  }
+
+  .doc-page-content {
+    padding: 2rem 3rem;
+    background: var(--bg-secondary, #fafbfc);
+  }
+
+  .doc-page-article {
+    max-width: 800px;
+    line-height: 1.75;
+    color: var(--text-secondary, #374151);
+  }
+
+  /* Tipografía para el contenido */
+  .doc-page-article h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary, #111827);
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-default, #e5e7eb);
+  }
+
+  .doc-page-article h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #1f2937);
+    margin: 2.5rem 0 1rem 0;
+  }
+
+  .doc-page-article h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-secondary, #374151);
+    margin: 2rem 0 0.75rem 0;
+  }
+
+  .doc-page-article p {
+    margin: 0 0 1.25rem 0;
+  }
+
+  .doc-page-article ul,
+  .doc-page-article ol {
+    margin: 0 0 1.25rem 0;
+    padding-left: 1.75rem;
+  }
+
+  .doc-page-article li {
+    margin-bottom: 0.5rem;
+  }
+
+  .doc-page-article a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+
+  .doc-page-article a:hover {
+    text-decoration: underline;
+  }
+
+  .doc-page-article strong {
+    font-weight: 600;
+    color: var(--text-primary, #111827);
+  }
+
+  .doc-page-article code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    background: var(--bg-tertiary, #f3f4f6);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    color: #be185d;
+  }
+
+  .doc-page-article pre {
+    background: var(--bg-inverse, #1f2937);
+    color: var(--text-inverse, #f3f4f6);
+    padding: 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .doc-page-article pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  .doc-page-article blockquote {
+    border-left: 4px solid #ec3e95;
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    color: var(--text-muted, #6b7280);
+    font-style: italic;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .doc-page-wrapper {
+      grid-template-columns: 220px 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .doc-page-wrapper {
+      grid-template-columns: 1fr;
+    }
+    .doc-page-sidebar {
+      border-right: none;
+      border-bottom: 1px solid var(--border-default, #e5e7eb);
+    }
+    .doc-page-content {
+      padding: 1.5rem;
+    }
+  }
+</style>

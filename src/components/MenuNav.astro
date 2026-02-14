@@ -1,0 +1,360 @@
+---
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = Astro.url.pathname } = Astro.props;
+
+const navItems = [
+  { href: "/projects", label: "Projects", requiresAuth: true },
+  { href: "/adminproject/", label: "Admin Project", requiresAuth: true },
+  { href: "/dashboard/", label: "Dashboard", requiresAuth: true },
+  { href: "/proposals/", label: "Proposals", requiresAuth: true },
+  { href: "/wip/", label: "WIP", requiresAuth: true },
+  { href: "/development/", label: "Development", requiresAuth: true, requiresSuperAdmin: true },
+  { href: "/global-config/", label: "Config", requiresAuth: true, requiresSuperAdmin: true },
+  { href: "/doc/", label: "Docs", requiresAuth: false, isDocLink: true }
+];
+
+// Determine which link should be active based on current path
+function isActiveLink(href: string, currentPath: string): boolean {
+  // Clean paths by removing trailing slashes and query parameters
+  const cleanHref = href === "/" ? "/" : href.replace(/\/$/, "");
+  const cleanCurrentPath = currentPath.split("?")[0].split("#")[0].replace(/\/$/, "") || "/";
+  
+  // Exact match for root path
+  if (cleanHref === "/" && cleanCurrentPath === "/") return true;
+  
+  // For non-root paths, use exact matching to avoid conflicts
+  if (cleanHref !== "/" && cleanCurrentPath === cleanHref) return true;
+  
+  return false;
+}
+---
+
+<nav class="menu-nav" id="menunav">
+  {navItems.map(item => (
+    <a
+      href={item.href}
+      class:list={[
+        "nav-link",
+        { active: isActiveLink(item.href, currentPath) },
+        { "requires-auth": item.requiresAuth },
+        { "requires-super-admin": item.requiresSuperAdmin },
+        { "doc-link": item.isDocLink }
+      ]}
+      data-href={item.href}
+      data-requires-auth={item.requiresAuth}
+      data-requires-super-admin={item.requiresSuperAdmin || false}
+      style={item.requiresSuperAdmin ? 'display: none;' : ''}
+    >
+      {item.label}
+    </a>
+  ))}
+  <div class="nav-indicator top"></div>
+  <div class="nav-indicator bottom"></div>
+</nav>
+
+<script>
+  // Helper function to get super admin email from firebase-config
+  let cachedSuperAdminEmail = null;
+
+  const normalizeEmail = (email) => (email || '').toString().trim().toLowerCase();
+  const legacyEncodeEmail = (email) => normalizeEmail(email).replace(/[@.#$\[\]\/]/g, '_');
+
+  async function getSuperAdminEmail() {
+    if (cachedSuperAdminEmail !== null) {
+      return cachedSuperAdminEmail;
+    }
+    try {
+      const module = await import(
+        /* @vite-ignore */ `${window.location.origin}/firebase-config.js`
+      );
+      cachedSuperAdminEmail = module.superAdminEmail || '';
+      return cachedSuperAdminEmail;
+    } catch (error) {
+      cachedSuperAdminEmail = '';
+      return '';
+    }
+  }
+
+  /**
+   * Check if user is SuperAdmin (only ONE, from .env)
+   * NOTE: /data/superAdminEmails is DEPRECATED and no longer used
+   */
+  async function isUserSuperAdmin(currentUserEmail) {
+    const normalizedUserEmail = normalizeEmail(currentUserEmail);
+    if (!normalizedUserEmail) return false;
+
+    const superAdminEmail = normalizeEmail(await getSuperAdminEmail());
+    return superAdminEmail && normalizedUserEmail === superAdminEmail;
+  }
+
+  // JavaScript mínimo para interactividad preservando la funcionalidad original
+  class MenuNavSSR {
+    constructor() {
+      this.activeElement = null;
+      this.navLinks = [];
+      this.indicatorTop = null;
+      this.indicatorBottom = null;
+      this.init();
+    }
+
+    init() {
+      const nav = document.querySelector('.menu-nav');
+      if (!nav) return;
+
+      this.navLinks = Array.from(nav.querySelectorAll('.nav-link'));
+      this.indicatorTop = nav.querySelector('.nav-indicator.top');
+      this.indicatorBottom = nav.querySelector('.nav-indicator.bottom');
+
+      this.updateNavLinks();
+      this.markActiveLinkByURL();
+
+      // Listen for auth state changes
+      document.addEventListener('user-authenticated', (event) => {
+        this.updateAuthLinks(true);
+        setTimeout(() => this.updateSuperAdminLinks(), 100);
+      });
+      document.addEventListener('user-signed-out', () => {
+        this.updateAuthLinks(false);
+        this.updateSuperAdminLinks();
+      });
+
+      // Initial auth state check (hide by default)
+      this.updateAuthLinks(false);
+
+      // Hide super admin links by default
+      this.navLinks.forEach(link => {
+        const requiresSuperAdmin = link.getAttribute('data-requires-super-admin') === 'true';
+        if (requiresSuperAdmin) {
+          link.style.display = 'none';
+        }
+      });
+
+      // Check super admin status after a delay
+      setTimeout(() => this.updateSuperAdminLinks(), 500);
+    }
+
+    updateNavLinks() {
+      const currentPath = window.location.pathname;
+
+      // Show/hide links based on path (original logic - without super admin logic)
+      // Root "/" and "/projects" show the same limited set of links
+      if (currentPath === '/' || currentPath === '/projects' || currentPath === '/projects/') {
+        const rootVisibleLinks = new Set(['/projects', '/dashboard/', '/proposals/', '/wip/', '/doc/']);
+        // Note: Development link visibility is handled by updateSuperAdminLinks
+
+        this.navLinks.forEach(link => {
+          const href = link.getAttribute('href');
+          const requiresSuperAdmin = link.getAttribute('data-requires-super-admin') === 'true';
+          const isDocLink = link.classList.contains('doc-link');
+
+          // Skip super admin links - they're handled separately
+          if (requiresSuperAdmin) return;
+
+          // Doc link is always visible
+          if (isDocLink) {
+            link.classList.remove('hidden');
+            return;
+          }
+
+          link.classList.toggle('hidden', !rootVisibleLinks.has(href));
+        });
+      } else {
+        this.navLinks.forEach(link => {
+          const requiresSuperAdmin = link.getAttribute('data-requires-super-admin') === 'true';
+          // Skip super admin links - they're handled separately
+          if (!requiresSuperAdmin) {
+            link.classList.remove('hidden');
+          }
+        });
+      }
+
+      // Add event listeners for interactivity
+      this.navLinks.forEach((link) => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          window.location.href = link.href;
+        });
+
+        link.addEventListener('mouseenter', (event) => this.moveIndicators(event.target));
+        link.addEventListener('mouseleave', () => this.resetIndicators());
+      });
+    }
+
+    markActiveLinkByURL() {
+      const path = new URL(window.location).pathname;
+      const matchingLink = this.navLinks.find(link => {
+        const href = link.getAttribute('href');
+        // Clean paths by removing trailing slashes
+        const cleanHref = href === "/" ? "/" : href.replace(/\/$/, "");
+        const cleanPath = path.replace(/\/$/, "") || "/";
+        
+        // Exact match for root path
+        if (cleanHref === "/" && cleanPath === "/") return true;
+        
+        // For non-root paths, use exact matching to avoid conflicts
+        if (cleanHref !== "/" && cleanPath === cleanHref) return true;
+        
+        return false;
+      });
+      
+      if (matchingLink) {
+        this.setActiveLink(matchingLink);
+      }
+    }
+
+    updateAuthLinks(isAuthenticated) {
+      this.navLinks.forEach(link => {
+        const requiresAuth = link.getAttribute('data-requires-auth') === 'true';
+        if (requiresAuth) {
+          link.style.display = isAuthenticated ? '' : 'none';
+        }
+      });
+
+      // Reset indicators position after visibility change
+      if (this.activeElement) {
+        this.moveIndicators(this.activeElement);
+      }
+    }
+
+    async updateSuperAdminLinks() {
+      const currentUserEmail = document.body.dataset.userEmail;
+      const isSuperAdmin = await isUserSuperAdmin(currentUserEmail);
+
+      // Hide/show links that require super admin
+      this.navLinks.forEach(link => {
+        const requiresSuperAdmin = link.getAttribute('data-requires-super-admin') === 'true';
+        if (requiresSuperAdmin) {
+          link.style.display = isSuperAdmin ? 'block' : 'none';
+        }
+      });
+
+      // Reset indicators position after visibility change
+      if (this.activeElement) {
+        this.moveIndicators(this.activeElement);
+      }
+    }
+
+    moveIndicators(target) {
+      if (!target || !this.indicatorTop || !this.indicatorBottom) return;
+
+      const { offsetLeft, offsetWidth } = target;
+      const nav = target.closest('nav');
+      const navPaddingLeft = parseInt(getComputedStyle(nav).paddingLeft, 10) || 0;
+      const offsetLeftFix = offsetLeft - navPaddingLeft;
+
+      this.indicatorTop.style.width = `${offsetWidth}px`;
+      this.indicatorTop.style.transform = `translateX(${offsetLeftFix}px)`;
+
+      this.indicatorBottom.style.width = `${offsetWidth}px`;
+      this.indicatorBottom.style.transform = `translateX(${offsetLeftFix}px)`;
+    }
+
+    resetIndicators() {
+      if (this.activeElement) {
+        this.moveIndicators(this.activeElement);
+      }
+    }
+
+    setActiveLink(link) {
+      this.activeElement = link;
+      // Remover clase active de todos los links
+      this.navLinks.forEach(l => {
+        l.classList.remove('active');
+        l.removeAttribute('active');
+      });
+      // Añadir clase active al link seleccionado
+      link.classList.add('active');
+      link.setAttribute('active', '');
+      this.moveIndicators(link);
+    }
+
+    // Public methods for backward compatibility
+    updateNavLinksPublic() {
+      this.updateNavLinks();
+    }
+
+    markActiveLinkByURLPublic() {
+      this.markActiveLinkByURL();
+    }
+  }
+
+  // Initialize when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    window.menuNavSSR = new MenuNavSSR();
+    
+    // Make methods available globally for backward compatibility
+    const menunav = document.getElementById('menunav');
+    if (menunav) {
+      menunav.updateNavLinks = () => window.menuNavSSR.updateNavLinksPublic();
+      menunav.markActiveLinkByURL = () => window.menuNavSSR.markActiveLinkByURLPublic();
+    }
+  });
+</script>
+
+<style>
+  nav {
+    display: flex;
+    gap: 16px;
+    position: relative;
+    border-bottom: 2px solid transparent;
+    padding: 0 2rem;
+    background: #ec3e95;
+    height: 2rem;
+    align-items: center;
+  }
+
+  .nav-link {
+    text-decoration: none;
+    color: #fff;
+    padding: 0.3rem 1rem;
+    position: relative;
+    font-size: 16px;
+    transition: color 0.3s, font-weight 0.3s;
+    font-weight: normal;
+  }
+
+  .nav-link:hover {
+    color: #000;
+  }
+
+  .nav-link[active],
+  .nav-link.active {
+    font-weight: bold;
+    color: #000;
+  }
+
+  .nav-link.hidden {
+    display: none;
+  }
+
+  .nav-indicator {
+    position: absolute;
+    height: 2px;
+    background-color: #fff;
+    transition: all 0.3s ease-in-out;
+    width: 0;
+  }
+
+  .nav-indicator.top {
+    top: 0;
+  }
+
+  .nav-indicator.bottom {
+    bottom: 0;
+  }
+
+  .nav-link.doc-link {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-size: 14px;
+    padding: 0.2rem 0.8rem;
+  }
+
+  .nav-link.doc-link:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
+</style>

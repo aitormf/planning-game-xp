@@ -1,0 +1,65 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // --- Helper Functions for Permissions ---
+
+    // App Admins: can upload, approve, deprecate, and delete apps
+    // Replace with your admin emails
+    function isAppAdmin() {
+      let email = request.auth.token.email;
+      return request.auth != null && (
+        email == 'YOUR_ADMIN_EMAIL'
+      );
+    }
+
+    // App Uploaders: can only upload apps (not approve/delete)
+    // Replace with your uploader emails
+    function isAppUploader() {
+      let email = request.auth.token.email;
+      return request.auth != null && (
+        email == 'YOUR_UPLOADER_EMAIL'
+      );
+    }
+
+    // Can upload apps: admins OR uploaders
+    function canUploadApps() {
+      return isAppAdmin() || isAppUploader();
+    }
+
+    function isReadAllowed() {
+      // Replace with your domain
+      let isDomainUser = request.auth.token.email.matches(".*@YOUR_DOMAIN\\.com$");
+      return isDomainUser;
+    }
+
+    function isWriteAllowed() {
+      return isAppAdmin();
+    }
+
+    // --- Path-specific Rules ---
+
+    match /apps/{projectId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if canUploadApps();
+      allow delete: if isAppAdmin();
+    }
+
+    match /c4d/{fileType}/{fileName} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /bug-attachments/{projectId}/{cardId}/{fileName} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /task-attachments/{projectId}/{cardId}/{fileName} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /{allPaths=**} {
+      allow read: if request.auth != null && isReadAllowed();
+      allow write: if isWriteAllowed();
+    }
+  }
+}

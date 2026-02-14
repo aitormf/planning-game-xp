@@ -1,0 +1,1767 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Documentación">
+  <div class="doc-page-wrapper">
+    <aside class="doc-page-sidebar">
+      <nav class="doc-sidebar-nav" id="doc-sidebar">
+        <div class="doc-sidebar-header">
+          <span class="doc-sidebar-icon">📘</span>
+          <span class="doc-sidebar-title">Engineering Playbook</span>
+          <button class="doc-add-btn" id="add-doc-btn" title="Añadir documento" style="display: none;">+</button>
+        </div>
+        <div id="sidebar-content">
+          <div class="doc-loading">Cargando...</div>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="doc-page-content">
+      <div class="doc-toolbar" id="doc-toolbar" style="display: none;">
+        <button class="doc-toolbar-btn" id="edit-doc-btn" title="Editar documento">
+          <span>Editar</span>
+        </button>
+        <button class="doc-toolbar-btn doc-toolbar-btn-danger" id="delete-doc-btn" title="Eliminar documento">
+          <span>Eliminar</span>
+        </button>
+        <button class="doc-toolbar-btn" id="history-doc-btn" title="Ver historial">
+          <span>Historial</span>
+        </button>
+      </div>
+      <nav class="doc-breadcrumbs" id="breadcrumbs"></nav>
+      <article class="doc-page-article" id="doc-content">
+        <div class="doc-loading">Cargando documentación...</div>
+      </article>
+    </div>
+  </div>
+
+  <!-- Editor Modal -->
+  <div class="doc-modal-overlay" id="editor-modal" style="display: none;">
+    <div class="doc-modal">
+      <div class="doc-modal-header">
+        <h2 id="editor-title">Editar Documento</h2>
+        <button class="doc-modal-close" id="editor-close">&times;</button>
+      </div>
+      <div class="doc-modal-body">
+        <div class="doc-form-group">
+          <label for="doc-title-input">Título (para sidebar)</label>
+          <input type="text" id="doc-title-input" placeholder="Título del documento">
+        </div>
+        <div class="doc-form-row">
+          <div class="doc-form-group doc-form-group-section">
+            <label for="doc-section-input">Sección</label>
+            <div class="doc-section-row">
+              <select id="doc-section-input">
+                <!-- Populated dynamically -->
+              </select>
+              <button type="button" class="doc-btn-icon" id="add-section-btn" title="Nueva sección">+</button>
+            </div>
+          </div>
+          <div class="doc-form-group doc-form-group-path">
+            <label for="doc-path-input">Ruta</label>
+            <div class="doc-path-row">
+              <span class="doc-path-prefix" id="doc-path-prefix">/</span>
+              <input type="text" id="doc-path-input" placeholder="mi-pagina">
+            </div>
+          </div>
+          <div class="doc-form-group doc-form-group-order">
+            <label for="doc-order-input">Orden</label>
+            <input type="number" id="doc-order-input" value="0" min="0" readonly>
+          </div>
+        </div>
+        <div class="doc-form-group doc-form-group-full">
+          <label>Contenido (Markdown)</label>
+          <div class="doc-editor-container">
+            <textarea id="doc-content-input" placeholder="# Título&#10;&#10;Contenido en Markdown..."></textarea>
+            <div class="doc-preview" id="doc-preview">
+              <div class="doc-preview-label">Vista previa</div>
+              <div class="doc-preview-content" id="doc-preview-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="doc-modal-footer">
+        <button class="doc-btn doc-btn-secondary" id="editor-cancel">Cancelar</button>
+        <button class="doc-btn doc-btn-primary" id="editor-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div class="doc-modal-overlay" id="history-modal" style="display: none;">
+    <div class="doc-modal doc-modal-wide">
+      <div class="doc-modal-header">
+        <h2>Historial de cambios</h2>
+        <button class="doc-modal-close" id="history-close">&times;</button>
+      </div>
+      <div class="doc-modal-body">
+        <div id="history-content">
+          <div class="doc-loading">Cargando historial...</div>
+        </div>
+      </div>
+      <div class="doc-modal-footer">
+        <button class="doc-btn doc-btn-secondary" id="history-cancel">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="doc-modal-overlay" id="delete-modal" style="display: none;">
+    <div class="doc-modal doc-modal-small">
+      <div class="doc-modal-header">
+        <h2>Confirmar eliminación</h2>
+        <button class="doc-modal-close" id="delete-close">&times;</button>
+      </div>
+      <div class="doc-modal-body">
+        <p>¿Estás seguro de que quieres eliminar este documento?</p>
+        <p class="doc-warning">Esta acción se puede deshacer desde el historial.</p>
+      </div>
+      <div class="doc-modal-footer">
+        <button class="doc-btn doc-btn-secondary" id="delete-cancel">Cancelar</button>
+        <button class="doc-btn doc-btn-danger" id="delete-confirm">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Section Modal -->
+  <div class="doc-modal-overlay" id="section-modal" style="display: none;">
+    <div class="doc-modal doc-modal-small">
+      <div class="doc-modal-header">
+        <h2>Nueva Sección</h2>
+        <button class="doc-modal-close" id="section-close">&times;</button>
+      </div>
+      <div class="doc-modal-body">
+        <div class="doc-form-group">
+          <label for="section-name-input">Nombre</label>
+          <input type="text" id="section-name-input" placeholder="Nombre de la sección">
+        </div>
+        <div class="doc-form-group">
+          <label for="section-slug-input">Slug (para URL)</label>
+          <input type="text" id="section-slug-input" placeholder="nombre-seccion">
+        </div>
+      </div>
+      <div class="doc-modal-footer">
+        <button class="doc-btn doc-btn-secondary" id="section-cancel">Cancelar</button>
+        <button class="doc-btn doc-btn-primary" id="section-save">Crear</button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<!-- Marked library for Markdown parsing (UMD build exposes global 'marked') -->
+<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+
+<script type="module">
+  import { docsService } from '/js/services/docs-service.js';
+  import { modalService } from '/js/services/modal-service.js';
+  import { entityDirectoryService } from '/js/services/entity-directory-service.js';
+
+  /**
+   * Show a message modal (replacement for alert)
+   */
+  async function showMessage(title, message) {
+    return modalService.createConfirmationModal({
+      title,
+      message,
+      confirmText: 'Aceptar',
+      cancelText: null,
+      confirmButtonClass: 'confirm',
+      cancelButtonClass: 'cancel'
+    });
+  }
+
+  /**
+   * Show a confirmation modal (replacement for confirm)
+   */
+  async function showConfirm(title, message) {
+    return modalService.createConfirmationModal({
+      title,
+      message,
+      confirmText: 'Aceptar',
+      cancelText: 'Cancelar',
+      confirmButtonClass: 'confirm',
+      cancelButtonClass: 'cancel'
+    });
+  }
+
+  // State
+  let docs = [];
+  let sections = [];
+  let currentDoc = null;
+  let isAdmin = false;
+  let isDeveloper = false;
+  let canDelete = false;  // Only admins can delete
+  let editingDocId = null;
+
+  // DOM Elements
+  const contentEl = document.getElementById('doc-content');
+  const breadcrumbsEl = document.getElementById('breadcrumbs');
+  const sidebarContent = document.getElementById('sidebar-content');
+  const toolbar = document.getElementById('doc-toolbar');
+  const addDocBtn = document.getElementById('add-doc-btn');
+  const editDocBtn = document.getElementById('edit-doc-btn');
+  const deleteDocBtn = document.getElementById('delete-doc-btn');
+  const historyDocBtn = document.getElementById('history-doc-btn');
+
+  // Editor Modal Elements
+  const editorModal = document.getElementById('editor-modal');
+  const editorTitle = document.getElementById('editor-title');
+  const titleInput = document.getElementById('doc-title-input');
+  const sectionInput = document.getElementById('doc-section-input');
+  const pathPrefix = document.getElementById('doc-path-prefix');
+  const pathInput = document.getElementById('doc-path-input');
+  const orderInput = document.getElementById('doc-order-input');
+  const contentInput = document.getElementById('doc-content-input');
+  const previewContent = document.getElementById('doc-preview-content');
+  const addSectionBtn = document.getElementById('add-section-btn');
+
+  // History Modal Elements
+  const historyModal = document.getElementById('history-modal');
+  const historyContent = document.getElementById('history-content');
+
+  // Delete Modal Elements
+  const deleteModal = document.getElementById('delete-modal');
+
+  // Section Modal Elements
+  const sectionModal = document.getElementById('section-modal');
+  const sectionNameInput = document.getElementById('section-name-input');
+  const sectionSlugInput = document.getElementById('section-slug-input');
+
+  /**
+   * Get section name by slug
+   */
+  function getSectionName(slug) {
+    const section = sections.find(s => s.slug === slug);
+    return section?.name || slug;
+  }
+
+  /**
+   * Check if user is admin, super admin, or developer
+   * - Admins: can create, edit, and delete docs
+   * - Developers: can create and edit docs (no delete)
+   */
+  async function checkAdminStatus() {
+    // Check project admin
+    const isProjectAdmin = window.currentUserRole?.isResponsable || false;
+
+    // Check super admin (from .env via firebase-config.js)
+    let isSuperAdmin = false;
+    const userEmail = (document.body.dataset.userEmail || '').toLowerCase().trim();
+
+    try {
+      if (userEmail) {
+        const { superAdminEmail } = await import(
+          /* @vite-ignore */ `${window.location.origin}/firebase-config.js`
+        );
+        const configSuperAdmin = (superAdminEmail || '').toLowerCase().trim();
+        isSuperAdmin = userEmail === configSuperAdmin;
+      }
+    } catch (error) {
+      // Silently fail - user won't have super admin access
+    }
+
+    // Check if user is a developer (from global developers list)
+    isDeveloper = false;
+    try {
+      if (userEmail) {
+        await entityDirectoryService.init();
+        const developerId = entityDirectoryService.resolveDeveloperId(userEmail);
+        isDeveloper = !!developerId;
+      }
+    } catch (error) {
+      // Silently fail - user won't have developer access
+    }
+
+    isAdmin = isProjectAdmin || isSuperAdmin;
+    canDelete = isAdmin;  // Only admins can delete
+    const canEdit = isAdmin || isDeveloper;  // Admins and developers can create/edit
+
+    // Show/hide controls based on permissions
+    if (canEdit) {
+      addDocBtn.style.display = 'flex';
+      toolbar.style.display = 'flex';
+      editDocBtn.style.display = '';
+      historyDocBtn.style.display = '';
+      // Delete button only for admins
+      deleteDocBtn.style.display = canDelete ? '' : 'none';
+    } else {
+      addDocBtn.style.display = 'none';
+      toolbar.style.display = 'none';
+    }
+  }
+
+  /**
+   * Load sections from Firebase
+   */
+  async function loadSections() {
+    try {
+      sections = await docsService.getAllSections();
+    } catch (error) {
+      console.error('Error loading sections:', error);
+      sections = [];
+    }
+  }
+
+  /**
+   * Load documents from Firebase
+   */
+  async function loadDocs() {
+    try {
+      await loadSections();
+      docs = await docsService.getAllDocs();
+      buildSidebar();
+      handleNavigation();
+    } catch (error) {
+      console.error('Error loading docs:', error);
+      sidebarContent.innerHTML = '<div class="doc-error">Error cargando documentos</div>';
+      contentEl.innerHTML = '<h1>Error</h1><p>No se pudieron cargar los documentos.</p>';
+    }
+  }
+
+  /**
+   * Build sidebar from documents
+   */
+  function buildSidebar() {
+    // Show migrate button if no docs or no sections
+    if (docs.length === 0 || sections.length === 0) {
+      sidebarContent.innerHTML = `
+        <div class="doc-sidebar-section">
+          <a href="#/" class="doc-sidebar-link doc-sidebar-home" data-route="/">Inicio</a>
+        </div>
+        <p class="doc-sidebar-empty">No hay documentos aún.</p>
+        ${isAdmin ? '<button class="doc-migrate-btn" id="migrate-docs-btn">Importar documentación inicial</button>' : ''}
+      `;
+
+      const migrateBtn = document.getElementById('migrate-docs-btn');
+      if (migrateBtn) {
+        migrateBtn.addEventListener('click', migrateInitialDocs);
+      }
+      return;
+    }
+
+    // Group docs by section (only sections from Firebase, no 'general')
+    const docsBySection = {};
+    docs.forEach(doc => {
+      const sectionSlug = doc.section;
+      if (sectionSlug && sectionSlug !== 'general') {
+        if (!docsBySection[sectionSlug]) {
+          docsBySection[sectionSlug] = [];
+        }
+        docsBySection[sectionSlug].push(doc);
+      }
+    });
+
+    // Start with home link
+    let html = `
+      <div class="doc-sidebar-section">
+        <a href="#/" class="doc-sidebar-link doc-sidebar-home" data-route="/">Inicio</a>
+      </div>
+    `;
+
+    // Build sections in order (from Firebase sections)
+    sections.forEach(section => {
+      const sectionDocs = docsBySection[section.slug] || [];
+      if (sectionDocs.length > 0) {
+        html += `
+          <div class="doc-sidebar-section">
+            <span class="doc-sidebar-label">${section.name}</span>
+            ${sectionDocs.map(doc => `
+              <a href="#${doc.path}" class="doc-sidebar-link" data-route="${doc.path}" data-doc-id="${doc.id}">${doc.title}</a>
+            `).join('')}
+          </div>
+        `;
+      }
+    });
+
+    sidebarContent.innerHTML = html;
+
+    // Add click listeners
+    sidebarContent.querySelectorAll('.doc-sidebar-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const route = link.dataset.route;
+        window.location.hash = route;
+      });
+    });
+  }
+
+  /**
+   * Get current route from hash
+   */
+  function getRoute() {
+    return window.location.hash.slice(1) || '/';
+  }
+
+  /**
+   * Update breadcrumbs
+   */
+  function updateBreadcrumbs(doc) {
+    if (!doc || doc.path === '/') {
+      breadcrumbsEl.innerHTML = '';
+      return;
+    }
+
+    const parts = doc.path.split('/').filter(Boolean);
+    let html = '<a href="#/">Docs</a>';
+
+    parts.forEach((part, i) => {
+      const isLast = i === parts.length - 1;
+      const isSection = i === 0;
+
+      // For section (first part), use section name from Firebase
+      // For document (last part), use document title
+      let label;
+      if (isSection) {
+        label = getSectionName(part);
+      } else if (isLast) {
+        label = doc.title;
+      } else {
+        label = part;
+      }
+
+      if (isLast) {
+        html += ` <span class="separator">/</span> <span class="current">${label}</span>`;
+      } else {
+        // For section, link to first doc in that section
+        const sectionFirstDoc = docs.find(d => d.section === part);
+        const href = sectionFirstDoc ? `#${sectionFirstDoc.path}` : '#/';
+        html += ` <span class="separator">/</span> <a href="${href}">${label}</a>`;
+      }
+    });
+
+    breadcrumbsEl.innerHTML = html;
+  }
+
+  /**
+   * Update active link in sidebar
+   */
+  function updateActiveLink(route) {
+    sidebarContent.querySelectorAll('.doc-sidebar-link').forEach(link => {
+      link.classList.toggle('active', link.dataset.route === route);
+    });
+  }
+
+  /**
+   * Render Markdown to HTML
+   */
+  function renderMarkdown(markdown) {
+    const text = markdown || '';
+
+    // Try marked library (handle different API versions)
+    if (typeof marked !== 'undefined') {
+      try {
+        // marked v4+ uses marked.parse()
+        if (typeof marked.parse === 'function') {
+          return marked.parse(text);
+        }
+        // older versions: marked is the function itself
+        if (typeof marked === 'function') {
+          return marked(text);
+        }
+      } catch (e) {
+        console.error('Error parsing markdown:', e);
+      }
+    }
+
+    // Fallback: basic conversion
+    return text
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+      .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+      .replace(/\*(.*)\*/gim, '<em>$1</em>')
+      .replace(/`([^`]+)`/gim, '<code>$1</code>')
+      .replace(/\n/gim, '<br>');
+  }
+
+  /**
+   * Build the home/welcome page content
+   */
+  function buildHomePage() {
+    let sectionsHtml = '';
+
+    sections.forEach(section => {
+      const sectionDocs = docs.filter(d => d.section === section.slug);
+      if (sectionDocs.length > 0) {
+        const firstDoc = sectionDocs[0];
+        sectionsHtml += `
+          <div class="doc-home-section">
+            <h3><a href="#${firstDoc.path}">${section.name}</a></h3>
+            <ul>
+              ${sectionDocs.map(doc => `<li><a href="#${doc.path}">${doc.title}</a></li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+    });
+
+    return `
+      <h1>Engineering Playbook</h1>
+      <p class="doc-home-intro">
+        Bienvenido a la documentación del equipo de ingeniería. Aquí encontrarás guías sobre
+        nuestro flujo de trabajo, estándares de calidad, despliegues y más.
+      </p>
+      ${sectionsHtml ? `<div class="doc-home-sections">${sectionsHtml}</div>` : '<p>No hay documentos disponibles aún.</p>'}
+      ${isAdmin && docs.length === 0 ? '<p>Usa el botón "+" en la barra lateral para crear el primer documento.</p>' : ''}
+    `;
+  }
+
+  /**
+   * Load content for route
+   */
+  function loadContent(route) {
+    // Handle home page
+    if (route === '/') {
+      currentDoc = null;
+      contentEl.style.opacity = '0';
+      contentEl.style.transform = 'translateY(10px)';
+
+      setTimeout(() => {
+        contentEl.innerHTML = buildHomePage();
+        breadcrumbsEl.innerHTML = '';
+        updateActiveLink('/');
+
+        requestAnimationFrame(() => {
+          contentEl.style.opacity = '1';
+          contentEl.style.transform = 'translateY(0)';
+        });
+      }, 150);
+      return;
+    }
+
+    currentDoc = docs.find(doc => doc.path === route);
+
+    if (!currentDoc) {
+      contentEl.innerHTML = '<h1>Página no encontrada</h1><p>La ruta solicitada no existe.</p>';
+      return;
+    }
+
+    // Fade out
+    contentEl.style.opacity = '0';
+    contentEl.style.transform = 'translateY(10px)';
+
+    setTimeout(() => {
+      const html = renderMarkdown(currentDoc.content);
+      contentEl.innerHTML = html;
+      updateBreadcrumbs(currentDoc);
+      updateActiveLink(currentDoc.path);
+
+      // Fade in
+      requestAnimationFrame(() => {
+        contentEl.style.opacity = '1';
+        contentEl.style.transform = 'translateY(0)';
+      });
+    }, 150);
+  }
+
+  /**
+   * Handle navigation
+   */
+  function handleNavigation() {
+    const route = getRoute();
+    loadContent(route);
+  }
+
+  /**
+   * Populate section dropdown from Firebase
+   */
+  function populateSectionDropdown(selectedSlug = null) {
+    sectionInput.innerHTML = '';
+
+    if (sections.length === 0) {
+      sectionInput.innerHTML = '<option value="">No hay secciones</option>';
+      return;
+    }
+
+    sections.forEach(section => {
+      const option = document.createElement('option');
+      option.value = section.slug;
+      option.textContent = section.name;
+      if (section.slug === selectedSlug) {
+        option.selected = true;
+      }
+      sectionInput.appendChild(option);
+    });
+  }
+
+  /**
+   * Update path prefix based on selected section
+   */
+  function updatePathPrefix() {
+    const selectedSlug = sectionInput.value;
+    pathPrefix.textContent = selectedSlug ? `/${selectedSlug}/` : '/';
+  }
+
+  /**
+   * Update order based on selected section (for new docs)
+   */
+  async function updateOrderForSection() {
+    if (editingDocId) return; // Don't auto-update for existing docs
+
+    const selectedSlug = sectionInput.value;
+    if (selectedSlug) {
+      const nextOrder = await docsService.getNextOrderForSection(selectedSlug);
+      orderInput.value = nextOrder;
+    }
+  }
+
+  /**
+   * Open editor modal
+   */
+  async function openEditor(doc = null) {
+    editingDocId = doc?.id || null;
+    editorTitle.textContent = doc ? 'Editar Documento' : 'Nuevo Documento';
+
+    // Populate section dropdown
+    const currentSection = doc?.section || (sections[0]?.slug || '');
+    populateSectionDropdown(currentSection);
+
+    titleInput.value = doc?.title || '';
+    contentInput.value = doc?.content || '';
+
+    // Handle path: for existing docs, extract slug from path
+    if (doc?.path) {
+      const pathParts = doc.path.split('/').filter(Boolean);
+      // Last part is the slug
+      pathInput.value = pathParts[pathParts.length - 1] || '';
+    } else {
+      pathInput.value = '';
+    }
+
+    // Update path prefix
+    updatePathPrefix();
+
+    // Set order
+    if (doc) {
+      orderInput.value = doc.order || 0;
+    } else {
+      await updateOrderForSection();
+    }
+
+    updatePreview();
+    editorModal.style.display = 'flex';
+  }
+
+  /**
+   * Close editor modal
+   */
+  function closeEditor() {
+    editorModal.style.display = 'none';
+    editingDocId = null;
+  }
+
+  /**
+   * Update preview
+   */
+  function updatePreview() {
+    const markdown = contentInput.value;
+    previewContent.innerHTML = renderMarkdown(markdown);
+  }
+
+  /**
+   * Save document (admins and developers)
+   */
+  async function saveDocument() {
+    const canEdit = isAdmin || isDeveloper;
+    if (!canEdit) {
+      await showMessage('Sin permisos', 'No tienes permisos para editar documentos.');
+      return;
+    }
+
+    const sectionSlug = sectionInput.value;
+    const pathSlug = pathInput.value.trim().toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    if (!sectionSlug) {
+      await showMessage('Campo requerido', 'Debes seleccionar una sección');
+      return;
+    }
+
+    if (!pathSlug) {
+      await showMessage('Campo requerido', 'La ruta es obligatoria');
+      return;
+    }
+
+    const fullPath = `/${sectionSlug}/${pathSlug}`;
+
+    const doc = {
+      id: editingDocId,
+      title: titleInput.value.trim(),
+      section: sectionSlug,
+      path: fullPath,
+      order: parseInt(orderInput.value, 10) || 0,
+      content: contentInput.value
+    };
+
+    if (!doc.title) {
+      await showMessage('Campo requerido', 'El título es obligatorio');
+      return;
+    }
+
+    try {
+      const saved = await docsService.saveDoc(doc);
+      closeEditor();
+      await loadDocs();
+      window.location.hash = saved.path;
+    } catch (error) {
+      console.error('Error saving document:', error);
+      await showMessage('Error', 'Error al guardar el documento: ' + error.message);
+    }
+  }
+
+  /**
+   * Open history modal
+   */
+  async function openHistory() {
+    if (!currentDoc) return;
+
+    historyModal.style.display = 'flex';
+    historyContent.innerHTML = '<div class="doc-loading">Cargando historial...</div>';
+
+    try {
+      const history = await docsService.getDocHistory(currentDoc.id);
+
+      if (history.length === 0) {
+        historyContent.innerHTML = '<p>No hay historial disponible.</p>';
+        return;
+      }
+
+      let html = '<div class="doc-history-list">';
+      history.forEach(entry => {
+        const date = new Date(entry.timestamp);
+        const actionLabels = {
+          'create': 'Creado',
+          'update': 'Actualizado',
+          'delete': 'Eliminado'
+        };
+        html += `
+          <div class="doc-history-item">
+            <div class="doc-history-info">
+              <span class="doc-history-action">${actionLabels[entry.action] || entry.action}</span>
+              <span class="doc-history-date">${date.toLocaleString()}</span>
+              <span class="doc-history-user">${entry.changedBy}</span>
+            </div>
+            <div class="doc-history-actions">
+              <button class="doc-btn doc-btn-small" data-history-id="${entry.id}">Restaurar</button>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+
+      historyContent.innerHTML = html;
+
+      // Add restore listeners
+      historyContent.querySelectorAll('[data-history-id]').forEach(btn => {
+        btn.addEventListener('click', () => restoreVersion(btn.dataset.historyId));
+      });
+    } catch (error) {
+      console.error('Error loading history:', error);
+      historyContent.innerHTML = '<p class="doc-error">Error cargando historial.</p>';
+    }
+  }
+
+  /**
+   * Restore version from history
+   */
+  async function restoreVersion(historyId) {
+    if (!currentDoc) return;
+    const confirmed = await showConfirm('Restaurar versión', '¿Restaurar esta versión del documento?');
+    if (!confirmed) return;
+
+    try {
+      await docsService.restoreFromHistory(currentDoc.id, historyId);
+      closeHistory();
+      await loadDocs();
+      handleNavigation();
+    } catch (error) {
+      console.error('Error restoring version:', error);
+      await showMessage('Error', 'Error al restaurar: ' + error.message);
+    }
+  }
+
+  /**
+   * Close history modal
+   */
+  function closeHistory() {
+    historyModal.style.display = 'none';
+  }
+
+  /**
+   * Open delete confirmation (admin only)
+   */
+  function openDeleteConfirm() {
+    if (!currentDoc) return;
+    if (!canDelete) {
+      showMessage('Sin permisos', 'Solo los administradores pueden eliminar documentos.');
+      return;
+    }
+    deleteModal.style.display = 'flex';
+  }
+
+  /**
+   * Close delete modal
+   */
+  function closeDelete() {
+    deleteModal.style.display = 'none';
+  }
+
+  /**
+   * Delete document (admin only)
+   */
+  async function deleteDocument() {
+    if (!currentDoc) return;
+    if (!canDelete) {
+      await showMessage('Sin permisos', 'Solo los administradores pueden eliminar documentos.');
+      closeDelete();
+      return;
+    }
+
+    try {
+      await docsService.deleteDoc(currentDoc.id);
+      closeDelete();
+      await loadDocs();
+      window.location.hash = '/';
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      await showMessage('Error', 'Error al eliminar: ' + error.message);
+    }
+  }
+
+  /**
+   * Open section modal
+   */
+  function openSectionModal() {
+    sectionNameInput.value = '';
+    sectionSlugInput.value = '';
+    sectionModal.style.display = 'flex';
+  }
+
+  /**
+   * Close section modal
+   */
+  function closeSectionModal() {
+    sectionModal.style.display = 'none';
+  }
+
+  /**
+   * Auto-generate slug from section name
+   */
+  function generateSlugFromName() {
+    const name = sectionNameInput.value;
+    const slug = name.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    sectionSlugInput.value = slug;
+  }
+
+  /**
+   * Save new section
+   */
+  async function saveSection() {
+    const name = sectionNameInput.value.trim();
+    const slug = sectionSlugInput.value.trim().toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    if (!name) {
+      await showMessage('Campo requerido', 'El nombre es obligatorio');
+      return;
+    }
+
+    if (!slug) {
+      await showMessage('Campo requerido', 'El slug es obligatorio');
+      return;
+    }
+
+    // Check if slug already exists
+    if (sections.some(s => s.slug === slug)) {
+      await showMessage('Error', 'Ya existe una sección con ese slug');
+      return;
+    }
+
+    try {
+      const nextOrder = sections.length;
+      await docsService.saveSection({ name, slug, order: nextOrder });
+      closeSectionModal();
+      await loadSections();
+      // Update dropdown and select new section
+      populateSectionDropdown(slug);
+      updatePathPrefix();
+      await updateOrderForSection();
+    } catch (error) {
+      console.error('Error saving section:', error);
+      await showMessage('Error', 'Error al crear sección: ' + error.message);
+    }
+  }
+
+  // Event Listeners
+  window.addEventListener('hashchange', handleNavigation);
+
+  // Admin controls
+  addDocBtn.addEventListener('click', () => openEditor());
+  editDocBtn.addEventListener('click', () => openEditor(currentDoc));
+  deleteDocBtn.addEventListener('click', openDeleteConfirm);
+  historyDocBtn.addEventListener('click', openHistory);
+
+  // Editor modal
+  document.getElementById('editor-close').addEventListener('click', closeEditor);
+  document.getElementById('editor-cancel').addEventListener('click', closeEditor);
+  document.getElementById('editor-save').addEventListener('click', saveDocument);
+  contentInput.addEventListener('input', updatePreview);
+
+  // Section dropdown change - update path prefix and order
+  sectionInput.addEventListener('change', async () => {
+    updatePathPrefix();
+    await updateOrderForSection();
+  });
+
+  // Add section button
+  addSectionBtn.addEventListener('click', openSectionModal);
+
+  // Section modal
+  document.getElementById('section-close').addEventListener('click', closeSectionModal);
+  document.getElementById('section-cancel').addEventListener('click', closeSectionModal);
+  document.getElementById('section-save').addEventListener('click', saveSection);
+  sectionNameInput.addEventListener('input', generateSlugFromName);
+
+  // History modal
+  document.getElementById('history-close').addEventListener('click', closeHistory);
+  document.getElementById('history-cancel').addEventListener('click', closeHistory);
+
+  // Delete modal
+  document.getElementById('delete-close').addEventListener('click', closeDelete);
+  document.getElementById('delete-cancel').addEventListener('click', closeDelete);
+  document.getElementById('delete-confirm').addEventListener('click', deleteDocument);
+
+  // Close modals on overlay click
+  [editorModal, historyModal, deleteModal, sectionModal].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  });
+
+  // Listen for auth changes
+  document.addEventListener('user-authenticated', () => {
+    setTimeout(() => checkAdminStatus(), 100);
+  });
+
+  /**
+   * Migrate initial documentation to Firebase
+   */
+  async function migrateInitialDocs() {
+    const confirmed = await showConfirm(
+      'Importar documentación',
+      '¿Importar la documentación inicial? Esto creará 4 secciones y 10 documentos.'
+    );
+    if (!confirmed) return;
+
+    const migrateBtn = document.getElementById('migrate-docs-btn');
+    if (migrateBtn) {
+      migrateBtn.disabled = true;
+      migrateBtn.textContent = 'Importando...';
+    }
+
+    try {
+      // First migrate sections
+      const sectionsCount = await docsService.migrateInitialSections();
+
+      // Then migrate documents
+      const docsCount = await docsService.migrateInitialDocs();
+
+      await showMessage(
+        'Importación completada',
+        `Se importaron ${sectionsCount} secciones y ${docsCount} documentos correctamente.`
+      );
+      await loadDocs();
+    } catch (error) {
+      console.error('Error migrating docs:', error);
+      await showMessage('Error', 'Error al importar: ' + error.message);
+      if (migrateBtn) {
+        migrateBtn.disabled = false;
+        migrateBtn.textContent = 'Importar documentación inicial';
+      }
+    }
+  }
+
+  // Initialize
+  async function init() {
+    await checkAdminStatus();
+    await loadDocs();
+  }
+  init();
+</script>
+
+<style is:inline>
+  .doc-page-wrapper {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 160px);
+    margin: -2rem -2rem -5rem -2rem;
+  }
+
+  .doc-page-sidebar {
+    background: var(--bg-primary, #fff);
+    border-right: 1px solid var(--border-default, #e5e7eb);
+    padding: 1.5rem;
+  }
+
+  .doc-page-content {
+    padding: 2rem 3rem;
+    background: var(--bg-secondary, #fafbfc);
+  }
+
+  .doc-page-article {
+    max-width: 800px;
+    line-height: 1.75;
+    color: var(--text-secondary, #374151);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  /* Sidebar styles */
+  .doc-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .doc-sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-default, #e5e7eb);
+  }
+
+  .doc-sidebar-icon {
+    font-size: 1.25rem;
+  }
+
+  .doc-sidebar-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary, #111827);
+    flex: 1;
+  }
+
+  .doc-add-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border-default, #d1d5db);
+    background: var(--bg-primary, #fff);
+    color: var(--text-muted, #6b7280);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .doc-add-btn:hover {
+    background: var(--brand-primary, #2563eb);
+    border-color: var(--brand-primary, #2563eb);
+    color: #fff;
+  }
+
+  .doc-sidebar-section {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.25rem;
+  }
+
+  .doc-sidebar-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted, #9ca3af);
+    padding: 0.5rem 0.75rem 0.25rem;
+  }
+
+  .doc-sidebar-link {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary, #4b5563);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .doc-sidebar-link:hover {
+    background: var(--bg-tertiary, #f3f4f6);
+    color: var(--text-primary, #111827);
+  }
+
+  .doc-sidebar-link.active {
+    background: #eff6ff;
+    color: var(--brand-primary, #2563eb);
+    font-weight: 500;
+  }
+
+  .doc-sidebar-home {
+    font-weight: 500;
+  }
+
+  .doc-sidebar-empty {
+    color: var(--text-muted, #9ca3af);
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .doc-migrate-btn {
+    display: block;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--brand-primary, #2563eb);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .doc-migrate-btn:hover {
+    background: var(--brand-primary-hover, #1d4ed8);
+  }
+
+  .doc-migrate-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  /* Toolbar */
+  .doc-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .doc-toolbar-btn {
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-default, #d1d5db);
+    background: var(--bg-primary, #fff);
+    color: var(--text-secondary, #374151);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .doc-toolbar-btn:hover {
+    background: var(--bg-tertiary, #f3f4f6);
+    border-color: var(--text-muted, #9ca3af);
+  }
+
+  .doc-toolbar-btn-danger:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+
+  /* Breadcrumbs */
+  .doc-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+  }
+
+  .doc-breadcrumbs a {
+    color: var(--text-muted, #6b7280);
+    text-decoration: none;
+  }
+
+  .doc-breadcrumbs a:hover {
+    color: var(--brand-primary, #2563eb);
+  }
+
+  .doc-breadcrumbs .separator {
+    color: var(--border-default, #d1d5db);
+  }
+
+  .doc-breadcrumbs .current {
+    color: var(--text-primary, #111827);
+    font-weight: 500;
+  }
+
+  /* Article content */
+  .doc-page-article h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary, #111827);
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-default, #e5e7eb);
+  }
+
+  .doc-page-article h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #1f2937);
+    margin: 2.5rem 0 1rem 0;
+  }
+
+  .doc-page-article h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-secondary, #374151);
+    margin: 2rem 0 0.75rem 0;
+  }
+
+  .doc-page-article p {
+    margin: 0 0 1.25rem 0;
+  }
+
+  .doc-page-article ul,
+  .doc-page-article ol {
+    margin: 0 0 1.25rem 0;
+    padding-left: 1.75rem;
+  }
+
+  .doc-page-article li {
+    margin-bottom: 0.5rem;
+  }
+
+  .doc-page-article a {
+    color: var(--brand-primary, #2563eb);
+    text-decoration: none;
+  }
+
+  .doc-page-article a:hover {
+    text-decoration: underline;
+  }
+
+  .doc-page-article strong {
+    font-weight: 600;
+    color: var(--text-primary, #111827);
+  }
+
+  .doc-page-article code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    background: var(--bg-tertiary, #f3f4f6);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    color: #be185d;
+  }
+
+  .doc-page-article pre {
+    background: #1f2937;
+    color: #f3f4f6;
+    padding: 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .doc-page-article pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  /* Loading & Error */
+  .doc-loading {
+    color: var(--text-muted, #6b7280);
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .doc-error {
+    color: #ef4444;
+    padding: 1rem;
+  }
+
+  /* Modal styles */
+  .doc-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .doc-modal {
+    background: var(--bg-primary, #fff);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+
+  .doc-modal-wide {
+    max-width: 700px;
+  }
+
+  .doc-modal-small {
+    max-width: 400px;
+  }
+
+  .doc-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-default, #e5e7eb);
+  }
+
+  .doc-modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary, #111827);
+  }
+
+  .doc-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted, #6b7280);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .doc-modal-close:hover {
+    color: var(--text-primary, #111827);
+  }
+
+  .doc-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .doc-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-default, #e5e7eb);
+    background: var(--bg-secondary, #f9fafb);
+  }
+
+  /* Form styles */
+  .doc-form-group {
+    margin-bottom: 1rem;
+  }
+
+  .doc-form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary, #374151);
+    margin-bottom: 0.5rem;
+  }
+
+  .doc-form-group input,
+  .doc-form-group select,
+  .doc-form-group textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-default, #d1d5db);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: var(--text-primary, #111827);
+    background: var(--bg-primary, #fff);
+  }
+
+  .doc-form-group input:focus,
+  .doc-form-group select:focus,
+  .doc-form-group textarea:focus {
+    outline: none;
+    border-color: var(--brand-primary, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  .doc-form-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1.5fr 70px;
+    gap: 1rem;
+  }
+
+  .doc-form-group-section {
+    min-width: 0;
+  }
+
+  .doc-form-group-path {
+    min-width: 0;
+  }
+
+  .doc-form-group-order {
+    min-width: 0;
+  }
+
+  .doc-section-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .doc-section-row select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .doc-path-row {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-default, #d1d5db);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .doc-path-prefix {
+    padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+    background: var(--bg-tertiary, #f3f4f6);
+    color: var(--text-muted, #6b7280);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    border-right: 1px solid var(--border-default, #d1d5db);
+  }
+
+  .doc-path-row input {
+    flex: 1;
+    border: none;
+    border-radius: 0;
+    min-width: 0;
+  }
+
+  .doc-path-row input:focus {
+    box-shadow: none;
+  }
+
+  .doc-btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--border-default, #d1d5db);
+    border-radius: 6px;
+    background: var(--bg-primary, #fff);
+    color: var(--text-muted, #6b7280);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .doc-btn-icon:hover {
+    background: var(--brand-primary, #2563eb);
+    border-color: var(--brand-primary, #2563eb);
+    color: #fff;
+  }
+
+  .doc-form-group input[readonly] {
+    background: var(--bg-secondary, #f9fafb);
+    color: var(--text-muted, #6b7280);
+    cursor: not-allowed;
+  }
+
+  .doc-form-group-full {
+    margin-bottom: 0;
+  }
+
+  .doc-editor-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    height: 400px;
+  }
+
+  .doc-editor-container textarea {
+    height: 100%;
+    resize: none;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .doc-preview {
+    border: 1px solid var(--border-default, #e5e7eb);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .doc-preview-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted, #6b7280);
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-secondary, #f9fafb);
+    border-bottom: 1px solid var(--border-default, #e5e7eb);
+  }
+
+  .doc-preview-content {
+    padding: 1rem;
+    overflow-y: auto;
+    flex: 1;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .doc-preview-content h1 { font-size: 1.5rem; margin: 0 0 1rem 0; }
+  .doc-preview-content h2 { font-size: 1.25rem; margin: 1.5rem 0 0.75rem 0; }
+  .doc-preview-content h3 { font-size: 1rem; margin: 1rem 0 0.5rem 0; }
+  .doc-preview-content p { margin: 0 0 0.75rem 0; }
+  .doc-preview-content ul, .doc-preview-content ol { margin: 0 0 0.75rem 0; padding-left: 1.5rem; }
+
+  /* Buttons */
+  .doc-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .doc-btn-primary {
+    background: var(--brand-primary, #2563eb);
+    color: #fff;
+    border: none;
+  }
+
+  .doc-btn-primary:hover {
+    background: var(--brand-primary-hover, #1d4ed8);
+  }
+
+  .doc-btn-secondary {
+    background: var(--bg-primary, #fff);
+    color: var(--text-secondary, #374151);
+    border: 1px solid var(--border-default, #d1d5db);
+  }
+
+  .doc-btn-secondary:hover {
+    background: var(--bg-tertiary, #f3f4f6);
+  }
+
+  .doc-btn-danger {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+  }
+
+  .doc-btn-danger:hover {
+    background: #dc2626;
+  }
+
+  .doc-btn-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  /* History */
+  .doc-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .doc-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--bg-secondary, #f9fafb);
+    border-radius: 6px;
+  }
+
+  .doc-history-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .doc-history-action {
+    font-weight: 500;
+    color: var(--text-primary, #111827);
+  }
+
+  .doc-history-date {
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+  }
+
+  .doc-history-user {
+    font-size: 0.8rem;
+    color: var(--text-muted, #9ca3af);
+  }
+
+  .doc-warning {
+    color: var(--text-muted, #9ca3af);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Home page */
+  .doc-home-intro {
+    font-size: 1.1rem;
+    color: var(--text-secondary, #4b5563);
+    margin-bottom: 2rem;
+    line-height: 1.7;
+  }
+
+  .doc-home-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .doc-home-section {
+    background: var(--bg-primary, #fff);
+    border: 1px solid var(--border-default, #e5e7eb);
+    border-radius: 8px;
+    padding: 1.25rem;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .doc-home-section:hover {
+    border-color: var(--brand-primary, #2563eb);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+  }
+
+  .doc-home-section h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.1rem;
+  }
+
+  .doc-home-section h3 a {
+    color: var(--text-primary, #111827);
+    text-decoration: none;
+  }
+
+  .doc-home-section h3 a:hover {
+    color: var(--brand-primary, #2563eb);
+  }
+
+  .doc-home-section ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style: disc;
+  }
+
+  .doc-home-section li {
+    margin-bottom: 0.35rem;
+    font-size: 0.9rem;
+  }
+
+  .doc-home-section li a {
+    color: var(--text-secondary, #4b5563);
+    text-decoration: none;
+  }
+
+  .doc-home-section li a:hover {
+    color: var(--brand-primary, #2563eb);
+    text-decoration: underline;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .doc-page-wrapper {
+      grid-template-columns: 220px 1fr;
+    }
+    .doc-editor-container {
+      grid-template-columns: 1fr;
+      height: auto;
+    }
+    .doc-editor-container textarea {
+      height: 200px;
+    }
+    .doc-preview {
+      height: 200px;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .doc-page-wrapper {
+      grid-template-columns: 1fr;
+    }
+    .doc-page-sidebar {
+      border-right: none;
+      border-bottom: 1px solid var(--border-default, #e5e7eb);
+    }
+    .doc-page-content {
+      padding: 1.5rem;
+    }
+    .doc-form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Confirmation modal styles (for modalService) */
+  .confirmation-modal-content {
+    text-align: center;
+  }
+
+  .confirmation-message {
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    color: var(--text-secondary, #374151);
+    line-height: 1.5;
+  }
+
+  .confirmation-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .confirmation-buttons button {
+    padding: 0.5rem 1.25rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .confirmation-buttons button.confirm {
+    background: var(--brand-primary, #2563eb);
+    color: #fff;
+  }
+
+  .confirmation-buttons button.confirm:hover {
+    background: var(--brand-primary-hover, #1d4ed8);
+  }
+
+  .confirmation-buttons button.cancel {
+    background: var(--bg-primary, #fff);
+    color: var(--text-secondary, #374151);
+    border: 1px solid var(--border-default, #d1d5db);
+  }
+
+  .confirmation-buttons button.cancel:hover {
+    background: var(--bg-tertiary, #f3f4f6);
+  }
+</style>

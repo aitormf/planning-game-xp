@@ -1,0 +1,44 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Sprint View">
+  <h2 id="projectName"></h2>
+  <div class="gantt-container"></div>
+</Layout>
+
+<script type="module">
+  import '/js/wc/GanttChart.js';
+
+  import { database, ref, onValue, get } from '/firebase-config.js';
+
+  let task;
+
+  function fetchData() {
+    try {
+      const projectRef = ref(database, `/${this.project}`);
+      onValue(projectRef, (snapshot) => {
+        if (snapshot.exists()) {
+          task = snapshot.val();
+        } else {
+        }
+      }, (error) => {
+      });
+    } catch (error) {
+    }
+  }
+
+  function DOMContentLoadedActions() {
+    const projectName = document.getElementById('projectName');
+    projectName.innerText = 'Gantt Chart';
+
+    const ganttContainer = document.querySelector('.gantt-container');
+    const ganttChart = document.createElement('gantt-chart');
+    ganttContainer.appendChild(ganttChart);
+    ganttChart.setData(task)
+  }
+
+  document.addEventListener('DOMContentLoaded', DOMContentLoadedActions);
+
+
+</script>

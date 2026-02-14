@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Color Tabs</title>
+  <style>
+    :root {
+      --description-color: #4a9eff;
+      --acceptanceCriteria-color: #28a745;
+      --notes-color: #ffc107;
+      --bg-dark: #2d3748;
+      --bg-white: #ffffff;
+      --text-primary: #1a202c;
+      --text-secondary: #718096;
+      --spacing-sm: 0.5rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --radius-sm: 4px;
+      --radius-lg: 8px;
+      --font-size-base: 1rem;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem;
+      background: #f7fafc;
+    }
+
+    h1 {
+      margin-bottom: 2rem;
+    }
+
+    .test-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* Estilos del contenido del tab (simulando TaskCard) */
+    .tab-content {
+      padding: 1rem;
+      background: white;
+      min-height: 150px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 0.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      font-size: 1rem;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>Test Color Tabs Component</h1>
+
+    <color-tabs active-tab="description">
+      <color-tab name="description" label="Description" color="var(--description-color)">
+        <div class="tab-content">
+          <h3>Descripción</h3>
+          <textarea placeholder="Escribe la descripción aquí..."></textarea>
+        </div>
+      </color-tab>
+
+      <color-tab name="acceptance" label="Acceptance Criteria" color="var(--acceptanceCriteria-color)">
+        <div class="tab-content">
+          <h3>Criterios de Aceptación</h3>
+          <ul>
+            <li>Criterio 1</li>
+            <li>Criterio 2</li>
+            <li>Criterio 3</li>
+          </ul>
+        </div>
+      </color-tab>
+
+      <color-tab name="notes" label="Notes" color="var(--notes-color)">
+        <div class="tab-content">
+          <h3>Notas</h3>
+          <textarea placeholder="Escribe notas aquí..."></textarea>
+        </div>
+      </color-tab>
+    </color-tabs>
+  </div>
+
+  <script type="module">
+    import '/js/wc/ColorTabs.js';
+
+    document.querySelector('color-tabs').addEventListener('tab-changed', (e) => {
+      console.log('Tab changed:', e.detail);
+    });
+  </script>
+</body>
+</html>

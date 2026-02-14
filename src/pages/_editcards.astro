@@ -1,0 +1,349 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Task">
+  <h2 id="projectName"></h2>
+  <div id="appContainer" class="app-container hidden">
+    <div class="container">
+      <div class="cards-container">
+        <button id="addCard" class="add-button">+ New Card</button>
+        <div id="cardsList"></div>
+      </div>
+      <div class="selected-card" id="selectedCard">
+        <p id="information" class="placeholder"></p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script type="module">
+  import '/js/wc/BugCard.js';
+  import { database, ref, onValue, get } from '/firebase-config.js';
+  import { findObjectById, getUserAdminEmails } from '/js/utils/common-functions.js';
+
+  let user;
+  let userEmail;
+  let selectedCard = null;
+  let cardsListElement;
+  let selectedCardContainer;
+  let addButton;
+  let projectCardElement;
+  let dataCard;
+  let projectData;
+  let statusList;
+  let userAdminEmails;
+
+  const projectId = new URLSearchParams(window.location.search).get('projectId');
+
+  async function getStatusList() {
+    try {
+      const snapshot = await get(ref(database, `/columnsDashboardByProject`));
+      if (snapshot.exists()) {
+        return snapshot.val();
+      } else {
+        return [];
+      }
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function addNewCard() {
+    const newCardElement = document.createElement(projectData.card);
+    // Configurar una nueva tarjeta vacía con el estado expandido
+    Object.assign(newCardElement, dataCard);
+    newCardElement.userEmail = userEmail;
+    newCardElement.group = projectData.group;
+    newCardElement.projectId = projectId;
+    newCardElement.statusList = statusList;
+    newCardElement.expanded = true;
+    newCardElement.initializeFirebase(ref,database);
+    newCardElement.userAuthorizedEmails = userAdminEmails;
+
+    // Mostrar la nueva tarjeta en la lista
+    selectedCardContainer.innerHTML = '';
+    selectedCardContainer.appendChild(newCardElement);
+  }
+
+  async function reloadCards() {
+    await onValue(ref(database, `/cards/${projectData.group}/${projectId}`), (snapshot) => {
+      const cards = snapshot.val() || {};
+      document.querySelector('#information').textContent = `Número de entradas ${cards.length}`;
+      renderCards(cards);
+    });
+  }
+
+  async function initializeApp() {
+    await reloadCards();
+    getStatusList().then((columns) => {
+      statusList = columns[projectCardElement];
+    });
+    addButton.addEventListener('click', addNewCard);
+  }
+
+  function renderCards(cards) {
+    cardsListElement.innerHTML = '';
+
+    // Definir el orden de prioridad de los estados
+    const statusOrder = projectData.statusOrder;
+
+    // Convertir el objeto de tarjetas en un array y ordenar
+    const sortedCards = Object.entries(cards).sort(([idA, cardA], [idB, cardB]) => {
+      /*
+      // Ordenar primero por estado según la prioridad definida
+      const statusA = statusOrder[cardA.status] || 4; // Si no tiene estado, colocar al final
+      const statusB = statusOrder[cardB.status] || 4;
+
+      if (statusA !== statusB) {
+        return statusA - statusB; // Orden ascendente según prioridad del estado
+      }
+      */
+
+      // Luego, ordenar por índice de prioridad (businessPoints * 100 / devPoints)
+      const priorityA = cardA.devPoints > 0 ? (cardA.businessPoints * 100) / cardA.devPoints : 0;
+      const priorityB = cardB.devPoints > 0 ? (cardB.businessPoints * 100) / cardB.devPoints : 0;
+
+      if (priorityB !== priorityA) {
+        return priorityB - priorityA; // Orden descendente (mayor índice primero)
+      }
+
+      // Finalmente, ordenar por fecha de entrega más próxima solo en caso de empate total
+      const dateA = cardA.desiredDate ? new Date(cardA.desiredDate) : new Date(9999, 11, 31);
+      const dateB = cardB.desiredDate ? new Date(cardB.desiredDate) : new Date(9999, 11, 31);
+
+      return dateA.getTime() - dateB.getTime(); // Fecha más cercana primero
+    });
+
+    // Renderizar las tarjetas ordenadas
+    sortedCards.forEach(([id, card]) => {
+      const cardElement = document.createElement(projectCardElement);
+      Object.assign(cardElement, { id, ...card });
+      cardElement.setAttribute('id', `card-${id}`);
+      cardElement.group = projectData.group;
+      cardElement.projectId = projectId;
+      cardElement.userEmail = userEmail;
+      cardElement.initializeFirebase(ref, database);
+      cardsListElement.appendChild(cardElement);
+    });
+  }
+
+  function showCard(e) {
+    if (selectedCard) {
+      selectedCard.selected = false;
+      selectedCard.expanded = false;
+    }
+
+    const cardElement = e.composedPath().find(el => (el).tagName?.toLowerCase() === projectCardElement);
+    if (cardElement) {
+      selectedCard = cardElement;
+      cardElement.selected = true;
+      cardElement.expanded = false; // Evita expandir la tarjeta original
+
+      // Crear una nueva tarjeta en el área de detalles
+      const newCard = document.createElement(projectCardElement);
+      newCard.id = cardElement.id.replace('card-', '');
+      newCard.title = cardElement.title;
+      newCard.status = cardElement.status;
+      newCard.description = cardElement.description;
+      newCard.notes = cardElement.notes;
+      newCard.acceptanceCriteria = cardElement.acceptanceCriteria;
+      newCard.user = cardElement.user;
+      newCard.userEmail = cardElement.userEmail;
+      newCard.history = cardElement.history;
+      newCard.statusList = statusList;
+
+      if (projectCardElement === 'story-card') {
+        newCard.startDate = cardElement.startDate;
+        newCard.desiredDate = cardElement.desiredDate;
+        newCard.endDate = cardElement.endDate;
+        newCard.businessPoints = cardElement.businessPoints;
+        newCard.devPoints = cardElement.devPoints;
+        newCard.blockedByBusiness = cardElement.blockedByBusiness;
+        newCard.blockedByDevelopment = cardElement.blockedByDevelopment;
+        newCard.bbbWhy = cardElement.bbbWhy;
+        newCard.bbdWhy = cardElement.bbdWhy;
+        newCard.bbbWho = cardElement.bbbWho;
+        newCard.bbdWho = cardElement.bbdWho;
+        newCard.blockedHistory = cardElement.blockedHistory;
+      } else if (projectCardElement === 'bug-card') {
+        newCard.priority = cardElement.priority;
+        newCard.registerDate = cardElement.registerDate;
+        newCard.createdBy = cardElement.createdBy;
+      }
+
+      newCard.expanded = true;
+      newCard.group = projectData.group;
+      newCard.projectId = projectId;
+
+      newCard.initializeFirebase(ref,database);
+
+      selectedCardContainer.innerHTML = '';
+      selectedCardContainer.appendChild(newCard);
+    }
+  }
+
+  function addAppListeners() {
+    document.addEventListener('card-save', reloadCards);
+    document.addEventListener('delete-card', reloadCards);
+    document.addEventListener('card-click', showCard);
+  }
+
+  function initApp(e) {
+    const { projects } = e.detail;
+    projectData = findObjectById(projectId, projects);
+    document.getElementById('projectName').textContent = projectData.name;
+    projectCardElement = projectData.card;
+    dataCard = dataCards[projectId];
+
+    userEmail = document.body.dataset.userEmail;
+    cardsListElement = document.getElementById('cardsList');
+    selectedCardContainer = document.getElementById('selectedCard');
+    addButton = document.getElementById('addCard');
+    addAppListeners();
+    initializeApp();
+    userAdminEmails = getUserAdminEmails(ref, database, get);
+    document.querySelector('#appContainer').classList.remove('hidden');
+  }
+
+  async function DOMContentLoadedActions() {
+    if (!projectId) {
+      const AppModal = document.createElement('app-modal');
+      AppModal.title = 'Project not found';
+      AppModal.message = `
+        <p>The project you are trying to access does not exist.</p>
+        <p><a href="/">Go to the Home to select a project.</a></p>
+      `;
+      document.body.appendChild(AppModal);
+    } else {
+      document.addEventListener('projects-loaded', initApp);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', DOMContentLoadedActions);
+</script>
+
+<style>
+  .container {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    height: calc(100vh - 200px);
+  }
+
+  .cards-container {
+    background: var(--bg-primary, white);
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow-md, 0 2px 4px rgba(0,0,0,0.1));
+    overflow-y: auto;
+  }
+
+  .add-button {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-color, #4a9eff);
+    color: var(--text-on-primary, white);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1em;
+    margin-bottom: 16px;
+    transition: background-color 0.2s;
+  }
+
+  .add-button:hover {
+    background: var(--primary-color-dark, #3a8eef);
+  }
+
+  .selected-card {
+    background: var(--bg-primary, white);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow-md, 0 2px 4px rgba(0,0,0,0.1));
+  }
+
+  .selected-card .placeholder {
+    color: var(--text-muted, #666);
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+  .auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 200px);
+  }
+
+  .login-button {
+    padding: 12px 24px;
+    background: var(--primary-color, #4a9eff);
+    color: var(--text-on-primary, white);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.2s;
+  }
+
+  .login-button:hover {
+    background: var(--primary-color-dark, #3a8eef);
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .story-card[expanded] {
+    border: 2px dashed var(--primary-color, #4a9eff);
+  }
+
+      /* MODAL */
+      .modal {
+      display: none;
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.visible {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-primary, white);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg, 0 4px 8px rgba(0,0,0,0.2));
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+
+    .modal-actions button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .modal-actions button:first-child {
+      background-color: var(--color-danger, #ff4d4d);
+      color: var(--text-on-primary, white);
+    }
+
+    .modal-actions button:last-child {
+      background-color: var(--border-default, #ccc);
+    }
+</style>

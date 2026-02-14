@@ -1,0 +1,133 @@
+---
+const currentPath = Astro.url.pathname;
+
+function isExactMatch(href: string): boolean {
+  const cleanHref = href.replace(/\/$/, '') || '/doc';
+  const cleanPath = currentPath.replace(/\/$/, '') || '/doc';
+  return cleanPath === cleanHref;
+}
+---
+
+<nav class="doc-sidebar-nav">
+  <div class="doc-sidebar-header">
+    <span class="doc-sidebar-icon">📘</span>
+    <span class="doc-sidebar-title">Engineering Playbook</span>
+  </div>
+
+  <div class="doc-sidebar-section">
+    <a href="/doc" class:list={["doc-sidebar-link", { active: isExactMatch('/doc') }]}>
+      Inicio
+    </a>
+  </div>
+
+  <div class="doc-sidebar-section">
+    <span class="doc-sidebar-label">Git</span>
+    <a href="/doc/git" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/git') }]}>
+      Visión general
+    </a>
+    <a href="/doc/git/workflow" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/git/workflow') }]}>
+      Flujo de trabajo
+    </a>
+    <a href="/doc/git/pr-quality-gates" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/git/pr-quality-gates') }]}>
+      Calidad en PR
+    </a>
+    <a href="/doc/git/transition" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/git/transition') }]}>
+      Plan de transición
+    </a>
+  </div>
+
+  <div class="doc-sidebar-section">
+    <span class="doc-sidebar-label">Deploy</span>
+    <a href="/doc/deploy" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/deploy') }]}>
+      Visión general
+    </a>
+    <a href="/doc/deploy/vercel" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/deploy/vercel') }]}>
+      Vercel
+    </a>
+  </div>
+
+  <div class="doc-sidebar-section">
+    <span class="doc-sidebar-label">IA</span>
+    <a href="/doc/ai" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/ai') }]}>
+      Visión general
+    </a>
+    <a href="/doc/ai/pr-review-openai" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/ai/pr-review-openai') }]}>
+      Revisión PR
+    </a>
+    <a href="/doc/ai/becaria-automation" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/ai/becaria-automation') }]}>
+      Automatización BecarIA
+    </a>
+  </div>
+
+  <div class="doc-sidebar-section">
+    <span class="doc-sidebar-label">PlanningGame</span>
+    <a href="/doc/planninggame" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/planninggame') }]}>
+      Visión general
+    </a>
+    <a href="/doc/planninggame/integration" class:list={["doc-sidebar-link", { active: isExactMatch('/doc/planninggame/integration') }]}>
+      Integración
+    </a>
+  </div>
+</nav>
+
+<style is:inline>
+  .doc-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .doc-sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-default, #e5e7eb);
+  }
+
+  .doc-sidebar-icon {
+    font-size: 1.25rem;
+  }
+
+  .doc-sidebar-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary, #111827);
+  }
+
+  .doc-sidebar-section {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.25rem;
+  }
+
+  .doc-sidebar-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-disabled, #9ca3af);
+    padding: 0.5rem 0.75rem 0.25rem;
+  }
+
+  .doc-sidebar-link {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary, #4b5563);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .doc-sidebar-link:hover {
+    background: var(--bg-tertiary, #f3f4f6);
+    color: var(--text-primary, #111827);
+  }
+
+  .doc-sidebar-link.active {
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 500;
+  }
+</style>

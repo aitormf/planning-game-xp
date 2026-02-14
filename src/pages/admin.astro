@@ -1,0 +1,3304 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Admin Console">
+  <div id="adminContainer" style="display: none; padding: 2rem; max-width: 1400px; margin: 0 auto;">
+    <h1 class="admin-title">Admin Console</h1>
+    <p class="admin-subtitle">Herramientas de administración y generación de informes</p>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button id="firebaseTab" data-section="firebase" class="admin-tablink active">🔥 Firebase</button>
+      <button id="reportsTab" data-section="reports" class="admin-tablink">📊 Informes</button>
+      <button id="isoTab" data-section="iso" class="admin-tablink">📋 Informes ISO</button>
+      <button id="configTab" data-section="config" class="admin-tablink">⚙️ Configuración</button>
+    </div>
+
+    <!-- Firebase Section -->
+    <div id="firebaseTabContent" class="admin-tabcontent active">
+      <div class="admin-section">
+        <h2>Escribir JSON a ruta</h2>
+        <div class="form-group">
+          <label for="firebasePath">Ruta en Firebase:</label>
+          <input type="text" id="firebasePath" class="form-input mono" placeholder="/views" value="/views">
+        </div>
+
+        <div class="form-group">
+          <label for="jsonInput">JSON a escribir:</label>
+          <textarea id="jsonInput" class="form-textarea mono" rows="15" placeholder='{"task-list": {...}, "bug-list": {...}}'></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="mergeMode"> Merge (no sobrescribir, solo añadir/actualizar)
+          </label>
+        </div>
+
+        <div class="button-group">
+          <button id="validateJsonBtn" class="btn btn-secondary">Validar JSON</button>
+          <button id="loadFromFileBtn" class="btn btn-secondary">Cargar desde archivo</button>
+          <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+          <button id="writeToFirebaseBtn" class="btn btn-primary">Escribir a Firebase</button>
+        </div>
+
+        <div id="statusMessage" class="status-message" style="display: none;"></div>
+      </div>
+
+      <div class="admin-section">
+        <h2>Resincronizar Vistas de Proyecto</h2>
+        <p class="section-description">Regenera las vistas optimizadas (/views) desde los datos de cards. Útil si las tablas muestran datos desactualizados.</p>
+        <div class="form-group">
+          <label for="syncProjectId">ID del Proyecto:</label>
+          <input type="text" id="syncProjectId" class="form-input mono" placeholder="Intranet-Extended">
+        </div>
+        <div class="button-group">
+          <button id="syncViewsBtn" class="btn btn-primary">Resincronizar Vistas</button>
+        </div>
+        <div id="syncStatusMessage" class="status-message" style="display: none;"></div>
+      </div>
+
+      <div class="admin-section">
+        <h2>Leer ruta</h2>
+        <div class="form-group">
+          <label for="readPath">Ruta a leer:</label>
+          <input type="text" id="readPath" class="form-input mono" placeholder="/views/task-list/PlanningGame">
+        </div>
+        <button id="readFromFirebaseBtn" class="btn btn-secondary">Leer de Firebase</button>
+        <pre id="readOutput" class="code-output"></pre>
+      </div>
+    </div>
+
+    <!-- Reports Section -->
+    <div id="reportsTabContent" class="admin-tabcontent">
+      <div class="admin-section">
+        <h2>Filtros del Informe</h2>
+        <div class="report-filters">
+          <div class="filter-row">
+            <div class="filter-group">
+              <label for="reportStartDate">Fecha inicio:</label>
+              <input type="date" id="reportStartDate" class="filter-input">
+            </div>
+            <div class="filter-group">
+              <label for="reportEndDate">Fecha fin:</label>
+              <input type="date" id="reportEndDate" class="filter-input">
+            </div>
+            <div class="filter-group year-filter-group">
+              <label>Año completo:</label>
+              <div class="year-filter-controls">
+                <input type="checkbox" id="fullYearCheckbox">
+                <select id="yearSelect" class="filter-input year-select" disabled>
+                  <!-- Populated by JavaScript -->
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="filter-row">
+            <div class="filter-group project-select-group">
+              <label for="reportProjects">Proyecto:</label>
+              <select id="reportProjects" class="filter-input project-select">
+                <option value="all" selected>Todos los proyectos</option>
+              </select>
+            </div>
+          </div>
+          <div class="button-group">
+            <button id="generateReportBtn" class="btn btn-primary">📊 Generar Informe</button>
+            <button id="exportPdfBtn" class="btn btn-secondary" disabled>📄 Exportar PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="reportLoading" class="report-loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Generando informe...</p>
+      </div>
+
+      <div id="reportResults" style="display: none;">
+        <!-- Summary Cards -->
+        <div class="admin-section">
+          <h2>Resumen General</h2>
+          <div id="reportSummaryCards" class="summary-cards"></div>
+        </div>
+
+        <!-- Project Stats Table -->
+        <div class="admin-section">
+          <h2>Estadísticas por Proyecto</h2>
+          <div id="projectStatsTable" class="stats-table-container"></div>
+        </div>
+
+        <!-- Developer Stats grouped by developer groups -->
+        <div class="admin-section">
+          <h2>Horas por Developer</h2>
+          <div id="developerStatsContainer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ISO Reports Section -->
+    <div id="isoTabContent" class="admin-tabcontent">
+      <div class="admin-section">
+        <h2>Informe ISO - Detalle por Developer</h2>
+        <div class="report-filters">
+          <div class="filter-row">
+            <div class="filter-group">
+              <label for="isoStartDate">Fecha inicio:</label>
+              <input type="date" id="isoStartDate" class="filter-input">
+            </div>
+            <div class="filter-group">
+              <label for="isoEndDate">Fecha fin:</label>
+              <input type="date" id="isoEndDate" class="filter-input">
+            </div>
+            <div class="filter-group year-filter-group">
+              <label>Año completo:</label>
+              <div class="year-filter-controls">
+                <input type="checkbox" id="isoFullYearCheckbox">
+                <select id="isoYearSelect" class="filter-input year-select" disabled>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="button-group">
+            <button id="generateISOBtn" class="btn btn-primary">📋 Generar Informe ISO</button>
+            <button id="exportISOPdfBtn" class="btn btn-secondary" disabled>📄 Exportar PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="isoLoading" class="report-loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Generando informe ISO...</p>
+      </div>
+
+      <div id="isoResults" style="display: none;"></div>
+    </div>
+
+    <!-- Config Section -->
+    <div id="configTabContent" class="admin-tabcontent">
+      <div class="admin-section">
+        <h2>Grupos de Developers</h2>
+        <p class="section-description">Clasifica developers en grupos para informes mensuales de horas. Arrastra developers entre grupos y guarda la configuración.</p>
+
+        <div id="configStatusMessage" class="status-message" style="display: none;"></div>
+
+        <div id="groupsNotInitialized" style="display: none;">
+          <p style="margin-bottom: 1rem; color: var(--text-muted, #666);">No se encontró configuración de grupos. Pulsa el botón para crear la configuración inicial.</p>
+          <button id="initGroupsBtn" class="btn btn-primary">Inicializar grupos con datos por defecto</button>
+        </div>
+
+        <div id="groupsEditor" style="display: none;">
+          <div class="groups-container">
+            <div class="group-column" data-group="internal">
+              <h3 class="group-title group-title--internal">Internos</h3>
+              <ul id="groupList-internal" class="group-list"></ul>
+              <div class="group-add">
+                <select id="groupAdd-internal" class="filter-input group-select">
+                  <option value="">Añadir developer...</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="group-column" data-group="external">
+              <h3 class="group-title group-title--external">Externos</h3>
+              <ul id="groupList-external" class="group-list"></ul>
+              <div class="group-add">
+                <select id="groupAdd-external" class="filter-input group-select">
+                  <option value="">Añadir developer...</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="group-column" data-group="manager">
+              <h3 class="group-title group-title--manager">Manager</h3>
+              <ul id="groupList-manager" class="group-list"></ul>
+              <div class="group-add">
+                <select id="groupAdd-manager" class="filter-input group-select">
+                  <option value="">Añadir developer...</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-group" style="margin-top: 1.5rem;">
+            <button id="saveGroupsBtn" class="btn btn-primary">💾 Guardar Configuración</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="accessDenied" class="access-denied">
+    <h1>Acceso denegado</h1>
+    <p>Esta página requiere permisos de SuperAdmin.</p>
+    <a href="/" class="link-primary">Volver al inicio</a>
+  </div>
+
+  <div id="loadingAuth" style="padding: 2rem; text-align: center;">
+    <p>Verificando permisos...</p>
+  </div>
+</Layout>
+
+<style is:global>
+  /* Title and subtitle */
+  .admin-title {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary, #333);
+  }
+
+  .admin-subtitle {
+    color: var(--text-muted, #666);
+    margin-bottom: 1.5rem;
+  }
+
+  .section-description {
+    color: var(--text-muted, #666);
+    margin-bottom: 1rem;
+  }
+
+  /* Code output */
+  .code-output {
+    background: var(--bg-tertiary, #f5f5f5);
+    color: var(--text-primary, #333);
+    padding: 1rem;
+    margin-top: 1rem;
+    overflow: auto;
+    max-height: 400px;
+    display: none;
+    border-radius: 4px;
+    border: 1px solid var(--border-subtle, #eee);
+  }
+
+  /* Access denied */
+  .access-denied {
+    display: none;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .access-denied h1 {
+    color: var(--text-primary, #333);
+  }
+
+  .access-denied p {
+    color: var(--text-secondary, #555);
+  }
+
+  .link-primary {
+    color: var(--brand-primary, #007bff);
+  }
+
+  .link-primary:hover {
+    color: var(--brand-secondary, #0056b3);
+  }
+
+  /* Tabs Styles */
+  .admin-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
+    border-bottom: 2px solid var(--border-default, #ddd);
+  }
+
+  .admin-tablink {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: var(--tab-bg, var(--bg-tertiary, #f5f5f5));
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-muted, #666);
+    border-radius: 8px 8px 0 0;
+    margin-right: 4px;
+    transition: all 0.2s;
+  }
+
+  .admin-tablink:hover {
+    background: var(--hover-overlay, rgba(0,0,0,0.05));
+    color: var(--text-primary, #333);
+  }
+
+  .admin-tablink.active {
+    background: var(--tab-bg-active, var(--bg-primary, #fff));
+    color: var(--brand-primary, #007bff);
+    border: 2px solid var(--border-default, #ddd);
+    border-bottom: 2px solid var(--tab-bg-active, var(--bg-primary, #fff));
+    margin-bottom: -2px;
+  }
+
+  .admin-tabcontent {
+    display: none;
+    padding-top: 1.5rem;
+  }
+
+  .admin-tabcontent.active {
+    display: block;
+  }
+
+  /* Section Styles */
+  .admin-section {
+    background: var(--card-bg, var(--bg-secondary, #fff));
+    border: 1px solid var(--card-border-color, var(--border-default, #ddd));
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .admin-section h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    border-bottom: 1px solid var(--border-subtle, #eee);
+    padding-bottom: 0.5rem;
+    color: var(--text-primary, #333);
+  }
+
+  /* Form Styles */
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary, #333);
+  }
+
+  .form-input,
+  .form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--input-border, var(--border-default, #ddd));
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: var(--input-bg, var(--bg-primary, #fff));
+    color: var(--text-primary, #333);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-input:focus,
+  .form-textarea:focus {
+    outline: none;
+    border-color: var(--brand-primary, #007bff);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .mono {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+    font-size: 0.9rem;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--brand-primary, #007bff);
+    color: white;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--brand-secondary, #0056b3);
+  }
+
+  .btn-secondary {
+    background: var(--color-gray-500, #6c757d);
+    color: white;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-gray-600, #545b62);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .status-message {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+  }
+
+  .status-message.success {
+    background: var(--status-success-bg, #d4edda);
+    color: var(--status-success-text, #155724);
+    border-color: var(--status-success-border, #c3e6cb);
+  }
+
+  .status-message.error {
+    background: var(--status-error-bg, #f8d7da);
+    color: var(--status-error-text, #721c24);
+    border-color: var(--status-error-border, #f5c6cb);
+  }
+
+  .status-message.info {
+    background: var(--status-info-bg, #cce5ff);
+    color: var(--status-info-text, #004085);
+    border-color: var(--status-info-border, #b8daff);
+  }
+
+  /* Report Filters Styles */
+  .report-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 180px;
+  }
+
+  .filter-group label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #555);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .filter-input {
+    padding: 0.75rem;
+    border: 1px solid var(--input-border, var(--border-default, #ddd));
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: var(--input-bg, var(--bg-primary, #fff));
+    color: var(--text-primary, #333);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .filter-input:focus {
+    outline: none;
+    border-color: var(--brand-primary, #007bff);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+  }
+
+  .project-select-group {
+    flex: 0 1 auto;
+    min-width: 250px;
+    max-width: 350px;
+  }
+
+  .project-select {
+    font-size: 1.1rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+  }
+
+  .project-select:hover {
+    border-color: var(--brand-primary, #007bff);
+  }
+
+  .checkbox-group {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    padding-bottom: 0.5rem;
+  }
+
+  .checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--brand-primary, #007bff);
+  }
+
+  /* Year filter group */
+  .year-filter-group {
+    flex: 0 0 auto;
+    min-width: auto;
+  }
+
+  .year-filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .year-filter-controls input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--brand-primary, #007bff);
+  }
+
+  .year-select {
+    width: 100px;
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .year-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Report Loading */
+  .report-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-muted, #666);
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-subtle, #f3f3f3);
+    border-top: 4px solid var(--brand-primary, #007bff);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Summary Cards */
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .summary-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.25rem;
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  .summary-card.tasks {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  }
+
+  .summary-card.bugs {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+  }
+
+  .summary-card.time {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+
+  .summary-card.projects {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .summary-card .value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    display: block;
+  }
+
+  .summary-card .label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+  }
+
+  /* Stats Table */
+  .stats-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle, #eee);
+  }
+
+  .stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .stats-table th,
+  .stats-table td {
+    padding: 1rem 1.25rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-subtle, #eee);
+  }
+
+  .stats-table th:first-child,
+  .stats-table td:first-child {
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .stats-table th {
+    background: var(--bg-tertiary, #f8f9fa);
+    font-weight: 700;
+    color: var(--text-primary, #333);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+  }
+
+  .stats-table tbody tr {
+    transition: background-color 0.15s;
+  }
+
+  .stats-table tbody tr:hover {
+    background: var(--hover-overlay, rgba(0,0,0,0.03));
+  }
+
+  .stats-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .stats-table .number {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+
+  .stats-table .highlight-cell {
+    color: var(--brand-primary, #007bff);
+    font-weight: 700;
+  }
+
+  /* Developer Stats Grid */
+  .developer-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .developer-card {
+    background: var(--card-bg, #fff);
+    border: none;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.08));
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .developer-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px var(--shadow-color, rgba(0,0,0,0.15));
+  }
+
+  .developer-card .dev-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-subtle, #eee);
+  }
+
+  .developer-card .dev-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.3rem;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  .developer-card .dev-name {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--text-primary, #333);
+  }
+
+  .developer-card .dev-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .developer-card .stat-item {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-tertiary, #f8f9fa);
+    padding: 0.875rem;
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  .developer-card .stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary, #333);
+    line-height: 1.2;
+  }
+
+  .developer-card .stat-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted, #666);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.25rem;
+  }
+
+  .developer-card .stat-item.highlight {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+  }
+
+  .developer-card .stat-item.highlight .stat-value {
+    color: #667eea;
+  }
+
+  .developer-card .stat-item.tasks-highlight {
+    background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);
+    border: 1px solid rgba(17, 153, 142, 0.2);
+  }
+
+  .developer-card .stat-item.tasks-highlight .stat-value {
+    color: #11998e;
+  }
+
+  .developer-card .stat-item.bugs-highlight {
+    background: linear-gradient(135deg, rgba(235, 51, 73, 0.1) 0%, rgba(244, 92, 67, 0.1) 100%);
+    border: 1px solid rgba(235, 51, 73, 0.2);
+  }
+
+  .developer-card .stat-item.bugs-highlight .stat-value {
+    color: #eb3349;
+  }
+
+  .developer-card .stat-item.projects-highlight {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+    border: 1px solid rgba(79, 172, 254, 0.2);
+  }
+
+  .developer-card .stat-item.projects-highlight .stat-value {
+    color: #4facfe;
+  }
+
+  /* Developer Group Sections */
+  .dev-group-section {
+    margin-bottom: 2rem;
+  }
+
+  .dev-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid;
+    background: var(--bg-tertiary, #f8f9fa);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .dev-group-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .dev-group-totals {
+    display: flex;
+    gap: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #555);
+  }
+
+  .dev-group-total-item strong {
+    color: var(--text-primary, #333);
+  }
+
+  /* Dark theme support - uses .dark-theme class on html element */
+  .dark-theme .admin-section {
+    background: var(--card-bg);
+    border-color: var(--border-default);
+  }
+
+  .dark-theme .admin-section h2 {
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+  }
+
+  .dark-theme .admin-tablink {
+    background: var(--tab-bg);
+    color: var(--text-muted);
+  }
+
+  .dark-theme .admin-tablink:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+  }
+
+  .dark-theme .admin-tablink.active {
+    background: var(--tab-bg-active);
+    color: var(--brand-primary);
+    border-color: var(--border-default);
+    border-bottom-color: var(--tab-bg-active);
+  }
+
+  .dark-theme .admin-tabs {
+    border-color: var(--border-default);
+  }
+
+  .dark-theme .admin-tabcontent {
+    background: var(--bg-primary);
+    border-radius: 0 0 8px 8px;
+  }
+
+  .dark-theme .filter-input {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+  }
+
+  .dark-theme .stats-table th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  .dark-theme .stats-table td {
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+  }
+
+  .dark-theme .stats-table tr:hover {
+    background: var(--hover-overlay);
+  }
+
+  .dark-theme .developer-card {
+    background: var(--card-bg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .dark-theme .developer-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .dark-theme .developer-card .dev-header {
+    border-color: var(--border-subtle);
+  }
+
+  .dark-theme .developer-card .dev-name,
+  .dark-theme .developer-card .stat-value {
+    color: var(--text-primary);
+  }
+
+  .dark-theme .developer-card .stat-label {
+    color: var(--text-muted);
+  }
+
+  .dark-theme .dev-group-header {
+    background: var(--bg-tertiary);
+  }
+
+  .dark-theme .dev-group-totals {
+    color: var(--text-secondary);
+  }
+
+  .dark-theme .dev-group-total-item strong {
+    color: var(--text-primary);
+  }
+
+  .dark-theme .developer-card .stat-item {
+    background: var(--bg-tertiary);
+  }
+
+  .dark-theme .developer-card .stat-item.tasks-highlight {
+    background: rgba(17, 153, 142, 0.15);
+    border-color: rgba(17, 153, 142, 0.3);
+  }
+
+  .dark-theme .developer-card .stat-item.bugs-highlight {
+    background: rgba(235, 51, 73, 0.15);
+    border-color: rgba(235, 51, 73, 0.3);
+  }
+
+  .dark-theme .developer-card .stat-item.projects-highlight {
+    background: rgba(79, 172, 254, 0.15);
+    border-color: rgba(79, 172, 254, 0.3);
+  }
+
+  .dark-theme #readOutput {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  .dark-theme #accessDenied a {
+    color: var(--brand-primary);
+  }
+
+  .dark-theme .form-input,
+  .dark-theme .form-textarea {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+  }
+
+  .dark-theme .form-input::placeholder,
+  .dark-theme .form-textarea::placeholder {
+    color: var(--text-placeholder);
+  }
+
+  .dark-theme .status-message.success {
+    background: rgba(40, 167, 69, 0.2);
+    color: #6dd98c;
+    border-color: rgba(40, 167, 69, 0.3);
+  }
+
+  .dark-theme .status-message.error {
+    background: rgba(220, 53, 69, 0.2);
+    color: #f5a6ae;
+    border-color: rgba(220, 53, 69, 0.3);
+  }
+
+  .dark-theme .status-message.info {
+    background: rgba(0, 123, 255, 0.2);
+    color: #8ec8ff;
+    border-color: rgba(0, 123, 255, 0.3);
+  }
+
+  .dark-theme .filter-group label {
+    color: var(--text-secondary);
+  }
+
+  .dark-theme .checkbox-group label {
+    color: var(--text-primary);
+  }
+
+  /* Developer Groups Editor */
+  .groups-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .group-column {
+    background: var(--bg-tertiary, #f8f9fa);
+    border: 1px solid var(--border-default, #ddd);
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 200px;
+  }
+
+  .group-title {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid var(--border-default, #ddd);
+  }
+
+  .group-title--internal { border-bottom-color: #11998e; color: #11998e; }
+  .group-title--external { border-bottom-color: #667eea; color: #667eea; }
+  .group-title--manager { border-bottom-color: #f5a623; color: #f5a623; }
+
+  .group-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.75rem 0;
+  }
+
+  .group-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.25rem;
+    background: var(--bg-primary, #fff);
+    border: 1px solid var(--border-subtle, #eee);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: var(--text-primary, #333);
+  }
+
+  .group-list li .dev-name {
+    flex: 1;
+  }
+
+  .group-list li .dev-id {
+    font-size: 0.75rem;
+    color: var(--text-muted, #999);
+    margin-left: 0.5rem;
+  }
+
+  .group-list .remove-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted, #999);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0 0.25rem;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+
+  .group-list .remove-btn:hover {
+    color: #dc3545;
+  }
+
+  .group-add {
+    margin-top: 0.5rem;
+  }
+
+  .group-select {
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .groups-container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .dark-theme .group-column {
+    background: var(--bg-tertiary);
+    border-color: var(--border-default);
+  }
+
+  .dark-theme .group-list li {
+    background: var(--bg-secondary);
+    border-color: var(--border-subtle);
+    color: var(--text-primary);
+  }
+
+  .dark-theme .group-list .remove-btn {
+    color: var(--text-muted);
+  }
+
+  .dark-theme .group-list .remove-btn:hover {
+    color: #f5a6ae;
+  }
+
+  /* ===================== ISO Report Styles ===================== */
+  .iso-dev-block {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-default, #ddd);
+    border-left: 4px solid #667eea;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px var(--shadow-color, rgba(0,0,0,0.06));
+  }
+
+  .iso-dev-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-subtle, #eee);
+    flex-wrap: wrap;
+  }
+
+  .iso-dev-header .dev-pdf-check {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
+    flex-shrink: 0;
+  }
+
+  .iso-dev-header .dev-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .iso-dev-header .dev-name {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--text-primary, #333);
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .iso-dev-metrics {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .iso-metric {
+    background: var(--bg-tertiary, #f8f9fa);
+    padding: 0.5rem 0.875rem;
+    border-radius: 8px;
+    text-align: center;
+    min-width: 80px;
+  }
+
+  .iso-metric .metric-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-primary, #333);
+    display: block;
+  }
+
+  .iso-metric .metric-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted, #666);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .iso-metric.dev-metric {
+    background: linear-gradient(135deg, rgba(17, 153, 142, 0.1), rgba(56, 239, 125, 0.1));
+    border: 1px solid rgba(17, 153, 142, 0.2);
+  }
+  .iso-metric.dev-metric .metric-value { color: #11998e; }
+
+  .iso-metric.maint-metric {
+    background: linear-gradient(135deg, rgba(235, 51, 73, 0.1), rgba(244, 92, 67, 0.1));
+    border: 1px solid rgba(235, 51, 73, 0.2);
+  }
+  .iso-metric.maint-metric .metric-value { color: #eb3349; }
+
+  .iso-category {
+    margin-bottom: 1.25rem;
+  }
+
+  .iso-category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .iso-category-header.development {
+    background: linear-gradient(135deg, rgba(17, 153, 142, 0.12), rgba(56, 239, 125, 0.08));
+    color: #11998e;
+    border-left: 3px solid #11998e;
+  }
+
+  .iso-category-header.maintenance {
+    background: linear-gradient(135deg, rgba(235, 51, 73, 0.12), rgba(244, 92, 67, 0.08));
+    color: #eb3349;
+    border-left: 3px solid #eb3349;
+  }
+
+  .iso-category-hours {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .iso-project {
+    margin-left: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .iso-project-header {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary, #333);
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .iso-project-hours {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted, #666);
+  }
+
+  .iso-task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0 0 1.5rem;
+  }
+
+  .iso-task-list li {
+    font-size: 0.82rem;
+    color: var(--text-secondary, #555);
+    padding: 0.15rem 0;
+    line-height: 1.4;
+  }
+
+  .iso-task-list li::before {
+    content: '•';
+    margin-right: 0.5rem;
+    color: var(--text-muted, #999);
+  }
+
+  .iso-ai-saved {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #667eea;
+  }
+
+  .iso-ai-saved strong {
+    font-size: 1rem;
+  }
+
+  .iso-unassigned-block {
+    background: var(--bg-tertiary, #f8f9fa);
+    border: 1px dashed var(--border-default, #ddd);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-muted, #666);
+    font-size: 0.9rem;
+  }
+
+  /* Dark theme for ISO */
+  .dark-theme .iso-dev-block {
+    background: var(--card-bg);
+    border-color: var(--border-default);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .dark-theme .iso-dev-header {
+    border-color: var(--border-subtle);
+  }
+
+  .dark-theme .iso-dev-header .dev-name {
+    color: var(--text-primary);
+  }
+
+  .dark-theme .iso-metric {
+    background: var(--bg-tertiary);
+  }
+
+  .dark-theme .iso-metric .metric-value {
+    color: var(--text-primary);
+  }
+
+  .dark-theme .iso-metric .metric-label {
+    color: var(--text-muted);
+  }
+
+  .dark-theme .iso-project-header {
+    color: var(--text-primary);
+  }
+
+  .dark-theme .iso-task-list li {
+    color: var(--text-secondary);
+  }
+
+  .dark-theme .iso-unassigned-block {
+    background: var(--bg-tertiary);
+    border-color: var(--border-default);
+    color: var(--text-muted);
+  }
+</style>
+
+<script type="module">
+  import { getDatabase, ref, set, update, get } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+  import { app, superAdminEmail } from '/firebase-config.js';
+  import { holidays, HOURS_PER_WORKDAY } from '/js/config/holidays-config.js';
+
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  const holidaySet = new Set(holidays);
+
+  function normalizeEmail(email) {
+    return (email || '').trim().toLowerCase();
+  }
+
+  // Tab switching
+  function setupTabs() {
+    const tabButtons = document.querySelectorAll('.admin-tablink');
+    const tabContents = document.querySelectorAll('.admin-tabcontent');
+
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const section = button.dataset.section;
+
+        // Remove active from all
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        // Add active to clicked
+        button.classList.add('active');
+        const content = document.getElementById(`${section}TabContent`);
+        if (content) {
+          content.classList.add('active');
+        }
+      });
+    });
+  }
+
+  // Firebase section functions
+  function showStatus(message, type = 'info') {
+    const statusEl = document.getElementById('statusMessage');
+    statusEl.textContent = message;
+    statusEl.className = `status-message ${type}`;
+    statusEl.style.display = 'block';
+  }
+
+  function hideStatus() {
+    document.getElementById('statusMessage').style.display = 'none';
+  }
+
+  // Check authentication and SuperAdmin status
+  onAuthStateChanged(auth, async (user) => {
+    const loadingEl = document.getElementById('loadingAuth');
+    const adminEl = document.getElementById('adminContainer');
+    const deniedEl = document.getElementById('accessDenied');
+
+    if (!user) {
+      loadingEl.style.display = 'none';
+      deniedEl.style.display = 'block';
+      return;
+    }
+
+    const userEmail = normalizeEmail(user.email);
+    const envSuperAdmin = superAdminEmail ? normalizeEmail(superAdminEmail) : '';
+
+    if (userEmail !== envSuperAdmin) {
+      loadingEl.style.display = 'none';
+      deniedEl.style.display = 'block';
+      return;
+    }
+
+    // User is SuperAdmin
+    loadingEl.style.display = 'none';
+    adminEl.style.display = 'block';
+
+    // Setup tabs
+    setupTabs();
+
+    // Setup event listeners
+    setupFirebaseEventListeners();
+    setupReportEventListeners();
+    setupISOEventListeners();
+    setupConfigEventListeners();
+
+    // Load projects for report filter
+    await loadProjectsForFilter();
+
+    // Load developer groups for config tab
+    await loadDeveloperGroups();
+  });
+
+  function setupFirebaseEventListeners() {
+    // Validate JSON
+    document.getElementById('validateJsonBtn').addEventListener('click', () => {
+      const jsonInput = document.getElementById('jsonInput').value;
+      try {
+        const parsed = JSON.parse(jsonInput);
+        const keys = Object.keys(parsed);
+        showStatus(`JSON válido. Claves principales: ${keys.join(', ')}`, 'success');
+      } catch (e) {
+        showStatus(`JSON inválido: ${e.message}`, 'error');
+      }
+    });
+
+    // Load from file
+    document.getElementById('loadFromFileBtn').addEventListener('click', () => {
+      document.getElementById('jsonFileInput').click();
+    });
+
+    document.getElementById('jsonFileInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      showStatus('Cargando archivo...', 'info');
+
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        // If file has a 'views' key, extract it
+        if (data.views) {
+          document.getElementById('jsonInput').value = JSON.stringify(data.views, null, 2);
+          showStatus(`Archivo cargado. Se extrajo la sección "views" (${Object.keys(data.views).length} claves)`, 'success');
+        } else {
+          document.getElementById('jsonInput').value = JSON.stringify(data, null, 2);
+          showStatus(`Archivo cargado (${Object.keys(data).length} claves principales)`, 'success');
+        }
+      } catch (e) {
+        showStatus(`Error al cargar archivo: ${e.message}`, 'error');
+      }
+    });
+
+    // Write to Firebase
+    document.getElementById('writeToFirebaseBtn').addEventListener('click', async () => {
+      const path = document.getElementById('firebasePath').value.trim();
+      const jsonInput = document.getElementById('jsonInput').value;
+      const mergeMode = document.getElementById('mergeMode').checked;
+
+      if (!path) {
+        showStatus('Por favor, especifica una ruta', 'error');
+        return;
+      }
+
+      if (!path.startsWith('/')) {
+        showStatus('La ruta debe empezar con /', 'error');
+        return;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(jsonInput);
+      } catch (e) {
+        showStatus(`JSON inválido: ${e.message}`, 'error');
+        return;
+      }
+
+      const confirmed = confirm(
+        `¿Estás seguro de que quieres escribir a "${path}"?\n\n` +
+        `Modo: ${mergeMode ? 'MERGE (añadir/actualizar)' : 'SET (sobrescribir)'}\n` +
+        `Claves: ${Object.keys(data).join(', ')}`
+      );
+
+      if (!confirmed) return;
+
+      showStatus('Escribiendo a Firebase...', 'info');
+      document.getElementById('writeToFirebaseBtn').disabled = true;
+
+      try {
+        const dbRef = ref(db, path);
+
+        if (mergeMode) {
+          await update(dbRef, data);
+        } else {
+          await set(dbRef, data);
+        }
+
+        showStatus(`Escritura exitosa a ${path}`, 'success');
+      } catch (e) {
+        showStatus(`Error al escribir: ${e.message}`, 'error');
+      } finally {
+        document.getElementById('writeToFirebaseBtn').disabled = false;
+      }
+    });
+
+    // Sync Views
+    document.getElementById('syncViewsBtn').addEventListener('click', async () => {
+      const projectId = document.getElementById('syncProjectId').value.trim();
+      const syncStatusEl = document.getElementById('syncStatusMessage');
+
+      if (!projectId) {
+        syncStatusEl.textContent = 'Por favor, especifica un ID de proyecto';
+        syncStatusEl.className = 'status-message error';
+        syncStatusEl.style.display = 'block';
+        return;
+      }
+
+      const confirmed = confirm(`¿Resincronizar vistas del proyecto "${projectId}"?\n\nEsto regenerará las vistas de tasks, bugs y proposals.`);
+      if (!confirmed) return;
+
+      syncStatusEl.textContent = 'Resincronizando vistas...';
+      syncStatusEl.className = 'status-message info';
+      syncStatusEl.style.display = 'block';
+      document.getElementById('syncViewsBtn').disabled = true;
+
+      try {
+        let totalSynced = 0;
+
+        // Sync tasks
+        const tasksSnap = await get(ref(db, `/cards/${projectId}/TASKS_${projectId}`));
+        if (tasksSnap.exists()) {
+          const tasks = tasksSnap.val();
+          const taskViews = {};
+          for (const [firebaseId, task] of Object.entries(tasks)) {
+            if (task.deletedAt) continue;
+            taskViews[firebaseId] = {
+              firebaseId,
+              cardId: task.cardId,
+              title: task.title,
+              status: task.status,
+              businessPoints: task.businessPoints,
+              devPoints: task.devPoints,
+              sprint: task.sprint,
+              developer: task.developer,
+              coDeveloper: task.coDeveloper,
+              validator: task.validator,
+              coValidator: task.coValidator,
+              epic: task.epic,
+              startDate: task.startDate,
+              endDate: task.endDate,
+              spike: task.spike,
+              expedited: task.expedited,
+              blockedByBusiness: task.blockedByBusiness,
+              blockedByDevelopment: task.blockedByDevelopment,
+              notesCount: Array.isArray(task.notes) ? task.notes.length : 0,
+              year: task.year
+            };
+            Object.keys(taskViews[firebaseId]).forEach(k => {
+              if (taskViews[firebaseId][k] === undefined) delete taskViews[firebaseId][k];
+            });
+          }
+          await set(ref(db, `/views/task-list/${projectId}`), taskViews);
+          totalSynced += Object.keys(taskViews).length;
+        }
+
+        // Sync bugs
+        const bugsSnap = await get(ref(db, `/cards/${projectId}/BUGS_${projectId}`));
+        if (bugsSnap.exists()) {
+          const bugs = bugsSnap.val();
+          const bugViews = {};
+          for (const [firebaseId, bug] of Object.entries(bugs)) {
+            if (bug.deletedAt) continue;
+            bugViews[firebaseId] = {
+              firebaseId,
+              cardId: bug.cardId,
+              title: bug.title,
+              status: bug.status,
+              priority: bug.priority,
+              developer: bug.developer,
+              createdBy: bug.createdBy,
+              registerDate: bug.registerDate,
+              startDate: bug.startDate,
+              endDate: bug.endDate,
+              year: bug.year
+            };
+            Object.keys(bugViews[firebaseId]).forEach(k => {
+              if (bugViews[firebaseId][k] === undefined) delete bugViews[firebaseId][k];
+            });
+          }
+          await set(ref(db, `/views/bug-list/${projectId}`), bugViews);
+          totalSynced += Object.keys(bugViews).length;
+        }
+
+        // Sync proposals
+        const proposalsSnap = await get(ref(db, `/cards/${projectId}/PROPOSALS_${projectId}`));
+        if (proposalsSnap.exists()) {
+          const proposals = proposalsSnap.val();
+          const proposalViews = {};
+          for (const [firebaseId, proposal] of Object.entries(proposals)) {
+            if (proposal.deletedAt) continue;
+            proposalViews[firebaseId] = {
+              firebaseId,
+              cardId: proposal.cardId,
+              title: proposal.title,
+              status: proposal.status,
+              businessPoints: proposal.businessPoints,
+              createdBy: proposal.createdBy,
+              stakeholder: proposal.stakeholder,
+              registerDate: proposal.registerDate,
+              year: proposal.year
+            };
+            Object.keys(proposalViews[firebaseId]).forEach(k => {
+              if (proposalViews[firebaseId][k] === undefined) delete proposalViews[firebaseId][k];
+            });
+          }
+          await set(ref(db, `/views/proposal-list/${projectId}`), proposalViews);
+          totalSynced += Object.keys(proposalViews).length;
+        }
+
+        syncStatusEl.textContent = `Resincronización completada. ${totalSynced} cards sincronizadas.`;
+        syncStatusEl.className = 'status-message success';
+      } catch (e) {
+        syncStatusEl.textContent = `Error: ${e.message}`;
+        syncStatusEl.className = 'status-message error';
+      } finally {
+        document.getElementById('syncViewsBtn').disabled = false;
+      }
+    });
+
+    // Read from Firebase
+    document.getElementById('readFromFirebaseBtn').addEventListener('click', async () => {
+      const path = document.getElementById('readPath').value.trim();
+      const outputEl = document.getElementById('readOutput');
+
+      if (!path) {
+        showStatus('Por favor, especifica una ruta para leer', 'error');
+        return;
+      }
+
+      try {
+        const snapshot = await get(ref(db, path));
+
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          outputEl.textContent = JSON.stringify(data, null, 2);
+          outputEl.style.display = 'block';
+        } else {
+          outputEl.textContent = '(No existe datos en esta ruta)';
+          outputEl.style.display = 'block';
+        }
+      } catch (e) {
+        showStatus(`Error al leer: ${e.message}`, 'error');
+      }
+    });
+  }
+
+  // Report section functions
+  let allProjects = [];
+  let developerMap = new Map();
+  let developerGroups = null; // { internal: {...}, external: {...}, manager: {...} }
+
+  async function loadProjectsForFilter() {
+    try {
+      const projectsSnap = await get(ref(db, '/projects'));
+      if (projectsSnap.exists()) {
+        allProjects = Object.entries(projectsSnap.val() || {}).map(([id, project]) => ({
+          id,
+          name: project.name || id
+        }));
+
+        const select = document.getElementById('reportProjects');
+        select.innerHTML = '<option value="all" selected>Todos los proyectos</option>';
+        allProjects.forEach(project => {
+          const option = document.createElement('option');
+          option.value = project.id;
+          option.textContent = project.name;
+          select.appendChild(option);
+        });
+      }
+
+      // Load developer mappings
+      const devsSnap = await get(ref(db, '/data/developers'));
+      if (devsSnap.exists()) {
+        const devs = devsSnap.val() || {};
+        Object.entries(devs).forEach(([id, dev]) => {
+          if (dev && dev.name) {
+            developerMap.set(id.toLowerCase(), dev.name);
+            if (dev.email) {
+              developerMap.set(dev.email.toLowerCase(), dev.name);
+            }
+          }
+        });
+      }
+
+      // Load developer groups for report grouping
+      const groupsSnap = await get(ref(db, '/data/developerGroups'));
+      if (groupsSnap.exists()) {
+        developerGroups = groupsSnap.val();
+      }
+    } catch (e) {
+      console.error('Error loading projects:', e);
+    }
+  }
+
+  function setupReportEventListeners() {
+    const startDateInput = document.getElementById('reportStartDate');
+    const endDateInput = document.getElementById('reportEndDate');
+    const fullYearCheckbox = document.getElementById('fullYearCheckbox');
+    const yearSelect = document.getElementById('yearSelect');
+
+    // Populate year select (2025 to current year)
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear; year >= 2025; year--) {
+      const option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      if (year === currentYear) option.selected = true;
+      yearSelect.appendChild(option);
+    }
+
+    // Full year checkbox
+    fullYearCheckbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        yearSelect.disabled = false;
+        const year = yearSelect.value;
+        startDateInput.value = `${year}-01-01`;
+        endDateInput.value = `${year}-12-31`;
+        startDateInput.disabled = true;
+        endDateInput.disabled = true;
+      } else {
+        yearSelect.disabled = true;
+        startDateInput.disabled = false;
+        endDateInput.disabled = false;
+      }
+    });
+
+    // Year select change
+    yearSelect.addEventListener('change', (e) => {
+      if (fullYearCheckbox.checked) {
+        const year = e.target.value;
+        startDateInput.value = `${year}-01-01`;
+        endDateInput.value = `${year}-12-31`;
+      }
+    });
+
+    // Generate report
+    document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+
+    // Export PDF
+    document.getElementById('exportPdfBtn').addEventListener('click', exportToPdf);
+  }
+
+  async function generateReport() {
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
+    const projectSelect = document.getElementById('reportProjects');
+    const selectedProject = projectSelect.value;
+
+    if (!startDate || !endDate) {
+      alert('Por favor, selecciona las fechas del informe');
+      return;
+    }
+
+    // Show loading
+    document.getElementById('reportLoading').style.display = 'flex';
+    document.getElementById('reportResults').style.display = 'none';
+
+    try {
+      const projectsToQuery = selectedProject === 'all' ? allProjects.map(p => p.id) : [selectedProject];
+
+      const stats = await collectStats(projectsToQuery, startDate, endDate);
+      renderReport(stats, startDate, endDate);
+
+      document.getElementById('reportResults').style.display = 'block';
+      document.getElementById('exportPdfBtn').disabled = false;
+    } catch (e) {
+      console.error('Error generating report:', e);
+      alert(`Error al generar informe: ${e.message}`);
+    } finally {
+      document.getElementById('reportLoading').style.display = 'none';
+    }
+  }
+
+  async function collectStats(projectIds, startDate, endDate) {
+    const stats = {
+      totalTasks: 0,
+      completedTasks: 0,
+      totalBugs: 0,
+      resolvedBugs: 0,
+      projectStats: [],
+      developerStats: new Map()
+    };
+
+    for (const projectId of projectIds) {
+      const projectStats = {
+        projectId,
+        projectName: allProjects.find(p => p.id === projectId)?.name || projectId,
+        tasks: { total: 0, completed: 0, totalDays: 0, count: 0 },
+        bugs: { total: 0, resolved: 0, totalDays: 0, count: 0 }
+      };
+
+      // Fetch cards and transitions in parallel
+      const [tasksSnap, bugsSnap, taskTransSnap, bugTransSnap] = await Promise.all([
+        get(ref(db, `/cards/${projectId}/TASKS_${projectId}`)),
+        get(ref(db, `/cards/${projectId}/BUGS_${projectId}`)),
+        get(ref(db, `/stateTransitions/${projectId}/tasks`)),
+        get(ref(db, `/stateTransitions/${projectId}/bugs`)),
+      ]);
+
+      // Build transitions map keyed by cardId
+      const transitionsMap = new Map();
+      if (taskTransSnap.exists()) {
+        for (const [cardId, data] of Object.entries(taskTransSnap.val())) {
+          transitionsMap.set(cardId, data);
+        }
+      }
+      if (bugTransSnap.exists()) {
+        for (const [cardId, data] of Object.entries(bugTransSnap.val())) {
+          transitionsMap.set(cardId, data);
+        }
+      }
+
+      // Process tasks
+      if (tasksSnap.exists()) {
+        const tasks = tasksSnap.val();
+        for (const [, task] of Object.entries(tasks)) {
+          if (task.deletedAt) continue;
+          if (!isInDateRange(task.endDate || task.startDate || task.createdAt, startDate, endDate)) continue;
+
+          projectStats.tasks.total++;
+          stats.totalTasks++;
+
+          if (task.status === 'Done' || task.status === 'Done&Validated') {
+            projectStats.tasks.completed++;
+            stats.completedTasks++;
+
+            // Calculate dev time using real transitions when available (clamped to report range)
+            const cardTrans = task.cardId ? transitionsMap.get(task.cardId) : null;
+            const inProgressMs = cardTrans ? getInProgressMs(cardTrans, startDate, endDate) : 0;
+            if (inProgressMs > 0) {
+              const hours = inProgressMs / 3600000;
+              projectStats.tasks.totalDays += hours / HOURS_PER_WORKDAY;
+              projectStats.tasks.count++;
+            } else if (task.startDate && task.endDate) {
+              const clampedStart = task.startDate > startDate ? task.startDate : startDate;
+              const clampedEnd = task.endDate < endDate ? task.endDate : endDate;
+              if (clampedStart <= clampedEnd) {
+                const days = calculateWorkingDays(clampedStart, clampedEnd);
+                projectStats.tasks.totalDays += days;
+                projectStats.tasks.count++;
+              }
+            }
+          }
+
+          // Developer stats
+          if (task.developer) {
+            updateDeveloperStats(stats.developerStats, task.developer, 'tasks', task, transitionsMap, startDate, endDate);
+          }
+        }
+      }
+
+      // Process bugs
+      if (bugsSnap.exists()) {
+        const bugs = bugsSnap.val();
+        for (const [, bug] of Object.entries(bugs)) {
+          if (bug.deletedAt) continue;
+          if (!isInDateRange(bug.endDate || bug.registerDate || bug.createdAt, startDate, endDate)) continue;
+
+          projectStats.bugs.total++;
+          stats.totalBugs++;
+
+          if (bug.status === 'Fixed' || bug.status === 'Verified' || bug.status === 'Closed') {
+            projectStats.bugs.resolved++;
+            stats.resolvedBugs++;
+
+            // Calculate resolution time using real transitions when available (clamped to report range)
+            const cardTrans = bug.cardId ? transitionsMap.get(bug.cardId) : null;
+            const inProgressMs = cardTrans ? getInProgressMs(cardTrans, startDate, endDate) : 0;
+            if (inProgressMs > 0) {
+              const hours = inProgressMs / 3600000;
+              projectStats.bugs.totalDays += hours / HOURS_PER_WORKDAY;
+              projectStats.bugs.count++;
+            } else {
+              const bugStartDate = bug.startDate || bug.registerDate;
+              if (bugStartDate && bug.endDate) {
+                const clampedStart = bugStartDate > startDate ? bugStartDate : startDate;
+                const clampedEnd = bug.endDate < endDate ? bug.endDate : endDate;
+                if (clampedStart <= clampedEnd) {
+                  const days = calculateWorkingDays(clampedStart, clampedEnd);
+                  projectStats.bugs.totalDays += days;
+                  projectStats.bugs.count++;
+                }
+              }
+            }
+          }
+
+          // Developer stats
+          if (bug.developer) {
+            updateDeveloperStats(stats.developerStats, bug.developer, 'bugs', bug, transitionsMap, startDate, endDate);
+          }
+        }
+      }
+
+      stats.projectStats.push(projectStats);
+    }
+
+    return stats;
+  }
+
+  function isInDateRange(dateStr, startDate, endDate) {
+    if (!dateStr) return false;
+    const date = new Date(dateStr);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return date >= start && date <= end;
+  }
+
+  function calculateWorkingDays(startDateStr, endDateStr) {
+    const start = new Date(startDateStr);
+    const end = new Date(endDateStr);
+    let count = 0;
+    const current = new Date(start);
+
+    while (current <= end) {
+      const day = current.getDay();
+      const dateStr = current.toISOString().slice(0, 10);
+      if (day !== 0 && day !== 6 && !holidaySet.has(dateStr)) {
+        count++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return Math.max(1, count); // At least 1 day
+  }
+
+  function getInProgressMs(cardTransitions, rangeStart, rangeEnd) {
+    if (!cardTransitions || !cardTransitions.transitions) return 0;
+    const rangeStartMs = new Date(rangeStart).getTime();
+    const rangeEndMs = new Date(rangeEnd).getTime() + 86400000; // end of day (exclusive)
+    let totalMs = 0;
+    for (const transition of Object.values(cardTransitions.transitions)) {
+      if (transition.durationInPrevious > 0 &&
+          (transition.fromStatus || '').toLowerCase() === 'in progress') {
+        // Period when card was "In Progress": [transStart, transEnd]
+        const transEndMs = new Date(transition.timestamp).getTime();
+        const transStartMs = transEndMs - transition.durationInPrevious;
+        // Intersect with report range
+        const overlapStart = Math.max(transStartMs, rangeStartMs);
+        const overlapEnd = Math.min(transEndMs, rangeEndMs);
+        if (overlapStart < overlapEnd) {
+          totalMs += overlapEnd - overlapStart;
+        }
+      }
+    }
+    return totalMs;
+  }
+
+  function updateDeveloperStats(devStats, developerId, type, card, transitionsMap, rangeStart, rangeEnd) {
+    const devKey = developerId.toLowerCase();
+    if (!devStats.has(devKey)) {
+      devStats.set(devKey, {
+        id: developerId,
+        name: developerMap.get(devKey) || developerId,
+        tasks: { completed: 0, totalDays: 0, count: 0, totalHours: 0 },
+        bugs: { resolved: 0, totalDays: 0, count: 0, totalHours: 0 },
+        projects: new Set()
+      });
+    }
+
+    const dev = devStats.get(devKey);
+    dev.projects.add(card.projectId || 'Unknown');
+
+    if (type === 'tasks') {
+      if (card.status === 'Done' || card.status === 'Done&Validated') {
+        dev.tasks.completed++;
+        const cardTransitions = transitionsMap ? transitionsMap.get(card.cardId) : null;
+        const inProgressMs = cardTransitions ? getInProgressMs(cardTransitions, rangeStart, rangeEnd) : 0;
+        if (inProgressMs > 0) {
+          const hours = inProgressMs / 3600000;
+          dev.tasks.totalHours += hours;
+          dev.tasks.totalDays += hours / HOURS_PER_WORKDAY;
+          dev.tasks.count++;
+        } else if (card.startDate && card.endDate) {
+          const clampedStart = card.startDate > rangeStart ? card.startDate : rangeStart;
+          const clampedEnd = card.endDate < rangeEnd ? card.endDate : rangeEnd;
+          if (clampedStart <= clampedEnd) {
+            const days = calculateWorkingDays(clampedStart, clampedEnd);
+            dev.tasks.totalDays += days;
+            dev.tasks.totalHours += days * HOURS_PER_WORKDAY;
+            dev.tasks.count++;
+          }
+        }
+      }
+    } else if (type === 'bugs') {
+      if (card.status === 'Fixed' || card.status === 'Verified' || card.status === 'Closed') {
+        dev.bugs.resolved++;
+        const cardTransitions = transitionsMap ? transitionsMap.get(card.cardId) : null;
+        const inProgressMs = cardTransitions ? getInProgressMs(cardTransitions, rangeStart, rangeEnd) : 0;
+        if (inProgressMs > 0) {
+          const hours = inProgressMs / 3600000;
+          dev.bugs.totalHours += hours;
+          dev.bugs.totalDays += hours / HOURS_PER_WORKDAY;
+          dev.bugs.count++;
+        } else {
+          const bugStart = card.startDate || card.registerDate;
+          if (bugStart && card.endDate) {
+            const clampedStart = bugStart > rangeStart ? bugStart : rangeStart;
+            const clampedEnd = card.endDate < rangeEnd ? card.endDate : rangeEnd;
+            if (clampedStart <= clampedEnd) {
+              const days = calculateWorkingDays(clampedStart, clampedEnd);
+              dev.bugs.totalDays += days;
+              dev.bugs.totalHours += days * HOURS_PER_WORKDAY;
+              dev.bugs.count++;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function renderReport(stats, startDate, endDate) {
+    // Summary cards
+    const avgTaskDays = stats.projectStats.reduce((sum, p) => sum + p.tasks.totalDays, 0) /
+                        Math.max(1, stats.projectStats.reduce((sum, p) => sum + p.tasks.count, 0));
+
+    document.getElementById('reportSummaryCards').innerHTML = `
+      <div class="summary-card tasks">
+        <span class="value">${stats.completedTasks}/${stats.totalTasks}</span>
+        <span class="label">Tareas completadas</span>
+      </div>
+      <div class="summary-card bugs">
+        <span class="value">${stats.resolvedBugs}/${stats.totalBugs}</span>
+        <span class="label">Bugs resueltos</span>
+      </div>
+      <div class="summary-card time">
+        <span class="value">${avgTaskDays.toFixed(1)}</span>
+        <span class="label">Días promedio/tarea</span>
+      </div>
+      <div class="summary-card projects">
+        <span class="value">${stats.projectStats.length}</span>
+        <span class="label">Proyectos analizados</span>
+      </div>
+    `;
+
+    // Project stats table
+    document.getElementById('projectStatsTable').innerHTML = `
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Proyecto</th>
+            <th class="number">Tareas</th>
+            <th class="number">Completadas</th>
+            <th class="number">Tiempo medio</th>
+            <th class="number">Bugs</th>
+            <th class="number">Resueltos</th>
+            <th class="number">Tiempo medio</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${stats.projectStats.map(p => `
+            <tr>
+              <td>${p.projectName}</td>
+              <td class="number">${p.tasks.total}</td>
+              <td class="number">${p.tasks.completed}</td>
+              <td class="number">${p.tasks.count > 0 ? (p.tasks.totalDays / p.tasks.count).toFixed(1) + ' días' : '-'}</td>
+              <td class="number">${p.bugs.total}</td>
+              <td class="number">${p.bugs.resolved}</td>
+              <td class="number">${p.bugs.count > 0 ? (p.bugs.totalDays / p.bugs.count).toFixed(1) + ' días' : '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // Developer stats grouped by developer groups
+    const devStatsArray = Array.from(stats.developerStats.values())
+      .sort((a, b) => (b.tasks.completed + b.bugs.resolved) - (a.tasks.completed + a.bugs.resolved));
+
+    // Build devId-to-group mapping
+    const devToGroup = new Map();
+    if (developerGroups) {
+      for (const [groupKey, group] of Object.entries(developerGroups)) {
+        if (Array.isArray(group.developers)) {
+          group.developers.forEach(devId => devToGroup.set(devId.toLowerCase(), groupKey));
+        }
+      }
+    }
+
+    // Group developers
+    const grouped = { internal: [], external: [], manager: [], unclassified: [] };
+    devStatsArray.forEach(dev => {
+      const groupKey = devToGroup.get(dev.id.toLowerCase()) || 'unclassified';
+      if (grouped[groupKey]) {
+        grouped[groupKey].push(dev);
+      } else {
+        grouped.unclassified.push(dev);
+      }
+    });
+
+    const groupConfig = [
+      { key: 'internal', label: 'Internos', color: '#11998e' },
+      { key: 'external', label: 'Externos', color: '#667eea' },
+      { key: 'manager', label: 'Manager', color: '#f5a623' },
+      { key: 'unclassified', label: 'Sin clasificar', color: '#999' },
+    ];
+
+    function renderDevCard(dev) {
+      return `
+        <div class="developer-card">
+          <div class="dev-header">
+            <div class="dev-avatar">${getInitials(dev.name)}</div>
+            <div class="dev-name">${dev.name}</div>
+          </div>
+          <div class="dev-stats">
+            <div class="stat-item tasks-highlight">
+              <span class="stat-value">${dev.tasks.completed}</span>
+              <span class="stat-label">Tareas completadas</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">${dev.tasks.count > 0 ? (dev.tasks.totalDays / dev.tasks.count).toFixed(1) : '-'}</span>
+              <span class="stat-label">Días/tarea promedio</span>
+            </div>
+            <div class="stat-item bugs-highlight">
+              <span class="stat-value">${dev.bugs.resolved}</span>
+              <span class="stat-label">Bugs resueltos</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">${dev.bugs.count > 0 ? (dev.bugs.totalDays / dev.bugs.count).toFixed(1) : '-'}</span>
+              <span class="stat-label">Días/bug promedio</span>
+            </div>
+            <div class="stat-item highlight">
+              <span class="stat-value">${Math.round(dev.tasks.totalHours)}h</span>
+              <span class="stat-label">H. Proyecto</span>
+            </div>
+            <div class="stat-item highlight">
+              <span class="stat-value">${Math.round(dev.bugs.totalHours)}h</span>
+              <span class="stat-label">H. Mantenimiento</span>
+            </div>
+            <div class="stat-item projects-highlight" style="grid-column: span 2;">
+              <span class="stat-value">${dev.projects.size}</span>
+              <span class="stat-label">Proyectos</span>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    let developerHtml = '';
+    groupConfig.forEach(({ key, label, color }) => {
+      const devs = grouped[key];
+      if (!devs || devs.length === 0) return;
+
+      const totalProjectHours = devs.reduce((sum, d) => sum + d.tasks.totalHours, 0);
+      const totalMaintHours = devs.reduce((sum, d) => sum + d.bugs.totalHours, 0);
+      const totalHours = totalProjectHours + totalMaintHours;
+
+      developerHtml += `
+        <div class="dev-group-section">
+          <div class="dev-group-header" style="border-left-color: ${color};">
+            <span class="dev-group-title" style="color: ${color};">${label}</span>
+            <span class="dev-group-totals">
+              <span class="dev-group-total-item">Proyecto: <strong>${Math.round(totalProjectHours)}h</strong></span>
+              <span class="dev-group-total-item">Mant.: <strong>${Math.round(totalMaintHours)}h</strong></span>
+              <span class="dev-group-total-item">Total: <strong>${Math.round(totalHours)}h</strong></span>
+            </span>
+          </div>
+          <div class="developer-stats-grid">
+            ${devs.map(renderDevCard).join('')}
+          </div>
+        </div>`;
+    });
+
+    document.getElementById('developerStatsContainer').innerHTML = developerHtml;
+
+    // Store stats for PDF export
+    window.currentReportStats = stats;
+    window.currentReportDates = { startDate, endDate };
+  }
+
+  function getInitials(name) {
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  }
+
+  async function exportToPdf() {
+    const stats = window.currentReportStats;
+    const { startDate, endDate } = window.currentReportDates;
+
+    if (!stats) {
+      alert('Genera un informe primero');
+      return;
+    }
+
+    // Load jsPDF if not already loaded
+    if (!window.jspdf) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    let y = margin;
+
+    // Colors - Geniova Corporate
+    const primaryColor = [223, 0, 110]; // Geniova magenta #df006e
+    const secondaryColor = [52, 73, 94]; // Dark gray
+    const lightGray = [245, 245, 245];
+    const mediumGray = [189, 195, 199];
+    const successColor = [39, 174, 96]; // Green
+    const dangerColor = [231, 76, 60]; // Red
+
+    // Helper: Draw section header
+    function drawSectionHeader(title, yPos) {
+      doc.setFillColor(...primaryColor);
+      doc.rect(margin, yPos, pageWidth - 2 * margin, 10, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, margin + 5, yPos + 7);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+      return yPos + 15;
+    }
+
+    // Helper: Draw table
+    function drawTable(headers, rows, yPos, colWidths) {
+      const rowHeight = 8;
+      const tableWidth = colWidths.reduce((a, b) => a + b, 0);
+      let x = margin;
+
+      // Header row
+      doc.setFillColor(...secondaryColor);
+      doc.rect(margin, yPos, tableWidth, rowHeight, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+
+      headers.forEach((header, i) => {
+        doc.text(header, x + 2, yPos + 5.5);
+        x += colWidths[i];
+      });
+
+      yPos += rowHeight;
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+
+      // Data rows
+      rows.forEach((row, rowIndex) => {
+        if (yPos > pageHeight - 30) {
+          doc.addPage();
+          yPos = margin;
+        }
+
+        // Alternate row background
+        if (rowIndex % 2 === 0) {
+          doc.setFillColor(...lightGray);
+          doc.rect(margin, yPos, tableWidth, rowHeight, 'F');
+        }
+
+        // Draw cell borders
+        doc.setDrawColor(...mediumGray);
+        doc.rect(margin, yPos, tableWidth, rowHeight, 'S');
+
+        x = margin;
+        row.forEach((cell, i) => {
+          doc.text(String(cell), x + 2, yPos + 5.5);
+          x += colWidths[i];
+        });
+        yPos += rowHeight;
+      });
+
+      return yPos + 5;
+    }
+
+    // ============ PAGE HEADER ============
+    // Header background
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Title
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Informe de Desarrollo', pageWidth / 2, 18, { align: 'center' });
+
+    // Subtitle with period
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    const periodText = `Período: ${formatDate(startDate)} - ${formatDate(endDate)}`;
+    doc.text(periodText, pageWidth / 2, 28, { align: 'center' });
+
+    doc.setTextColor(0, 0, 0);
+    y = 45;
+
+    // ============ SUMMARY SECTION ============
+    y = drawSectionHeader('Resumen General', y);
+
+    // Summary boxes
+    const boxWidth = (pageWidth - 2 * margin - 15) / 4;
+    const boxHeight = 25;
+    const summaryData = [
+      { label: 'Tareas', value: `${stats.completedTasks}/${stats.totalTasks}`, color: successColor },
+      { label: 'Bugs', value: `${stats.resolvedBugs}/${stats.totalBugs}`, color: dangerColor },
+      { label: 'Días/Tarea', value: getAvgTaskDays(stats), color: primaryColor },
+      { label: 'Proyectos', value: String(stats.projectStats.length), color: secondaryColor }
+    ];
+
+    summaryData.forEach((item, i) => {
+      const boxX = margin + i * (boxWidth + 5);
+
+      // Box background
+      doc.setFillColor(...lightGray);
+      doc.rect(boxX, y, boxWidth, boxHeight, 'F');
+
+      // Top color bar
+      doc.setFillColor(...item.color);
+      doc.rect(boxX, y, boxWidth, 3, 'F');
+
+      // Value
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...item.color);
+      doc.text(item.value, boxX + boxWidth / 2, y + 13, { align: 'center' });
+
+      // Label
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text(item.label, boxX + boxWidth / 2, y + 20, { align: 'center' });
+    });
+
+    doc.setTextColor(0, 0, 0);
+    y += boxHeight + 10;
+
+    // ============ PROJECT STATS TABLE ============
+    y = drawSectionHeader('Estadísticas por Proyecto', y);
+
+    const projectHeaders = ['Proyecto', 'Tareas', 'Complet.', 'Tiempo', 'Bugs', 'Resueltos', 'Tiempo'];
+    const tableWidth = pageWidth - 2 * margin; // 170mm for A4
+    const projectColWidths = [50, 20, 22, 22, 20, 22, 14]; // Total = 170
+    const projectRows = stats.projectStats.map(p => [
+      p.projectName.substring(0, 18),
+      p.tasks.total,
+      p.tasks.completed,
+      p.tasks.count > 0 ? (p.tasks.totalDays / p.tasks.count).toFixed(1) + 'd' : '-',
+      p.bugs.total,
+      p.bugs.resolved,
+      p.bugs.count > 0 ? (p.bugs.totalDays / p.bugs.count).toFixed(1) + 'd' : '-'
+    ]);
+
+    y = drawTable(projectHeaders, projectRows, y, projectColWidths);
+    y += 5;
+
+    // ============ DEVELOPER STATS TABLE (grouped) ============
+    if (y > pageHeight - 80) {
+      doc.addPage();
+      y = margin;
+    }
+
+    y = drawSectionHeader('Horas por Developer', y);
+
+    const devHeaders = ['Developer', 'Tareas', 'Días/T', 'Bugs', 'Días/B', 'H.Proy', 'H.Mant', 'Proy.'];
+    const devColWidths = [46, 16, 18, 16, 18, 20, 20, 16]; // Total = 170
+
+    // Build group mapping for PDF
+    const pdfDevToGroup = new Map();
+    if (developerGroups) {
+      for (const [gKey, gVal] of Object.entries(developerGroups)) {
+        if (Array.isArray(gVal.developers)) {
+          gVal.developers.forEach(devId => pdfDevToGroup.set(devId.toLowerCase(), gKey));
+        }
+      }
+    }
+
+    const pdfDevStats = Array.from(stats.developerStats.values())
+      .sort((a, b) => (b.tasks.completed + b.bugs.resolved) - (a.tasks.completed + a.bugs.resolved));
+
+    const pdfGrouped = { internal: [], external: [], manager: [], unclassified: [] };
+    pdfDevStats.forEach(dev => {
+      const gKey = pdfDevToGroup.get(dev.id.toLowerCase()) || 'unclassified';
+      if (pdfGrouped[gKey]) {
+        pdfGrouped[gKey].push(dev);
+      } else {
+        pdfGrouped.unclassified.push(dev);
+      }
+    });
+
+    const pdfGroupConfig = [
+      { key: 'internal', label: 'Internos', color: [17, 153, 142] },
+      { key: 'external', label: 'Externos', color: [102, 126, 234] },
+      { key: 'manager', label: 'Manager', color: [245, 166, 35] },
+      { key: 'unclassified', label: 'Sin clasificar', color: [153, 153, 153] },
+    ];
+
+    for (const { key, label, color } of pdfGroupConfig) {
+      const groupDevs = pdfGrouped[key];
+      if (!groupDevs || groupDevs.length === 0) continue;
+
+      // Check page space for group subtitle
+      if (y > pageHeight - 40) {
+        doc.addPage();
+        y = margin;
+      }
+
+      // Group subtitle bar
+      doc.setFillColor(...color);
+      doc.rect(margin, y, pageWidth - 2 * margin, 7, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+
+      const groupTotalProjH = groupDevs.reduce((s, d) => s + d.tasks.totalHours, 0);
+      const groupTotalMaintH = groupDevs.reduce((s, d) => s + d.bugs.totalHours, 0);
+      doc.text(`${label}  —  Proy: ${Math.round(groupTotalProjH)}h  |  Mant: ${Math.round(groupTotalMaintH)}h  |  Total: ${Math.round(groupTotalProjH + groupTotalMaintH)}h`, margin + 3, y + 5);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+      y += 9;
+
+      const groupRows = groupDevs.map(dev => [
+        dev.name.substring(0, 18),
+        dev.tasks.completed,
+        dev.tasks.count > 0 ? (dev.tasks.totalDays / dev.tasks.count).toFixed(1) : '-',
+        dev.bugs.resolved,
+        dev.bugs.count > 0 ? (dev.bugs.totalDays / dev.bugs.count).toFixed(1) : '-',
+        Math.round(dev.tasks.totalHours) + 'h',
+        Math.round(dev.bugs.totalHours) + 'h',
+        dev.projects.size
+      ]);
+
+      y = drawTable(devHeaders, groupRows, y, devColWidths);
+    }
+
+    // ============ FOOTER ON ALL PAGES ============
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+
+      // Footer line
+      doc.setDrawColor(...mediumGray);
+      doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+      // Footer text
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, margin, pageHeight - 8);
+      doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      doc.text('Planning Game XP - Geniova Technologies', pageWidth / 2, pageHeight - 8, { align: 'center' });
+    }
+
+    // Download
+    doc.save(`informe-desarrollo-${startDate}-${endDate}.pdf`);
+  }
+
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function getAvgTaskDays(stats) {
+    const totalDays = stats.projectStats.reduce((sum, p) => sum + p.tasks.totalDays, 0);
+    const totalCount = stats.projectStats.reduce((sum, p) => sum + p.tasks.count, 0);
+    return totalCount > 0 ? (totalDays / totalCount).toFixed(1) : '-';
+  }
+
+  // ===================== ISO REPORT SECTION =====================
+
+  function setupISOEventListeners() {
+    const startDateInput = document.getElementById('isoStartDate');
+    const endDateInput = document.getElementById('isoEndDate');
+    const fullYearCheckbox = document.getElementById('isoFullYearCheckbox');
+    const yearSelect = document.getElementById('isoYearSelect');
+
+    // Populate year select
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear; year >= 2025; year--) {
+      const option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      if (year === currentYear) option.selected = true;
+      yearSelect.appendChild(option);
+    }
+
+    fullYearCheckbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        yearSelect.disabled = false;
+        const year = yearSelect.value;
+        startDateInput.value = `${year}-01-01`;
+        endDateInput.value = `${year}-12-31`;
+        startDateInput.disabled = true;
+        endDateInput.disabled = true;
+      } else {
+        yearSelect.disabled = true;
+        startDateInput.disabled = false;
+        endDateInput.disabled = false;
+      }
+    });
+
+    yearSelect.addEventListener('change', (e) => {
+      if (fullYearCheckbox.checked) {
+        const year = e.target.value;
+        startDateInput.value = `${year}-01-01`;
+        endDateInput.value = `${year}-12-31`;
+      }
+    });
+
+    document.getElementById('generateISOBtn').addEventListener('click', generateISOReport);
+    document.getElementById('exportISOPdfBtn').addEventListener('click', exportISOToPdf);
+  }
+
+  async function generateISOReport() {
+    const startDate = document.getElementById('isoStartDate').value;
+    const endDate = document.getElementById('isoEndDate').value;
+
+    if (!startDate || !endDate) {
+      document.getElementById('isoResults').innerHTML = '<div class="status-message error" style="display:block;">Por favor, selecciona las fechas del informe</div>';
+      document.getElementById('isoResults').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('isoLoading').style.display = 'flex';
+    document.getElementById('isoResults').style.display = 'none';
+
+    try {
+      const projectIds = allProjects.map(p => p.id);
+      const stats = await collectISOStats(projectIds, startDate, endDate);
+      renderISOReport(stats, startDate, endDate);
+      document.getElementById('isoResults').style.display = 'block';
+      document.getElementById('exportISOPdfBtn').disabled = false;
+    } catch (e) {
+      console.error('Error generating ISO report:', e);
+      document.getElementById('isoResults').innerHTML = `<div class="status-message error" style="display:block;">Error al generar informe: ${e.message}</div>`;
+      document.getElementById('isoResults').style.display = 'block';
+    } finally {
+      document.getElementById('isoLoading').style.display = 'none';
+    }
+  }
+
+  async function collectISOStats(projectIds, startDate, endDate) {
+    // Get internal developer IDs
+    const internalDevIds = new Set();
+    if (developerGroups && developerGroups.internal && Array.isArray(developerGroups.internal.developers)) {
+      developerGroups.internal.developers.forEach(id => internalDevIds.add(id.toLowerCase()));
+    }
+
+    // Stats per developer: devId -> { name, categories: { development: { projects: { projId: { name, hours, items: [] } } }, maintenance: {...} }, aiHoursSaved }
+    const devStats = new Map();
+    const workingDays = calculateWorkingDays(startDate, endDate);
+    const totalHoursTarget = workingDays * HOURS_PER_WORKDAY;
+
+    for (const projectId of projectIds) {
+      const projectName = allProjects.find(p => p.id === projectId)?.name || projectId;
+
+      // Fetch cards, epics and transitions in parallel
+      const [tasksSnap, bugsSnap, epicsSnap, taskTransSnap, bugTransSnap] = await Promise.all([
+        get(ref(db, `/cards/${projectId}/TASKS_${projectId}`)),
+        get(ref(db, `/cards/${projectId}/BUGS_${projectId}`)),
+        get(ref(db, `/cards/${projectId}/EPICS_${projectId}`)),
+        get(ref(db, `/stateTransitions/${projectId}/tasks`)),
+        get(ref(db, `/stateTransitions/${projectId}/bugs`)),
+      ]);
+
+      // Build epic title map
+      const epicTitleMap = new Map();
+      if (epicsSnap.exists()) {
+        for (const [, epic] of Object.entries(epicsSnap.val())) {
+          if (epic.cardId && epic.title) {
+            epicTitleMap.set(epic.cardId, epic.title);
+          }
+        }
+      }
+
+      // Build transitions map
+      const transitionsMap = new Map();
+      if (taskTransSnap.exists()) {
+        for (const [cardId, data] of Object.entries(taskTransSnap.val())) {
+          transitionsMap.set(cardId, data);
+        }
+      }
+      if (bugTransSnap.exists()) {
+        for (const [cardId, data] of Object.entries(bugTransSnap.val())) {
+          transitionsMap.set(cardId, data);
+        }
+      }
+
+      // Helper to get raw hours for a card
+      function getRawHours(card, cardType) {
+        const cardTrans = card.cardId ? transitionsMap.get(card.cardId) : null;
+        const inProgressMs = cardTrans ? getInProgressMs(cardTrans, startDate, endDate) : 0;
+        if (inProgressMs > 0) {
+          return inProgressMs / 3600000;
+        }
+        // Fallback: calendar days
+        const cardStart = card.startDate || (cardType === 'bug' ? card.registerDate : null);
+        if (cardStart && card.endDate) {
+          const clampedStart = cardStart > startDate ? cardStart : startDate;
+          const clampedEnd = card.endDate < endDate ? card.endDate : endDate;
+          if (clampedStart <= clampedEnd) {
+            return calculateWorkingDays(clampedStart, clampedEnd) * HOURS_PER_WORKDAY;
+          }
+        }
+        return 0;
+      }
+
+      // Helper to determine category from epic
+      function getCategory(task) {
+        if (task.epic) {
+          const epicTitle = epicTitleMap.get(task.epic) || '';
+          if (epicTitle.toLowerCase().includes('mantenimiento')) {
+            return 'maintenance';
+          }
+        }
+        return 'development';
+      }
+
+      // Helper to ensure dev entry exists
+      function ensureDevEntry(devId) {
+        const devKey = devId.toLowerCase();
+        if (!devStats.has(devKey)) {
+          devStats.set(devKey, {
+            id: devId,
+            name: developerMap.get(devKey) || devId,
+            categories: {
+              development: { totalRawHours: 0, projects: {} },
+              maintenance: { totalRawHours: 0, projects: {} }
+            },
+            totalRawHours: 0,
+            aiHoursSaved: 0,
+            aiItems: []
+          });
+        }
+        return devStats.get(devKey);
+      }
+
+      // Helper to add item to dev stats
+      function addItemToDev(devId, category, projId, projName, hours, itemLabel) {
+        const dev = ensureDevEntry(devId);
+        const cat = dev.categories[category];
+        if (!cat.projects[projId]) {
+          cat.projects[projId] = { name: projName, rawHours: 0, items: [] };
+        }
+        cat.projects[projId].rawHours += hours;
+        cat.projects[projId].items.push(itemLabel);
+        cat.totalRawHours += hours;
+        dev.totalRawHours += hours;
+      }
+
+      // Process tasks
+      if (tasksSnap.exists()) {
+        for (const [, task] of Object.entries(tasksSnap.val())) {
+          if (task.deletedAt) continue;
+          if (task.status !== 'Done' && task.status !== 'Done&Validated') continue;
+          if (!isInDateRange(task.endDate || task.startDate || task.createdAt, startDate, endDate)) continue;
+
+          const hours = getRawHours(task, 'task');
+          if (hours <= 0) continue;
+
+          const category = getCategory(task);
+          const itemLabel = `${task.cardId || '?'}: ${task.title || 'Sin título'}`;
+
+          // Direct developer
+          if (task.developer) {
+            const devKey = task.developer.toLowerCase();
+            if (internalDevIds.has(devKey)) {
+              addItemToDev(task.developer, category, projectId, projectName, hours, itemLabel);
+            }
+          }
+
+          // becarIA as developer + coDeveloper is internal → AI hours saved for coDeveloper
+          if (task.developer === 'dev_016' && task.coDeveloper) {
+            const coDevKey = task.coDeveloper.toLowerCase();
+            if (internalDevIds.has(coDevKey)) {
+              const dev = ensureDevEntry(task.coDeveloper);
+              dev.aiHoursSaved += hours;
+              dev.aiItems.push(`${itemLabel} (${projectName})`);
+            }
+          }
+        }
+      }
+
+      // Process bugs (always maintenance)
+      if (bugsSnap.exists()) {
+        for (const [, bug] of Object.entries(bugsSnap.val())) {
+          if (bug.deletedAt) continue;
+          if (bug.status !== 'Fixed' && bug.status !== 'Verified' && bug.status !== 'Closed') continue;
+          if (!isInDateRange(bug.endDate || bug.registerDate || bug.createdAt, startDate, endDate)) continue;
+
+          const hours = getRawHours(bug, 'bug');
+          if (hours <= 0) continue;
+
+          const itemLabel = `${bug.cardId || '?'}: ${bug.title || 'Sin título'}`;
+
+          if (bug.developer) {
+            const devKey = bug.developer.toLowerCase();
+            if (internalDevIds.has(devKey)) {
+              addItemToDev(bug.developer, 'maintenance', projectId, projectName, hours, itemLabel);
+            }
+          }
+
+          // becarIA as developer + coDeveloper is internal → AI hours saved
+          if (bug.developer === 'dev_016' && bug.coDeveloper) {
+            const coDevKey = bug.coDeveloper.toLowerCase();
+            if (internalDevIds.has(coDevKey)) {
+              const dev = ensureDevEntry(bug.coDeveloper);
+              dev.aiHoursSaved += hours;
+              dev.aiItems.push(`${itemLabel} (${projectName})`);
+            }
+          }
+        }
+      }
+    }
+
+    // Scale hours per developer to match workingDays * 8
+    for (const dev of devStats.values()) {
+      if (dev.totalRawHours <= 0) {
+        // No activity: all hours go to "Sin asignar"
+        dev.scaledCategories = {
+          development: { totalHours: 0, projects: {} },
+          maintenance: { totalHours: 0, projects: {} },
+          unassignedHours: totalHoursTarget
+        };
+        dev.totalScaledHours = totalHoursTarget;
+        continue;
+      }
+
+      const scaleFactor = totalHoursTarget / dev.totalRawHours;
+      dev.scaledCategories = {
+        development: { totalHours: 0, projects: {} },
+        maintenance: { totalHours: 0, projects: {} },
+        unassignedHours: 0
+      };
+
+      // Scale each project in each category
+      let totalScaled = 0;
+      const allEntries = []; // { ref, rawHours } for rounding adjustment
+
+      for (const catKey of ['development', 'maintenance']) {
+        const cat = dev.categories[catKey];
+        for (const [projId, proj] of Object.entries(cat.projects)) {
+          const scaledHours = Math.round(proj.rawHours * scaleFactor * 100) / 100;
+          dev.scaledCategories[catKey].projects[projId] = {
+            name: proj.name,
+            hours: scaledHours,
+            items: proj.items
+          };
+          dev.scaledCategories[catKey].totalHours += scaledHours;
+          totalScaled += scaledHours;
+          allEntries.push({ catKey, projId, scaledHours });
+        }
+      }
+
+      // Rounding adjustment: distribute difference to the largest entry
+      const diff = totalHoursTarget - Math.round(totalScaled * 100) / 100;
+      if (Math.abs(diff) > 0.001 && allEntries.length > 0) {
+        allEntries.sort((a, b) => b.scaledHours - a.scaledHours);
+        const largest = allEntries[0];
+        const projEntry = dev.scaledCategories[largest.catKey].projects[largest.projId];
+        projEntry.hours = Math.round((projEntry.hours + diff) * 100) / 100;
+        dev.scaledCategories[largest.catKey].totalHours = Object.values(dev.scaledCategories[largest.catKey].projects)
+          .reduce((sum, p) => sum + p.hours, 0);
+      }
+
+      dev.totalScaledHours = totalHoursTarget;
+    }
+
+    return {
+      devStats,
+      workingDays,
+      totalHoursTarget,
+      internalDevIds
+    };
+  }
+
+  function renderISOReport(stats, startDate, endDate) {
+    const { devStats, workingDays, totalHoursTarget, internalDevIds } = stats;
+
+    // Sort developers alphabetically
+    const sortedDevs = Array.from(devStats.values())
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Also include internal devs with NO activity
+    const activeDevIds = new Set(sortedDevs.map(d => d.id.toLowerCase()));
+    const inactiveDevs = [];
+    if (developerGroups && developerGroups.internal && Array.isArray(developerGroups.internal.developers)) {
+      for (const devId of developerGroups.internal.developers) {
+        if (!activeDevIds.has(devId.toLowerCase())) {
+          inactiveDevs.push({
+            id: devId,
+            name: developerMap.get(devId.toLowerCase()) || devId,
+            totalRawHours: 0,
+            totalScaledHours: totalHoursTarget,
+            aiHoursSaved: 0,
+            aiItems: [],
+            scaledCategories: {
+              development: { totalHours: 0, projects: {} },
+              maintenance: { totalHours: 0, projects: {} },
+              unassignedHours: totalHoursTarget
+            }
+          });
+        }
+      }
+    }
+
+    const allDevs = [...sortedDevs, ...inactiveDevs.sort((a, b) => a.name.localeCompare(b.name))];
+
+    let html = '';
+
+    for (const dev of allDevs) {
+      const devHours = dev.scaledCategories ? dev.scaledCategories.development.totalHours : 0;
+      const maintHours = dev.scaledCategories ? dev.scaledCategories.maintenance.totalHours : 0;
+      const unassigned = dev.scaledCategories ? (dev.scaledCategories.unassignedHours || 0) : totalHoursTarget;
+
+      html += `<div class="iso-dev-block" data-dev-id="${dev.id}">`;
+      html += `<div class="iso-dev-header">`;
+      html += `<input type="checkbox" class="dev-pdf-check" data-dev-id="${dev.id}" checked title="Incluir en PDF">`;
+      html += `<div class="dev-avatar">${getInitials(dev.name)}</div>`;
+      html += `<div class="dev-name">${dev.name}</div>`;
+      html += `<div class="iso-dev-metrics">`;
+      html += `<div class="iso-metric"><span class="metric-value">${workingDays}</span><span class="metric-label">Días</span></div>`;
+      html += `<div class="iso-metric"><span class="metric-value">${totalHoursTarget}h</span><span class="metric-label">Total</span></div>`;
+      html += `<div class="iso-metric dev-metric"><span class="metric-value">${devHours.toFixed(1)}h</span><span class="metric-label">Desarrollo</span></div>`;
+      html += `<div class="iso-metric maint-metric"><span class="metric-value">${maintHours.toFixed(1)}h</span><span class="metric-label">Mantenim.</span></div>`;
+      html += `</div></div>`;
+
+      // Development category
+      if (dev.scaledCategories && Object.keys(dev.scaledCategories.development.projects).length > 0) {
+        html += `<div class="iso-category">`;
+        html += `<div class="iso-category-header development"><span>Desarrollo</span><span class="iso-category-hours">${devHours.toFixed(1)}h</span></div>`;
+        for (const [, proj] of Object.entries(dev.scaledCategories.development.projects)) {
+          html += `<div class="iso-project">`;
+          html += `<div class="iso-project-header">${proj.name} <span class="iso-project-hours">(${proj.hours.toFixed(1)}h)</span></div>`;
+          html += `<ul class="iso-task-list">`;
+          for (const item of proj.items) {
+            html += `<li>${escapeHtml(item)}</li>`;
+          }
+          html += `</ul></div>`;
+        }
+        html += `</div>`;
+      }
+
+      // Maintenance category
+      if (dev.scaledCategories && Object.keys(dev.scaledCategories.maintenance.projects).length > 0) {
+        html += `<div class="iso-category">`;
+        html += `<div class="iso-category-header maintenance"><span>Mantenimiento</span><span class="iso-category-hours">${maintHours.toFixed(1)}h</span></div>`;
+        for (const [, proj] of Object.entries(dev.scaledCategories.maintenance.projects)) {
+          html += `<div class="iso-project">`;
+          html += `<div class="iso-project-header">${proj.name} <span class="iso-project-hours">(${proj.hours.toFixed(1)}h)</span></div>`;
+          html += `<ul class="iso-task-list">`;
+          for (const item of proj.items) {
+            html += `<li>${escapeHtml(item)}</li>`;
+          }
+          html += `</ul></div>`;
+        }
+        html += `</div>`;
+      }
+
+      // Unassigned hours
+      if (unassigned > 0) {
+        html += `<div class="iso-unassigned-block">Sin actividad registrada: <strong>${unassigned.toFixed(1)}h</strong></div>`;
+      }
+
+      // AI hours saved
+      if (dev.aiHoursSaved > 0) {
+        const scaledAI = dev.totalRawHours > 0
+          ? Math.round(dev.aiHoursSaved * (totalHoursTarget / dev.totalRawHours) * 100) / 100
+          : dev.aiHoursSaved;
+        html += `<div class="iso-ai-saved">`;
+        html += `🤖 Horas ahorradas con IA (becarIA): <strong>${scaledAI.toFixed(1)}h</strong> — `;
+        html += `${dev.aiItems.length} item${dev.aiItems.length !== 1 ? 's' : ''} donde becarIA fue developer`;
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+    }
+
+    if (allDevs.length === 0) {
+      html = '<div class="status-message info" style="display:block;">No se encontraron developers internos con actividad en el periodo seleccionado. Verifica que el grupo "Internos" esté configurado en la pestaña Configuración.</div>';
+    }
+
+    document.getElementById('isoResults').innerHTML = html;
+
+    // Store for PDF
+    window.currentISOStats = stats;
+    window.currentISODates = { startDate, endDate };
+    window.currentISODevs = allDevs;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  async function exportISOToPdf() {
+    const stats = window.currentISOStats;
+    const { startDate, endDate } = window.currentISODates;
+    const allDevs = window.currentISODevs;
+
+    if (!stats || !allDevs) return;
+
+    // Load jsPDF if not already loaded
+    if (!window.jspdf) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    let y = margin;
+    const { workingDays, totalHoursTarget } = stats;
+
+    // Colors
+    const primaryColor = [223, 0, 110];
+    const secondaryColor = [52, 73, 94];
+    const lightGray = [245, 245, 245];
+    const mediumGray = [189, 195, 199];
+    const devColor = [17, 153, 142];
+    const maintColor = [231, 76, 60];
+    const aiColor = [102, 126, 234];
+
+    function checkPageBreak(needed) {
+      if (y + needed > pageHeight - 25) {
+        doc.addPage();
+        y = margin;
+        return true;
+      }
+      return false;
+    }
+
+    // ============ HEADER ============
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Informe ISO - Detalle por Developer', pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Período: ${formatDate(startDate)} - ${formatDate(endDate)}  |  ${workingDays} días laborables  |  ${totalHoursTarget}h/developer`, pageWidth / 2, 28, { align: 'center' });
+
+    doc.setTextColor(0, 0, 0);
+    y = 45;
+
+    // ============ DEVELOPER BLOCKS ============
+    // Filter by checked checkboxes
+    const checkedDevIds = new Set(
+      [...document.querySelectorAll('.dev-pdf-check:checked')].map(cb => cb.dataset.devId)
+    );
+    const filteredDevs = allDevs.filter(dev => checkedDevIds.has(dev.id));
+
+    for (const dev of filteredDevs) {
+      const devHours = dev.scaledCategories ? dev.scaledCategories.development.totalHours : 0;
+      const maintHours = dev.scaledCategories ? dev.scaledCategories.maintenance.totalHours : 0;
+      const unassigned = dev.scaledCategories ? (dev.scaledCategories.unassignedHours || 0) : totalHoursTarget;
+
+      // Count total items for space estimation
+      let itemCount = 0;
+      if (dev.scaledCategories) {
+        for (const cat of ['development', 'maintenance']) {
+          for (const proj of Object.values(dev.scaledCategories[cat].projects)) {
+            itemCount += proj.items.length + 1; // +1 for project header
+          }
+        }
+      }
+      const estimatedHeight = 25 + (itemCount * 5) + (dev.aiHoursSaved > 0 ? 10 : 0) + (unassigned > 0 ? 8 : 0);
+      checkPageBreak(Math.min(estimatedHeight, 60)); // At least fit the header
+
+      // Developer header bar
+      doc.setFillColor(...secondaryColor);
+      doc.rect(margin, y, pageWidth - 2 * margin, 10, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text(dev.name, margin + 5, y + 7);
+
+      // Metrics on the right
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      const metricsText = `${workingDays} días  |  Total: ${totalHoursTarget}h  |  Desarrollo: ${devHours.toFixed(1)}h  |  Mantenim.: ${maintHours.toFixed(1)}h`;
+      doc.text(metricsText, pageWidth - margin - 3, y + 7, { align: 'right' });
+      doc.setTextColor(0, 0, 0);
+      y += 13;
+
+      // Development section
+      if (dev.scaledCategories && Object.keys(dev.scaledCategories.development.projects).length > 0) {
+        checkPageBreak(15);
+        doc.setFillColor(...devColor);
+        doc.rect(margin, y, pageWidth - 2 * margin, 7, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`DESARROLLO — ${devHours.toFixed(1)}h`, margin + 3, y + 5);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        y += 9;
+
+        for (const [, proj] of Object.entries(dev.scaledCategories.development.projects)) {
+          checkPageBreak(12);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`${proj.name} (${proj.hours.toFixed(1)}h)`, margin + 5, y + 4);
+          doc.setFont('helvetica', 'normal');
+          y += 6;
+
+          doc.setFontSize(7.5);
+          for (const item of proj.items) {
+            checkPageBreak(5);
+            const truncated = item.length > 90 ? item.substring(0, 87) + '...' : item;
+            doc.text(`• ${truncated}`, margin + 10, y + 3);
+            y += 4;
+          }
+          y += 2;
+        }
+      }
+
+      // Maintenance section
+      if (dev.scaledCategories && Object.keys(dev.scaledCategories.maintenance.projects).length > 0) {
+        checkPageBreak(15);
+        doc.setFillColor(...maintColor);
+        doc.rect(margin, y, pageWidth - 2 * margin, 7, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`MANTENIMIENTO — ${maintHours.toFixed(1)}h`, margin + 3, y + 5);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        y += 9;
+
+        for (const [, proj] of Object.entries(dev.scaledCategories.maintenance.projects)) {
+          checkPageBreak(12);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`${proj.name} (${proj.hours.toFixed(1)}h)`, margin + 5, y + 4);
+          doc.setFont('helvetica', 'normal');
+          y += 6;
+
+          doc.setFontSize(7.5);
+          for (const item of proj.items) {
+            checkPageBreak(5);
+            const truncated = item.length > 90 ? item.substring(0, 87) + '...' : item;
+            doc.text(`• ${truncated}`, margin + 10, y + 3);
+            y += 4;
+          }
+          y += 2;
+        }
+      }
+
+      // Unassigned hours
+      if (unassigned > 0) {
+        checkPageBreak(10);
+        doc.setFontSize(8);
+        doc.setTextColor(128, 128, 128);
+        doc.text(`Sin actividad registrada: ${unassigned.toFixed(1)}h`, margin + 5, y + 4);
+        doc.setTextColor(0, 0, 0);
+        y += 8;
+      }
+
+      // AI hours saved
+      if (dev.aiHoursSaved > 0) {
+        checkPageBreak(10);
+        const scaledAI = dev.totalRawHours > 0
+          ? Math.round(dev.aiHoursSaved * (totalHoursTarget / dev.totalRawHours) * 100) / 100
+          : dev.aiHoursSaved;
+        doc.setFillColor(235, 239, 255);
+        doc.rect(margin, y, pageWidth - 2 * margin, 7, 'F');
+        doc.setTextColor(...aiColor);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Horas ahorradas con IA (becarIA): ${scaledAI.toFixed(1)}h — ${dev.aiItems.length} items`, margin + 3, y + 5);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        y += 10;
+      }
+
+      y += 5; // spacing between developers
+    }
+
+    // ============ FOOTER ============
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(...mediumGray);
+      doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, margin, pageHeight - 8);
+      doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      doc.text('Planning Game XP - Geniova Technologies', pageWidth / 2, pageHeight - 8, { align: 'center' });
+    }
+
+    doc.save(`informe-iso-${startDate}-${endDate}.pdf`);
+  }
+
+  // ===================== CONFIG SECTION =====================
+
+  // Local state for group editing
+  let currentGroups = null;
+  let allDevelopers = {}; // { dev_XXX: { name, email, active } }
+
+  const DEFAULT_GROUPS = {
+    internal: { label: 'Internos', developers: ['dev_005', 'dev_001', 'dev_008', 'dev_012', 'dev_003'] },
+    external: { label: 'Externos', developers: ['dev_014', 'dev_004', 'dev_011', 'dev_002'] },
+    manager: { label: 'Manager', developers: ['dev_010'] },
+  };
+
+  function showConfigStatus(message, type = 'info') {
+    const el = document.getElementById('configStatusMessage');
+    el.textContent = message;
+    el.className = `status-message ${type}`;
+    el.style.display = 'block';
+  }
+
+  function hideConfigStatus() {
+    document.getElementById('configStatusMessage').style.display = 'none';
+  }
+
+  async function loadDeveloperGroups() {
+    try {
+      // Load all developers from /data/developers
+      const devsSnap = await get(ref(db, '/data/developers'));
+      if (devsSnap.exists()) {
+        allDevelopers = devsSnap.val() || {};
+      }
+
+      // Load groups from /data/developerGroups
+      const groupsSnap = await get(ref(db, '/data/developerGroups'));
+      if (groupsSnap.exists()) {
+        currentGroups = groupsSnap.val();
+        document.getElementById('groupsNotInitialized').style.display = 'none';
+        document.getElementById('groupsEditor').style.display = 'block';
+        renderGroups();
+      } else {
+        currentGroups = null;
+        document.getElementById('groupsNotInitialized').style.display = 'block';
+        document.getElementById('groupsEditor').style.display = 'none';
+      }
+    } catch (e) {
+      console.error('Error loading developer groups:', e);
+      showConfigStatus(`Error al cargar grupos: ${e.message}`, 'error');
+    }
+  }
+
+  function getDevName(devId) {
+    const dev = allDevelopers[devId];
+    return dev && dev.name ? dev.name : devId;
+  }
+
+  function getAssignedDevIds() {
+    if (!currentGroups) return new Set();
+    const assigned = new Set();
+    for (const group of Object.values(currentGroups)) {
+      if (Array.isArray(group.developers)) {
+        group.developers.forEach(id => assigned.add(id));
+      }
+    }
+    return assigned;
+  }
+
+  function renderGroups() {
+    if (!currentGroups) return;
+
+    const assigned = getAssignedDevIds();
+
+    for (const groupKey of ['internal', 'external', 'manager']) {
+      const group = currentGroups[groupKey];
+      if (!group) continue;
+
+      // Render list
+      const listEl = document.getElementById(`groupList-${groupKey}`);
+      listEl.innerHTML = '';
+
+      const devIds = Array.isArray(group.developers) ? group.developers : [];
+      devIds.forEach(devId => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span class="dev-name">${getDevName(devId)}</span>
+          <span class="dev-id">${devId}</span>
+          <button class="remove-btn" data-dev="${devId}" data-group="${groupKey}" title="Quitar del grupo">&times;</button>
+        `;
+        listEl.append(li);
+      });
+
+      // Render dropdown with unassigned developers
+      const selectEl = document.getElementById(`groupAdd-${groupKey}`);
+      selectEl.innerHTML = '<option value="">Añadir developer...</option>';
+
+      for (const [devId, dev] of Object.entries(allDevelopers)) {
+        if (!assigned.has(devId) && dev && dev.name) {
+          const option = document.createElement('option');
+          option.value = devId;
+          option.textContent = `${dev.name} (${devId})`;
+          selectEl.append(option);
+        }
+      }
+    }
+  }
+
+  function setupConfigEventListeners() {
+    // Initialize groups with default data
+    document.getElementById('initGroupsBtn').addEventListener('click', async () => {
+      try {
+        await set(ref(db, '/data/developerGroups'), DEFAULT_GROUPS);
+        currentGroups = structuredClone(DEFAULT_GROUPS);
+        document.getElementById('groupsNotInitialized').style.display = 'none';
+        document.getElementById('groupsEditor').style.display = 'block';
+        renderGroups();
+        showConfigStatus('Grupos inicializados correctamente', 'success');
+      } catch (e) {
+        showConfigStatus(`Error al inicializar grupos: ${e.message}`, 'error');
+      }
+    });
+
+    // Save groups
+    document.getElementById('saveGroupsBtn').addEventListener('click', async () => {
+      if (!currentGroups) return;
+
+      const btn = document.getElementById('saveGroupsBtn');
+      btn.disabled = true;
+      hideConfigStatus();
+
+      try {
+        await set(ref(db, '/data/developerGroups'), currentGroups);
+        showConfigStatus('Configuración guardada correctamente', 'success');
+      } catch (e) {
+        showConfigStatus(`Error al guardar: ${e.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // Remove developer from group (event delegation)
+    document.getElementById('groupsEditor').addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('.remove-btn');
+      if (!removeBtn) return;
+
+      const devId = removeBtn.dataset.dev;
+      const groupKey = removeBtn.dataset.group;
+
+      if (currentGroups[groupKey] && Array.isArray(currentGroups[groupKey].developers)) {
+        currentGroups[groupKey].developers = currentGroups[groupKey].developers.filter(id => id !== devId);
+        renderGroups();
+      }
+    });
+
+    // Add developer to group via dropdown
+    for (const groupKey of ['internal', 'external', 'manager']) {
+      document.getElementById(`groupAdd-${groupKey}`).addEventListener('change', (e) => {
+        const devId = e.target.value;
+        if (!devId || !currentGroups[groupKey]) return;
+
+        if (!Array.isArray(currentGroups[groupKey].developers)) {
+          currentGroups[groupKey].developers = [];
+        }
+        currentGroups[groupKey].developers.push(devId);
+        e.target.value = '';
+        renderGroups();
+      });
+    }
+  }
+</script>

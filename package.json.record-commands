@@ -1,0 +1,7 @@
+// Añade estos comandos a tu package.json en la sección "scripts":
+
+"record:full": "npx playwright codegen http://localhost:4321 --output=playwright/recorded/full-flow.js",
+"record:kanban": "npx playwright codegen http://localhost:4321 --output=playwright/recorded/kanban-actions.js", 
+"record:sprint": "npx playwright codegen http://localhost:4321 --output=playwright/recorded/sprint-management.js",
+"record:custom": "npx playwright codegen http://localhost:4321",
+"integrate": "node scripts/integrate-recorded.js"
