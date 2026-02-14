@@ -1,8 +1,11 @@
+// Safe accessor for window globals (this file is also imported during SSR/build)
+const _win = typeof window !== 'undefined' ? window : {};
+
 export const APP_CONSTANTS = {
   // Production app URL - used for notification links, shared URLs, etc.
   // NEVER use window.location.origin for URLs stored in Firebase
   // Configured via PUBLIC_APP_URL env var → window.appUrl
-  APP_URL: window.appUrl || '',
+  APP_URL: _win.appUrl || '',
 
   CARD_TYPES: ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa'],
 
@@ -22,12 +25,12 @@ export const APP_CONSTANTS = {
   CONSULTATION_TABS: ['sprints', 'epics', 'tickets', 'proposals', 'app'],
   
   WELCOME_MESSAGES: {
-    TITLE: window.appName || 'Planning GameXP',
+    TITLE: _win.appName || 'Planning GameXP',
     SUBTITLE: 'Sign in with your account'
   },
   // Configured via PUBLIC_ALLOWED_EMAIL_DOMAINS env var → window.allowedEmailDomains
   // Comma-separated list of domains (e.g. "example.com,corp.example.com")
-  AUTH_ALLOWED_EMAIL_DOMAINS: (window.allowedEmailDomains || '').split(',').filter(Boolean),
+  AUTH_ALLOWED_EMAIL_DOMAINS: (_win.allowedEmailDomains || '').split(',').filter(Boolean),
   
   PROJECT_CARD_ELEMENT: {
     'sprints': 'sprint-card',
