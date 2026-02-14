@@ -7,6 +7,27 @@ vi.mock('../../public/firebase-config.js', () => ({
   get: vi.fn()
 }));
 
+vi.mock('../../public/js/config/developer-directory.js', () => ({
+  developerDirectory: [
+    {
+      id: 'sin-asignar',
+      name: 'Sin asignar',
+      primaryEmail: '',
+      emails: [''],
+      aliases: ['Sin asignar', 'No developer assigned', ''],
+      isUnassigned: true
+    },
+    {
+      id: 'david-nieto',
+      name: 'David Nieto',
+      primaryEmail: 'dnfernandez@partner.example.com',
+      emails: ['dnfernandez@partner.example.com'],
+      aliases: ['David Nieto', 'dnfernandez']
+    }
+  ],
+  getDeveloperDirectory: vi.fn()
+}));
+
 describe('user-directory-service alias resolution', () => {
   let userDirectoryService;
 

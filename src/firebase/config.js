@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, push, set, onValue } from 'firebase/database';
-import { getAuth, OAuthProvider } from 'firebase/auth';
+import { getAuth, OAuthProvider, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getMessaging } from 'firebase/messaging';
 
@@ -28,7 +28,17 @@ if (import.meta.env.PUBLIC_USE_FIRESTORE_EMULATOR === 'true') {
 }
 
 export const messaging = getMessaging(app);
-export const microsoftProvider = new OAuthProvider('microsoft.com');
+function createAuthProvider() {
+  const provider = import.meta.env.PUBLIC_AUTH_PROVIDER || 'google';
+  switch (provider) {
+    case 'microsoft': return new OAuthProvider('microsoft.com');
+    case 'github': return new OAuthProvider('github.com');
+    case 'gitlab': return new OAuthProvider(import.meta.env.PUBLIC_GITLAB_ISSUER_URL || 'gitlab.com');
+    case 'google': default: return new GoogleAuthProvider();
+  }
+}
+export const authProvider = createAuthProvider();
+export const authProviderName = import.meta.env.PUBLIC_AUTH_PROVIDER || 'google';
 
 // Exportar funciones comunes
 export { ref, push, set, onValue };

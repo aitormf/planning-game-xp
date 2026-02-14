@@ -129,7 +129,11 @@ En la consola de Firebase, habilitar:
 
 1. **Authentication**
    - Ir a Authentication → Sign-in method
-   - Habilitar **Microsoft** (requiere Azure AD App Registration)
+   - Habilitar el proveedor elegido durante `npm run setup`:
+     - **Google**: Habilitar "Google" (la opción más sencilla)
+     - **Microsoft**: Requiere Azure AD App Registration
+     - **GitHub**: Requiere OAuth App en GitHub Developer Settings
+     - **GitLab**: Configurar OIDC con tu instancia GitLab
 
 2. **Realtime Database**
    - Ir a Realtime Database → Create Database
@@ -165,6 +169,46 @@ PUBLIC_FIREBASE_APP_ID=1:123456789:web:abc123
 PUBLIC_FIREBASE_MEASUREMENT_ID=G-XXXXXXX
 PUBLIC_SUPER_ADMIN_EMAIL=tu-email@dominio.com
 ```
+
+---
+
+## Configurar Proveedor de Autenticación
+
+El asistente `npm run setup` te preguntará qué proveedor OAuth usar. Los proveedores soportados son:
+
+| Proveedor | Variable `PUBLIC_AUTH_PROVIDER` | Notas |
+|-----------|-------------------------------|-------|
+| Google | `google` | Recomendado. Solo necesitas habilitarlo en Firebase Console. |
+| Microsoft | `microsoft` | Requiere App Registration en Azure AD. |
+| GitHub | `github` | Requiere OAuth App en GitHub Settings → Developer Settings. |
+| GitLab | `gitlab` | Requiere `PUBLIC_GITLAB_ISSUER_URL` adicional. |
+
+### Configuración por proveedor
+
+**Google:**
+1. Firebase Console → Authentication → Sign-in method → Google → Enable
+
+**Microsoft:**
+1. Crear App Registration en [Azure Portal](https://portal.azure.com/)
+2. Redirect URI: `https://tu-proyecto.firebaseapp.com/__/auth/handler`
+3. Firebase Console → Authentication → Sign-in method → Microsoft → Enable (con Client ID y Secret)
+
+**GitHub:**
+1. GitHub → Settings → Developer settings → OAuth Apps → New OAuth App
+2. Authorization callback URL: `https://tu-proyecto.firebaseapp.com/__/auth/handler`
+3. Firebase Console → Authentication → Sign-in method → GitHub → Enable (con Client ID y Secret)
+
+**GitLab (OIDC):**
+1. Configurar OIDC en tu instancia de GitLab
+2. Firebase Console → Authentication → Sign-in method → OpenID Connect → Enable
+3. Definir `PUBLIC_GITLAB_ISSUER_URL` en tus archivos `.env.*`
+
+### Cambiar de proveedor después de la instalación
+
+1. Editar `PUBLIC_AUTH_PROVIDER` en `.env.dev`, `.env.pre` y `.env.prod`
+2. Si cambias a GitLab, añadir también `PUBLIC_GITLAB_ISSUER_URL`
+3. Habilitar el nuevo proveedor en Firebase Console → Authentication
+4. Reconstruir y desplegar: `npm run build && npm run deploy`
 
 ---
 
@@ -253,7 +297,7 @@ npm run verify-setup
    - Debe mostrar la pantalla de login
 
 2. **Iniciar sesión**
-   - Click en "Sign in with Microsoft"
+   - Click en "Sign in with ..." (el botón muestra el proveedor configurado)
    - Autenticarse con el email del Super Admin
 
 3. **Verificar permisos**

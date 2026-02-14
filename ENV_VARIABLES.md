@@ -57,6 +57,17 @@ PUBLIC_FIREBASE_VAPID_KEY=BH5fN8...
 PUBLIC_SUPER_ADMIN_EMAIL=admin@tudominio.com
 ```
 
+### Authentication Provider (REQUERIDA)
+
+```bash
+# Proveedor de autenticación OAuth: google, microsoft, github, gitlab
+# Se configura durante npm run setup
+PUBLIC_AUTH_PROVIDER=google
+
+# URL de la instancia GitLab (solo si PUBLIC_AUTH_PROVIDER=gitlab)
+PUBLIC_GITLAB_ISSUER_URL=https://gitlab.com
+```
+
 ### Emuladores (SOLO para desarrollo)
 
 ```bash
@@ -232,6 +243,8 @@ Para el envío de emails vía Microsoft Graph:
 - [ ] `PUBLIC_FIREBASE_MEASUREMENT_ID`
 - [ ] `PUBLIC_FIREBASE_VAPID_KEY`
 - [ ] `PUBLIC_SUPER_ADMIN_EMAIL`
+- [ ] `PUBLIC_AUTH_PROVIDER`
+- [ ] `PUBLIC_GITLAB_ISSUER_URL` (solo si provider = gitlab)
 
 ### Cloud Functions (functions/.env)
 

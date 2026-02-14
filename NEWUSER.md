@@ -4,48 +4,27 @@ Este documento describe los pasos necesarios para dar de alta a un nuevo usuario
 
 ## Resumen de Pasos
 
-1. **Crear usuario en Azure AD** (Microsoft)
-2. **Añadir email a las reglas de Firestore** (si es necesario)
-3. **Configurar permisos en Realtime Database**
-4. **Primera autenticación del usuario**
+1. **Crear usuario en el proveedor de autenticación** (Google, Microsoft, GitHub o GitLab)
+2. **Configurar permisos en Realtime Database**
+3. **Primera autenticación del usuario**
 
 ---
 
-## 1. Crear Usuario en Azure AD (Microsoft)
+## 1. Crear Usuario en el Proveedor de Autenticación
 
-El sistema usa autenticación Microsoft OAuth. El usuario debe existir en el tenant de Azure AD configurado.
+El sistema usa autenticación OAuth con el proveedor configurado en `PUBLIC_AUTH_PROVIDER`. El usuario debe tener una cuenta válida en dicho proveedor.
 
-**Acciones:**
-- Crear el usuario en Azure AD (portal.azure.com)
-- El email debe ser del dominio `@example.com` o estar en la lista de dominios permitidos
+**Según el proveedor configurado:**
+- **Google**: El usuario necesita una cuenta de Google
+- **Microsoft**: Crear el usuario en Azure AD (portal.azure.com)
+- **GitHub**: El usuario necesita una cuenta de GitHub
+- **GitLab**: El usuario necesita una cuenta en la instancia GitLab configurada
 
----
-
-## 2. Reglas de Firestore
-
-**Archivo:** `firestore.rules`
-
-Las reglas de Firestore controlan quién puede escribir en la colección `projectCounters` (usada para generar IDs de tarjetas).
-
-### Emails permitidos automáticamente
-- Cualquier email `*@example.com`
-
-### Añadir usuario de otro dominio
-Si el usuario NO es `@example.com`, añadir su email a la lista en `firestore.rules`:
-
-```javascript
-// Línea ~12-16 en firestore.rules
-|| request.auth.token.email.matches("(usuario1|usuario2|nuevoUsuario)@dominio\\.com$")
-```
-
-**Después de modificar:** Desplegar las reglas con:
-```bash
-npm run deploy:rules
-```
+**Nota:** El email del usuario debe pertenecer a los dominios permitidos configurados en `PUBLIC_ALLOWED_EMAIL_DOMAINS`
 
 ---
 
-## 3. Configuración en Realtime Database
+## 2. Configuración en Realtime Database
 
 ### 3.1 Codificación del Email
 
@@ -135,11 +114,11 @@ Para almacenar información adicional del usuario:
 
 ---
 
-## 4. Primera Autenticación
+## 3. Primera Autenticación
 
 1. El usuario accede a la aplicación
-2. Hace clic en "Sign in with Microsoft"
-3. Se autentica con sus credenciales de Microsoft
+2. Hace clic en "Sign in with ..." (el botón muestra el proveedor configurado)
+3. Se autentica con sus credenciales
 4. La aplicación verifica sus permisos en Firebase
 5. Si no tiene entrada en `/data/projectsByUser/`, se le asignan proyectos por defecto
 
@@ -227,5 +206,5 @@ console.log('User projects:', window.userProjects);
 - O verificar que sea `@example.com` (tienen acceso automático)
 
 ### Error "Permission denied" en Firestore
-- Verificar que el email esté en la lista de `firestore.rules`
+- Verificar que el usuario está autenticado correctamente
 - Desplegar las reglas actualizadas: `npm run deploy:rules`

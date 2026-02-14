@@ -32,6 +32,7 @@ const ENV_TEMPLATE = {
     { key: 'PUBLIC_FIREBASE_MEASUREMENT_ID', desc: 'Firebase Measurement ID (Google Analytics)', required: false },
     { key: 'PUBLIC_FIREBASE_VAPID_KEY', desc: 'Firebase VAPID Key (para push notifications)', required: false },
     { key: 'PUBLIC_SUPER_ADMIN_EMAIL', desc: 'Email del Super Admin', required: true },
+    { key: 'PUBLIC_AUTH_PROVIDER', desc: 'Auth provider (google/microsoft/github/gitlab)', required: true, default: 'google' },
   ],
   functions: [
     { key: 'PUBLIC_SUPER_ADMIN_EMAIL', desc: 'Email del Super Admin (mismo que arriba)', required: true },
@@ -98,34 +99,38 @@ class SetupWizard {
       return;
     }
 
-    const totalSteps = 7;
+    const totalSteps = 8;
 
     // Step 1: Check prerequisites
     this.printStep(1, totalSteps, 'Verificando prerequisitos...');
     await this.checkPrerequisites();
 
-    // Step 2: Firebase configuration
-    this.printStep(2, totalSteps, 'Configuración de Firebase');
+    // Step 2: Auth provider selection
+    this.printStep(2, totalSteps, 'Selección de proveedor de autenticación');
+    await this.configureAuth();
+
+    // Step 3: Firebase configuration
+    this.printStep(3, totalSteps, 'Configuración de Firebase');
     await this.configureFirebase();
 
-    // Step 3: Environment files
-    this.printStep(3, totalSteps, 'Generando archivos de entorno');
+    // Step 4: Environment files
+    this.printStep(4, totalSteps, 'Generando archivos de entorno');
     await this.generateEnvFiles();
 
-    // Step 4: Microsoft Graph (optional)
-    this.printStep(4, totalSteps, 'Configuración de Microsoft Graph (opcional)');
+    // Step 5: Email service (optional)
+    this.printStep(5, totalSteps, 'Configuración de servicio de emails (opcional)');
     await this.configureMicrosoftGraph();
 
-    // Step 5: Deploy
-    this.printStep(5, totalSteps, 'Despliegue inicial');
+    // Step 6: Deploy
+    this.printStep(6, totalSteps, 'Despliegue inicial');
     await this.deploy();
 
-    // Step 6: First App Admin
-    this.printStep(6, totalSteps, 'Configuración del primer App Admin');
+    // Step 7: First App Admin
+    this.printStep(7, totalSteps, 'Configuración del primer App Admin');
     await this.setupFirstAdmin();
 
-    // Step 7: MCP Server (optional)
-    this.printStep(7, totalSteps, 'MCP Server (opcional)');
+    // Step 8: MCP Server (optional)
+    this.printStep(8, totalSteps, 'MCP Server (opcional)');
     await this.setupMCP();
 
     // Done
@@ -164,6 +169,53 @@ class SetupWizard {
       this.print('\nPara instalar Firebase CLI: npm install -g firebase-tools');
       process.exit(1);
     }
+  }
+
+  async configureAuth() {
+    this.print('Elige el proveedor de autenticación OAuth.\n');
+    this.print('  1. Google (recomendado - más fácil de configurar)');
+    this.print('  2. Microsoft (Azure AD - para organizaciones Microsoft 365)');
+    this.print('  3. GitHub (para equipos de desarrollo)');
+    this.print('  4. GitLab (OIDC - para instancias self-hosted)\n');
+
+    const choice = await this.question('Selecciona [1-4]', '1');
+    const providers = { '1': 'google', '2': 'microsoft', '3': 'github', '4': 'gitlab' };
+    const provider = providers[choice] || 'google';
+
+    this.config.client['PUBLIC_AUTH_PROVIDER'] = provider;
+
+    const instructions = {
+      google: [
+        '  → Ve a Firebase Console → Authentication → Sign-in method',
+        '  → Habilita "Google" como proveedor',
+        '  → No necesitas configuración adicional'
+      ],
+      microsoft: [
+        '  → Crea una App Registration en Azure Portal',
+        '  → Configura redirect URI: https://tu-proyecto.firebaseapp.com/__/auth/handler',
+        '  → Habilita Microsoft en Firebase Console → Authentication → Sign-in method'
+      ],
+      github: [
+        '  → Ve a GitHub Settings → Developer settings → OAuth Apps → New OAuth App',
+        '  → Authorization callback URL: https://tu-proyecto.firebaseapp.com/__/auth/handler',
+        '  → Habilita GitHub en Firebase Console con Client ID y Secret'
+      ],
+      gitlab: [
+        '  → Configura OIDC en tu instancia GitLab',
+        '  → Habilita OpenID Connect en Firebase Console → Authentication → Sign-in method'
+      ]
+    };
+
+    this.print(`\nProveedor seleccionado: ${provider.toUpperCase()}`);
+    this.print('Instrucciones para configurar en Firebase:\n');
+    instructions[provider].forEach(line => this.print(line));
+
+    if (provider === 'gitlab') {
+      const issuer = await this.question('\n  URL de tu instancia GitLab', 'https://gitlab.com');
+      this.config.client['PUBLIC_GITLAB_ISSUER_URL'] = issuer;
+    }
+
+    this.print('');
   }
 
   async configureFirebase() {

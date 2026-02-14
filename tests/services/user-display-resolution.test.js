@@ -7,6 +7,34 @@ vi.mock('../../public/firebase-config.js', () => ({
   get: vi.fn()
 }));
 
+vi.mock('../../public/js/config/developer-directory.js', () => ({
+  developerDirectory: [
+    {
+      id: 'sin-asignar',
+      name: 'Sin asignar',
+      primaryEmail: '',
+      emails: [''],
+      aliases: ['Sin asignar', 'No developer assigned', ''],
+      isUnassigned: true
+    },
+    {
+      id: 'dani-neff',
+      name: 'Dani Neff',
+      primaryEmail: 'dneff@example.com',
+      emails: ['dneff@example.com'],
+      aliases: ['Dani Neff', 'dneff']
+    },
+    {
+      id: 'daniel-gonzalez',
+      name: 'Daniel González',
+      primaryEmail: 'dglopez@partner.example.com',
+      emails: ['dglopez@partner.example.com'],
+      aliases: ['Daniel González', 'dglopez']
+    }
+  ],
+  getDeveloperDirectory: vi.fn()
+}));
+
 import { userDirectoryService } from '../../public/js/services/user-directory-service.js';
 import { developerDirectory } from '../../public/js/config/developer-directory.js';
 

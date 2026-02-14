@@ -1,10 +1,10 @@
 import { signInWithPopup } from 'firebase/auth';
-import { auth, microsoftProvider } from '@firebase/config.js';
+import { auth, authProvider } from '@firebase/config.js';
 
 // Authentication
 async function authenticate() {
   try {
-    await signInWithPopup(auth, microsoftProvider);
+    await signInWithPopup(auth, authProvider);
   } catch (error) {
     console.error('[Auth] Authentication error:', error.code, error.message);
 

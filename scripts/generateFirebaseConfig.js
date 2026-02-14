@@ -22,7 +22,7 @@ export function generateFirebaseConfig(env) {
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getDatabase, ref, onValue, push, set, get, update, connectDatabaseEmulator, query, orderByChild, limitToLast, runTransaction as runDbTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
-import { getAuth, OAuthProvider, signOut, signInWithPopup, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, OAuthProvider, GoogleAuthProvider, signOut, signInWithPopup, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { getFirestore, doc, runTransaction, setDoc, getDoc, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { getMessaging } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
@@ -41,6 +41,7 @@ window.allowedEmailDomains = "${env.PUBLIC_ALLOWED_EMAIL_DOMAINS || ''}"
   .split(',')
   .map(d => d.trim())
   .filter(Boolean);
+window.authProviderName = '${env.PUBLIC_AUTH_PROVIDER || 'google'}';
 const runtimeEnv = "${env.APP_RUNTIME_ENV || env.ASTRO_MODE || env.MODE || ''}";
 const isPreEnv = runtimeEnv === 'pre';
 const allowEmulators = ${env.USE_FIREBASE_EMULATOR === 'true' ? 'true' : 'false'} && !isPreEnv;
@@ -70,7 +71,15 @@ if (isDevelopment && allowEmulators && useEmulators && !window._emulatorsPreConn
 
 export const database = getDatabase(app);
 export const auth = getAuth(app);
-export const microsoftProvider = new OAuthProvider('microsoft.com');
+function _createAuthProvider() {
+  const p = '${env.PUBLIC_AUTH_PROVIDER || 'google'}';
+  if (p === 'microsoft') return new OAuthProvider('microsoft.com');
+  if (p === 'github') return new OAuthProvider('github.com');
+  if (p === 'gitlab') return new OAuthProvider('${env.PUBLIC_GITLAB_ISSUER_URL || 'gitlab.com'}');
+  return new GoogleAuthProvider();
+}
+export const authProvider = _createAuthProvider();
+export const authProviderName = '${env.PUBLIC_AUTH_PROVIDER || 'google'}';
 export const databaseFirestore = getFirestore(app);
 export const messaging = getMessaging(app);
 export const storage = getStorage(app);
@@ -152,7 +161,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-export { ref, push, set, update, onValue, signOut, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, get, doc, runTransaction, runDbTransaction, setDoc, getDoc, vapidKey, connectDatabaseEmulator, connectStorageEmulator, query, orderByChild, limitToLast, httpsCallable };
+export { ref, push, set, update, onValue, signOut, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, get, doc, runTransaction, runDbTransaction, setDoc, getDoc, vapidKey, connectDatabaseEmulator, connectStorageEmulator, query, orderByChild, limitToLast, httpsCallable, OAuthProvider, GoogleAuthProvider };
 `;
 
   // Escribir los archivos

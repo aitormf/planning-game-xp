@@ -60,7 +60,7 @@ let user = null;
         <notification-bell id="notificationBell" class="hidden"></notification-bell>
         <span id="user-status">Cargando...</span>
         <div class="auth-actions">
-          <button id="microsoftLoginButton" class="login-button hidden">Sign in with Microsoft</button>
+          <button id="oauthLoginButton" class="login-button hidden">Sign in</button>
           <button id="emailLoginToggle" class="secondary-button hidden">Entrar con email</button>
           <form id="emailLoginForm" class="email-login-form hidden">
             <label class="sr-only" for="emailLoginInput">Correo electrónico</label>
@@ -151,7 +151,7 @@ let user = null;
       import { APP_CONSTANTS } from '/js/constants/app-constants.js';
   import '/js/services/notification-service.js';
   import '/js/debug-notifications.js';
-  import { database, ref, onValue, auth, microsoftProvider, signOut, signInWithPopup, signInWithEmailAndPassword, functions, httpsCallable, app, get } from '/firebase-config.js';
+  import { database, ref, onValue, auth, authProvider, authProviderName, signOut, signInWithPopup, signInWithEmailAndPassword, functions, httpsCallable, app, get } from '/firebase-config.js';
   import { encodeEmailForFirebase } from '/js/utils/email-sanitizer.js';
       import { SYSTEM_REQUIREMENTS } from '/js/config/system-requirements-config.js';
 
@@ -172,7 +172,7 @@ let user = null;
       }
 
       let userStatusElement;
-      let microsoftLoginButton;
+      let oauthLoginButton;
       let emailLoginToggle;
       let emailLoginForm;
       let emailLoginInput;
@@ -230,10 +230,10 @@ let user = null;
         default: 'No se ha podido enviar la solicitud. Inténtalo más tarde o contacta con soporte.'
       };
 
-      // Función de autenticación con Microsoft
-      async function authenticateWithMicrosoft() {
+      // OAuth authentication function
+      async function authenticateWithOAuth() {
         try {
-          await signInWithPopup(auth, microsoftProvider);
+          await signInWithPopup(auth, authProvider);
         } catch (error) {
           console.error('[Auth] Authentication error:', error.code, error.message);
 
@@ -559,7 +559,7 @@ let user = null;
         }
 
         userStatusElement.textContent = 'Not signed in';
-        microsoftLoginButton?.classList.remove('hidden');
+        oauthLoginButton?.classList.remove('hidden');
         emailLoginToggle?.classList.remove('hidden');
         hideEmailLoginForm({ resetForm: true });
         hideEmailRegisterForm({ resetForm: true });
@@ -584,7 +584,7 @@ let user = null;
         document.body.setAttribute('data-authenticated', 'true');
         const userName = user.displayName || user.email || 'Usuario sin nombre';
         userStatusElement.textContent = `Signed in as ${userName}`;
-        microsoftLoginButton?.classList.add('hidden');
+        oauthLoginButton?.classList.add('hidden');
         emailLoginToggle?.classList.add('hidden');
         hideEmailLoginForm({ resetForm: true, showToggle: false });
         hideEmailRegisterForm({ resetForm: true, showLoginToggle: false });
@@ -622,7 +622,7 @@ let user = null;
 
       function getDomElements() {
         userStatusElement = document.getElementById('user-status');
-        microsoftLoginButton = document.getElementById('microsoftLoginButton');
+        oauthLoginButton = document.getElementById('oauthLoginButton');
         emailLoginToggle = document.getElementById('emailLoginToggle');
         emailLoginForm = document.getElementById('emailLoginForm');
         emailLoginInput = document.getElementById('emailLoginInput');
@@ -652,8 +652,10 @@ let user = null;
 
         getDomElements();
         pagePath = window.location.pathname;
-        if (microsoftLoginButton) {
-          microsoftLoginButton.addEventListener('click', authenticateWithMicrosoft);
+        if (oauthLoginButton) {
+          const providerLabels = { google: 'Google', microsoft: 'Microsoft', github: 'GitHub', gitlab: 'GitLab' };
+          oauthLoginButton.textContent = `Sign in with ${providerLabels[authProviderName] || 'OAuth'}`;
+          oauthLoginButton.addEventListener('click', authenticateWithOAuth);
         }
         if (emailLoginToggle) {
           emailLoginToggle.addEventListener('click', showEmailLoginForm);
