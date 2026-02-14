@@ -17,7 +17,7 @@ let user = null;
     <meta name="description" content="XP Planning Game" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <title>Planning GameXP - {title}</title>
+    <title>{title}</title>
     <link rel="manifest" href="/manifest.json">
     <!-- Import Maps for npm packages -->
     <script type="importmap">
@@ -44,7 +44,6 @@ let user = null;
   <body data-user-email={user || ''} data-authenticated="false">
     <header>
       <a href="/" class="header-logos">
-        <img src="/images/logo_geniova.png" alt="Geniova Logo" class="logo" />
         <img src="/images/icono_PGame.png" alt="Planning Game" class="planning-game-icon" />
       </a>
       <div class="header-title-container">
@@ -788,7 +787,7 @@ let user = null;
         --primary-color: #4a9eff;
         --secondary-color: #357ae8;
         --terciary-color: #f5f7fa;
-        --geniova-color: #ec3e95;
+        --brand-secondary: #ec3e95;
         --background-color: var(--bg-secondary, #f5f7fa);
 
         /* Aliases: map legacy variable names used by components to design system tokens */
@@ -941,10 +940,10 @@ let user = null;
       }
 
       .login-button {
-        background: var(--geniova-color);
+        background: var(--brand-secondary);
       }
       .login-button:hover {
-        background: var(--geniova-color-light, #fc6ec5);
+        background: var(--brand-secondary-light, #fc6ec5);
       }
 
       .logout-button {

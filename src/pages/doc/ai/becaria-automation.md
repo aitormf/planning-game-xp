@@ -107,7 +107,7 @@ on:
 jobs:
   review:
     if: contains(github.event.pull_request.labels.*.name, 'ai-review')
-    uses: Geniova-Technologies/.github/.github/workflows/ai-pr-review.yml@main
+    uses: your-org/.github/.github/workflows/ai-pr-review.yml@main
     secrets:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 ```
@@ -145,7 +145,7 @@ El workflow soporta un **prompt personalizado** almacenado en Firebase. Para usa
 ```yaml
 jobs:
   review:
-    uses: Geniova-Technologies/.github/.github/workflows/ai-pr-review.yml@main
+    uses: your-org/.github/.github/workflows/ai-pr-review.yml@main
     with:
       prompt_url: "https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app/globalConfigs/prompts/<ID>.json"
     secrets:

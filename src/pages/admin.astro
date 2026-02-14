@@ -2236,8 +2236,8 @@ import Layout from '../layouts/Layout.astro';
     const margin = 20;
     let y = margin;
 
-    // Colors - Geniova Corporate
-    const primaryColor = [223, 0, 110]; // Geniova magenta #df006e
+    // Colors - Brand
+    const primaryColor = [223, 0, 110]; // Brand magenta #df006e
     const secondaryColor = [52, 73, 94]; // Dark gray
     const lightGray = [245, 245, 245];
     const mediumGray = [189, 195, 199];
@@ -2479,7 +2479,7 @@ import Layout from '../layouts/Layout.astro';
       doc.setTextColor(128, 128, 128);
       doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, margin, pageHeight - 8);
       doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
-      doc.text('Planning Game XP - Geniova Technologies', pageWidth / 2, pageHeight - 8, { align: 'center' });
+      doc.text(window.appName || 'Planning GameXP', pageWidth / 2, pageHeight - 8, { align: 'center' });
     }
 
     // Download
@@ -3129,7 +3129,7 @@ import Layout from '../layouts/Layout.astro';
       doc.setTextColor(128, 128, 128);
       doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, margin, pageHeight - 8);
       doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
-      doc.text('Planning Game XP - Geniova Technologies', pageWidth / 2, pageHeight - 8, { align: 'center' });
+      doc.text(window.appName || 'Planning GameXP', pageWidth / 2, pageHeight - 8, { align: 'center' });
     }
 
     doc.save(`informe-iso-${startDate}-${endDate}.pdf`);

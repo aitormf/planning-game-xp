@@ -10,7 +10,7 @@
 # - Node.js 18+
 # - Docker
 # - Claude Code CLI (claude)
-# - Access to NAS for MCP credentials
+# - Firebase serviceAccountKey.json for MCP
 # ============================================================================
 
 set -e
@@ -114,9 +114,8 @@ setup_planning_game_mcp() {
         warning "serviceAccountKey.json not found in $MCP_DIR"
         echo ""
         echo "  The Planning Game MCP requires Firebase credentials."
-        echo "  Please download serviceAccountKey.zip from:"
-        echo "  \\\\192.168.63.130\\no-comun\\IT\\geniova-platform-data\\MCP-PlanningGame"
-        echo "  and extract it to $MCP_DIR"
+        echo "  Please place your serviceAccountKey.json in $MCP_DIR"
+        echo "  (Download from Firebase Console > Project Settings > Service accounts)"
         echo ""
     fi
 

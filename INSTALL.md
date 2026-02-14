@@ -58,11 +58,11 @@ La forma más fácil de instalar es usando el asistente interactivo:
 # 1. Clonar el repositorio
 
 Por https:
-git clone https://github.com/Geniova-Technologies/PlanningGameXP.git
+git clone https://github.com/AgilePlanning-io/planning-game-xp.git
 O por ssh:
-git clone git@github.com:Geniova-Technologies/PlanningGameXP.git
+git clone git@github.com:AgilePlanning-io/planning-game-xp.git
 
-cd PlanningGameXP
+cd planning-game-xp
 
 # 2. Instalar dependencias
 npm install
@@ -83,8 +83,8 @@ Si prefieres configurar manualmente:
 ### 1. Clonar y preparar
 
 ```bash
-git clone https://github.com/Geniova-Technologies/PlanningGameXP.git
-cd PlanningGameXP
+git clone https://github.com/AgilePlanning-io/planning-game-xp.git
+cd planning-game-xp
 npm install
 cd functions && npm install && cd ..
 ```

@@ -207,7 +207,7 @@ const width = 1000 - margin.left - margin.right;
         <strong>${task.name}</strong><br/>
         ${planificado}
         ${task.realStart ? `<br/>Real: ${task.realStart}${task.realEnd ? ` - ${task.realEnd}` : ''}` : ''}<br/>
-        Team: Geniova Team IT
+        Team: ${this.project || 'Team'}
       `)
         .style('left', (event.pageX + 10) + 'px')
         .style('top', (event.pageY - 28) + 'px');

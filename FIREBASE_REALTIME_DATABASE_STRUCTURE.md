@@ -479,12 +479,12 @@ wip/
 ```json
 {
   "wip": {
-    "mfosela|geniova!com": {
+    "admin|example!com": {
       "taskId": "PLN-TSK-0042",
       "taskTitle": "Implementar filtros avanzados",
       "projectId": "planning-game",
       "startedAt": "2025-12-03T10:30:00.000Z",
-      "developer": "mfosela@geniova.com",
+      "developer": "admin@example.com",
       "developerName": "Mánu Fosela"
     }
   }
@@ -529,12 +529,12 @@ wipHistory/
 ```json
 {
   "wipHistory": {
-    "mfosela|geniova!com": {
+    "admin|example!com": {
       "1701600000000": {
         "taskId": "PLN-TSK-0041",
         "taskTitle": "Diseñar componente de login",
         "projectId": "planning-game",
-        "developer": "mfosela@geniova.com",
+        "developer": "admin@example.com",
         "developerName": "Mánu Fosela",
         "startedAt": "2025-12-02T09:00:00.000Z",
         "endedAt": "2025-12-03T10:30:00.000Z",
@@ -546,7 +546,7 @@ wipHistory/
         "taskId": "PLN-TSK-0040",
         "taskTitle": "Revisar estilos",
         "projectId": "planning-game",
-        "developer": "mfosela@geniova.com",
+        "developer": "admin@example.com",
         "developerName": "Mánu Fosela",
         "startedAt": "2025-12-01T14:00:00.000Z",
         "endedAt": "2025-12-02T09:00:00.000Z",
@@ -609,9 +609,9 @@ global/
         "category": "development",
         "content": "# BecarIA Developer Agent\n\n## Comportamiento\n...",
         "createdAt": "2026-01-31T10:00:00.000Z",
-        "createdBy": "admin@geniova.com",
+        "createdBy": "admin@example.com",
         "updatedAt": "2026-01-31T10:00:00.000Z",
-        "updatedBy": "admin@geniova.com"
+        "updatedBy": "admin@example.com"
       }
     },
     "prompts": {
@@ -621,7 +621,7 @@ global/
         "category": "planning",
         "content": "## Escala devPoints (1-5)\n...",
         "createdAt": "2026-01-31T10:00:00.000Z",
-        "createdBy": "admin@geniova.com"
+        "createdBy": "admin@example.com"
       }
     },
     "instructions": {
@@ -721,9 +721,9 @@ adrs/
         "consequences": "Positivas:\n- Updates en tiempo real\n- Modelo simple\n\nNegativas:\n- Queries limitados\n- Vendor lock-in",
         "supersededBy": null,
         "createdAt": "2024-01-15T10:00:00.000Z",
-        "createdBy": "mfosela@geniova.com",
+        "createdBy": "admin@example.com",
         "updatedAt": "2026-01-31T10:00:00.000Z",
-        "updatedBy": "admin@geniova.com"
+        "updatedBy": "admin@example.com"
       }
     }
   }

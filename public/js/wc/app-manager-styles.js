@@ -35,12 +35,12 @@ export const AppManagerStyles = css`
     color: var(--secondary-color, #333);
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--geniova-color, #ec3e95);
+    border-bottom: 2px solid var(--brand-secondary, #ec3e95);
   }
 
   .upload-area {
     background: var(--bg-primary);
-    border: 2px dashed var(--geniova-color, #ec3e95);
+    border: 2px dashed var(--brand-secondary, #ec3e95);
     border-radius: 8px;
     padding: 2rem;
     text-align: center;
@@ -260,7 +260,7 @@ export const AppManagerStyles = css`
 
   .download-btn {
     padding: 0.5rem 1rem;
-    background: var(--geniova-color, #ec3e95);
+    background: var(--brand-secondary, #ec3e95);
     color: white;
     border: none;
     border-radius: 4px;
@@ -355,7 +355,7 @@ export const AppManagerStyles = css`
     width: 20px;
     height: 20px;
     border: 2px solid #f3f3f3;
-    border-top: 2px solid var(--geniova-color, #ec3e95);
+    border-top: 2px solid var(--brand-secondary, #ec3e95);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-right: 0.5rem;
@@ -450,7 +450,7 @@ export const AppManagerStyles = css`
   .upload-metadata-form .form-select:focus,
   .upload-metadata-form .form-textarea:focus {
     outline: none;
-    border-color: var(--geniova-color, #ec3e95);
+    border-color: var(--brand-secondary, #ec3e95);
     box-shadow: 0 0 0 2px rgba(236, 62, 149, 0.15);
   }
 
@@ -859,7 +859,7 @@ export const AppManagerStyles = css`
   /* Download button primary */
   .download-btn.primary {
     padding: 0.5rem 1.25rem;
-    background: linear-gradient(135deg, var(--geniova-color, #ec3e95) 0%, #d63384 100%);
+    background: linear-gradient(135deg, var(--brand-secondary, #ec3e95) 0%, #d63384 100%);
     font-size: 0.95rem;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(236, 62, 149, 0.3);
@@ -985,7 +985,7 @@ export const AppManagerStyles = css`
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.25rem;
-    background: linear-gradient(135deg, var(--geniova-color, #ec3e95) 0%, #d63384 100%);
+    background: linear-gradient(135deg, var(--brand-secondary, #ec3e95) 0%, #d63384 100%);
     color: white;
   }
 

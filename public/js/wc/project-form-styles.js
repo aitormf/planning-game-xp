@@ -60,7 +60,7 @@ export const ProjectFormStyles = css`
   .form-group textarea {
     width: 100%;
     padding: 0.75rem;
-    border: 2px solid var(--geniova-color, #007bff);
+    border: 2px solid var(--brand-secondary, #007bff);
     border-radius: 8px;
     font-size: 1rem;
     box-sizing: border-box;
@@ -70,7 +70,7 @@ export const ProjectFormStyles = css`
   .form-group select:focus,
   .form-group textarea:focus {
     outline: none;
-    border-color: var(--geniova-color, #007bff);
+    border-color: var(--brand-secondary, #007bff);
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
   }
 
@@ -86,7 +86,7 @@ export const ProjectFormStyles = css`
 
   .stakeholder-input button {
     padding: 0.75rem 1rem;
-    background-color: var(--geniova-color, #007bff);
+    background-color: var(--brand-secondary, #007bff);
     color: white;
     border: none;
     border-radius: 8px;
@@ -116,7 +116,7 @@ export const ProjectFormStyles = css`
 
   .developer-input button {
     padding: 0.75rem 1rem;
-    background-color: var(--geniova-color, #007bff);
+    background-color: var(--brand-secondary, #007bff);
     color: white;
     border: none;
     border-radius: 8px;
@@ -443,7 +443,7 @@ export const ProjectFormStyles = css`
 
   .add-btn {
     padding: 0.75rem 1rem;
-    background-color: var(--geniova-color, #007bff);
+    background-color: var(--brand-secondary, #007bff);
     color: white;
     border: none;
     border-radius: 8px;
@@ -572,7 +572,7 @@ export const ProjectFormStyles = css`
   }
 
   .repository-item.default-repo {
-    border-color: var(--geniova-color, #007bff);
+    border-color: var(--brand-secondary, #007bff);
     background-color: #e7f3ff;
   }
 
@@ -595,7 +595,7 @@ export const ProjectFormStyles = css`
   }
 
   .default-badge {
-    background-color: var(--geniova-color, #007bff);
+    background-color: var(--brand-secondary, #007bff);
     color: white;
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;

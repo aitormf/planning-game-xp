@@ -1957,7 +1957,7 @@ this.selectedYear = year;
   }
 
   /**
-   * Check if current user is superadmin (mfosela@geniova.com)
+   * Check if current user is superadmin
    * @returns {Promise<boolean>} True if user is superadmin
    */
   async _checkIsSuperAdmin() {

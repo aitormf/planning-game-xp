@@ -626,7 +626,7 @@ const developerValue = developerOptions.find(opt => opt.value === this.developer
       ${!this.isNewProposal ? html`
         <button
           @click=${this.showConvertConfirmation}
-          style="background-color: var(--geniova-color); margin: 1rem;"
+          style="background-color: var(--brand-secondary); margin: 1rem;"
         >
           Convert to Task
         </button>
@@ -833,7 +833,7 @@ return;
           message: `¿Quieres convertir la propuesta <b>${this.title || this.cardId}</b> en una tarea?`,
           button1Text: 'Convertir',
           button2Text: 'Cancelar',
-          button1css: 'background-color: var(--geniova-color);',
+          button1css: 'background-color: var(--brand-secondary);',
           button2css: 'background-color: #999;',
           button1Action: () => this.convertToTask(),
           button2Action: () => { },

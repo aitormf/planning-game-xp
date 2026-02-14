@@ -17,9 +17,9 @@ vi.mock('../../public/firebase-config.js', () => ({
   setDoc: vi.fn(),
   doc: vi.fn(),
   runTransaction: vi.fn(),
-  auth: { currentUser: { email: 'testuser@geniova.com' } },
+  auth: { currentUser: { email: 'testuser@example.com' } },
   firebaseConfig: {},
-  superAdminEmail: 'superadmin@geniova.com',
+  superAdminEmail: 'superadmin@example.com',
 }));
 
 describe('DeveloperGroupsService', () => {

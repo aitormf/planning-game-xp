@@ -13,11 +13,11 @@ Este documento describe los pasos necesarios para dar de alta a un nuevo usuario
 
 ## 1. Crear Usuario en Azure AD (Microsoft)
 
-El sistema usa autenticación Microsoft OAuth. El usuario debe existir en el tenant de Azure AD de Geniova.
+El sistema usa autenticación Microsoft OAuth. El usuario debe existir en el tenant de Azure AD configurado.
 
 **Acciones:**
 - Crear el usuario en Azure AD (portal.azure.com)
-- El email debe ser del dominio `@geniova.com` o estar en la lista de dominios permitidos
+- El email debe ser del dominio `@example.com` o estar en la lista de dominios permitidos
 
 ---
 
@@ -28,10 +28,10 @@ El sistema usa autenticación Microsoft OAuth. El usuario debe existir en el ten
 Las reglas de Firestore controlan quién puede escribir en la colección `projectCounters` (usada para generar IDs de tarjetas).
 
 ### Emails permitidos automáticamente
-- Cualquier email `*@geniova.com`
+- Cualquier email `*@example.com`
 
 ### Añadir usuario de otro dominio
-Si el usuario NO es `@geniova.com`, añadir su email a la lista en `firestore.rules`:
+Si el usuario NO es `@example.com`, añadir su email a la lista en `firestore.rules`:
 
 ```javascript
 // Línea ~12-16 en firestore.rules
@@ -54,7 +54,7 @@ Los emails se codifican para usarse como claves en Firebase:
 - `.` → `!`
 - `#` → `-`
 
-**Ejemplo:** `usuario@geniova.com` → `usuario|geniova!com`
+**Ejemplo:** `usuario@example.com` → `usuario|example!com`
 
 ### 3.2 Rutas a Configurar
 
@@ -68,8 +68,8 @@ Los emails se codifican para usarse como claves en Firebase:
 
 **Ejemplo:**
 ```
-/data/projectsByUser/usuario|geniova!com = "All"
-/data/projectsByUser/consultor|externo!com = "Cinema4D, Extranet V2"
+/data/projectsByUser/usuario|example!com = "All"
+/data/projectsByUser/consultant|example!com = "ProjectA, ProjectB"
 ```
 
 #### B) SuperAdmin (OPCIONAL)
@@ -78,7 +78,7 @@ Los emails se codifican para usarse como claves en Firebase:
 Para dar permisos de SuperAdmin (gestión de usuarios, todos los proyectos, crear/eliminar proyectos):
 
 ```
-/data/superAdminEmails/usuario|geniova!com = true
+/data/superAdminEmails/usuario|example!com = true
 ```
 
 #### C) App Uploader (OPCIONAL)
@@ -87,7 +87,7 @@ Para dar permisos de SuperAdmin (gestión de usuarios, todos los proyectos, crea
 Para dar permisos de subida de aplicaciones en un proyecto específico:
 
 ```
-/data/appUploaders/Cinema4D/usuario|geniova!com = true
+/data/appUploaders/ProjectA/usuario|example!com = true
 ```
 
 > Las apps subidas quedan en estado "pendiente" hasta que un App Admin las apruebe.
@@ -98,7 +98,7 @@ Para dar permisos de subida de aplicaciones en un proyecto específico:
 Para dar permisos de administrador de aplicaciones (aprobar, deprecar, eliminar apps):
 
 ```
-/data/appAdmins/usuario|geniova!com = true
+/data/appAdmins/usuario|example!com = true
 ```
 
 #### F) Permisos de Storage General (OPCIONAL)
@@ -107,11 +107,11 @@ Para dar permisos de administrador de aplicaciones (aprobar, deprecar, eliminar 
 - `/data/storageWriteAllowed/{emailCodificado}` - Escritura de archivos (fuera de /apps/)
 
 ```
-/data/storageReadAllowed/usuario|geniova!com = true
-/data/storageWriteAllowed/usuario|geniova!com = true
+/data/storageReadAllowed/usuario|example!com = true
+/data/storageWriteAllowed/usuario|example!com = true
 ```
 
-> **Nota:** Los usuarios `@geniova.com` tienen acceso de lectura automático.
+> **Nota:** Los usuarios `@example.com` tienen acceso de lectura automático.
 > Para subir apps, usar `appUploaders`. Para aprobar apps, usar `appAdmins`.
 
 #### G) Información del Usuario (OPCIONAL)
@@ -122,7 +122,7 @@ Para almacenar información adicional del usuario:
 ```json
 {
   "name": "Nombre Apellido",
-  "email": "usuario@geniova.com",
+  "email": "usuario@example.com",
   "isAdmin": false,
   "isSuperAdmin": false,
   "aliases": ["alias@otro.com"],
@@ -163,28 +163,28 @@ Para almacenar información adicional del usuario:
 
 ### Usuario Normal (solo ciertos proyectos)
 ```
-/data/projectsByUser/empleado|geniova!com = "Cinema4D, Intranet"
+/data/projectsByUser/empleado|example!com = "ProjectA, ProjectB"
 ```
 
 ### Usuario con Acceso Total
 ```
-/data/projectsByUser/manager|geniova!com = "All"
+/data/projectsByUser/manager|example!com = "All"
 ```
 
 ### SuperAdmin Completo
 ```
-/data/projectsByUser/admin|geniova!com = "All"
-/data/superAdminEmails/admin|geniova!com = true
-/data/appAdmins/admin|geniova!com = true
-/data/storageWriteAllowed/admin|geniova!com = true
+/data/projectsByUser/admin|example!com = "All"
+/data/superAdminEmails/admin|example!com = true
+/data/appAdmins/admin|example!com = true
+/data/storageWriteAllowed/admin|example!com = true
 ```
 
 ### Usuario Externo (consultor)
-1. Añadir email a `firestore.rules` si no es `@geniova.com`
+1. Añadir email a `firestore.rules` si no es `@example.com`
 2. Configurar en Realtime Database:
 ```
-/data/projectsByUser/consultor|externo!com = "ProyectoCliente"
-/data/storageReadAllowed/consultor|externo!com = true
+/data/projectsByUser/consultant|example!com = "ProyectoCliente"
+/data/storageReadAllowed/consultant|example!com = true
 ```
 
 ---
@@ -198,8 +198,8 @@ function encodeEmailForFirebase(email) {
 }
 
 // Uso:
-console.log(encodeEmailForFirebase('usuario@geniova.com'));
-// Output: usuario|geniova!com
+console.log(encodeEmailForFirebase('usuario@example.com'));
+// Output: usuario|example!com
 ```
 
 ### Verificar Permisos desde la Consola del Navegador
@@ -224,7 +224,7 @@ console.log('User projects:', window.userProjects);
 
 ### El usuario no puede subir archivos
 - Verificar `/data/storageWriteAllowed/{emailCodificado}` = `true`
-- O verificar que sea `@geniova.com` (tienen acceso automático)
+- O verificar que sea `@example.com` (tienen acceso automático)
 
 ### Error "Permission denied" en Firestore
 - Verificar que el email esté en la lista de `firestore.rules`

@@ -6,16 +6,16 @@ export class AppFooter extends LitElement {
     return css`
       :host {
         display: block;
-        background: #4a9eff;
-        color: white;
+        background: var(--brand-primary, #4a9eff);
+        color: var(--footer-text, white);
         padding: 0.1rem;
         text-align: center;
-        box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-md, 0 -2px 4px rgba(0,0,0,0.1));
         position: fixed;
         width: 100%;
         bottom: 0;
         z-index: 1000;
-        border-top: 2px solid #357ae8;
+        border-top: 2px solid var(--primary-color-dark, #357ae8);
         font-weight: bold;
       }
 
@@ -42,8 +42,8 @@ export class AppFooter extends LitElement {
       }
 
       .version {
-        background: #ec3e95;
-        color: white;
+        background: var(--brand-secondary, #ec3e95);
+        color: var(--footer-text, white);
         padding: 0.25rem 0.75rem;
         border-radius: 20px;
         font-weight: 500;
@@ -51,7 +51,7 @@ export class AppFooter extends LitElement {
       }
 
       .copyright {
-        color: white;
+        color: var(--footer-text, white);
         font-size: 0.8rem;
         font-weight: bold;
       }
@@ -75,7 +75,7 @@ export class AppFooter extends LitElement {
       <footer>
         <div class="footer-content">
           <div class="footer-left">
-            <span class="copyright">© ${new Date().getFullYear()} Geniova Technologies - Planning Game XP</span>
+            <span class="copyright">© ${new Date().getFullYear()} ${window.appName || 'Planning GameXP'}</span>
           </div>
           <div class="footer-right">
             <span class="version">v${version}</span>

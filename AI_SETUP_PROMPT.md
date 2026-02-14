@@ -9,7 +9,7 @@ Copia este prompt y dáselo a una IA (como Claude) para que te guíe en la insta
 ```
 Necesito que me ayudes a instalar y configurar Planning Game XP, una aplicación de gestión de proyectos ágiles.
 
-El repositorio está en: https://github.com/Geniova-Technologies/PlanningGameXP
+El repositorio está en: https://github.com/AgilePlanning-io/planning-game-xp
 
 Por favor, guíame paso a paso a través del proceso de instalación. Necesito:
 
@@ -81,8 +81,8 @@ Durante la instalación, la IA te pedirá que ejecutes comandos como:
 
 ```bash
 # Clonar repositorio
-git clone https://github.com/Geniova-Technologies/PlanningGameXP.git
-cd PlanningGameXP
+git clone https://github.com/AgilePlanning-io/planning-game-xp.git
+cd planning-game-xp
 
 # Instalar dependencias
 npm install

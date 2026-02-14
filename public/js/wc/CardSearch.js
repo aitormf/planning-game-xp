@@ -39,7 +39,7 @@ export class CardSearch extends LitElement {
       }
 
       .search-container:focus-within {
-        border-color: var(--geniova-color, #ec3e95);
+        border-color: var(--brand-secondary, #ec3e95);
         box-shadow: 0 0 0 2px rgba(236, 62, 149, 0.15);
       }
 

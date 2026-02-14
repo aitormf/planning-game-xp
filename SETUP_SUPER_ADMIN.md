@@ -6,7 +6,7 @@ Se ha implementado un sistema de seguridad de 3 capas para la sección Developme
 
 ### Capa 1: Variable de entorno (Cliente - UX)
 - Archivo: `.env.dev`, `.env.pre`, `.env.pro`
-- Variable: `PUBLIC_SUPER_ADMIN_EMAIL=mfosela@geniova.com`
+- Variable: `PUBLIC_SUPER_ADMIN_EMAIL=admin@example.com`
 - Propósito: Ocultar enlace en menú de navegación
 
 ### Capa 2: Validación cliente (JavaScript)
@@ -31,7 +31,7 @@ Necesitas añadir tu email a Firebase Realtime Database manualmente:
 3. Ve a **Realtime Database**
 4. Navega a `/data/superAdminEmails`
 5. Añade un nuevo hijo:
-   - **Clave**: `mfosela_geniova_com` (email con caracteres especiales reemplazados)
+   - **Clave**: `admin_example_com` (email con caracteres especiales reemplazados)
    - **Valor**: `true`
 
 **Opción B: Usar script de inicialización**
@@ -42,7 +42,7 @@ Ejecuta este código desde la consola del navegador **después de iniciar sesió
 // Copiar y pegar en la consola del navegador
 (async function() {
   const { database, ref, set } = await import('/firebase-config.js');
-  const email = 'mfosela@geniova.com';
+  const email = 'admin@example.com';
   const encodedEmail = email.replace(/\./g, '_').replace(/#/g, '_').replace(/\$/g, '_').replace(/\[/g, '_').replace(/]/g, '_');
 
   try {
@@ -68,15 +68,15 @@ firebase deploy --only database
 
 ### 3. Verificar que funciona
 
-1. Inicia sesión con tu usuario (`mfosela@geniova.com`)
+1. Inicia sesión con tu usuario (`admin@example.com`)
 2. Abre la consola del navegador
 3. Deberías ver:
    ```
-   🔑 Super Admin access granted from environment variable: mfosela@geniova.com
+   🔑 Super Admin access granted from environment variable: admin@example.com
    ```
    O si usas Firebase:
    ```
-   🔑 Super Admin access granted from Firebase: mfosela@geniova.com
+   🔑 Super Admin access granted from Firebase: admin@example.com
    ```
 
 4. Cierra sesión e inicia con otro usuario
@@ -90,7 +90,7 @@ firebase deploy --only database
 ```
 /data
   /superAdminEmails
-    /mfosela_geniova_com: true
+    /admin_example_com: true
 ```
 
 ## ⚠️ Importante
@@ -108,7 +108,7 @@ firebase deploy --only database
 ```javascript
 (async function() {
   const { database, ref, set } = await import('/firebase-config.js');
-  const newSuperAdminEmail = 'nuevo@geniova.com'; // Cambiar aquí
+  const newSuperAdminEmail = 'newadmin@example.com'; // Cambiar aquí
   const encodedEmail = newSuperAdminEmail.replace(/\./g, '_').replace(/#/g, '_').replace(/\$/g, '_').replace(/\[/g, '_').replace(/]/g, '_');
 
   await set(ref(database, `/data/superAdminEmails/${encodedEmail}`), true);
@@ -120,7 +120,7 @@ firebase deploy --only database
 
 Para probar que funciona correctamente:
 
-1. **Como super admin** (`mfosela@geniova.com`):
+1. **Como super admin** (`admin@example.com`):
    - ✅ Ves el enlace "Development" en el menú
    - ✅ Puedes acceder a `/development/`
    - ✅ Puedes modificar `/data/superAdminEmails`

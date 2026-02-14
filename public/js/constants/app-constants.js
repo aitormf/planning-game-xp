@@ -1,7 +1,8 @@
 export const APP_CONSTANTS = {
   // Production app URL - used for notification links, shared URLs, etc.
   // NEVER use window.location.origin for URLs stored in Firebase
-  APP_URL: 'https://planning.geniova.com',
+  // Configured via PUBLIC_APP_URL env var → window.appUrl
+  APP_URL: window.appUrl || '',
 
   CARD_TYPES: ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa'],
 
@@ -14,22 +15,19 @@ export const APP_CONSTANTS = {
     ALIASES: ['', 'Sin asignar', 'No developer assigned', 'sin asignar', 'no developer assigned']
   },
   SECTIONS: ['Sprints', 'Epics', 'Tasks', 'Bugs', 'Proposals', 'QA'],
-  DEFAULT_USER_PROJECTS: ['Cinema4D', 'Extranet', 'Intranet', 'Intranet-Extended'],
+  DEFAULT_USER_PROJECTS: [],
 
   // Tabs visible in each view mode
   MANAGEMENT_TABS: ['sprints', 'epics', 'tasks', 'bugs', 'tickets', 'proposals', 'qa', 'adrs', 'app'],
   CONSULTATION_TABS: ['sprints', 'epics', 'tickets', 'proposals', 'app'],
   
   WELCOME_MESSAGES: {
-    TITLE: 'Project Planning Game',
-    SUBTITLE: 'Identifícate con tu usuario de Geniova'
+    TITLE: window.appName || 'Planning GameXP',
+    SUBTITLE: 'Sign in with your account'
   },
-  AUTH_ALLOWED_EMAIL_DOMAINS: [
-    'geniova.com',
-    'geniovaspain.onmicrosoft.com',
-    'maurerlabs.com',
-    'inveready.com'
-  ],
+  // Configured via PUBLIC_ALLOWED_EMAIL_DOMAINS env var → window.allowedEmailDomains
+  // Comma-separated list of domains (e.g. "example.com,corp.example.com")
+  AUTH_ALLOWED_EMAIL_DOMAINS: (window.allowedEmailDomains || '').split(',').filter(Boolean),
   
   PROJECT_CARD_ELEMENT: {
     'sprints': 'sprint-card',

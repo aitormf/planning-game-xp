@@ -102,13 +102,13 @@ describe('onPortalBugResolved', () => {
     });
 
     it('should extract ticketId when it is on a separate line (real Portal format)', () => {
-      const notes = '[Portal de Incidencias] Ticket #46\nticketId: -OkXZOLQaEyUhJ1O4Jt2\nURL: https://soporte.geniova.com/geniova/adminView?incidencia=-OkXZOLQaEyUhJ1O4Jt2';
+      const notes = '[Portal de Incidencias] Ticket #46\nticketId: -OkXZOLQaEyUhJ1O4Jt2\nURL: https://support.example.com/adminView?incidencia=-OkXZOLQaEyUhJ1O4Jt2';
       expect(parsePortalTicketId(notes)).toBe('-OkXZOLQaEyUhJ1O4Jt2');
     });
 
     it('should extract ticketId from array note with multiline content (real Portal format)', () => {
       const notes = [{
-        content: '[Portal de Incidencias] Ticket #47\nticketId: -OkX_8dFVLz_9sqrrUep\nURL: https://soporte.geniova.com/geniova/adminView?incidencia=-OkX_8dFVLz_9sqrrUep',
+        content: '[Portal de Incidencias] Ticket #47\nticketId: -OkX_8dFVLz_9sqrrUep\nURL: https://support.example.com/adminView?incidencia=-OkX_8dFVLz_9sqrrUep',
         id: 'legacy-123',
         timestamp: '2026-02-11T16:41:03.137Z'
       }];

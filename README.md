@@ -6,7 +6,7 @@ Aplicación web para la gestión ágil de proyectos, siguiendo las prácticas de
 
 ```bash
 # 1. Clonar
-git clone https://github.com/Geniova-Technologies/PlanningGameXP.git
+git clone https://github.com/AgilePlanning-io/planning-game-xp.git
 cd PlanningGameXP
 
 # 2. Instalar dependencias
@@ -66,7 +66,7 @@ npm install -g firebase-tools
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/Geniova-Technologies/PlanningGameXP.git
+git clone https://github.com/AgilePlanning-io/planning-game-xp.git
 cd PlanningGameXP
 ```
 
@@ -80,7 +80,7 @@ npm install
 
 Los archivos de entorno contienen las credenciales de Firebase y NO estan en el repositorio.
 
-**Obtenerlos de:** Google Drive de GENIOVA → `APP-CONFIG/Planning-GameXP/`
+**Create them** by running `npm run setup` or manually from the template in [ENV_VARIABLES.md](./ENV_VARIABLES.md)
 
 Copiar estos archivos a la raiz del proyecto:
 
@@ -103,7 +103,7 @@ firebase login
 firebase projects:list
 ```
 
-Si usas el proyecto existente (`planning-gamexp`), no necesitas hacer `firebase init` — el `firebase.json` y `.firebaserc` ya estan configurados en el repo.
+Run `npm run setup` to configure your Firebase project. The `firebase.json` is already configured in the repo.
 
 ### 5. Instalar dependencias de Cloud Functions
 
@@ -279,7 +279,7 @@ MCP (Model Context Protocol) es un protocolo que da herramientas extra a Claude 
 
 #### 1. Obtener el Service Account Key
 
-Copia el `serviceAccountKey.json` desde Google Drive (`APP-CONFIG/Planning-GameXP/`) a `~/mcp-servers/planning-game/`.
+Download the `serviceAccountKey.json` from Firebase Console (Project Settings > Service accounts) and copy it to `~/mcp-servers/planning-game/`.
 
 #### 2. Elegir el modo de uso
 
@@ -303,11 +303,11 @@ Ejecuta este comando una sola vez en tu terminal:
 claude mcp add planning-game \
   -s user \
   -e GOOGLE_APPLICATION_CREDENTIALS=$HOME/mcp-servers/planning-game/serviceAccountKey.json \
-  -e FIREBASE_DATABASE_URL=https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app \
+  -e FIREBASE_DATABASE_URL=https://your-project-default-rtdb.europe-west1.firebasedatabase.app \
   -- node $HOME/mcp-servers/planning-game/index.js
 ```
 
-Esto guarda la configuracion en tu `~/.claude.json`. A partir de ahora, puedes abrir Claude Code en **cualquier directorio** (el repo de Cinema4D, Intranet, Extranet, lo que sea) y tendras acceso a las tareas del Planning Game.
+Esto guarda la configuracion en tu `~/.claude.json`. A partir de ahora, puedes abrir Claude Code en **cualquier directorio** (cualquier otro proyecto) y tendras acceso a las tareas del Planning Game.
 
 > Para Cursor: configura el MCP server en Settings → MCP Servers con los mismos datos.
 
@@ -328,14 +328,14 @@ Debe mostrar: `planning-game: ... ✓ Connected`
 Una vez activo, puedes pedirle a la IA cosas como:
 
 - "Lista los proyectos de Planning Game"
-- "Que tareas tiene Cinema4D en estado To Do?"
-- "Muestra el detalle de la card C4D-TSK-0042"
-- "Crea una tarea en PlanningGame con titulo X"
+- "Que tareas tiene MyProject en estado To Do?"
+- "Muestra el detalle de la card PRJ-TSK-0001"
+- "Crea una tarea en MyProject con titulo X"
 - "Cambia el status de esta card a Done"
-- "Que sprints hay en Intranet para 2025?"
+- "Que sprints hay en MyProject para 2026?"
 - "Lista los developers"
 
-**Caso de uso principal:** Estas trabajando en el repo de Cinema4D. Le pides a Claude "lee la tarea C4D-TSK-0015 y desarrollala". La IA lee la descripcion, acceptance criteria, y escribe el codigo directamente en el repo donde estas.
+**Caso de uso principal:** Estas trabajando en el repo de tu proyecto. Le pides a Claude "lee la tarea PRJ-TSK-0001 y desarrollala". La IA lee la descripcion, acceptance criteria, y escribe el codigo directamente en el repo donde estas.
 
 ### Tools disponibles
 
@@ -501,7 +501,7 @@ npm run deploy
 | Problema | Solucion |
 |----------|----------|
 | Security check falla | Ejecutar `npm run security:fix` |
-| Falta `.env` | Copiar desde Google Drive `APP-CONFIG/Planning-GameXP/` |
+| Falta `.env` | Run `npm run setup` to generate environment files |
 | Deploy falla | Verificar `firebase login` y que tienes permisos en el proyecto |
 
 ### MCP Server

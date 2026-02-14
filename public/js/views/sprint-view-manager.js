@@ -155,7 +155,7 @@ return filtered;
           message: `¿Importar <b>${count} tarea${count > 1 ? 's' : ''}</b> del backlog de ${previousYear} al año ${currentYear}?`,
           button1Text: 'Importar',
           button2Text: 'Cancelar',
-          button1css: 'background-color: var(--geniova-color);',
+          button1css: 'background-color: var(--brand-secondary);',
           button2css: 'background-color: #999;',
           button1Action: () => this._executeBacklogMove(currentYear, count),
           button2Action: () => { },

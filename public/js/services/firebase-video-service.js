@@ -131,7 +131,7 @@ reject(error);
       this.updateProgressNotification(progressNotification, 'Guardando metadatos...', 95);
 
       // Get current user email from localStorage or auth
-      const userEmail = localStorage.getItem('userEmail') || 'unknown@geniova.com';
+      const userEmail = localStorage.getItem('userEmail') || 'unknown';
 
       // Save metadata directly to Firebase Realtime Database
       const videoRef = {

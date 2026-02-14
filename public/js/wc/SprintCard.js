@@ -683,7 +683,7 @@ try {
               ${error.message}
             </p>
             <p style="color: #666; font-size: 0.9rem;">
-              Por favor, verifica que estés logueado con tu cuenta @geniova.com y que tengas permisos para subir archivos.
+              Por favor, verifica que estés logueado con tu cuenta corporativa y que tengas permisos para subir archivos.
             </p>
           `;
           

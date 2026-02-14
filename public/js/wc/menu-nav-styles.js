@@ -12,7 +12,7 @@ export const MenuNavStyles = css`
     position: relative;
     border-bottom: 2px solid transparent;
     padding: 0 2rem;
-    background: var(--geniova-color, #ec3e95);
+    background: var(--brand-secondary, #ec3e95);
     height: 2rem;
     align-items: center;
   }

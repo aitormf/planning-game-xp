@@ -27,9 +27,9 @@ Los pull requests son la mejor forma de proponer cambios en el código. Aceptamo
 
 En resumen, cuando envías cambios de código, se entiende que tus envíos están bajo la misma [Licencia MIT](http://choosealicense.com/licenses/mit/) que cubre el proyecto. Siéntete libre de contactar con los mantenedores si esto te preocupa.
 
-## Reportar bugs usando el [issue tracker](https://github.com/Geniova-Technologies/PlanningGameXP/issues) de GitHub
+## Reportar bugs usando el [issue tracker](https://github.com/AgilePlanning-io/planning-game-xp/issues) de GitHub
 
-Usamos issues de GitHub para hacer seguimiento de bugs públicos. Reporta un bug [abriendo un nuevo issue](https://github.com/Geniova-Technologies/PlanningGameXP/issues/new); ¡es así de fácil!
+Usamos issues de GitHub para hacer seguimiento de bugs públicos. Reporta un bug [abriendo un nuevo issue](https://github.com/AgilePlanning-io/planning-game-xp/issues/new); ¡es así de fácil!
 
 ## Escribe reportes de bugs con detalle, contexto y código de ejemplo
 
@@ -58,7 +58,7 @@ A la gente le *encantan* los reportes de bugs detallados. No es broma.
 
 1. Clona el repositorio:
 ```bash
-git clone https://github.com/Geniova-Technologies/PlanningGameXP.git
+git clone https://github.com/AgilePlanning-io/planning-game-xp.git
 cd PlanningGameXP
 ```
 
@@ -260,9 +260,9 @@ Pull requests are the best way to propose changes to the codebase. We actively w
 
 In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
 
-## Report bugs using GitHub's [issue tracker](https://github.com/Geniova-Technologies/PlanningGameXP/issues)
+## Report bugs using GitHub's [issue tracker](https://github.com/AgilePlanning-io/planning-game-xp/issues)
 
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/Geniova-Technologies/PlanningGameXP/issues/new); it's that easy!
+We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/AgilePlanning-io/planning-game-xp/issues/new); it's that easy!
 
 ## Write bug reports with detail, background, and sample code
 
@@ -291,7 +291,7 @@ People *love* thorough bug reports. I'm not even kidding.
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Geniova-Technologies/PlanningGameXP.git
+git clone https://github.com/AgilePlanning-io/planning-game-xp.git
 cd PlanningGameXP
 ```
 

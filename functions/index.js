@@ -92,6 +92,7 @@ const msClientId = defineSecret("MS_CLIENT_ID");
 const msClientSecret = defineSecret("MS_CLIENT_SECRET");
 const msTenantId = defineSecret("MS_TENANT_ID");
 const msFromEmail = defineSecret("MS_FROM_EMAIL");
+const msAlertEmail = defineSecret("MS_ALERT_EMAIL"); // Email address for system alerts (e.g. localhost URL detection)
 const IA_GLOBAL_ENABLE = defineSecret("IA_GLOBAL_ENABLE"); // optional: 'true'/'false'
 const IA_API_KEY = defineSecret("IA_API_KEY");
 const CREATE_CARD_API_KEY = defineSecret("CREATE_CARD_API_KEY"); // API Key for creating cards programmatically
@@ -222,7 +223,7 @@ async function sendEmail(accessToken, toEmails, subject, htmlContent) {
         message: {
           subject: alertSubject,
           body: { contentType: 'HTML', content: alertBody },
-          toRecipients: [{ emailAddress: { address: 'departamento.it@geniova.com' } }]
+          toRecipients: [{ emailAddress: { address: msAlertEmail.value() || msFromEmail.value() } }]
         },
         saveToSentItems: true
       };
@@ -231,7 +232,7 @@ async function sendEmail(accessToken, toEmails, subject, htmlContent) {
         alertData,
         { headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
       );
-      logger.info('Alert email sent to departamento.it@geniova.com');
+      logger.info(`Alert email sent to ${msAlertEmail.value() || msFromEmail.value()}`);
     } catch (alertError) {
       logger.error('Failed to send alert email:', alertError.message);
     }
@@ -1173,7 +1174,7 @@ exports.weeklyTaskSummary = onSchedule({
   schedule: "0 9 * * 1", // Every Monday at 9:00 AM
   timeZone: "Europe/Madrid",
   region: "europe-west1", // Belgium (closest European region)
-  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail]
+  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
 }, async (event) => {
   return await sendWeeklyTaskSummary();
 });
@@ -1184,7 +1185,7 @@ exports.weeklyTaskSummary = onSchedule({
  */
 exports.testWeeklyTaskSummary = onRequest({
   region: "europe-west1", // Belgium (closest European region)
-  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail]
+  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
 }, async (req, res) => {
   try {
     // Get optional email filter from query string
@@ -3120,7 +3121,7 @@ exports.getProjectEpics = onRequest({
 exports.onCardToValidate = onValueUpdated({
   ref: "/cards/{projectId}/{section}/{cardId}",
   region: "europe-west1",
-  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail]
+  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
 }, async (event) => {
   const { projectId, section, cardId } = event.params;
   const beforeData = event.data.before.val();
@@ -3150,7 +3151,7 @@ exports.onCardToValidate = onValueUpdated({
 exports.onBugFixed = onValueUpdated({
   ref: "/cards/{projectId}/{section}/{cardId}",
   region: "europe-west1",
-  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail]
+  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
 }, async (event) => {
   const { projectId, section, cardId } = event.params;
   const beforeData = event.data.before.val();

@@ -14,6 +14,7 @@ firebase functions:secrets:set MS_CLIENT_ID
 firebase functions:secrets:set MS_CLIENT_SECRET
 firebase functions:secrets:set MS_TENANT_ID
 firebase functions:secrets:set MS_FROM_EMAIL
+firebase functions:secrets:set MS_ALERT_EMAIL  # Optional: email for system alerts (defaults to MS_FROM_EMAIL)
 ```
 
 O usa el script automatizado que lee desde `.env`:
@@ -136,7 +137,7 @@ firebase functions:log --only testWeeklyTaskSummary
 - Asegúrate que los sprints tengan fechas de fin configuradas
 
 ### Proyectos Sin Configuración
-- Se enviará correo a `mfosela@geniova.com` automáticamente
+- Se enviará correo al email configurado en `MS_ALERT_EMAIL` automáticamente
 - Agrega la configuración en `/projects/{projectId}` para el proyecto
 
 ## Estructura del Email

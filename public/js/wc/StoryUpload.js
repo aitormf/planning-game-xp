@@ -279,7 +279,7 @@ this.error = error?.message || 'No se pudieron subir las historias.';
 
     label.file-label:hover,
     label.file-label:focus-within {
-      border-color: var(--geniova-color, #ec3e95);
+      border-color: var(--brand-secondary, #ec3e95);
       box-shadow: 0 16px 32px -24px rgba(236, 62, 149, 0.65);
       transform: translateY(-1px);
     }
@@ -312,7 +312,7 @@ this.error = error?.message || 'No se pudieron subir las historias.';
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.12em;
-      color: var(--geniova-color, #ec3e95);
+      color: var(--brand-secondary, #ec3e95);
       background: rgba(236, 62, 149, 0.12);
       border: 1px solid rgba(236, 62, 149, 0.3);
       font-weight: 700;
@@ -338,7 +338,7 @@ this.error = error?.message || 'No se pudieron subir las historias.';
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      background: var(--geniova-color, #ec3e95);
+      background: var(--brand-secondary, #ec3e95);
       color: #ffffff;
       padding: 0.55rem 1.2rem;
       border-radius: 999px;
@@ -386,8 +386,8 @@ this.error = error?.message || 'No se pudieron subir las historias.';
     }
 
     button.primary {
-      background-color: var(--geniova-color, #ec3e95);
-      border: 2px solid var(--geniova-color, #ec3e95);
+      background-color: var(--brand-secondary, #ec3e95);
+      border: 2px solid var(--brand-secondary, #ec3e95);
       color: #ffffff;
       padding: 0.75rem 1.5rem;
       border-radius: 12px;
@@ -401,7 +401,7 @@ this.error = error?.message || 'No se pudieron subir las historias.';
     button.primary:hover {
       transform: translateY(-1px);
       box-shadow: 0 18px 36px -18px rgba(236, 62, 149, 0.55);
-      background-color: var(--geniova-color-strong, #ff5cad);
+      background-color: var(--brand-secondary-strong, #ff5cad);
     }
 
     button.primary[disabled] {

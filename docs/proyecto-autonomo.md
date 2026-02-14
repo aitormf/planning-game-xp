@@ -14,7 +14,7 @@
 
   3.Infraestructura CI/CD
   -¿Tenéis SonarQube ya montado o hay que configurarlo?
-  -¿GitHub Actions ya configurado en la org de Geniova?
+  -¿GitHub Actions ya configurado en la org?
   -¿Hay algún workflow de ia-review ya existente o lo creamos desde cero?
 
   4.Planning Game

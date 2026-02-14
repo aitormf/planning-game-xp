@@ -3,7 +3,7 @@ import { css } from 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+esm';
 export const BugTheme = css`
   :host {
     /* Colores específicos para bugs */
-    --geniova-color: #4a9eff;
+    --brand-secondary: #4a9eff;
     --description-color: #4caf50;
     --acceptanceCriteria-color: #2196f3;
     --notes-color: #ff9800;
@@ -34,7 +34,7 @@ export const BugTheme = css`
 
   .card-group span {
     font-weight: bold;
-    color: var(--geniova-color, var(--primary-color));
+    color: var(--brand-secondary, var(--primary-color));
   }
 
   .bugcard-table {
@@ -43,7 +43,7 @@ export const BugTheme = css`
 
   .bugcard-table span {
     font-weight: bold;
-    color: var(--geniova-color, var(--primary-color));
+    color: var(--brand-secondary, var(--primary-color));
   }
 
   .card-header span {

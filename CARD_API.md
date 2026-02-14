@@ -92,7 +92,7 @@ Header `x-api-key` con el valor del secret `CREATE_CARD_API_KEY`.
 | `projectId` | string | ✅ | ID del proyecto (ej: `"Cinema4D"`, `"Extranet V2"`) |
 | `title` | string | ✅ | Título descriptivo de la card |
 | `year` | number | ✅ | Año actual (ej: `2026`) |
-| `createdBy` | string | ❌ | Email del creador (default: `"api@planning-game.geniova.com"`) |
+| `createdBy` | string | ❌ | Email del creador (default: `"api@planning-game.local"`) |
 
 #### Campos para TASKS (formato User Story)
 
@@ -145,7 +145,7 @@ curl -X POST https://europe-west1-planning-gamexp.cloudfunctions.net/createCard 
     "role": "usuario de Intranet",
     "goal": "ver el ortodoncista y agente ATC asignados dentro de la ficha del paciente",
     "benefit": "tener visibilidad completa del caso sin consultar otros sistemas",
-    "createdBy": "mfosela@geniova.com"
+    "createdBy": "admin@example.com"
   }'
 ```
 
@@ -163,7 +163,7 @@ curl -X POST https://europe-west1-planning-gamexp.cloudfunctions.net/createCard 
     "goal": "que las fechas de envío se muestren correctamente actualizadas en casos anteriores a 29/09/2025",
     "benefit": "reducir el alto volumen de llamadas a ATC y comercial por información incorrecta",
     "priority": "high",
-    "createdBy": "mfosela@geniova.com"
+    "createdBy": "admin@example.com"
   }'
 ```
 

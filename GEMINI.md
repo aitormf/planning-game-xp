@@ -27,14 +27,14 @@ The main application logic is handled by the `AppController` class (`public/js/c
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/Geniova-Technologies/PlanningGameXP.git
-    cd PlanningGameXP
+    git clone https://github.com/AgilePlanning-io/planning-game-xp.git
+    cd planning-game-xp
     ```
 2.  Install dependencies:
     ```bash
     npm install
     ```
-3.  Set up environment variables by copying the `.env`, `.env.dev`, `.env.pre`, and `.env.pro` files from the project's Google Drive.
+3.  Set up environment variables by running `npm run setup` or manually creating `.env.dev`, `.env.pre`, and `.env.pro` from the templates.
 4.  Configure Firebase:
     ```bash
     firebase login
