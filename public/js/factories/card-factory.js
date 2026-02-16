@@ -14,7 +14,7 @@ export class CardFactory {
 
     const creators = {
       'task-card': () => this.createTaskCard(modal, config),
-      'bug-card': () => section === 'tickets' ? this.createTicketCard(modal, config) : this.createBugCard(modal, config),
+      'bug-card': () => this.createBugCard(modal, config),
       'qa-card': () => this.createQACard(modal, config),
       'proposal-card': () => this.createProposalCard(modal, config),
       'sprint-card': () => this.createSprintCard(modal, config),
@@ -49,26 +49,6 @@ export class CardFactory {
 
     await this.setupModal(modal, newCard);
 
-    newCard.status = config.statusBugList[0];
-    newCard.statusList = config.statusBugList;
-    // No asignar listas globales vacías - el card cargará sus propios stakeholders del proyecto
-    newCard.priorityList = config.bugpriorityList;
-
-    if (config.projectId === 'Cinema4D') {
-      newCard.bugType = 'c4d';
-      newCard.cardId = await FirebaseService.generateProjectSectionId(config.projectId, 'BUG');
-    }
-  }
-
-  static async createTicketCard(modal, config) {
-    modal.title = '';
-    const newCard = this.createBaseCard('bug-card', config);
-
-    await this.setupModal(modal, newCard);
-
-    // Configurar el card para funcionar como ticket
-    newCard.section = 'tickets'; // Importante: marcar como tickets para permisos especiales
-    newCard.group = 'bugs'; // Pero se guarda en la sección bugs
     newCard.status = config.statusBugList[0];
     newCard.statusList = config.statusBugList;
     // No asignar listas globales vacías - el card cargará sus propios stakeholders del proyecto

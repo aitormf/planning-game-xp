@@ -70,7 +70,6 @@ export class AppController {
     this.hasAppAccess = Boolean(window.isAppAdmin);
     this.cardAutoOpened = false;
     this.bugFiltersSetup = false; // Flag to prevent triple BugFilters setup execution
-    this.ticketFiltersSetup = false; // Flag to prevent triple TicketFilters setup execution
     this.taskFiltersSetup = false; // Flag to prevent triple TaskFilters setup execution
     this.initialViewApplied = {
       tasks: false,
@@ -142,9 +141,7 @@ export class AppController {
     if (urlState.view) {
       const currentSection = this.section || 'tasks';
       // Only handle sections that applyInitialView doesn't cover
-      if (currentSection === 'tickets') {
-        this.toggleTicketsView(urlState.view);
-      } else if (currentSection === 'epics') {
+      if (currentSection === 'epics') {
         this.toggleEpicView(urlState.view);
       }
     }
@@ -170,7 +167,6 @@ export class AppController {
     // Try to find and apply to the filter component directly
     const filterComponentSelector = currentSection === 'tasks' ? 'task-filters'
       : currentSection === 'bugs' ? 'bug-filters'
-      : currentSection === 'tickets' ? 'bug-filters'
       : null;
 
     if (filterComponentSelector) {
@@ -194,8 +190,6 @@ export class AppController {
           this.toggleTaskView(state.view);
         } else if (currentSection === 'bugs') {
           this.toggleBugsView(state.view);
-        } else if (currentSection === 'tickets') {
-          this.toggleTicketsView(state.view);
         } else if (currentSection === 'epics') {
           this.toggleEpicView(state.view);
         } else if (currentSection === 'proposals') {
@@ -274,7 +268,6 @@ export class AppController {
           epics: 'epic-card',
           tasks: 'task-card',
           bugs: 'bug-card',
-          tickets: 'bug-card',
           proposals: 'proposal-card',
           qa: 'qa-card'
         },
@@ -436,19 +429,6 @@ export class AppController {
       }
     });
 
-    // Ticket view buttons
-    const ticketViewButtons = [
-      { id: 'ticketsListViewBtn', view: 'list' },
-      { id: 'ticketsTableViewBtn', view: 'table' }
-    ];
-
-    ticketViewButtons.forEach(({ id, view }) => {
-      const button = document.getElementById(id);
-      if (button) {
-        button.addEventListener('click', this.createToggleTicketsViewHandler(view));
-      }
-    });
-
     // Epic view buttons
     const epicViewButtons = [
       { id: 'epicsListBtn', view: 'list' },
@@ -486,12 +466,6 @@ export class AppController {
     const bugsTableContainer = document.getElementById('bugsTableView');
     if (bugsTableContainer) {
       bugsTableContainer.addEventListener('view-bug', this.handleViewBug.bind(this));
-    }
-
-    // Evento para ver ticket desde la tabla
-    const ticketsTableContainer = document.getElementById('ticketsTableView');
-    if (ticketsTableContainer) {
-      ticketsTableContainer.addEventListener('view-bug', this.handleViewTicket.bind(this));
     }
 
     // Evento para ver/eliminar proposal desde la tabla
@@ -620,7 +594,7 @@ this.applyInitialView(section);
 
       const currentFilters = this._getPreservedFilters(section, preserveFilters);
 
-      const dataSection = section === 'tickets' ? 'bugs' : section;
+      const dataSection = section;
       let cards = await this.firebaseService.getCards(this.projectId, dataSection);
 cards = this._filterCardsByYear(cards, section);
 
@@ -695,22 +669,6 @@ this.showNotification(`Error loading ${section}: ${error.message}`, 'error');
     } else {
       // Reset filters when switching away from list view
       this.resetBugFilters();
-    }
-  }
-
-  toggleTicketsView(view) {
-    // Tickets use the same view factory as bugs but with tickets section
-    this.viewFactory.switchView(view, 'tickets', this.config);
-
-    // Update URL with new view
-    URLStateManager.updateState({ view });
-
-    // Setup filters when switching to list view
-    if (view === 'list') {
-      requestAnimationFrame(() => this.setupTicketFilters());
-    } else {
-      // Reset filters when switching away from list view
-      this.resetTicketFilters();
     }
   }
 
@@ -805,65 +763,6 @@ return;
     }
     // Reset the setup flag to allow fresh setup when needed
     this.bugFiltersSetup = false;
-  }
-
-  /**
-   * Configura los filtros para la vista de tickets usando el componente bug-filters
-   */
-  setupTicketFilters() {
-// Prevent redundant setup executions
-    if (this.ticketFiltersSetup) {
-return;
-    }
-
-    // Solo configurar filtros si estamos en la vista de lista de tickets
-    const ticketsListView = document.getElementById('ticketsCardsList');
-    const ticketsListBtn = document.getElementById('ticketsListViewBtn');
-
-    if (ticketsListView && ticketsListBtn?.classList.contains('active')) {
-      this.ticketFiltersSetup = true;
-      // Variables are available from GlobalDataManager, no need to wait
-      this.createTicketFiltersComponent();
-    }
-  }
-
-  /**
-   * Crea o actualiza el componente bug-filters para tickets
-   */
-  createTicketFiltersComponent() {
-    const filtersContainer = document.getElementById('ticketsFilters');
-    if (!filtersContainer) {
-return;
-    }
-
-    // Verificar si ya existe un componente bug-filters
-    let ticketFilters = filtersContainer.querySelector('bug-filters');
-    if (ticketFilters) {
-return;
-    }
-
-    // Limpiar contenido existente
-    filtersContainer.innerHTML = '';
-
-    // Crear el componente bug-filters (reutilizamos el mismo componente)
-    ticketFilters = document.createElement('bug-filters');
-    ticketFilters.setAttribute('target-selector', '#ticketsCardsList');
-    ticketFilters.setAttribute('card-selector', 'bug-card');
-
-    // Añadir el componente al DOM
-    filtersContainer.appendChild(ticketFilters);
-}
-
-  /**
-   * Resetea los filtros de tickets
-   */
-  resetTicketFilters() {
-    const ticketFilters = document.querySelector('#ticketsFilters bug-filters');
-    if (ticketFilters && typeof ticketFilters.clearAllFilters === 'function') {
-      ticketFilters.clearAllFilters();
-    }
-    // Reset the setup flag to allow fresh setup when needed
-    this.ticketFiltersSetup = false;
   }
 
   /**
@@ -1237,8 +1136,6 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
     // Cards are already rendered, setup filters immediately
     if (section === 'bugs') {
       this.setupBugFilters();
-    } else if (section === 'tickets') {
-      this.setupTicketFilters();
     } else if (section === 'tasks') {
       this.setupTaskFilters();
     }
@@ -1267,7 +1164,7 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
     }
   }
 
-  // Note: handleEpicCardDataRequest, handleTaskCardDataRequest, and handleBugCardDataRequest 
+  // Note: handleEpicCardDataRequest, handleTaskCardDataRequest, and handleBugCardDataRequest
   // are now handled by GlobalDataManager
 
   createToggleTaskViewHandler(view) {
@@ -1276,10 +1173,6 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
 
   createToggleBugsViewHandler(view) {
     return () => this.toggleBugsView(view);
-  }
-
-  createToggleTicketsViewHandler(view) {
-    return () => this.toggleTicketsView(view);
   }
 
   createToggleEpicViewHandler(view) {
@@ -1405,62 +1298,6 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
       console.error('handleViewBug error:', error);
       document.dispatchEvent(new CustomEvent('show-slide-notification', {
         detail: { options: { message: `Error al abrir bug: ${error.message}`, type: 'error' } }
-      }));
-    }
-  }
-
-  async handleViewTicket(e) {
-    const { id, cardId } = e.detail;
-
-    if (!id) {
-      console.error('handleViewTicket: firebaseId is required');
-      document.dispatchEvent(new CustomEvent('show-slide-notification', {
-        detail: { options: { message: 'Error: ID de ticket no proporcionado', type: 'error' } }
-      }));
-      return;
-    }
-
-    try {
-      const { showExpandedCardInModal } = await import('../utils/common-functions.js');
-
-      // 1. Try to find existing bug-card in DOM (tickets are bugs in consulta view)
-      const existingCard = document.querySelector(`#ticketsCardsList bug-card[id="${id}"]`) ||
-                           document.querySelector(`bug-card[id="${id}"]`) ||
-                           document.querySelector(`bug-card[data-id="${id}"]`);
-      if (existingCard) {
-        showExpandedCardInModal(existingCard);
-        return;
-      }
-
-      // 2. Fetch from /cards/ (source of truth) - tickets are bugs
-      const projectId = this.projectId;
-      if (!projectId) throw new Error('No hay proyecto seleccionado');
-
-      const cardPath = `${FirebaseService.getPathBySectionAndProjectId('bugs', projectId)}/${id}`;
-      const snap = await get(ref(database, cardPath));
-
-      if (snap.exists()) {
-        const cardData = snap.val();
-        const bugCard = document.createElement('bug-card');
-        Object.assign(bugCard, cardData, {
-          id: id,
-          firebaseId: id,
-          expanded: false,
-          projectId: cardData.projectId || projectId,
-          group: cardData.group || 'bugs',
-          cardType: cardData.cardType || 'bug-card'
-        });
-        showExpandedCardInModal(bugCard);
-        return;
-      }
-
-      // 3. NOT in /cards/ - check duplicates and ask user
-      await this._handleCardNotInSource('bug', 'bugs', id, cardId, projectId);
-
-    } catch (error) {
-      console.error('handleViewTicket error:', error);
-      document.dispatchEvent(new CustomEvent('show-slide-notification', {
-        detail: { options: { message: `Error al abrir ticket: ${error.message}`, type: 'error' } }
       }));
     }
   }
@@ -1889,7 +1726,6 @@ try {
 
       this.taskFiltersSetup = false;
       this.bugFiltersSetup = false;
-      this.ticketFiltersSetup = false;
 
       await this.ensureGlobalVariables();
 
@@ -1946,11 +1782,10 @@ this.selectedYear = year;
     this.sectionsNeedReload['epics'] = true;
     this.sectionsNeedReload['tasks'] = true;
     this.sectionsNeedReload['bugs'] = true;
-    this.sectionsNeedReload['tickets'] = true;
 
     // If currently viewing a year-filtered section, reload it
     const currentSection = this.tabController.getCurrentTab();
-    const yearFilteredSections = ['sprints', 'epics', 'tasks', 'bugs', 'tickets'];
+    const yearFilteredSections = ['sprints', 'epics', 'tasks', 'bugs'];
     if (yearFilteredSections.includes(currentSection)) {
       this.reloadCards(currentSection);
     }
@@ -1994,7 +1829,7 @@ return false;
    */
   _filterCardsByYear(cards, section) {
     // Only filter sections that support year filtering
-    const yearFilteredSections = ['sprints', 'epics', 'tasks', 'bugs', 'tickets'];
+    const yearFilteredSections = ['sprints', 'epics', 'tasks', 'bugs'];
     if (!yearFilteredSections.includes(section)) {
       return cards;
     }

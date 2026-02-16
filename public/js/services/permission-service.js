@@ -48,7 +48,7 @@ export class PermissionService {
   /**
    * Calcula permisos para una tarjeta específica
    * @param {Object} cardData - Datos de la tarjeta
-   * @param {string} cardType - Tipo de tarjeta (bug, task, ticket, etc.)
+   * @param {string} cardType - Tipo de tarjeta (bug, task, etc.)
    * @returns {Object} Objeto con permisos
    */
   getCardPermissions(cardData, cardType) {
@@ -73,9 +73,6 @@ export class PermissionService {
     const isAdmin = this.isAdmin();
 
     switch (cardType) {
-      case 'ticket':
-        return this.getTicketPermissions(cardData, { isNewCard, isOwner, isAdmin });
-      
       case 'bug':
         return this.getBugPermissions(cardData, { isNewCard, isOwner, isAdmin });
       
@@ -90,44 +87,6 @@ export class PermissionService {
       
       default:
         return this.getDefaultPermissions(cardData, { isNewCard, isOwner, isAdmin });
-    }
-  }
-
-  /**
-   * Permisos específicos para tickets
-   */
-  getTicketPermissions(cardData, { isNewCard, isOwner, isAdmin }) {
-    const basePermissions = {
-      canView: true,
-      canEdit: false,
-      canSave: false,
-      canDelete: false,
-      canCreate: true // Los usuarios pueden crear tickets en modo consulta
-    };
-
-    if (isNewCard) {
-      return {
-        ...basePermissions,
-        canEdit: true,
-        canSave: true
-      };
-    }
-
-    if (this.viewMode === 'management') {
-      return {
-        ...basePermissions,
-        canEdit: isAdmin,
-        canSave: isAdmin,
-        canDelete: isAdmin
-      };
-    } else {
-      // Modo consulta: solo el propietario puede editar sus tickets
-      return {
-        ...basePermissions,
-        canEdit: isOwner,
-        canSave: isOwner,
-        canDelete: false
-      };
     }
   }
 
@@ -413,10 +372,6 @@ try {
           permissions = this.checkQAPermissions(cardId, userEmail, createdBy);
           break;
 
-        case 'ticket-permissions':
-          permissions = this.checkTicketPermissions(cardId, userEmail);
-          break;
-
         case 'ownership-permissions':
           permissions = this.checkOwnershipPermissions(cardId, cardType, userEmail, createdBy);
           break;
@@ -541,22 +496,6 @@ try {
     // Usar la lógica ya existente para épicas
     const cardData = { cardId, createdBy };
     return this.getEpicPermissions(cardData, {
-      isNewCard: this.isNewCard(cardData),
-      isOwner: this.isOwner(cardData),
-      isAdmin: this.isAdmin()
-    });
-  }
-
-  /**
-   * Verifica permisos de tickets
-   * @param {string} cardId - ID de la tarjeta
-   * @param {string} userEmail - Email del usuario
-   * @returns {Object} - Permisos de tickets
-   */
-  checkTicketPermissions(cardId, userEmail) {
-    // Usar la lógica ya existente para tickets
-    const cardData = { cardId, createdBy: userEmail };
-    return this.getTicketPermissions(cardData, {
       isNewCard: this.isNewCard(cardData),
       isOwner: this.isOwner(cardData),
       isAdmin: this.isAdmin()

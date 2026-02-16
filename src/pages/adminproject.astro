@@ -12,7 +12,6 @@ import Layout from '../layouts/Layout.astro';
       <button id="epicsTab" data-section="epics" class="tablinks">Epics</button>
       <button id="tasksTab" data-section="tasks" class="tablinks">Tasks</button>
       <button id="bugsTab" data-section="bugs" class="tablinks">Bugs</button>
-      <button id="ticketsTab" data-section="tickets" class="tablinks">Tickets</button>
       <button id="proposalsTab" data-section="proposals" class="tablinks">Proposals</button>
       <button id="qaTab" data-section="qa" class="tablinks">QA</button>
       <button id="adrsTab" data-section="adrs" class="tablinks">ADRs</button>
@@ -143,23 +142,6 @@ import Layout from '../layouts/Layout.astro';
       <div class="kanban-columns" id="bugsPriorityKanbanColumns"></div>
     </section>
   </div>
-  <div id="ticketsTabContent" class="tabcontent">
-    <section class="subheader">
-      <h3>Tickets</h3>
-      <div class="view-buttons">
-        <button id="ticketsListViewBtn" class="view-button active">List View</button>
-        <button id="ticketsTableViewBtn" class="view-button">Table View</button>
-        <button id="addTicketCard" class="add-button">+ New Ticket</button>
-      </div>
-    </section>
-    <section class="filters-section">
-      <div id="ticketsFilters" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;"></div>
-    </section>
-    <div id="ticketsCardsList" class="cards-container">
-      <div class="cards-list"></div>
-    </div>
-    <section class="table-view" id="ticketsTableView" style="display:none"></section>
-  </div>
   <div id="proposalsTabContent" class="tabcontent">
     <section class="subheader">
       <h3>Proposals</h3>
@@ -270,8 +252,8 @@ import Layout from '../layouts/Layout.astro';
   let isYearReadOnly = false; // Para años anteriores en modo solo lectura
 
   // Tabs configuration - synced with APP_CONSTANTS.MANAGEMENT_TABS and APP_CONSTANTS.CONSULTATION_TABS
-  const MANAGEMENT_TABS = ['sprints', 'epics', 'tasks', 'bugs', 'tickets', 'proposals', 'qa', 'adrs', 'app'];
-  const CONSULTATION_TABS = ['sprints', 'epics', 'tickets', 'proposals', 'app'];
+  const MANAGEMENT_TABS = ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa', 'adrs', 'app'];
+  const CONSULTATION_TABS = ['sprints', 'epics', 'proposals', 'app'];
 
   // Función para cambiar modo de vista
   window.switchViewMode = function(mode) {
@@ -311,8 +293,8 @@ import Layout from '../layouts/Layout.astro';
 
     const editButtons = document.querySelectorAll('.add-button, .edit-button, .delete-button');
     editButtons.forEach(btn => {
-      // Excepciones especiales: empleados pueden añadir propuestas, tickets y QA
-      if (btn.id === 'addProposalCard' || btn.id === 'addTicketCard' || btn.id === 'addQACard') {
+      // Excepciones especiales: empleados pueden añadir propuestas y QA
+      if (btn.id === 'addProposalCard' || btn.id === 'addQACard') {
         btn.style.display = ''; // Siempre visible para todos los usuarios
       } else {
         btn.style.display = effectiveCanEdit ? '' : 'none';
@@ -446,48 +428,6 @@ import Layout from '../layouts/Layout.astro';
       isYearReadOnly
     };
 
-    // Llamar al callback inmediatamente
-    if (callback && typeof callback === 'function') {
-      callback(permissions);
-    }
-  });
-
-  // Handler específico para permisos de TicketCard (bugs con lógica de ownership)
-  document.addEventListener('request-ticket-permissions', function(e) {
-    const { cardId, cardType, userEmail, createdBy, callback } = e.detail;
-    
-    
-    // Para TicketCards (bugs especiales):
-    // - Los admins pueden editar cualquier ticket
-    // - Los empleados pueden crear y editar sus propios tickets
-    // - Los empleados solo pueden ver tickets de otros en modo consulta
-    const currentUserEmail = document.body.dataset.userEmail;
-    const isAdmin = isResponsable && currentViewMode === 'management';
-    
-    // Use centralized utility for consistent user comparison
-    const isOwner = window.UserDisplayUtils ? 
-      window.UserDisplayUtils.isOwner(createdBy, currentUserEmail) : 
-      (createdBy === currentUserEmail); // Fallback if utils not loaded yet
-    
-    
-    // En modo consulta: todos pueden ver, pero solo pueden editar los suyos
-    // En modo gestión: solo admins pueden editar cualquier ticket
-    // Excepción: las tarjetas nuevas (sin cardId o cardId temporal) siempre se pueden editar
-    const isNewCard = !cardId || cardId.startsWith('temp_') || cardId === '';
-    const canEdit = isNewCard ? true : (currentViewMode === 'management' ? isAdmin : isOwner);
-    
-    const permissions = {
-      canEdit,
-      canSave: canEdit,
-      canDelete: isAdmin, // Solo admins pueden eliminar tickets
-      canView: true, // Siempre se puede ver en modo consulta
-      userRole: currentUserRole,
-      viewMode: currentViewMode,
-      isOwner,
-      isAdmin
-    };
-    
-    
     // Llamar al callback inmediatamente
     if (callback && typeof callback === 'function') {
       callback(permissions);

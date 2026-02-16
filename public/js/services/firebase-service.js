@@ -893,7 +893,7 @@ export const FirebaseService = {
     // Verificar permisos usando el sistema centralizado
     const canDelete = await this.checkUserPermissions(card, 'delete');
 if (!canDelete) {
-      const itemType = card.cardType === 'bug-card' ? 'ticket' :
+      const itemType = card.cardType === 'bug-card' ? 'bug' :
         card.cardType === 'task-card' ? 'tarea' :
           card.cardType === 'epic-card' ? 'épica' : 'elemento';
 document.dispatchEvent(new CustomEvent('show-slide-notification', {
@@ -1130,17 +1130,10 @@ try {
     return cards;
   },
   getCardPath(card) {
-    // IMPORTANTE: "tickets" es solo un alias de "bugs" para la vista consulta
-    // En Firebase solo existe la sección BUGS, nunca TICKETS
-    let section = card.group.toUpperCase();
-    if (section === 'TICKETS') {
-      section = 'BUGS';
-    }
+    const section = card.group.toUpperCase();
     return this.getPathBySectionAndProjectId(section, card.projectId);
   },
   getPathBySectionAndProjectId(section, projectId) {
-    // NOTA: La sección debe ser BUGS, TASKS, EPICS, SPRINTS, etc. 
-    // NUNCA TICKETS (tickets es solo alias de bugs en vista consulta)
     return `/cards/${projectId}/${section.toUpperCase()}_${projectId}`;
   },
   async updateSprintPoints(detail) {

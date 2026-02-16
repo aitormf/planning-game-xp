@@ -241,14 +241,6 @@ export class ModalService {
       'sprint-card': isNew ? '' : 'Editar Sprint'
     };
 
-    // Para tickets, verificar si estamos en la sección de tickets
-    if (cardType === 'bug-card') {
-      const isTicketSection = document.getElementById('ticketsTab')?.classList.contains('active');
-      if (isTicketSection) {
-        return isNew ? '' : 'Editar Ticket';
-      }
-    }
-
     return titles[cardType] || (isNew ? '' : 'Editar Tarjeta');
   }
 

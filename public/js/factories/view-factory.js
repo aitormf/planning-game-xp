@@ -138,10 +138,6 @@ export class ViewFactory {
       case 'bugs':
         await this.switchBugsView(viewType, config);
         break;
-      case 'tickets':
-        // Tickets usa exactamente la misma funcionalidad que bugs
-        await this.switchBugsView(viewType, config);
-        break;
       case 'epics':
         await this.switchEpicView(viewType, config);
         break;
@@ -186,13 +182,7 @@ export class ViewFactory {
         this.showBugsKanbanView('priority', config);
         break;
       case 'table':
-        // Verificar si estamos en la sección de tickets
-        const isTicketsSection = document.getElementById('ticketsTab')?.classList.contains('active');
-        if (isTicketsSection) {
-          await this.showTicketsTableView(config);
-        } else {
-          await this.showBugsTableView(config);
-        }
+        await this.showBugsTableView(config);
         break;
       default:
 }
@@ -299,8 +289,7 @@ export class ViewFactory {
       const bugFilters = document.querySelector('bug-filters');
       if (!bugFilters?.applyFilters) return;
 
-      const targetSelector = section === 'tickets' ? '#ticketsCardsList' : '#bugsCardsList';
-      const cardCount = document.querySelectorAll(`${targetSelector} bug-card`).length;
+      const cardCount = document.querySelectorAll('#bugsCardsList bug-card').length;
       if (cardCount > 0) {
         bugFilters.applyFilters();
       }
@@ -314,21 +303,19 @@ export class ViewFactory {
     this._resetContainerStylesForListView(cardsContainer);
 
     // Show filters for filterable sections
-    const filterableSections = ['tasks', 'bugs', 'tickets'];
+    const filterableSections = ['tasks', 'bugs'];
     if (filterableSections.includes(section)) {
       this.showFilters(section);
     }
 
     try {
-      const dataSection = section === 'tickets' ? 'bugs' : section;
-      let cards = await this.firebaseService.getCards(config.projectId, dataSection);
+      let cards = await this.firebaseService.getCards(config.projectId, section);
       cards = this._filterCardsByYear(cards, section);
 
       this._setupListFiltersForSection(section, cards);
       this.listRenderer.renderListView(cardsContainer, cards, config);
 
-      const isBugSection = section === 'bugs' || section === 'tickets';
-      if (isBugSection) {
+      if (section === 'bugs') {
         this._applyBugFiltersAfterRender(section);
       }
     } catch (error) {
@@ -516,7 +503,6 @@ export class ViewFactory {
     const viewContainers = {
       tasks: ['tasksCardsList', 'tasksKanbanView', 'tasksSprintView', 'tasksTableView'],
       bugs: ['bugsCardsList', 'bugsStatusKanbanView', 'bugsPriorityKanbanView', 'bugsTableView'],
-      tickets: ['ticketsCardsList', 'ticketsTableView'], // Tickets solo usa list y table view
       epics: ['epicsCardsList', 'epicsGanttView'],
       proposals: ['proposalsCardsList', 'proposalsTableView']
     };
@@ -562,10 +548,6 @@ export class ViewFactory {
         status: 'bugsStatusKanbanBtn',
         priority: 'bugsPriorityKanbanBtn',
         table: 'bugsTableViewBtn'
-      },
-      tickets: {
-        list: 'ticketsListViewBtn',
-        table: 'ticketsTableViewBtn'
       },
       epics: {
         list: 'epicsListBtn',
@@ -744,9 +726,6 @@ export class ViewFactory {
           this.createBugFiltersComponent();
         }
       }
-    } else if (section === 'tickets') {
-      // Tickets usa exactamente los mismos filtros que bugs
-      this.showFilters('bugs');
     } else if (section) {
       // Comportamiento anterior para otros tipos
       const filtersSection = document.querySelector(`#${section}TabContent .filters-section`);
@@ -855,41 +834,6 @@ export class ViewFactory {
       // Usar TableViewManager con reactividad en tiempo real
       this.tableViewManager.setFilters(this.bugFilters);
       this.tableViewManager.renderBugsTableView(container, config);
-
-      this.currentView = {
-        cleanup: () => {
-          this.tableViewManager.cleanup();
-        }
-      };
-    }
-  }
-
-  /**
-   * Muestra la vista de tabla para tickets (reutiliza lógica de bugs)
-   * @param {Object} config
-   */
-  async showTicketsTableView(config) {
-    const container = document.getElementById('ticketsTableView');
-    if (container) {
-      // Restablecer todos los estilos de ocultación
-      container.style.removeProperty('display');
-      container.style.removeProperty('visibility');
-      container.style.removeProperty('opacity');
-      container.style.removeProperty('position');
-      container.style.removeProperty('left');
-      container.style.display = 'block';
-      container.className = 'table-view';
-
-      // Listen for TABLE_RENDERED event before starting render
-      AppEventBus.once(AppEvents.TABLE_RENDERED, (detail) => {
-        if (detail.section === 'tickets') {
-          this.showFilters('tickets');
-        }
-      });
-
-      // Usar TableViewManager con reactividad en tiempo real
-      this.tableViewManager.setFilters(this.bugFilters);
-      this.tableViewManager.renderTicketsTableView(container, config);
 
       this.currentView = {
         cleanup: () => {
@@ -1149,12 +1093,7 @@ return tableFilters;
       return;
     }
 
-    // Detectar si estamos en la sección de tickets o bugs para usar el contenedor correcto
-    const isTicketsSection = document.getElementById('ticketsTab')?.classList.contains('active');
-    const containerId = isTicketsSection ? 'ticketsFilters' : 'bugsFilters';
-    const targetSelector = isTicketsSection ? '#ticketsCardsList' : '#bugsCardsList';
-
-    const filtersContainer = document.getElementById(containerId);
+    const filtersContainer = document.getElementById('bugsFilters');
     if (!filtersContainer) {
       return;
     }
@@ -1186,7 +1125,7 @@ return tableFilters;
 
     // Crear el componente bug-filters
     bugFilters = document.createElement('bug-filters');
-    bugFilters.setAttribute('target-selector', targetSelector);
+    bugFilters.setAttribute('target-selector', '#bugsCardsList');
     bugFilters.setAttribute('card-selector', 'bug-card');
 
     // Añadir el componente al DOM
@@ -1224,8 +1163,7 @@ return tableFilters;
         }
 
         // Contar las tarjetas iniciales y aplicar filtros por defecto de status
-        const cardSelector = isTicketsSection ? '#ticketsCardsList bug-card' : '#bugsCardsList bug-card';
-        const cards = document.querySelectorAll(cardSelector);
+        const cards = document.querySelectorAll('#bugsCardsList bug-card');
         if (bugFilters.resultsCount) {
           bugFilters.resultsCount = { visible: cards.length, total: cards.length };
         }
@@ -1253,12 +1191,7 @@ return tableFilters;
       return;
     }
 
-    // Detectar si estamos en la sección de tickets o bugs
-    const isTicketsSection = document.getElementById('ticketsTab')?.classList.contains('active');
-    const containerId = isTicketsSection ? 'ticketsFilters' : 'bugsFilters';
-    const targetSelector = isTicketsSection ? '#ticketsTableView' : '#bugsTableView';
-
-    const filtersContainer = document.getElementById(containerId);
+    const filtersContainer = document.getElementById('bugsFilters');
     if (!filtersContainer) {
       return;
     }
@@ -1285,7 +1218,7 @@ return tableFilters;
 
     // Crear el componente bug-filters para Table View
     const bugFilters = document.createElement('bug-filters');
-    bugFilters.setAttribute('target-selector', targetSelector);
+    bugFilters.setAttribute('target-selector', '#bugsTableView');
     bugFilters.setAttribute('card-selector', 'tr[data-bug-id]');
     bugFilters.setAttribute('data-view', 'table');
 
@@ -1354,7 +1287,7 @@ return tableFilters;
    */
   _filterCardsByYear(cards, section) {
     // Only filter sections that support year filtering
-    const yearFilteredSections = ['sprints', 'epics', 'tasks', 'bugs', 'tickets'];
+    const yearFilteredSections = ['sprints', 'epics', 'tasks', 'bugs'];
     if (!yearFilteredSections.includes(section)) {
       return cards;
     }
@@ -1387,7 +1320,7 @@ return filteredCards;
       // Si estamos en vista de tareas
       if (this._activeTaskView) {
         const activeSection = this._lastConfig.section || 'tasks';
-        if (['tasks', 'bugs', 'tickets'].includes(activeSection)) {
+        if (['tasks', 'bugs'].includes(activeSection)) {
           // Las vistas de tabla y lista se refrescan automáticamente desde app-controller
           // Pero kanban y sprint view necesitan refrescarse aquí
           if (this._activeTaskView === 'kanban' && this.viewManagers.kanban) {

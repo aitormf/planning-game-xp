@@ -1628,7 +1628,7 @@ const style = {
     if (!filteredCards || Object.keys(filteredCards).length === 0) {
       const emptyMessage = UIUtils.createElement('p', {
         style: { textAlign: 'center', padding: '2rem', color: 'var(--text-muted, #666)' }
-      }, 'No hay tickets');
+      }, 'No hay bugs');
       container.appendChild(emptyMessage);
       return;
     }

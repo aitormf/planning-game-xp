@@ -72,11 +72,6 @@ describe('TableViewManager', () => {
       expect(path).toBe('/views/bug-list/TestProject');
     });
 
-    it('should return correct view path for tickets (alias for bugs)', () => {
-      const path = manager._getViewPath('tickets', 'TestProject');
-      expect(path).toBe('/views/bug-list/TestProject');
-    });
-
     it('should return correct view path for proposals', () => {
       const path = manager._getViewPath('proposals', 'TestProject');
       expect(path).toBe('/views/proposal-list/TestProject');
@@ -96,11 +91,6 @@ describe('TableViewManager', () => {
 
     it('should return correct cards path for bugs', () => {
       const path = manager._getCardsPath('bugs', 'TestProject');
-      expect(path).toBe('/cards/TestProject/BUGS_TestProject');
-    });
-
-    it('should return correct cards path for tickets', () => {
-      const path = manager._getCardsPath('tickets', 'TestProject');
       expect(path).toBe('/cards/TestProject/BUGS_TestProject');
     });
 

@@ -11,7 +11,7 @@ export class FilterService {
 
   /**
    * Registra una configuración de filtros para un tipo específico
-   * @param {string} cardType - Tipo de tarjeta (task, bug, ticket, etc.)
+   * @param {string} cardType - Tipo de tarjeta (task, bug, etc.)
    * @param {Object} config - Configuración de filtros
    */
   registerFilterConfig(cardType, config) {
@@ -347,7 +347,7 @@ export class FilterService {
       defaultSort: 'createdDate'
     });
 
-    // Configuración para bugs/tickets
+    // Configuración para bugs
     this.registerFilterConfig('bug', {
       filters: {
         search: {
@@ -373,8 +373,6 @@ export class FilterService {
       defaultSort: 'createdDate'
     });
 
-    // Tickets usan la misma configuración que bugs
-    this.registerFilterConfig('ticket', this.getFilterConfig('bug'));
   }
 
   /**

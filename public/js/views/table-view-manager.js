@@ -93,7 +93,7 @@ export class TableViewManager {
           this.checkPreviousYearProposals(this.cardsCache);
         }
         // Re-check for previous year bugs when year changes
-        if (this.currentSection === 'bugs' || this.currentSection === 'tickets') {
+        if (this.currentSection === 'bugs') {
           this.checkPreviousYearBugs(this.cardsCache);
         }
         // Re-check for previous year tasks when year changes
@@ -591,17 +591,10 @@ export class TableViewManager {
   }
 
   /**
-   * Renderiza la vista tabla para bugs con reactividad  
+   * Renderiza la vista tabla para bugs con reactividad
    */
   renderBugsTableView(container, config) {
     this.setupTableView(container, config, 'bugs');
-  }
-
-  /**
-   * Renderiza la vista tabla para tickets con reactividad
-   */
-  renderTicketsTableView(container, config) {
-    this.setupTableView(container, config, 'tickets');
   }
 
   /**
@@ -613,7 +606,7 @@ export class TableViewManager {
 
   /**
    * Get the path for optimized views
-   * @param {string} section - Section name (tasks, bugs, tickets, proposals)
+   * @param {string} section - Section name (tasks, bugs, proposals)
    * @param {string} projectId - Project ID
    * @returns {string|null} View path or null if section not supported
    */
@@ -621,7 +614,7 @@ export class TableViewManager {
     if (!projectId) return null;
     if (section === 'tasks') {
       return `/views/task-list/${projectId}`;
-    } else if (section === 'bugs' || section === 'tickets') {
+    } else if (section === 'bugs') {
       return `/views/bug-list/${projectId}`;
     } else if (section === 'proposals') {
       return `/views/proposal-list/${projectId}`;
@@ -631,7 +624,7 @@ export class TableViewManager {
 
   /**
    * Get the path for full card data (fallback)
-   * @param {string} section - Section name (tasks, bugs, tickets, proposals)
+   * @param {string} section - Section name (tasks, bugs, proposals)
    * @param {string} projectId - Project ID
    * @returns {string|null} Cards path or null if section not supported
    */
@@ -639,7 +632,7 @@ export class TableViewManager {
     if (!projectId) return null;
     if (section === 'tasks') {
       return `/cards/${projectId}/TASKS_${projectId}`;
-    } else if (section === 'bugs' || section === 'tickets') {
+    } else if (section === 'bugs') {
       return `/cards/${projectId}/BUGS_${projectId}`;
     } else if (section === 'proposals') {
       return `/cards/${projectId}/PROPOSALS_${projectId}`;
@@ -657,7 +650,6 @@ export class TableViewManager {
     const schemaMap = {
       tasks: TASK_SCHEMA,
       bugs: BUG_SCHEMA,
-      tickets: BUG_SCHEMA,
       proposals: PROPOSAL_SCHEMA
     };
     const schema = schemaMap[section];
@@ -801,7 +793,7 @@ export class TableViewManager {
   _checkPreviousYearCards(section) {
     if (section === 'proposals') {
       this.checkPreviousYearProposals(this.cardsCache);
-    } else if (section === 'bugs' || section === 'tickets') {
+    } else if (section === 'bugs') {
       this.checkPreviousYearBugs(this.cardsCache);
     } else if (section === 'tasks') {
       this.checkPreviousYearTasks(this.cardsCache);
@@ -908,7 +900,7 @@ return filteredCards;
     // Renderizar según la sección
     if (this.currentSection === 'tasks') {
       this.tableRenderer.renderTableView(this.currentContainer, filteredCards, renderConfig);
-    } else if (this.currentSection === 'bugs' || this.currentSection === 'tickets') {
+    } else if (this.currentSection === 'bugs') {
       this.tableRenderer.renderBugsTableView(this.currentContainer, filteredCards, renderConfig);
     } else if (this.currentSection === 'proposals') {
       this.tableRenderer.renderProposalsTableView(this.currentContainer, filteredCards, renderConfig);
@@ -949,7 +941,7 @@ return filteredCards;
     if (this.currentSection === 'tasks') {
       return 'task';
     }
-    if (this.currentSection === 'bugs' || this.currentSection === 'tickets') {
+    if (this.currentSection === 'bugs') {
       return 'bug';
     }
     // Proposals don't use unified filters yet
@@ -997,7 +989,7 @@ return filteredCards;
     let filtersComponent = null;
     if (this.currentSection === 'tasks') {
       filtersComponent = document.querySelector('task-filters');
-    } else if (this.currentSection === 'bugs' || this.currentSection === 'tickets') {
+    } else if (this.currentSection === 'bugs') {
       filtersComponent = document.querySelector('bug-filters');
     }
 
@@ -1077,7 +1069,7 @@ return filteredCards;
       };
 
       // Normalizar status y priority para bugs
-      if (section === 'bugs' || section === 'tickets') {
+      if (section === 'bugs') {
         if (!cardWithIds.status || cardWithIds.status.trim() === '') {
           cardWithIds.status = 'Created';
         }
@@ -1087,7 +1079,7 @@ return filteredCards;
       }
 
       const dedupKey = cardWithIds.cardId || cardWithIds.id || firebaseId;
-      const shouldDedup = section === 'bugs' || section === 'tickets';
+      const shouldDedup = section === 'bugs';
 
       if (shouldDedup) {
         const existingFirebaseId = dedupMap.get(dedupKey);

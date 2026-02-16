@@ -30,8 +30,8 @@ export const APP_CONSTANTS = {
   DEFAULT_USER_PROJECTS: [],
 
   // Tabs visible in each view mode
-  MANAGEMENT_TABS: ['sprints', 'epics', 'tasks', 'bugs', 'tickets', 'proposals', 'qa', 'adrs', 'app'],
-  CONSULTATION_TABS: ['sprints', 'epics', 'tickets', 'proposals', 'app'],
+  MANAGEMENT_TABS: ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa', 'adrs', 'app'],
+  CONSULTATION_TABS: ['sprints', 'epics', 'proposals', 'app'],
   
   WELCOME_MESSAGES: {
     TITLE: _win.appName || 'Planning GameXP',
@@ -47,7 +47,7 @@ export const APP_CONSTANTS = {
     'epics': 'epic-card',
     'tasks': 'task-card',
     'bugs': 'bug-card',
-    'tickets': 'bug-card',
+
     'proposals': 'proposal-card',
     'qa': 'qa-card',
     'logs': 'log-card',

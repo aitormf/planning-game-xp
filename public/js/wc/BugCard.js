@@ -673,18 +673,14 @@ return [];
    * Solicita permisos específicos para esta BugCard
    */
   _requestPermissions() {
-    // Detectar si estamos en la sección de tickets para usar permisos especiales
-    const isInTicketsSection = this._isInTicketsSection();
-    const eventName = isInTicketsSection ? 'request-ticket-permissions' : 'request-bug-permissions';
-// Emitir evento solicitando permisos específicos
-    const permissionRequest = new CustomEvent(eventName, {
+    const permissionRequest = new CustomEvent('request-bug-permissions', {
       detail: {
         cardId: this.cardId,
-        cardType: isInTicketsSection ? 'ticket-card' : 'bug-card',
+        cardType: 'bug-card',
         userEmail: this.userEmail,
         createdBy: this.createdBy,
         callback: (permissions) => {
-this.canEditPermission = permissions.canEdit || false;
+          this.canEditPermission = permissions.canEdit || false;
           this.requestUpdate();
         }
       },
@@ -692,36 +688,6 @@ this.canEditPermission = permissions.canEdit || false;
     });
 
     document.dispatchEvent(permissionRequest);
-  }
-
-  /**
-   * Detecta si esta BugCard está siendo usada en la sección de tickets
-   * @returns {boolean} True si está en la sección de tickets
-   */
-  _isInTicketsSection() {
-    // Verificar si estamos en el contenedor de tickets
-    const ticketsContainer = document.getElementById('ticketsCardsList');
-    if (ticketsContainer?.contains(this)) {
-      return true;
-    }
-
-    // Verificar si el tab activo es tickets
-    const ticketsTab = document.getElementById('ticketsTab');
-    if (ticketsTab?.classList.contains('active')) {
-      return true;
-    }
-
-    // Verificar URL hash
-    if (window.location.hash === '#tickets') {
-      return true;
-    }
-
-    // Verificar si el section está configurado como tickets
-    if (this.section === 'tickets') {
-      return true;
-    }
-
-    return false;
   }
 
   _openMiniModalCloseWarning() {
