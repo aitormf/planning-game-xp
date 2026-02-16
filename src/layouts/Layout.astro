@@ -45,6 +45,7 @@ let user = null;
     <header>
       <a href="/" class="header-logos">
         <img src="/images/icono_PGame.png" alt="Planning Game" class="planning-game-icon" />
+        <span id="orgNameBadge" class="org-name hidden"></span>
       </a>
       <div class="header-title-container">
         <h1>Planning Game</h1>
@@ -645,12 +646,28 @@ let user = null;
         menuNav = document.getElementById('menunav');
       }
 
+      function applyOrganizationBranding() {
+        const orgNameBadge = document.getElementById('orgNameBadge');
+        if (!orgNameBadge) return;
+        const orgName = APP_CONSTANTS.ORG_NAME;
+        if (orgName) {
+          orgNameBadge.textContent = orgName;
+          orgNameBadge.classList.remove('hidden');
+          orgNameBadge.setAttribute('aria-label', `Organización: ${orgName}`);
+          return;
+        }
+        orgNameBadge.classList.add('hidden');
+        orgNameBadge.textContent = '';
+        orgNameBadge.removeAttribute('aria-label');
+      }
+
       async function DOMContentLoadedActions() {
         // Initialize theme system before anything else renders
         await ThemeLoaderService.loadAndApply();
         ThemeManagerService.init();
 
         getDomElements();
+        applyOrganizationBranding();
         pagePath = window.location.pathname;
         if (oauthLoginButton) {
           const providerLabels = { google: 'Google', microsoft: 'Microsoft', github: 'GitHub', gitlab: 'GitLab' };
@@ -916,6 +933,20 @@ let user = null;
       .planning-game-icon {
         height: 55px;
         width: auto;
+      }
+
+      .org-name {
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        color: var(--text-on-primary, #ffffff);
+        white-space: nowrap;
+      }
+
+      @media (max-width: 768px) {
+        .org-name {
+          display: none;
+        }
       }
 
       .user-info {

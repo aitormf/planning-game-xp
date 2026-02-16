@@ -32,6 +32,7 @@ const ENV_TEMPLATE = {
     { key: 'PUBLIC_FIREBASE_MEASUREMENT_ID', desc: 'Firebase Measurement ID (Google Analytics)', required: false },
     { key: 'PUBLIC_FIREBASE_VAPID_KEY', desc: 'Firebase VAPID Key (para push notifications)', required: false },
     { key: 'PUBLIC_SUPER_ADMIN_EMAIL', desc: 'Email del Super Admin', required: true },
+    { key: 'PUBLIC_ORG_NAME', desc: 'Nombre de la organización/marca (ej: GENIOVA)', required: false },
     { key: 'PUBLIC_AUTH_PROVIDER', desc: 'Auth provider (google/microsoft/github/gitlab)', required: true, default: 'google' },
   ],
   functions: [

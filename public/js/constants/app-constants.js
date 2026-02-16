@@ -37,6 +37,7 @@ export const APP_CONSTANTS = {
     TITLE: _win.appName || 'Planning GameXP',
     SUBTITLE: 'Sign in with your account'
   },
+  ORG_NAME: typeof _win.orgName === 'string' ? _win.orgName.trim() : '',
   // Configured via PUBLIC_ALLOWED_EMAIL_DOMAINS env var → window.allowedEmailDomains
   // Comma-separated list of domains (e.g. "example.com,corp.example.com")
   AUTH_ALLOWED_EMAIL_DOMAINS: parseAllowedEmailDomains(_win.allowedEmailDomains),
