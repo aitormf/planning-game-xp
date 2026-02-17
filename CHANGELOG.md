@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.120.0] - 2026-02-17
+
 ### Added
 
-- Unit test coverage expansion for utility modules and services
+- **Prompt Persistence in Tasks Generator**: Auto-save draft with 2s debounce, restore on reload/project switch, save/load/rename/delete named prompts per user and project in RTDB
+
+## [1.119.1] - 2026-02-17
+
+### Added
+
+- Unit test coverage expansion for utility modules (email-sanitizer, workday-utils, cache-manager, developer-normalizer) - 142 new tests
 
 ## [1.119.0] - 2026-02-17
 
