@@ -9,7 +9,8 @@ const versionJsonPath = path.join(repoRoot, 'version.json');
 const filesToTrack = [
   'version.json',
   'public/js/version.js',
-  'package.json'
+  'package.json',
+  'CHANGELOG.md'
 ];
 
 function hasChanges(file) {
