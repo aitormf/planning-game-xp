@@ -285,7 +285,7 @@ export class AppController {
 
       // OPTIMIZACIÓN: Estas no bloquean la carga de cards
       this.updateAppTabVisibility();
-      this.updateUploadTabVisibility();
+      this.updateTasksGeneratorTabVisibility();
       await this.setUserViewMode();
     } catch (error) {
       console.error('[AppController] loadInitialData failed:', error);
@@ -1034,14 +1034,14 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
     }
   }
 
-  async updateUploadTabVisibility() {
-    const uploadTab = document.getElementById('uploadTab');
-    const uploadContent = document.getElementById('uploadsTabContent');
-    if (!uploadTab || !uploadContent) {
+  async updateTasksGeneratorTabVisibility() {
+    const generatorTab = document.getElementById('tasksGeneratorTab');
+    const generatorContent = document.getElementById('tasksGeneratorTabContent');
+    if (!generatorTab || !generatorContent) {
       return;
     }
 
-    // Upload tab is visible to superadmin, project admins, developers and stakeholders
+    // Tasks Generator tab is visible to superadmin, project admins, developers and stakeholders
     const isSuperAdmin = await this._checkIsSuperAdmin();
     const isResponsable = window.currentUserRole?.isResponsable || false;
 
@@ -1063,11 +1063,11 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
     const hasAccess = isSuperAdmin || isResponsable || isDeveloper || isStakeholder;
 
     if (hasAccess) {
-      uploadTab.style.display = 'block';
+      generatorTab.style.display = 'block';
     } else {
-      const wasActive = uploadTab.classList.contains('active');
-      uploadTab.style.display = 'none';
-      uploadContent.style.display = 'none';
+      const wasActive = generatorTab.classList.contains('active');
+      generatorTab.style.display = 'none';
+      generatorContent.style.display = 'none';
       if (wasActive) {
         this.tabController.switchToTab('tasks');
       }
@@ -1076,7 +1076,7 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
 
   setupAppAccessListener() {
     this.hasAppAccess = Boolean(window.isAppAdmin);
-    this.updateUploadTabVisibility();
+    this.updateTasksGeneratorTabVisibility();
     document.addEventListener('app-admin-status-changed', this.handleAppAdminStatusChange);
   }
 
@@ -1085,7 +1085,7 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
     this.hasAppAccess = Boolean(event?.detail?.isAppAdmin);
     if (previous !== this.hasAppAccess) {
       this.updateAppTabVisibility();
-      this.updateUploadTabVisibility();
+      this.updateTasksGeneratorTabVisibility();
     }
   }
 
@@ -1743,7 +1743,7 @@ try {
       }
 
       this.updateAppTabVisibility();
-      this.updateUploadTabVisibility();
+      this.updateTasksGeneratorTabVisibility();
       this.setupSprintChartButton();
 } catch (error) {
 // Fallback to full page reload if partial reload fails

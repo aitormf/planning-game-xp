@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+e
 import { FirebaseService } from '../services/firebase-service.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { entityDirectoryService } from '../services/entity-directory-service.js';
+import { ThemeVariables } from '../ui/styles/theme-variables.js';
 
 /**
  * Component for uploading documents and generating tasks/bugs using AI
@@ -27,10 +28,12 @@ export class AiDocumentUploader extends LitElement {
     selectedDeveloper: { type: String },
     isCurrentUserStakeholder: { type: Boolean },
     currentUserStakeholderName: { type: String },
-    scoringSystem: { type: String }
+    scoringSystem: { type: String },
+    inputMode: { type: String },
+    textInput: { type: String }
   };
 
-  static styles = css`
+  static styles = [ThemeVariables, css`
     :host {
       display: block;
       font-family: system-ui, -apple-system, sans-serif;
@@ -50,21 +53,21 @@ export class AiDocumentUploader extends LitElement {
 
     .header h3 {
       margin: 0;
-      color: #1e293b;
+      color: var(--text-primary);
     }
 
     .header p {
       margin: 0;
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 0.9rem;
     }
 
     .card {
-      background: #fff;
-      border: 1px solid #e2e8f0;
+      background: var(--card-bg);
+      border: 1px solid var(--border-subtle);
       border-radius: 12px;
       padding: 1.25rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--card-shadow);
     }
 
     .config-section {
@@ -82,15 +85,16 @@ export class AiDocumentUploader extends LitElement {
     .form-group label {
       font-weight: 600;
       font-size: 0.875rem;
-      color: #475569;
+      color: var(--text-secondary);
     }
 
     .form-group select {
       padding: 0.6rem;
-      border: 1px solid #cbd5e1;
+      border: 1px solid var(--input-border);
       border-radius: 8px;
       font-size: 0.9rem;
-      background: white;
+      background: var(--input-bg);
+      color: var(--input-text);
     }
 
     .project-badge {
@@ -98,26 +102,102 @@ export class AiDocumentUploader extends LitElement {
       align-items: center;
       gap: 0.5rem;
       padding: 0.5rem 1rem;
-      background: #e0f2fe;
-      color: #0369a1;
+      background: var(--color-info-light);
+      color: var(--color-info-dark);
       border-radius: 8px;
       font-weight: 600;
       font-size: 0.9rem;
     }
 
+    /* Input mode toggle */
+    .input-mode-toggle {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      overflow: hidden;
+      width: fit-content;
+    }
+
+    .input-mode-toggle button {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: var(--bg-primary);
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .input-mode-toggle button:not(:last-child) {
+      border-right: 1px solid var(--border-default);
+    }
+
+    .input-mode-toggle button.active {
+      background: var(--brand-primary);
+      color: var(--text-inverse);
+    }
+
+    .input-mode-toggle button:hover:not(.active) {
+      background: var(--bg-secondary);
+    }
+
+    /* Text input area */
+    .text-input-area {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .text-input-area textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 1rem;
+      border: 2px solid var(--border-subtle);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      resize: vertical;
+      box-sizing: border-box;
+      background: var(--input-bg);
+      color: var(--input-text);
+      transition: border-color 0.2s;
+    }
+
+    .text-input-area textarea:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+    }
+
+    .text-input-area textarea::placeholder {
+      color: var(--text-placeholder);
+    }
+
+    .text-input-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .generate-btn-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+
     .dropzone {
-      border: 2px dashed #94a3b8;
+      border: 2px dashed var(--border-default);
       border-radius: 12px;
       padding: 2rem;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s;
-      background: #f8fafc;
+      background: var(--bg-subtle);
     }
 
     .dropzone:hover {
-      border-color: #3b82f6;
-      background: #eff6ff;
+      border-color: var(--brand-primary);
+      background: var(--color-info-light);
     }
 
     .dropzone.is-disabled {
@@ -136,12 +216,12 @@ export class AiDocumentUploader extends LitElement {
 
     .dropzone-title {
       font-weight: 600;
-      color: #1e293b;
+      color: var(--text-primary);
       margin: 0 0 0.25rem;
     }
 
     .dropzone-subtitle {
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 0.875rem;
       margin: 0;
     }
@@ -154,8 +234,8 @@ export class AiDocumentUploader extends LitElement {
     }
 
     .file-type-badge {
-      background: #e0f2fe;
-      color: #0369a1;
+      background: var(--color-info-light);
+      color: var(--color-info-dark);
       padding: 0.2rem 0.6rem;
       border-radius: 999px;
       font-size: 0.75rem;
@@ -173,8 +253,8 @@ export class AiDocumentUploader extends LitElement {
     .spinner {
       width: 40px;
       height: 40px;
-      border: 3px solid #e2e8f0;
-      border-top-color: #3b82f6;
+      border: 3px solid var(--border-subtle);
+      border-top-color: var(--brand-primary);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -194,12 +274,12 @@ export class AiDocumentUploader extends LitElement {
       justify-content: space-between;
       align-items: center;
       padding-bottom: 0.75rem;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .items-header h4 {
       margin: 0;
-      color: #1e293b;
+      color: var(--text-primary);
     }
 
     .items-count {
@@ -218,38 +298,38 @@ export class AiDocumentUploader extends LitElement {
     }
 
     .count-badge.tasks {
-      background: #dbeafe;
-      color: #1d4ed8;
+      background: var(--color-info-light);
+      color: var(--color-info-dark);
     }
 
     .count-badge.bugs {
-      background: #fee2e2;
-      color: #dc2626;
+      background: var(--color-error-light);
+      color: var(--color-error-dark);
     }
 
     .count-badge.proposals {
-      background: #fef3c7;
-      color: #b45309;
+      background: var(--color-warning-light);
+      color: var(--color-warning-dark);
     }
 
     .item-card {
-      background: #fff;
-      border: 1px solid #e2e8f0;
+      background: var(--card-bg);
+      border: 1px solid var(--border-subtle);
       border-radius: 10px;
       padding: 1rem;
       transition: box-shadow 0.2s;
     }
 
     .item-card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: var(--card-shadow-hover);
     }
 
     .item-card.task {
-      border-left: 4px solid #3b82f6;
+      border-left: 4px solid var(--brand-primary);
     }
 
     .item-card.bug {
-      border-left: 4px solid #ef4444;
+      border-left: 4px solid var(--color-error);
     }
 
     .item-header {
@@ -269,22 +349,22 @@ export class AiDocumentUploader extends LitElement {
     }
 
     .item-type-badge.task {
-      background: #dbeafe;
-      color: #1d4ed8;
+      background: var(--color-info-light);
+      color: var(--color-info-dark);
     }
 
     .item-type-badge.bug {
-      background: #fee2e2;
-      color: #dc2626;
+      background: var(--color-error-light);
+      color: var(--color-error-dark);
     }
 
     .item-type-badge.proposal {
-      background: #fef3c7;
-      color: #b45309;
+      background: var(--color-warning-light);
+      color: var(--color-warning-dark);
     }
 
     .item-card.proposal {
-      border-left: 4px solid #f59e0b;
+      border-left: 4px solid var(--color-warning);
     }
 
     .item-actions {
@@ -294,22 +374,23 @@ export class AiDocumentUploader extends LitElement {
 
     .item-actions button {
       background: none;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-subtle);
       border-radius: 6px;
       padding: 0.35rem 0.6rem;
       cursor: pointer;
       font-size: 0.8rem;
+      color: var(--text-primary);
       transition: all 0.2s;
     }
 
     .item-actions button:hover {
-      background: #f1f5f9;
+      background: var(--bg-secondary);
     }
 
     .item-actions button.delete:hover {
-      background: #fee2e2;
-      border-color: #fecaca;
-      color: #dc2626;
+      background: var(--color-error-light);
+      border-color: var(--color-error);
+      color: var(--color-error-dark);
     }
 
     .item-field {
@@ -320,7 +401,7 @@ export class AiDocumentUploader extends LitElement {
       display: block;
       font-size: 0.75rem;
       font-weight: 600;
-      color: #64748b;
+      color: var(--text-muted);
       margin-bottom: 0.25rem;
       text-transform: uppercase;
     }
@@ -330,11 +411,13 @@ export class AiDocumentUploader extends LitElement {
     .item-field select {
       width: 100%;
       padding: 0.5rem;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-subtle);
       border-radius: 6px;
       font-size: 0.9rem;
       font-family: inherit;
       box-sizing: border-box;
+      background: var(--input-bg);
+      color: var(--input-text);
     }
 
     .item-field textarea {
@@ -343,7 +426,7 @@ export class AiDocumentUploader extends LitElement {
     }
 
     .item-field .epic-new {
-      color: #16a34a;
+      color: var(--color-success);
       font-style: italic;
     }
 
@@ -352,7 +435,7 @@ export class AiDocumentUploader extends LitElement {
       justify-content: space-between;
       align-items: center;
       padding-top: 1rem;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid var(--border-subtle);
     }
 
     .btn {
@@ -366,27 +449,27 @@ export class AiDocumentUploader extends LitElement {
     }
 
     .btn-primary {
-      background: #3b82f6;
-      color: white;
+      background: var(--btn-primary-bg);
+      color: var(--btn-primary-text);
     }
 
     .btn-primary:hover {
-      background: #2563eb;
+      background: var(--btn-primary-hover-bg);
     }
 
     .btn-primary:disabled {
-      background: #94a3b8;
+      background: var(--text-disabled);
       cursor: not-allowed;
     }
 
     .btn-secondary {
-      background: white;
-      border: 1px solid #e2e8f0;
-      color: #475569;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
     }
 
     .btn-secondary:hover {
-      background: #f1f5f9;
+      background: var(--bg-secondary);
     }
 
     .message {
@@ -396,21 +479,21 @@ export class AiDocumentUploader extends LitElement {
     }
 
     .message.error {
-      background: #fee2e2;
-      color: #dc2626;
-      border: 1px solid #fecaca;
+      background: var(--color-error-light);
+      color: var(--color-error-dark);
+      border: 1px solid var(--color-error);
     }
 
     .message.success {
-      background: #dcfce7;
-      color: #16a34a;
-      border: 1px solid #bbf7d0;
+      background: var(--color-success-light);
+      color: var(--color-success-dark);
+      border: 1px solid var(--color-success);
     }
 
     .no-project {
       text-align: center;
       padding: 2rem;
-      color: #64748b;
+      color: var(--text-muted);
     }
 
     .overlay {
@@ -427,7 +510,7 @@ export class AiDocumentUploader extends LitElement {
     }
 
     .overlay-content {
-      background: white;
+      background: var(--card-bg);
       padding: 2rem 3rem;
       border-radius: 12px;
       text-align: center;
@@ -443,16 +526,16 @@ export class AiDocumentUploader extends LitElement {
 
     .overlay-content h4 {
       margin: 0 0 0.5rem;
-      color: #1e293b;
+      color: var(--text-primary);
       font-size: 1.1rem;
     }
 
     .overlay-content p {
       margin: 0;
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 0.9rem;
     }
-  `;
+  `];
 
   constructor() {
     super();
@@ -474,6 +557,8 @@ export class AiDocumentUploader extends LitElement {
     this.isCurrentUserStakeholder = false;
     this.currentUserStakeholderName = '';
     this.scoringSystem = '1-5';
+    this.inputMode = 'text';
+    this.textInput = '';
     this._projectChangeHandler = this._handleProjectChange.bind(this);
   }
 
@@ -652,6 +737,56 @@ export class AiDocumentUploader extends LitElement {
     } catch (error) {
       console.error('Error loading sprints:', error);
       this.sprints = [];
+    }
+  }
+
+  _setInputMode(mode) {
+    this.inputMode = mode;
+  }
+
+  async _handleTextGenerate() {
+    if (!this.textInput || this.textInput.trim().length < 10) {
+      this.error = 'El texto debe tener al menos 10 caracteres.';
+      return;
+    }
+
+    if (!this.projectId) {
+      this.error = 'No hay proyecto seleccionado.';
+      return;
+    }
+
+    this.error = '';
+    this.success = '';
+    this.generatedItems = [];
+    this.loading = true;
+
+    try {
+      const functions = getFunctions(undefined, 'europe-west1');
+      const parseDocument = httpsCallable(functions, 'parseDocumentForCards');
+
+      const result = await parseDocument({
+        projectId: this.projectId,
+        documentContent: this.textInput.trim(),
+        fileName: 'text-input',
+        scoringSystem: this.scoringSystem
+      });
+
+      if (result.data?.status === 'ok') {
+        this.generatedItems = result.data.items.map((item, index) => ({
+          ...item,
+          id: `item-${index}`,
+          selected: true
+        }));
+        this.existingEpics = result.data.existingEpics || [];
+        this.success = `Se generaron ${this.generatedItems.length} items del texto.`;
+      } else {
+        throw new Error('No se pudieron generar items del texto.');
+      }
+    } catch (error) {
+      console.error('Error processing text:', error);
+      this.error = error.message || 'Error al procesar el texto.';
+    } finally {
+      this.loading = false;
     }
   }
 
@@ -963,6 +1098,7 @@ export class AiDocumentUploader extends LitElement {
   _clearAll() {
     this.generatedItems = [];
     this.fileName = '';
+    this.textInput = '';
     this.error = '';
     this.success = '';
     this.existingEpics = [];
@@ -994,8 +1130,8 @@ export class AiDocumentUploader extends LitElement {
     return html`
       <div class="container">
         <div class="header">
-          <h3>Generar Cards desde Documento</h3>
-          <p>Sube un documento y la IA extraerá las tareas y bugs necesarios.</p>
+          <h3>Tasks Generator</h3>
+          <p>Escribe texto o sube un documento y la IA extraerá las tareas y bugs necesarios.</p>
         </div>
 
         ${this.error ? html`<div class="message error">${this.error}</div>` : null}
@@ -1077,27 +1213,57 @@ export class AiDocumentUploader extends LitElement {
         </div>
 
         ${!this.loading ? html`
-          <label class="dropzone">
-            <input
-              type="file"
-              accept=".txt,.md,.pdf,.doc,.docx"
-              @change=${this._handleFileChange}
-              ?disabled=${this.loading || this.uploading}
-            />
-            <div class="dropzone-icon">📄</div>
-            <p class="dropzone-title">
-              ${this.fileName || 'Haz clic o arrastra tu documento'}
-            </p>
-            <p class="dropzone-subtitle">
-              La IA analizará el contenido y generará tareas y bugs automáticamente.
-            </p>
-            <div class="file-types">
-              <span class="file-type-badge">TXT</span>
-              <span class="file-type-badge">MD</span>
-              <span class="file-type-badge">PDF</span>
-              <span class="file-type-badge">DOCX</span>
+          <div class="input-mode-toggle">
+            <button
+              class=${this.inputMode === 'text' ? 'active' : ''}
+              @click=${() => this._setInputMode('text')}
+            >Escribir texto</button>
+            <button
+              class=${this.inputMode === 'document' ? 'active' : ''}
+              @click=${() => this._setInputMode('document')}
+            >Subir documento</button>
+          </div>
+
+          ${this.inputMode === 'text' ? html`
+            <div class="text-input-area">
+              <textarea
+                .value=${this.textInput}
+                @input=${e => { this.textInput = e.target.value; }}
+                placeholder="Describe las funcionalidades, requisitos o problemas que quieres convertir en tareas y bugs. Cuanto más detalle incluyas, mejores serán los resultados..."
+                ?disabled=${this.uploading}
+              ></textarea>
+              <span class="text-input-hint">${this.textInput.length} caracteres</span>
+              <div class="generate-btn-container">
+                <button
+                  class="btn btn-primary"
+                  @click=${this._handleTextGenerate}
+                  ?disabled=${this.uploading || this.textInput.trim().length < 10}
+                >Generar Cards</button>
+              </div>
             </div>
-          </label>
+          ` : html`
+            <label class="dropzone">
+              <input
+                type="file"
+                accept=".txt,.md,.pdf,.doc,.docx"
+                @change=${this._handleFileChange}
+                ?disabled=${this.loading || this.uploading}
+              />
+              <div class="dropzone-icon">📄</div>
+              <p class="dropzone-title">
+                ${this.fileName || 'Haz clic o arrastra tu documento'}
+              </p>
+              <p class="dropzone-subtitle">
+                La IA analizará el contenido y generará tareas y bugs automáticamente.
+              </p>
+              <div class="file-types">
+                <span class="file-type-badge">TXT</span>
+                <span class="file-type-badge">MD</span>
+                <span class="file-type-badge">PDF</span>
+                <span class="file-type-badge">DOCX</span>
+              </div>
+            </label>
+          `}
         ` : null}
 
         ${this.generatedItems.length > 0 ? html`
@@ -1249,7 +1415,7 @@ export class AiDocumentUploader extends LitElement {
         <div class="overlay">
           <div class="overlay-content">
             <div class="spinner"></div>
-            <h4>Analizando documento con IA...</h4>
+            <h4>Analizando ${this.inputMode === 'text' ? 'texto' : 'documento'} con IA...</h4>
             <p>Este proceso puede durar varios minutos</p>
           </div>
         </div>

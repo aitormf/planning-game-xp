@@ -16,7 +16,7 @@ import Layout from '../layouts/Layout.astro';
       <button id="qaTab" data-section="qa" class="tablinks">QA</button>
       <button id="adrsTab" data-section="adrs" class="tablinks">ADRs</button>
       <button id="appTab" data-section="app" class="tablinks app-tab" style="display:none;">App</button>
-      <button id="uploadTab" data-section="uploads" class="tablinks upload-tab" style="display:none;">Uploads</button>
+      <button id="tasksGeneratorTab" data-section="tasksGenerator" class="tablinks tasks-generator-tab" style="display:none;">Tasks Generator</button>
     </div>
     <div class="mode-switch" id="modeSwitchContainer" style="display: none;">
       <select id="viewModeSelect" onchange="switchViewMode(this.value)">
@@ -173,10 +173,10 @@ import Layout from '../layouts/Layout.astro';
     </section>
     <app-manager id="appManager"></app-manager>
   </div>
-  <div id="uploadsTabContent" class="tabcontent">
+  <div id="tasksGeneratorTabContent" class="tabcontent">
     <section class="subheader">
-      <h3>Generador de Cards con IA</h3>
-      <p class="subheader-hint">Sube un documento y la IA generará automáticamente las tareas y bugs necesarios.</p>
+      <h3>Tasks Generator</h3>
+      <p class="subheader-hint">Escribe texto o sube un documento y la IA generará automáticamente las tareas y bugs necesarios.</p>
     </section>
     <ai-document-uploader id="aiDocumentUploader"></ai-document-uploader>
   </div>
