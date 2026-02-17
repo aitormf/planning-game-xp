@@ -1,7 +1,7 @@
 {
-  "allowedPackages": [],
-  "allowedAdvisories": [],
-  "reason": "",
-  "lastReviewed": "2026-02-13",
+  "allowedPackages": ["fast-xml-parser", "@google-cloud/storage", "firebase-admin"],
+  "allowedAdvisories": ["GHSA-jmr7-xgp7-cmfj"],
+  "reason": "Transitive dependency of firebase-admin via @google-cloud/storage → fast-xml-parser. DoS via DOCTYPE entity expansion - low risk in server-side Cloud Functions context, no user-controlled XML parsing.",
+  "lastReviewed": "2026-02-18",
   "reviewedBy": "Team"
 }
