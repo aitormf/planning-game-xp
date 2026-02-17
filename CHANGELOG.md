@@ -9,7 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Admin Uploads Tab**: Admin-only section inside each project with JSON uploads for tasks, bugs, and proposals including schema validation, duplicate prevention, and success/error reporting.
+- Unit test coverage expansion for utility modules and services
+
+## [1.119.0] - 2026-02-17
+
+### Added
+
+- **Changelog Modal**: Version badge in footer is now a clickable button that opens a modal displaying the full project changelog with formatted sections and styles
+
+## [1.118.1] - 2026-02-17
+
+### Fixed
+
+- **Dark Mode in Tasks Generator**: Removed ThemeVariables from AiDocumentUploader shadow DOM to fix dark mode. CSS variables now correctly inherit from `:root` where ThemeManagerService sets dark values
+
+## [1.118.0] - 2026-02-17
+
+### Added
+
+- **Tasks Generator**: Renamed "Uploads" tab to "Tasks Generator" with dual input modes
+- **Text Input Mode**: New textarea option for generating tasks/bugs from plain text (in addition to document upload)
+- **Input Mode Toggle**: Switch between "Write text" and "Upload document" within the Tasks Generator section
+
+### Changed
+
+- **Tab Naming**: "Uploads" → "Tasks Generator" across all references (adminproject, app-controller)
+- **Button Text**: "Generar Cards" → "Generar tareas" for clarity
+- **CSS Variables**: Replaced all hardcoded colors in AiDocumentUploader with theme-aware CSS variables
+
+## [1.117.8] - 2026-02-17
+
+### Removed
+
+- **Tickets Section**: Removed unauthorized Tickets section that was not properly scoped for current permissions
+
+## [1.117.7] - 2026-02-16
+
+### Changed
+
+- Pre-build configuration updates and version management improvements
 
 ## [1.2.0] - Q3 2025
 
@@ -21,7 +59,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Filter Service**: Generic filtering system that eliminates duplication between TaskFilters, BugFilters, etc.
 - **Modal Service**: Centralized modal management with stacking, confirmation, and form modals
 - **Integration Service**: Migration service to seamlessly integrate existing components with new services
-- **Tickets Functionality**: Full tickets management integrated with bugs infrastructure but with different permissions
 
 ### Changed
 
@@ -39,7 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Permission Inconsistencies**: Unified permission logic ensuring consistent behavior
 - **Code Duplication**: Removed repetitive patterns across filter components and permission checks
 - **Modal Management**: Fixed modal stacking and cleanup issues with centralized service
-- **Tickets Creation**: Fixed missing button and save functionality for tickets in consultation mode
 
 ### Technical Improvements
 
