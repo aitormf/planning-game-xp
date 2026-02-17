@@ -610,16 +610,25 @@ export class AiDocumentUploader extends LitElement {
       gap: 0.35rem;
     }
 
+    .save-input-group select,
     .save-input-group input {
       padding: 0.35rem 0.5rem;
       border: 1px solid var(--border-default);
       border-radius: 6px;
       font-size: 0.8rem;
-      width: 180px;
       background: var(--input-bg);
       color: var(--input-text);
     }
 
+    .save-input-group input {
+      width: 160px;
+    }
+
+    .save-input-group select {
+      max-width: 180px;
+    }
+
+    .save-input-group select:focus,
     .save-input-group input:focus {
       outline: none;
       border-color: var(--brand-primary);
@@ -768,6 +777,9 @@ export class AiDocumentUploader extends LitElement {
     this.showSaveInput = false;
     this.savePromptName = '';
     this._draftTimer = null;
+    this._saveTargetId = '';
+    this._activePromptId = '';
+    this._activePromptName = '';
     this._projectChangeHandler = this._handleProjectChange.bind(this);
   }
 
@@ -790,15 +802,10 @@ export class AiDocumentUploader extends LitElement {
       const stakeholderId = entityDirectoryService.resolveStakeholderId(userEmail);
 
       if (stakeholderId) {
-        // User is a stakeholder - check if they are also a developer
-        const developerId = entityDirectoryService.resolveDeveloperId(userEmail);
-
-        if (!developerId) {
-          // User is ONLY a stakeholder (not also a developer) - auto-assign as validator
-          this.isCurrentUserStakeholder = true;
-          this.currentUserStakeholderName = entityDirectoryService.getStakeholderDisplayName(stakeholderId) || userEmail;
-          this.selectedValidator = stakeholderId;
-        }
+        // User is a stakeholder - auto-assign as validator regardless of being also a developer
+        this.isCurrentUserStakeholder = true;
+        this.currentUserStakeholderName = entityDirectoryService.getStakeholderDisplayName(stakeholderId) || userEmail;
+        this.selectedValidator = stakeholderId;
       }
     } catch (error) {
       // Silently fail - user can still use the dropdown
@@ -1400,10 +1407,25 @@ export class AiDocumentUploader extends LitElement {
     }
   }
 
-  _toggleSaveInput() {
+  async _toggleSaveInput() {
     this.showSaveInput = !this.showSaveInput;
     if (this.showSaveInput) {
       this.savePromptName = '';
+      this._saveTargetId = this._activePromptId || '';
+      await this._loadSavedPrompts();
+      this.updateComplete.then(() => {
+        if (!this._saveTargetId) {
+          const input = this.shadowRoot.querySelector('.save-input-group input');
+          if (input) input.focus();
+        }
+      });
+    }
+  }
+
+  _onSaveTargetChange(e) {
+    this._saveTargetId = e.target.value;
+    this.requestUpdate();
+    if (!this._saveTargetId) {
       this.updateComplete.then(() => {
         const input = this.shadowRoot.querySelector('.save-input-group input');
         if (input) input.focus();
@@ -1412,26 +1434,52 @@ export class AiDocumentUploader extends LitElement {
   }
 
   async _handleSavePrompt() {
-    const name = this.savePromptName.trim();
-    if (!name || !this.textInput.trim()) return;
+    if (!this.textInput.trim()) return;
 
     const path = this._getUserPromptsPath();
     if (!path) return;
 
-    try {
-      const { push, set } = await this._getDbModule();
-      const savedRef = FirebaseService.getRef(`${path}/saved`);
-      const newRef = push(savedRef);
-      await set(newRef, {
-        name,
-        content: this.textInput,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
+    const isOverwrite = !!this._saveTargetId;
+    const existingPrompt = isOverwrite
+      ? this.savedPrompts.find(p => p.id === this._saveTargetId)
+      : null;
 
-      this.showSaveInput = false;
-      this.savePromptName = '';
-      this._showNotification(`Prompt "${name}" guardado`, 'success');
+    if (!isOverwrite) {
+      const name = this.savePromptName.trim();
+      if (!name) return;
+    }
+
+    try {
+      if (isOverwrite && existingPrompt) {
+        const { update } = await this._getDbModule();
+        const promptRef = FirebaseService.getRef(`${path}/saved/${this._saveTargetId}`);
+        await update(promptRef, {
+          content: this.textInput,
+          updatedAt: new Date().toISOString()
+        });
+
+        this._activePromptId = this._saveTargetId;
+        this._activePromptName = existingPrompt.name;
+        this.showSaveInput = false;
+        this._showNotification(`Prompt "${existingPrompt.name}" actualizado`, 'success');
+      } else {
+        const name = this.savePromptName.trim();
+        const { push, set } = await this._getDbModule();
+        const savedRef = FirebaseService.getRef(`${path}/saved`);
+        const newRef = push(savedRef);
+        await set(newRef, {
+          name,
+          content: this.textInput,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+
+        this._activePromptId = newRef.key;
+        this._activePromptName = name;
+        this.showSaveInput = false;
+        this.savePromptName = '';
+        this._showNotification(`Prompt "${name}" guardado`, 'success');
+      }
 
       if (this.showSavedPrompts) {
         this._loadSavedPrompts();
@@ -1484,6 +1532,8 @@ export class AiDocumentUploader extends LitElement {
 
   _loadPrompt(prompt) {
     this.textInput = prompt.content;
+    this._activePromptId = prompt.id;
+    this._activePromptName = prompt.name;
     this.showSavedPrompts = false;
     this._scheduleDraftSave();
   }
@@ -1716,16 +1766,27 @@ export class AiDocumentUploader extends LitElement {
                 <div class="prompt-toolbar-right">
                   ${this.showSaveInput ? html`
                     <div class="save-input-group">
-                      <input
-                        type="text"
-                        placeholder="Nombre del prompt..."
-                        .value=${this.savePromptName}
-                        @input=${e => { this.savePromptName = e.target.value; }}
-                        @keydown=${e => this._handleSaveKeydown(e)}
-                      />
+                      ${this.savedPrompts.length > 0 ? html`
+                        <select @change=${e => this._onSaveTargetChange(e)}
+                          .value=${this._saveTargetId}>
+                          <option value="">Nuevo prompt...</option>
+                          ${this.savedPrompts.map(p => html`
+                            <option value=${p.id} ?selected=${p.id === this._saveTargetId}>${p.name}</option>
+                          `)}
+                        </select>
+                      ` : null}
+                      ${!this._saveTargetId ? html`
+                        <input
+                          type="text"
+                          placeholder="Nombre del prompt..."
+                          .value=${this.savePromptName}
+                          @input=${e => { this.savePromptName = e.target.value; }}
+                          @keydown=${e => this._handleSaveKeydown(e)}
+                        />
+                      ` : null}
                       <button class="btn-icon" @click=${this._handleSavePrompt}
-                        ?disabled=${!this.savePromptName.trim() || !this.textInput.trim()}>
-                        Guardar
+                        ?disabled=${!this.textInput.trim() || (!this._saveTargetId && !this.savePromptName.trim())}>
+                        ${this._saveTargetId ? 'Sobrescribir' : 'Guardar'}
                       </button>
                       <button class="btn-icon" @click=${() => { this.showSaveInput = false; }}>
                         ✕
