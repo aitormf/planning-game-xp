@@ -2,12 +2,15 @@ import { LitElement, html, css } from 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+e
 import { FirebaseService } from '../services/firebase-service.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { entityDirectoryService } from '../services/entity-directory-service.js';
-import { ThemeVariables } from '../ui/styles/theme-variables.js';
-
 /**
  * Component for uploading documents and generating tasks/bugs using AI
  * Visible to superadmin, admins, developers and stakeholders
  * Uses the current project from adminproject page context
+ *
+ * Dark mode: This component does NOT include ThemeVariables in static styles.
+ * CSS variables are inherited from :root where ThemeManagerService sets them.
+ * Including ThemeVariables would re-declare primitives on :host, overriding
+ * the dark theme values applied as inline styles on :root.
  */
 export class AiDocumentUploader extends LitElement {
   static properties = {
@@ -33,7 +36,7 @@ export class AiDocumentUploader extends LitElement {
     textInput: { type: String }
   };
 
-  static styles = [ThemeVariables, css`
+  static styles = css`
     :host {
       display: block;
       font-family: system-ui, -apple-system, sans-serif;
@@ -535,7 +538,7 @@ export class AiDocumentUploader extends LitElement {
       color: var(--text-muted);
       font-size: 0.9rem;
     }
-  `];
+  `;
 
   constructor() {
     super();
@@ -1238,7 +1241,7 @@ export class AiDocumentUploader extends LitElement {
                   class="btn btn-primary"
                   @click=${this._handleTextGenerate}
                   ?disabled=${this.uploading || this.textInput.trim().length < 10}
-                >Generar Cards</button>
+                >Generar tareas</button>
               </div>
             </div>
           ` : html`
