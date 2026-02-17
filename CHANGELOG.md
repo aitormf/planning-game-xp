@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Added
+
+- Auto-generate changelog from git commits on each build
+
 ## [1.120.2] - 2026-02-17
 
 ### Fixed
