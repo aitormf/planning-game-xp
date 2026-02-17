@@ -1,8 +1,20 @@
 ---
-// Leer versión desde package.json en build time
+// Read version and changelog at build time
 import pkg from '../../package.json';
+import fs from 'node:fs';
+import path from 'node:path';
+
 const version = pkg.version;
 const currentYear = new Date().getFullYear();
+
+// Read CHANGELOG.md at build time
+let changelogContent = '';
+try {
+  const changelogPath = path.resolve(process.cwd(), 'CHANGELOG.md');
+  changelogContent = fs.readFileSync(changelogPath, 'utf-8');
+} catch {
+  changelogContent = 'Changelog not available.';
+}
 ---
 
 <footer class="app-footer">
@@ -11,10 +23,81 @@ const currentYear = new Date().getFullYear();
       <span class="copyright">&copy; {currentYear} Planning GameXP</span>
     </div>
     <div class="footer-right">
-      <span class="version">v{version}</span>
+      <button class="version" id="versionBtn" title="Ver changelog">v{version}</button>
     </div>
   </div>
 </footer>
+
+<script is:inline define:vars={{ changelogContent }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const versionBtn = document.getElementById('versionBtn');
+    if (!versionBtn) return;
+
+    versionBtn.addEventListener('click', async () => {
+      const { modalService } = await import('/js/services/modal-service.js');
+
+      // Convert markdown to simple HTML
+      const htmlContent = changelogContent
+        .replace(/^## \[([^\]]+)\](.*)/gm, '<h3 class="changelog-version">$1 <span class="changelog-date">$2</span></h3>')
+        .replace(/^### (.+)/gm, '<h4 class="changelog-section">$1</h4>')
+        .replace(/^# (.+)/gm, '<h2>$1</h2>')
+        .replace(/^- \*\*([^*]+)\*\*: (.+)/gm, '<li><strong>$1</strong>: $2</li>')
+        .replace(/^- (.+)/gm, '<li>$1</li>')
+        .replace(/(<li>[\s\S]*?<\/li>)/gm, (match) => match)
+        .replace(/(<li>[^]*?(?=<h|<li>|$))/g, (match) => match)
+        .replace(/\n{2,}/g, '\n');
+
+      // Wrap consecutive <li> in <ul>
+      const wrappedHtml = htmlContent.replace(
+        /(<li>.*?<\/li>\n?)+/g,
+        (match) => `<ul>${match}</ul>`
+      );
+
+      const content = `
+        <div style="padding: 1.5rem; max-height: 70vh; overflow-y: auto; font-family: system-ui, -apple-system, sans-serif; color: var(--text-primary, #333);">
+          <style>
+            .changelog-version {
+              color: var(--brand-primary, #4a9eff);
+              border-bottom: 2px solid var(--border-subtle, #e2e8f0);
+              padding-bottom: 0.5rem;
+              margin-top: 1.5rem;
+            }
+            .changelog-version:first-child { margin-top: 0; }
+            .changelog-date {
+              font-size: 0.8em;
+              color: var(--text-muted, #666);
+              font-weight: normal;
+            }
+            .changelog-section {
+              color: var(--text-secondary, #555);
+              margin: 1rem 0 0.5rem;
+            }
+            ul {
+              margin: 0.25rem 0;
+              padding-left: 1.5rem;
+            }
+            li {
+              margin: 0.3rem 0;
+              line-height: 1.5;
+              color: var(--text-primary, #333);
+            }
+            li strong {
+              color: var(--brand-primary, #4a9eff);
+            }
+          </style>
+          ${wrappedHtml}
+        </div>
+      `;
+
+      modalService.createModal({
+        title: 'Changelog',
+        content,
+        maxWidth: '700px',
+        maxHeight: '85vh'
+      });
+    });
+  });
+</script>
 
 <style>
   .app-footer {
@@ -61,6 +144,17 @@ const currentYear = new Date().getFullYear();
     border-radius: 20px;
     font-weight: 500;
     font-size: 0.8rem;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .version:hover {
+    opacity: 0.85;
+  }
+
+  .version:active {
+    transform: scale(0.95);
   }
 
   .copyright {
