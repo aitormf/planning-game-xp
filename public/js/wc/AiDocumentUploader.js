@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+e
 import { FirebaseService } from '../services/firebase-service.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { entityDirectoryService } from '../services/entity-directory-service.js';
+import { encodeEmailForFirebase } from '../utils/email-sanitizer.js';
 /**
  * Component for uploading documents and generating tasks/bugs using AI
  * Visible to superadmin, admins, developers and stakeholders
@@ -33,7 +34,12 @@ export class AiDocumentUploader extends LitElement {
     currentUserStakeholderName: { type: String },
     scoringSystem: { type: String },
     inputMode: { type: String },
-    textInput: { type: String }
+    textInput: { type: String },
+    savedPrompts: { type: Array },
+    draftStatus: { type: String },
+    showSavedPrompts: { type: Boolean },
+    showSaveInput: { type: Boolean },
+    savePromptName: { type: String }
   };
 
   static styles = css`
@@ -538,6 +544,200 @@ export class AiDocumentUploader extends LitElement {
       color: var(--text-muted);
       font-size: 0.9rem;
     }
+
+    /* Prompt toolbar */
+    .prompt-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .prompt-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .prompt-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .draft-indicator {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .draft-indicator.saved {
+      color: var(--color-success);
+    }
+
+    .btn-icon {
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn-icon:hover {
+      background: var(--bg-secondary);
+      border-color: var(--border-default);
+    }
+
+    .btn-icon.active {
+      background: var(--color-info-light);
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+    }
+
+    .save-input-group {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .save-input-group input {
+      padding: 0.35rem 0.5rem;
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      width: 180px;
+      background: var(--input-bg);
+      color: var(--input-text);
+    }
+
+    .save-input-group input:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+    }
+
+    .save-input-group .btn-icon {
+      padding: 0.35rem 0.6rem;
+    }
+
+    /* Saved prompts panel */
+    .saved-prompts-panel {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 0.75rem;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .saved-prompts-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .saved-prompts-header h5 {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+    }
+
+    .saved-prompts-empty {
+      text-align: center;
+      padding: 1rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .saved-prompt-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.5rem;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .saved-prompt-item:hover {
+      background: var(--bg-secondary);
+    }
+
+    .saved-prompt-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .saved-prompt-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .saved-prompt-name-input {
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.15rem 0.35rem;
+      border: 1px solid var(--brand-primary);
+      border-radius: 4px;
+      background: var(--input-bg);
+      color: var(--input-text);
+      width: 100%;
+      max-width: 250px;
+    }
+
+    .saved-prompt-date {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .saved-prompt-actions {
+      display: flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+      margin-left: 0.5rem;
+    }
+
+    .saved-prompt-actions button {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .saved-prompt-actions button:hover {
+      background: var(--bg-secondary);
+    }
+
+    .saved-prompt-actions button.load:hover {
+      background: var(--color-info-light);
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+    }
+
+    .saved-prompt-actions button.delete:hover {
+      background: var(--color-error-light);
+      border-color: var(--color-error);
+      color: var(--color-error-dark);
+    }
   `;
 
   constructor() {
@@ -562,6 +762,12 @@ export class AiDocumentUploader extends LitElement {
     this.scoringSystem = '1-5';
     this.inputMode = 'text';
     this.textInput = '';
+    this.savedPrompts = [];
+    this.draftStatus = '';
+    this.showSavedPrompts = false;
+    this.showSaveInput = false;
+    this.savePromptName = '';
+    this._draftTimer = null;
     this._projectChangeHandler = this._handleProjectChange.bind(this);
   }
 
@@ -601,6 +807,7 @@ export class AiDocumentUploader extends LitElement {
 
   disconnectedCallback() {
     document.removeEventListener('project-change-reload', this._projectChangeHandler);
+    if (this._draftTimer) clearTimeout(this._draftTimer);
     super.disconnectedCallback();
   }
 
@@ -608,8 +815,8 @@ export class AiDocumentUploader extends LitElement {
     const newProjectId = event.detail?.newProjectId;
     if (newProjectId && newProjectId !== this.projectId) {
       this.projectId = newProjectId;
-      this._loadProjectData();
       this._clearAll();
+      this._loadProjectData();
     }
   }
 
@@ -632,6 +839,7 @@ export class AiDocumentUploader extends LitElement {
     this._loadDevelopers();
     this._loadSprints();
     this._loadProjectScoringSystem();
+    this._loadDraft();
   }
 
   async _loadProjectScoringSystem() {
@@ -1105,6 +1313,267 @@ export class AiDocumentUploader extends LitElement {
     this.error = '';
     this.success = '';
     this.existingEpics = [];
+    this.showSavedPrompts = false;
+    this.showSaveInput = false;
+    this._clearDraft();
+  }
+
+  // === Prompt Persistence Methods ===
+
+  _getUserEmail() {
+    return (document.body.dataset.userEmail || '').toLowerCase().trim();
+  }
+
+  _getUserPromptsPath() {
+    const email = this._getUserEmail();
+    if (!email || !this.projectId) return '';
+    const encodedEmail = encodeEmailForFirebase(email);
+    return `/data/userPrompts/${encodedEmail}/${this.projectId}`;
+  }
+
+  async _getDbModule() {
+    if (!this._dbModule) {
+      this._dbModule = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js');
+    }
+    return this._dbModule;
+  }
+
+  _scheduleDraftSave() {
+    if (this._draftTimer) clearTimeout(this._draftTimer);
+    this.draftStatus = '';
+    this._draftTimer = setTimeout(() => this._saveDraft(), 2000);
+  }
+
+  async _saveDraft() {
+    const path = this._getUserPromptsPath();
+    if (!path || !this.textInput.trim()) {
+      this.draftStatus = '';
+      return;
+    }
+
+    this.draftStatus = 'saving';
+    try {
+      const { set } = await this._getDbModule();
+      const draftRef = FirebaseService.getRef(`${path}/draft`);
+      await set(draftRef, {
+        content: this.textInput,
+        updatedAt: new Date().toISOString()
+      });
+      this.draftStatus = 'saved';
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      this.draftStatus = '';
+    }
+  }
+
+  async _loadDraft() {
+    const path = this._getUserPromptsPath();
+    if (!path) return;
+
+    try {
+      const { get } = await this._getDbModule();
+      const draftRef = FirebaseService.getRef(`${path}/draft`);
+      const snapshot = await get(draftRef);
+      if (snapshot.exists()) {
+        const draft = snapshot.val();
+        if (draft.content) {
+          this.textInput = draft.content;
+          this.draftStatus = 'saved';
+        }
+      }
+    } catch (error) {
+      console.error('Error loading draft:', error);
+    }
+  }
+
+  async _clearDraft() {
+    const path = this._getUserPromptsPath();
+    if (!path) return;
+
+    try {
+      const { set } = await this._getDbModule();
+      const draftRef = FirebaseService.getRef(`${path}/draft`);
+      await set(draftRef, null);
+      this.draftStatus = '';
+    } catch (error) {
+      console.error('Error clearing draft:', error);
+    }
+  }
+
+  _toggleSaveInput() {
+    this.showSaveInput = !this.showSaveInput;
+    if (this.showSaveInput) {
+      this.savePromptName = '';
+      this.updateComplete.then(() => {
+        const input = this.shadowRoot.querySelector('.save-input-group input');
+        if (input) input.focus();
+      });
+    }
+  }
+
+  async _handleSavePrompt() {
+    const name = this.savePromptName.trim();
+    if (!name || !this.textInput.trim()) return;
+
+    const path = this._getUserPromptsPath();
+    if (!path) return;
+
+    try {
+      const { push, set } = await this._getDbModule();
+      const savedRef = FirebaseService.getRef(`${path}/saved`);
+      const newRef = push(savedRef);
+      await set(newRef, {
+        name,
+        content: this.textInput,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+
+      this.showSaveInput = false;
+      this.savePromptName = '';
+      this._showNotification(`Prompt "${name}" guardado`, 'success');
+
+      if (this.showSavedPrompts) {
+        this._loadSavedPrompts();
+      }
+    } catch (error) {
+      console.error('Error saving prompt:', error);
+      this._showNotification('Error al guardar el prompt', 'error');
+    }
+  }
+
+  _handleSaveKeydown(e) {
+    if (e.key === 'Enter') {
+      this._handleSavePrompt();
+    } else if (e.key === 'Escape') {
+      this.showSaveInput = false;
+    }
+  }
+
+  async _toggleSavedPrompts() {
+    this.showSavedPrompts = !this.showSavedPrompts;
+    if (this.showSavedPrompts) {
+      await this._loadSavedPrompts();
+    }
+  }
+
+  async _loadSavedPrompts() {
+    const path = this._getUserPromptsPath();
+    if (!path) {
+      this.savedPrompts = [];
+      return;
+    }
+
+    try {
+      const { get } = await this._getDbModule();
+      const savedRef = FirebaseService.getRef(`${path}/saved`);
+      const snapshot = await get(savedRef);
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        this.savedPrompts = Object.entries(data)
+          .map(([id, prompt]) => ({ id, ...prompt }))
+          .sort((a, b) => (b.updatedAt || b.createdAt || '').localeCompare(a.updatedAt || a.createdAt || ''));
+      } else {
+        this.savedPrompts = [];
+      }
+    } catch (error) {
+      console.error('Error loading saved prompts:', error);
+      this.savedPrompts = [];
+    }
+  }
+
+  _loadPrompt(prompt) {
+    this.textInput = prompt.content;
+    this.showSavedPrompts = false;
+    this._scheduleDraftSave();
+  }
+
+  async _deletePrompt(promptId) {
+    const path = this._getUserPromptsPath();
+    if (!path) return;
+
+    try {
+      const { set } = await this._getDbModule();
+      const promptRef = FirebaseService.getRef(`${path}/saved/${promptId}`);
+      await set(promptRef, null);
+      this.savedPrompts = this.savedPrompts.filter(p => p.id !== promptId);
+      this._showNotification('Prompt eliminado', 'info');
+    } catch (error) {
+      console.error('Error deleting prompt:', error);
+      this._showNotification('Error al eliminar el prompt', 'error');
+    }
+  }
+
+  async _renamePrompt(promptId, newName) {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+
+    const path = this._getUserPromptsPath();
+    if (!path) return;
+
+    try {
+      const { update } = await this._getDbModule();
+      const promptRef = FirebaseService.getRef(`${path}/saved/${promptId}`);
+      await update(promptRef, {
+        name: trimmed,
+        updatedAt: new Date().toISOString()
+      });
+      this.savedPrompts = this.savedPrompts.map(p =>
+        p.id === promptId ? { ...p, name: trimmed } : p
+      );
+    } catch (error) {
+      console.error('Error renaming prompt:', error);
+    }
+  }
+
+  _handleRenameBlur(e, promptId) {
+    const newName = e.target.value.trim();
+    if (newName) {
+      this._renamePrompt(promptId, newName);
+    }
+    this._editingPromptId = null;
+    this.requestUpdate();
+  }
+
+  _handleRenameKeydown(e, promptId) {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    } else if (e.key === 'Escape') {
+      this._editingPromptId = null;
+      this.requestUpdate();
+    }
+  }
+
+  _startRename(promptId) {
+    this._editingPromptId = promptId;
+    this.requestUpdate();
+    this.updateComplete.then(() => {
+      const input = this.shadowRoot.querySelector('.saved-prompt-name-input');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    });
+  }
+
+  _formatPromptDate(isoDate) {
+    if (!isoDate) return '';
+    try {
+      const date = new Date(isoDate);
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 1) return 'Ahora mismo';
+      if (minutes < 60) return `Hace ${minutes} min`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `Hace ${hours}h`;
+      const days = Math.floor(hours / 24);
+      if (days === 1) return 'Ayer';
+      if (days < 7) return `Hace ${days} días`;
+      return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    } catch {
+      return '';
+    }
   }
 
   _showNotification(message, type = 'success') {
@@ -1231,11 +1700,83 @@ export class AiDocumentUploader extends LitElement {
             <div class="text-input-area">
               <textarea
                 .value=${this.textInput}
-                @input=${e => { this.textInput = e.target.value; }}
+                @input=${e => { this.textInput = e.target.value; this._scheduleDraftSave(); }}
                 placeholder="Describe las funcionalidades, requisitos o problemas que quieres convertir en tareas y bugs. Cuanto más detalle incluyas, mejores serán los resultados..."
                 ?disabled=${this.uploading}
               ></textarea>
-              <span class="text-input-hint">${this.textInput.length} caracteres</span>
+              <div class="prompt-toolbar">
+                <div class="prompt-toolbar-left">
+                  <span class="text-input-hint">${this.textInput.length} caracteres</span>
+                  ${this.draftStatus === 'saving' ? html`
+                    <span class="draft-indicator">Guardando...</span>
+                  ` : this.draftStatus === 'saved' ? html`
+                    <span class="draft-indicator saved">Borrador guardado</span>
+                  ` : null}
+                </div>
+                <div class="prompt-toolbar-right">
+                  ${this.showSaveInput ? html`
+                    <div class="save-input-group">
+                      <input
+                        type="text"
+                        placeholder="Nombre del prompt..."
+                        .value=${this.savePromptName}
+                        @input=${e => { this.savePromptName = e.target.value; }}
+                        @keydown=${e => this._handleSaveKeydown(e)}
+                      />
+                      <button class="btn-icon" @click=${this._handleSavePrompt}
+                        ?disabled=${!this.savePromptName.trim() || !this.textInput.trim()}>
+                        Guardar
+                      </button>
+                      <button class="btn-icon" @click=${() => { this.showSaveInput = false; }}>
+                        ✕
+                      </button>
+                    </div>
+                  ` : html`
+                    <button class="btn-icon" @click=${this._toggleSaveInput}
+                      ?disabled=${!this.textInput.trim()}>
+                      Guardar prompt
+                    </button>
+                  `}
+                  <button class="btn-icon ${this.showSavedPrompts ? 'active' : ''}"
+                    @click=${this._toggleSavedPrompts}>
+                    Prompts${this.showSavedPrompts && this.savedPrompts.length > 0
+                      ? ` (${this.savedPrompts.length})` : ''}
+                  </button>
+                </div>
+              </div>
+              ${this.showSavedPrompts ? html`
+                <div class="saved-prompts-panel">
+                  <div class="saved-prompts-header">
+                    <h5>Prompts guardados</h5>
+                    <button class="btn-icon" @click=${() => { this.showSavedPrompts = false; }}>✕</button>
+                  </div>
+                  ${this.savedPrompts.length === 0 ? html`
+                    <div class="saved-prompts-empty">No hay prompts guardados para este proyecto.</div>
+                  ` : this.savedPrompts.map(prompt => html`
+                    <div class="saved-prompt-item">
+                      <div class="saved-prompt-info">
+                        ${this._editingPromptId === prompt.id ? html`
+                          <input class="saved-prompt-name-input"
+                            type="text"
+                            .value=${prompt.name}
+                            @blur=${e => this._handleRenameBlur(e, prompt.id)}
+                            @keydown=${e => this._handleRenameKeydown(e, prompt.id)}
+                          />
+                        ` : html`
+                          <div class="saved-prompt-name"
+                            @dblclick=${() => this._startRename(prompt.id)}
+                            title="Doble clic para renombrar">${prompt.name}</div>
+                        `}
+                        <div class="saved-prompt-date">${this._formatPromptDate(prompt.updatedAt || prompt.createdAt)}</div>
+                      </div>
+                      <div class="saved-prompt-actions">
+                        <button class="load" @click=${() => this._loadPrompt(prompt)}>Cargar</button>
+                        <button class="delete" @click=${() => this._deletePrompt(prompt.id)}>Eliminar</button>
+                      </div>
+                    </div>
+                  `)}
+                </div>
+              ` : null}
               <div class="generate-btn-container">
                 <button
                   class="btn btn-primary"
