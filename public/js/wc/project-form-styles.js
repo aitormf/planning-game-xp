@@ -258,6 +258,17 @@ export const ProjectFormStyles = css`
     color: #a94442;
   }
 
+  .helper-text.locked-hint {
+    color: var(--text-warning, #b45309);
+    font-style: italic;
+  }
+
+  .locked-field {
+    background: var(--bg-tertiary, #f1f5f9);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
   .error {
     color: #dc3545;
     font-size: 0.875rem;

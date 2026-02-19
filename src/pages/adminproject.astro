@@ -1238,11 +1238,17 @@ async function showEditProjectModal(projectName) {
       return;
     }
 
+    // Check if project has existing cards (locks name and abbreviation)
+    const cardsRef = ref(database, `/cards/${projectName}`);
+    const cardsSnapshot = await get(cardsRef);
+    const hasCards = cardsSnapshot.exists();
+
     const projectForm = document.createElement('project-form');
 
     // Store project data to apply after component is ready
     const applyProjectData = () => {
       projectForm.editMode = true;
+      projectForm.hasCards = hasCards;
       projectForm.originalProjectName = projectName;
       projectForm.projectName = projectData.name || projectName;
       projectForm.abbreviation = projectData.abbreviation || '';

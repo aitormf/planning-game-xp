@@ -56,6 +56,8 @@ export class ProjectForm extends LitElement {
       isLoading: { type: Boolean },
       // Archive state
       archived: { type: Boolean },
+      // Whether the project has existing cards (locks abbreviation + name)
+      hasCards: { type: Boolean },
       // Permission to delete (only superadmin)
       canDelete: { type: Boolean },
       // App permissions (Uploaders and Approvers)
@@ -114,6 +116,7 @@ export class ProjectForm extends LitElement {
     this.newStakeholderEmail = '';
     this.isLoading = true;
     this.archived = false;
+    this.hasCards = false;
     this.canDelete = false; // Only superadmin can delete
     // App permissions
     this.appUploaders = [];
@@ -304,7 +307,11 @@ export class ProjectForm extends LitElement {
               @input=${this._handleProjectNameChange}
               placeholder="Ingresa el nombre del proyecto"
               required
+              ?readonly=${this.editMode && this.hasCards}
+              class=${this.editMode && this.hasCards ? 'locked-field' : ''}
+              title=${this.editMode && this.hasCards ? 'No se puede cambiar: existen cards que dependen de este nombre como clave en Firebase' : ''}
             />
+            ${this.editMode && this.hasCards ? html`<div class="helper-text locked-hint">Bloqueado: existen cards en este proyecto</div>` : ''}
           </div>
           <div class="stacked">
             <label for="abbreviation">Abreviatura <span class="required">*</span></label>
@@ -317,8 +324,13 @@ export class ProjectForm extends LitElement {
               maxlength="4"
               required
               style="text-transform: uppercase; width: 80px;"
+              ?readonly=${this.editMode && this.hasCards}
+              class=${this.editMode && this.hasCards ? 'locked-field' : ''}
+              title=${this.editMode && this.hasCards ? 'No se puede cambiar: los cardIds existentes usan esta abreviatura' : ''}
             />
-            <div class="helper-text">3-4 caracteres para IDs (ej: C4D, NTR)</div>
+            ${this.editMode && this.hasCards
+              ? html`<div class="helper-text locked-hint">Bloqueado: los cardIds usan esta abreviatura</div>`
+              : html`<div class="helper-text">3-4 caracteres para IDs (ej: C4D, NTR)</div>`}
           </div>
         </div>
 
