@@ -13,7 +13,7 @@ import { getPriorityDisplay } from '../utils/priority-utils.js';
 export class TableRenderer {
   constructor() {
     this.filters = {};
-    this.sortField = 'ID';
+    this.sortField = 'Prioridad';
     this.sortDirection = 'asc';
     this.isLoading = true; // Estado de carga inicial
   }
