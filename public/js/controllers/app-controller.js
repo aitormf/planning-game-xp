@@ -1077,7 +1077,16 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
   setupAppAccessListener() {
     this.hasAppAccess = Boolean(window.isAppAdmin);
     this.updateTasksGeneratorTabVisibility();
+    this.updateTrashTabVisibility();
     document.addEventListener('app-admin-status-changed', this.handleAppAdminStatusChange);
+  }
+
+  async updateTrashTabVisibility() {
+    const trashTab = document.getElementById('trashTab');
+    if (!trashTab) return;
+
+    const isSuperAdmin = await this._checkIsSuperAdmin();
+    trashTab.style.display = isSuperAdmin ? 'block' : 'none';
   }
 
   handleAppAdminStatusChange(event) {

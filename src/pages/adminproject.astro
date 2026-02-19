@@ -17,6 +17,7 @@ import Layout from '../layouts/Layout.astro';
       <button id="adrsTab" data-section="adrs" class="tablinks">ADRs</button>
       <button id="appTab" data-section="app" class="tablinks app-tab" style="display:none;">App</button>
       <button id="tasksGeneratorTab" data-section="tasksGenerator" class="tablinks tasks-generator-tab" style="display:none;">Tasks Generator</button>
+      <button id="trashTab" data-section="trash" class="tablinks trash-tab" style="display:none;">Trash</button>
     </div>
     <div class="mode-switch" id="modeSwitchContainer" style="display: none;">
       <select id="viewModeSelect" onchange="switchViewMode(this.value)">
@@ -180,6 +181,15 @@ import Layout from '../layouts/Layout.astro';
     </section>
     <ai-document-uploader id="aiDocumentUploader"></ai-document-uploader>
   </div>
+  <div id="trashTabContent" class="tabcontent">
+    <section class="subheader">
+      <h3>Trash</h3>
+      <p class="subheader-hint">Cards eliminadas del proyecto. Solo visible para administradores.</p>
+    </section>
+    <section id="trashCardsList" class="trash-list">
+      <p class="loading-message">Cargando...</p>
+    </section>
+  </div>
 </Layout>
 
 <style>
@@ -210,6 +220,45 @@ import Layout from '../layouts/Layout.astro';
   body.no-project-selected #yearSelector,
   body.no-project-selected #modeSwitchContainer {
     display: none !important;
+  }
+
+  .trash-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .trash-table th,
+  .trash-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border-default, #e2e8f0);
+    text-align: left;
+  }
+  .trash-table th {
+    background: var(--bg-secondary, #f1f5f9);
+    font-weight: 600;
+    color: var(--text-secondary, #555);
+  }
+  .trash-table tr:hover {
+    background: var(--bg-hover, #f8fafc);
+  }
+  .moved-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    background: var(--brand-primary, #4a9eff);
+    color: white;
+    margin-left: 0.25rem;
+  }
+  .empty-message,
+  .loading-message,
+  .error-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted, #999);
+  }
+  .error-message {
+    color: var(--text-danger, #dc3545);
   }
 </style>
 
@@ -1422,6 +1471,94 @@ async function deleteProject(projectName) {
     }));
   }
 }
+
+// === Trash Tab ===
+
+let trashLoaded = false;
+
+async function loadTrashCards(projectName) {
+  if (trashLoaded) return;
+
+  const container = document.getElementById('trashCardsList');
+  if (!container) return;
+
+  container.innerHTML = '<p class="loading-message">Cargando papelera...</p>';
+
+  try {
+    const trashRef = ref(database, `/trash/cards/${projectName}`);
+    const snapshot = await get(trashRef);
+    const trashData = snapshot.val();
+
+    if (!trashData) {
+      container.innerHTML = '<p class="empty-message">La papelera está vacía.</p>';
+      trashLoaded = true;
+      return;
+    }
+
+    const items = [];
+    for (const [cardType, cards] of Object.entries(trashData)) {
+      for (const [firebaseId, card] of Object.entries(cards)) {
+        items.push({ ...card, _firebaseId: firebaseId, _cardType: cardType });
+      }
+    }
+
+    items.sort((a, b) => (b.deletedAt || '').localeCompare(a.deletedAt || ''));
+
+    if (items.length === 0) {
+      container.innerHTML = '<p class="empty-message">La papelera está vacía.</p>';
+      trashLoaded = true;
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'trash-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Card ID</th>
+          <th>Tipo</th>
+          <th>Título</th>
+          <th>Estado</th>
+          <th>Eliminado por</th>
+          <th>Fecha eliminación</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${items.map(item => {
+          const type = (item._cardType || '').replace(`_${projectName}`, '');
+          const deletedDate = item.deletedAt
+            ? new Date(item.deletedAt).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
+            : '-';
+          const reason = item.deleteReason === 'moved_to_project'
+            ? `Movido a ${item.movedTo?.projectId || '?'}`
+            : '';
+          return `<tr>
+            <td>${item.cardId || '-'}</td>
+            <td>${type}</td>
+            <td>${item.title || '-'}</td>
+            <td>${item.status || '-'} ${reason ? `<span class="moved-badge">${reason}</span>` : ''}</td>
+            <td>${item.deletedBy || '-'}</td>
+            <td>${deletedDate}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    `;
+    container.innerHTML = '';
+    container.append(table);
+    trashLoaded = true;
+  } catch (error) {
+    console.error('Error loading trash:', error);
+    container.innerHTML = '<p class="error-message">Error al cargar la papelera.</p>';
+  }
+}
+
+document.addEventListener('tab-changed', (e) => {
+  const section = e.detail?.section;
+  if (section === 'trash') {
+    const projectName = new URLSearchParams(window.location.search).get('projectId');
+    if (projectName) loadTrashCards(projectName);
+  }
+});
 
 // Initialize on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
