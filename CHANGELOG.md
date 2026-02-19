@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Added
+
+- Add Trash tab to admin page for viewing deleted cards
+- Lock project name and abbreviation when cards exist
+- Show notification when deep link cardId not found
+- Default table sort by priority (highest first)
+
+### Testing
+
+- Add E2E dark theme tests (toggle, persistence, contrast)
+- Add ThemeManagerService unit tests (34 tests)
+
 ## [1.121.0] - 2026-02-18
 
 ### Added
