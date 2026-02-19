@@ -1127,6 +1127,12 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
           showExpandedCardInModal(card);
           this.cardAutoOpened = true;
         });
+      } else {
+        this.cardAutoOpened = true;
+        const notification = document.createElement('slide-notification');
+        notification.message = `Card "${cardIdToOpen}" not found in this project. It may have been deleted or the ID may be incorrect.`;
+        notification.type = 'warning';
+        document.body.append(notification);
       }
     }
   }

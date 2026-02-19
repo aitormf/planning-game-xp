@@ -268,6 +268,12 @@ export class UnifiedEventSystem {
       if (card) {
         showExpandedCardInModal(card);
         this.appController.cardAutoOpened = true;
+      } else {
+        this.appController.cardAutoOpened = true;
+        const notification = document.createElement('slide-notification');
+        notification.message = `Card "${cardIdToOpen}" not found in this project. It may have been deleted or the ID may be incorrect.`;
+        notification.type = 'warning';
+        document.body.append(notification);
       }
     }
   }
