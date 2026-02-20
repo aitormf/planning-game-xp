@@ -16,6 +16,7 @@ import Layout from '../layouts/Layout.astro';
       <button id="qaTab" data-section="qa" class="tablinks">QA</button>
       <button id="adrsTab" data-section="adrs" class="tablinks">ADRs</button>
       <button id="appTab" data-section="app" class="tablinks app-tab" style="display:none;">App</button>
+      <button id="themeTab" data-section="theme" class="tablinks theme-tab" style="display:none;">Theme</button>
       <button id="tasksGeneratorTab" data-section="tasksGenerator" class="tablinks tasks-generator-tab" style="display:none;">Tasks Generator</button>
       <button id="trashTab" data-section="trash" class="tablinks trash-tab" style="display:none;">🗑️</button>
     </div>
@@ -174,6 +175,13 @@ import Layout from '../layouts/Layout.astro';
     </section>
     <app-manager id="appManager"></app-manager>
   </div>
+  <div id="themeTabContent" class="tabcontent">
+    <section class="subheader">
+      <h3>Theme Configuration</h3>
+      <p class="subheader-hint">Customize brand colors, status colors, branding and features for this instance.</p>
+    </section>
+    <theme-editor id="themeEditor"></theme-editor>
+  </div>
   <div id="tasksGeneratorTabContent" class="tabcontent">
     <section class="subheader">
       <h3>Tasks Generator</h3>
@@ -311,7 +319,7 @@ import Layout from '../layouts/Layout.astro';
   let isYearReadOnly = false; // Para años anteriores en modo solo lectura
 
   // Tabs configuration - synced with APP_CONSTANTS.MANAGEMENT_TABS and APP_CONSTANTS.CONSULTATION_TABS
-  const MANAGEMENT_TABS = ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa', 'adrs', 'app', 'trash'];
+  const MANAGEMENT_TABS = ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa', 'adrs', 'app', 'theme', 'trash'];
   const CONSULTATION_TABS = ['sprints', 'epics', 'proposals', 'app'];
 
   // Función para cambiar modo de vista
@@ -1242,6 +1250,7 @@ import 'https://esm.sh/@manufosela/md-renderer';
 import { database, ref, get, set, auth, superAdminEmail } from '/firebase-config.js';
 import '/js/wc/ProjectForm.js';
 import '/js/wc/CardSearch.js';
+import '/js/wc/ThemeEditor.js';
 
 let currentProjectName = '';
 
