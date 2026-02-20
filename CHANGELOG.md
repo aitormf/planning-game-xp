@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Remove duplicate cards-rendered dispatch that broke deep links
+
+## [1.125.3] - 2026-02-20
+
 ### Style
 
 - Increase theme toggle icon size by 25%
