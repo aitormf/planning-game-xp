@@ -291,6 +291,16 @@ import Layout from '../layouts/Layout.astro';
       }
     }
   });
+
+  // Navigate to selected project when changed from the selector
+  document.addEventListener('project-changed', (e) => {
+    const projectId = e.detail?.projectId;
+    if (projectId) {
+      const url = new URL(window.location);
+      url.searchParams.set('projectId', projectId);
+      window.location.href = url.toString();
+    }
+  });
 </script>
 
 <script>
