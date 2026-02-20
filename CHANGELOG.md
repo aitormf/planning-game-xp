@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Testing
+
+- Add deep link card opening tests
+
+## [1.125.4] - 2026-02-20
+
 ### Fixed
 
 - Remove duplicate cards-rendered dispatch that broke deep links
