@@ -22,8 +22,8 @@ class ThemeToggle extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
+      width: 45px;
+      height: 45px;
       padding: 0;
       border: none;
       border-radius: 50%;
@@ -47,8 +47,8 @@ class ThemeToggle extends LitElement {
     }
 
     .icon {
-      width: 24px;
-      height: 24px;
+      width: 30px;
+      height: 30px;
       object-fit: contain;
       transition: transform 0.3s ease;
       pointer-events: none;
