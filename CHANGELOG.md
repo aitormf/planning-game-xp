@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Card deep link not working in table view (#14)
+
+## [1.125.1] - 2026-02-20
+
+### Fixed
+
 - Deploy verifies build instance + org logo auto-detection (#13)
 
 ## [1.125.0] - 2026-02-20
