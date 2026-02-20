@@ -7,6 +7,17 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Multi-instance architecture, trash tab in admin, changelog modal fix
+- SPA URL navigation for wip, sprintview and proposals (#10)
+
+### Changed
+
+- Replace notes column with inline badge next to task title (#11)
+
+## [1.122.0] - 2026-02-19
+
+### Added
+
 - Add Trash tab to admin page for viewing deleted cards
 - Lock project name and abbreviation when cards exist
 - Show notification when deep link cardId not found
