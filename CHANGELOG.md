@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Navigate to selected project in adminproject page
+
+## [1.124.0] - 2026-02-20
+
 ### Added
 
 - Enable Trash tab in adminproject with bin icon
