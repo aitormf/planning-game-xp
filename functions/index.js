@@ -22,6 +22,7 @@ const path = require("node:path");
 
 const { handleCardToValidate } = require("./handlers/on-card-to-validate");
 const { handleBugFixed } = require("./handlers/on-bug-fixed");
+const { handleHourlyDigest } = require("./handlers/hourly-validation-digest");
 const { handleTaskStatusValidation } = require("./handlers/on-task-status-validation");
 const { handleSyncCardViews } = require("./handlers/sync-card-views");
 const { handlePortalBugResolved } = require("./handlers/on-portal-bug-resolved");
@@ -1201,6 +1202,51 @@ exports.testWeeklyTaskSummary = onRequest({
   }
 });
 
+/**
+ * Scheduled function - runs every hour to send consolidated digest emails
+ * Replaces immediate per-card emails with hourly batched summaries.
+ */
+exports.hourlyValidationDigest = onSchedule({
+  schedule: "0 * * * *", // Every hour at minute 0
+  timeZone: "Europe/Madrid",
+  region: "europe-west1",
+  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
+}, async (event) => {
+  const db = getDatabase();
+  return handleHourlyDigest({
+    db,
+    getAccessToken: getGraphAccessToken,
+    sendEmail,
+    logger
+  });
+});
+
+/**
+ * HTTP trigger for manual testing of the hourly digest
+ * Supports optional ?email=user@example.com parameter to filter and only send to that email
+ */
+exports.testHourlyDigest = onRequest({
+  region: "europe-west1",
+  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
+}, async (req, res) => {
+  try {
+    const filterEmail = req.query.email || null;
+    if (filterEmail) {
+      logger.info(`Hourly digest test triggered with email filter: ${filterEmail}`);
+    }
+    const db = getDatabase();
+    const result = await handleHourlyDigest({
+      db,
+      getAccessToken: getGraphAccessToken,
+      sendEmail,
+      logger
+    }, filterEmail);
+    res.json(result);
+  } catch (error) {
+    logger.error('Error in hourly digest test function:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * Firebase Cloud Function for Push Notifications
@@ -3115,13 +3161,12 @@ exports.getProjectEpics = onRequest({
 
 /**
  * Cloud Function: onCardToValidate
- * Triggers when a card is updated and sends notifications + email
- * when a task transitions to "To Validate" status.
+ * Triggers when a card is updated, creates push notifications
+ * and queues email for hourly digest when a task transitions to "To Validate".
  */
 exports.onCardToValidate = onValueUpdated({
   ref: "/cards/{projectId}/{section}/{cardId}",
-  region: "europe-west1",
-  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
+  region: "europe-west1"
 }, async (event) => {
   const { projectId, section, cardId } = event.params;
   const beforeData = event.data.before.val();
@@ -3135,8 +3180,6 @@ exports.onCardToValidate = onValueUpdated({
     afterData,
     {
       db,
-      getAccessToken: getGraphAccessToken,
-      sendEmail,
       logger
     }
   );
@@ -3144,14 +3187,13 @@ exports.onCardToValidate = onValueUpdated({
 
 /**
  * Cloud Function: onBugFixed
- * Triggers when a bug is updated and sends notifications + email
- * when a bug transitions to "Fixed" status.
+ * Triggers when a bug is updated, creates push notifications
+ * and queues email for hourly digest when a bug transitions to "Fixed".
  * Notifies the bug creator so they can verify the fix.
  */
 exports.onBugFixed = onValueUpdated({
   ref: "/cards/{projectId}/{section}/{cardId}",
-  region: "europe-west1",
-  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
+  region: "europe-west1"
 }, async (event) => {
   const { projectId, section, cardId } = event.params;
   const beforeData = event.data.before.val();
@@ -3165,8 +3207,6 @@ exports.onBugFixed = onValueUpdated({
     afterData,
     {
       db,
-      getAccessToken: getGraphAccessToken,
-      sendEmail,
       logger
     }
   );

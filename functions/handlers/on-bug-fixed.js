@@ -1,8 +1,11 @@
 /**
  * Handler for onBugFixed Cloud Function
- * Sends push notification and email when a bug transitions to "Fixed"
+ * Sends push notification when a bug transitions to "Fixed"
+ * and queues email notification for the hourly digest.
  * Notifies the bug creator so they can verify the fix.
  */
+
+const { queueBugFixedEmail } = require('./email-queue');
 
 function getAppUrl() {
   if (!process.env.PUBLIC_APP_URL) {
@@ -85,11 +88,11 @@ function generateBugFixedEmailHtml(bugData, projectId, cardId) {
  * @param {Object} params - { projectId, section, cardId }
  * @param {Object} beforeData - Bug data before the change
  * @param {Object} afterData - Bug data after the change
- * @param {Object} deps - Dependencies { db, getAccessToken, sendEmail, logger }
+ * @param {Object} deps - Dependencies { db, logger }
  */
 async function handleBugFixed(params, beforeData, afterData, deps) {
   const { projectId, section, cardId } = params;
-  const { db, getAccessToken, sendEmail, logger } = deps;
+  const { db, logger } = deps;
 
   logger.info('onBugFixed: Triggered', { projectId, section, cardId });
 
@@ -165,25 +168,43 @@ async function handleBugFixed(params, beforeData, afterData, deps) {
     recipient: recipientEmail
   });
 
-  // Send email
-  try {
-    const accessToken = await getAccessToken();
-    const emailSubject = `[${projectId}] Bug corregido: ${bugTitle}`;
-    const emailHtml = generateBugFixedEmailHtml(afterData, projectId, bugCardId);
+  // Resolve developer ID to name for queue entry
+  let developerName = afterData.developer || null;
+  const developerId = afterData.developer;
+  if (developerId && developerId.startsWith('dev_')) {
+    try {
+      const devSnapshot = await db.ref(`/data/developers/${developerId}`).once('value');
+      const developerData = devSnapshot.val();
+      if (developerData?.name) {
+        developerName = developerData.name;
+      }
+    } catch {
+      // Keep the raw developer value
+    }
+  }
 
-    await sendEmail(accessToken, [recipientEmail], emailSubject, emailHtml);
-    logger.info('onBugFixed: Email sent', {
+  // Queue email for hourly digest (instead of sending immediately)
+  try {
+    await queueBugFixedEmail(db, {
+      recipientEmail,
+      cardId: bugCardId,
+      projectId,
+      bugTitle,
+      developerName,
+      description: afterData.description || ''
+    });
+    logger.info('onBugFixed: Email queued for hourly digest', {
       projectId,
       cardId: bugCardId,
       recipient: recipientEmail
     });
   } catch (error) {
-    logger.error('onBugFixed: Failed to send email', {
+    logger.error('onBugFixed: Failed to queue email', {
       error: error.message,
       projectId,
       cardId: bugCardId
     });
-    // Don't throw - notification was already created successfully
+    // Don't throw - push notification was already created successfully
   }
 
   return { notified: recipientEmail };
