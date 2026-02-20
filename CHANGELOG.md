@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Add per-instance theming and org branding support (#12)
+
+## [1.124.1] - 2026-02-20
+
 ### Fixed
 
 - Navigate to selected project in adminproject page
