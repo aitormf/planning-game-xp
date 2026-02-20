@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Style
+
+- Increase theme toggle icon size by 25%
+
+## [1.125.2] - 2026-02-20
+
 ### Fixed
 
 - Card deep link not working in table view (#14)
