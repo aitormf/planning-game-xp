@@ -1,6 +1,7 @@
 /**
  * Handler for onCardToValidate Cloud Function
- * Sends push notifications and email when a task transitions to "To Validate"
+ * Sends push notifications when a task transitions to "To Validate"
+ * and queues email notifications for the hourly digest.
  */
 
 function getAppUrl() {
@@ -15,6 +16,7 @@ function getAppUrl() {
 
 // Import validation functions to ensure we don't send emails for invalid transitions
 const { REQUIRED_FIELDS_TO_LEAVE_TODO, hasValidValue } = require('./on-task-status-validation');
+const { queueValidationEmail } = require('./email-queue');
 
 /**
  * Sanitize email for use as Firebase key (full email, not just prefix)
@@ -111,11 +113,11 @@ function generateValidationEmailHtml(cardData, projectId, cardId, developerName)
  * @param {Object} params - { projectId, section, cardId }
  * @param {Object} beforeData - Card data before the change
  * @param {Object} afterData - Card data after the change
- * @param {Object} deps - Dependencies { db, getAccessToken, sendEmail, logger }
+ * @param {Object} deps - Dependencies { db, logger }
  */
 async function handleCardToValidate(params, beforeData, afterData, deps) {
   const { projectId, section, cardId } = params;
-  const { db, getAccessToken, sendEmail, logger } = deps;
+  const { db, logger } = deps;
 
   logger.info('onCardToValidate: Triggered', { projectId, section, cardId });
 
@@ -231,7 +233,7 @@ async function handleCardToValidate(params, beforeData, afterData, deps) {
     recipients: recipientEmails.map(r => r.email)
   });
 
-  // Resolve developer ID to name for email
+  // Resolve developer ID to name for queue entry
   let developerName = null;
   const developerId = afterData.developer;
   if (developerId) {
@@ -247,26 +249,32 @@ async function handleCardToValidate(params, beforeData, afterData, deps) {
     }
   }
 
-  // Send email
+  // Queue email for hourly digest (instead of sending immediately)
   try {
-    const accessToken = await getAccessToken();
-    const emailSubject = `[${projectId}] Tarea pendiente de validación: ${cardTitle}`;
-    const emailHtml = generateValidationEmailHtml(afterData, projectId, taskCardId, developerName);
-    const emails = recipientEmails.map(r => r.email);
-
-    await sendEmail(accessToken, emails, emailSubject, emailHtml);
-    logger.info('onCardToValidate: Email sent', {
+    const queuePromises = recipientEmails.map(recipient =>
+      queueValidationEmail(db, {
+        recipientEmail: recipient.email,
+        recipientName: recipient.name,
+        cardId: taskCardId,
+        projectId,
+        taskTitle: cardTitle,
+        developerName,
+        acceptanceCriteria: afterData.acceptanceCriteriaStructured || []
+      })
+    );
+    await Promise.all(queuePromises);
+    logger.info('onCardToValidate: Email queued for hourly digest', {
       projectId,
       cardId: taskCardId,
-      recipients: emails
+      recipients: recipientEmails.map(r => r.email)
     });
   } catch (error) {
-    logger.error('onCardToValidate: Failed to send email', {
+    logger.error('onCardToValidate: Failed to queue email', {
       error: error.message,
       projectId,
       cardId: taskCardId
     });
-    // Don't throw - notifications were already created successfully
+    // Don't throw - push notifications were already created successfully
   }
 
   return { notified: recipientEmails.map(r => r.email) };

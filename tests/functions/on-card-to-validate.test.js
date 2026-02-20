@@ -17,9 +17,11 @@ describe('onCardToValidate', () => {
   let mockSendEmail;
   let mockLogger;
   let mockPushRef;
+  let mockQueuePushRef;
 
   beforeEach(() => {
-    mockPushRef = { set: vi.fn().mockResolvedValue(undefined) };
+    mockPushRef = { key: '-notifKey', set: vi.fn().mockResolvedValue(undefined) };
+    mockQueuePushRef = { key: '-queueKey', set: vi.fn().mockResolvedValue(undefined) };
 
     mockDb = {
       ref: vi.fn().mockReturnValue({
@@ -58,7 +60,13 @@ describe('onCardToValidate', () => {
           push: vi.fn().mockReturnValue(mockPushRef)
         };
       }
-      // Default: notifications path
+      // Match email queue path
+      if (path === '/emailQueue/toValidate') {
+        return {
+          push: vi.fn().mockReturnValue(mockQueuePushRef)
+        };
+      }
+      // Default: notifications and developer paths
       return {
         once: vi.fn().mockResolvedValue({ val: () => null }),
         push: vi.fn().mockReturnValue(mockPushRef)
@@ -155,7 +163,6 @@ describe('onCardToValidate', () => {
 
       const result = await handleCardToValidate(params, before, after, getDeps());
       expect(result).toBeNull();
-      expect(mockSendEmail).not.toHaveBeenCalled();
     });
 
     it('should skip when status does not change to "To Validate"', async () => {
@@ -189,7 +196,7 @@ describe('onCardToValidate', () => {
       );
     });
 
-    it('should send notification and email to validator when task transitions to "To Validate"', async () => {
+    it('should create push notification and queue email when task transitions to "To Validate"', async () => {
       setupStakeholderResolution({
         stk_001: { email: 'validator@example.com', name: 'Validator User' }
       });
@@ -210,7 +217,7 @@ describe('onCardToValidate', () => {
 
       expect(result).toEqual({ notified: ['validator@example.com'] });
 
-      // Verify notification created
+      // Verify push notification created
       expect(mockPushRef.set).toHaveBeenCalledWith(expect.objectContaining({
         title: 'Tarea pendiente de validación',
         message: 'La tarea "Implement login" está lista para validar',
@@ -221,16 +228,22 @@ describe('onCardToValidate', () => {
         data: { itemType: 'task', action: 'validation-request' }
       }));
 
-      // Verify email sent
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        'mock-access-token',
-        ['validator@example.com'],
-        '[C4D] Tarea pendiente de validación: Implement login',
-        expect.stringContaining('Implement login')
-      );
+      // Verify email queued (not sent directly)
+      expect(mockQueuePushRef.set).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'toValidate',
+        recipientEmail: 'validator@example.com',
+        recipientName: 'Validator User',
+        cardId: 'C4D-TSK-0042',
+        projectId: 'C4D',
+        taskTitle: 'Implement login'
+      }));
+
+      // No direct email sending
+      expect(mockSendEmail).not.toHaveBeenCalled();
+      expect(mockGetAccessToken).not.toHaveBeenCalled();
     });
 
-    it('should send notifications and emails to both validator and co-validator', async () => {
+    it('should queue emails for both validator and co-validator', async () => {
       setupStakeholderResolution({
         stk_001: { email: 'validator@example.com', name: 'Validator' },
         stk_002: { email: 'covalidator@example.com', name: 'Co-Validator' }
@@ -253,19 +266,17 @@ describe('onCardToValidate', () => {
         notified: ['validator@example.com', 'covalidator@example.com']
       });
 
-      // Two notifications created
+      // Two push notifications created
       expect(mockPushRef.set).toHaveBeenCalledTimes(2);
 
-      // Email sent to both
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        'mock-access-token',
-        ['validator@example.com', 'covalidator@example.com'],
-        expect.stringContaining('[NTR]'),
-        expect.any(String)
-      );
+      // Two queue entries created (one per recipient)
+      expect(mockQueuePushRef.set).toHaveBeenCalledTimes(2);
+
+      // No direct email
+      expect(mockSendEmail).not.toHaveBeenCalled();
     });
 
-    it('should only notify validator when no co-validator is set', async () => {
+    it('should only queue for validator when no co-validator is set', async () => {
       setupStakeholderResolution({
         stk_001: { email: 'solo-validator@example.com', name: 'Solo Validator' }
       });
@@ -284,25 +295,23 @@ describe('onCardToValidate', () => {
 
       expect(result).toEqual({ notified: ['solo-validator@example.com'] });
       expect(mockPushRef.set).toHaveBeenCalledTimes(1);
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        'mock-access-token',
-        ['solo-validator@example.com'],
-        expect.any(String),
-        expect.any(String)
-      );
+      expect(mockQueuePushRef.set).toHaveBeenCalledTimes(1);
+      expect(mockQueuePushRef.set).toHaveBeenCalledWith(expect.objectContaining({
+        recipientEmail: 'solo-validator@example.com'
+      }));
     });
 
-    it('should still create notifications if email sending fails', async () => {
+    it('should still create push notifications if email queueing fails', async () => {
       setupStakeholderResolution({
         stk_001: { email: 'validator@example.com', name: 'Validator' }
       });
-      mockSendEmail.mockRejectedValue(new Error('SMTP error'));
+      mockQueuePushRef.set.mockRejectedValue(new Error('Queue write error'));
 
       const params = { projectId: 'C4D', section: 'tasks_C4D', cardId: 'key111' };
       const before = { status: 'In Progress' };
       const after = {
         status: 'To Validate',
-        title: 'Failing email task',
+        title: 'Failing queue task',
         cardId: 'C4D-TSK-0050',
         validator: 'stk_001',
         acceptanceCriteriaStructured: []
@@ -310,14 +319,14 @@ describe('onCardToValidate', () => {
 
       const result = await handleCardToValidate(params, before, after, getDeps());
 
-      // Notifications still created
+      // Push notifications still created
       expect(result).toEqual({ notified: ['validator@example.com'] });
       expect(mockPushRef.set).toHaveBeenCalledTimes(1);
 
       // Error was logged
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'onCardToValidate: Failed to send email',
-        expect.objectContaining({ error: 'SMTP error' })
+        'onCardToValidate: Failed to queue email',
+        expect.objectContaining({ error: 'Queue write error' })
       );
     });
 
