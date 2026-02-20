@@ -1,27 +1,23 @@
 /**
  * Theme Loader Service
  *
- * Loads external theme configuration from /theme-config.json
- * This allows third parties to customize the application appearance
- * without modifying the source code.
+ * Loads theme configuration from Firebase RTDB (/config/theme) with
+ * fallback to static /theme-config.json. Supports real-time updates
+ * via onValue listener and saving config back to RTDB.
  *
- * Configuration file structure:
+ * Configuration structure:
  * ```json
  * {
  *   "tokens": {
- *     "brand": {
- *       "primary": "#4a9eff",
- *       "secondary": "#ec3e95"
- *     },
- *     "colors": { ... }
+ *     "brand": { "primary": "#4a9eff", "secondary": "#ec3e95" },
+ *     "status": { "todo": "#449bd3", "inProgress": "#cce500" }
  *   },
  *   "branding": {
  *     "appName": "Planning Game XP",
- *     "logo": "/assets/logo.svg"
+ *     "logo": "/images/icono_PGame.png",
+ *     "primaryColor": "#4a9eff"
  *   },
- *   "features": {
- *     "darkMode": true
- *   }
+ *   "features": { "darkMode": true }
  * }
  * ```
  *
@@ -29,8 +25,11 @@
  * ```js
  * import { ThemeLoaderService } from './services/theme-loader-service.js';
  *
- * // Load and apply configuration
+ * // Load from RTDB (or fallback) and apply
  * await ThemeLoaderService.loadAndApply();
+ *
+ * // Save config to RTDB
+ * await ThemeLoaderService.saveConfig(newConfig);
  *
  * // Get branding info
  * const branding = ThemeLoaderService.getBranding();
@@ -38,23 +37,26 @@
  */
 
 import { ThemeManagerService } from './theme-manager-service.js';
+import { database, ref, get, set, onValue } from '../../firebase-config.js';
 
 const CONFIG_PATH = '/theme-config.json';
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const RTDB_PATH = '/config/theme';
 
 class ThemeLoader {
   constructor() {
     this.config = null;
     this.configLoadedAt = null;
     this.loading = null;
+    this._unsubscribe = null;
+    this._rtdbListenerActive = false;
   }
 
   /**
-   * Load configuration from external file
+   * Load configuration from RTDB, falling back to static JSON
    * @returns {Promise<Object|null>} Configuration object or null if not found
    */
   async loadConfig() {
-    if (this.config && this.isCacheValid()) {
+    if (this.config && this.configLoadedAt) {
       return this.config;
     }
 
@@ -62,43 +64,73 @@ class ThemeLoader {
       return this.loading;
     }
 
-    this.loading = this.fetchConfig();
+    this.loading = this._loadFromSources();
 
     try {
       this.config = await this.loading;
       this.configLoadedAt = Date.now();
       return this.config;
-    } catch {
-      // Theme config is optional - silently use defaults if not found
-      return null;
     } finally {
       this.loading = null;
     }
   }
 
   /**
-   * Fetch configuration from server
-   * @returns {Promise<Object>} Configuration object
+   * Try RTDB first, then fall back to static JSON
+   * @returns {Promise<Object|null>}
    */
-  async fetchConfig() {
-    const response = await fetch(CONFIG_PATH);
-
-    if (!response.ok) {
-      throw new Error(`Failed to load theme config: ${response.status}`);
+  async _loadFromSources() {
+    // Try RTDB first
+    try {
+      const snapshot = await get(ref(database, RTDB_PATH));
+      if (snapshot.exists()) {
+        return snapshot.val();
+      }
+    } catch {
+      // RTDB unavailable, fall through to static fallback
     }
 
-    return response.json();
+    // Fallback to static JSON
+    try {
+      const response = await fetch(CONFIG_PATH);
+      if (response.ok) {
+        return response.json();
+      }
+    } catch {
+      // Static file also unavailable
+    }
+
+    return null;
   }
 
   /**
-   * Check if cached config is still valid
-   * @returns {boolean} True if cache is valid
+   * Save configuration to RTDB
+   * @param {Object} config - Configuration object to persist
+   * @returns {Promise<void>}
    */
-  isCacheValid() {
-    if (!this.configLoadedAt) {
-      return false;
+  async saveConfig(config) {
+    await set(ref(database, RTDB_PATH), config);
+    this.config = config;
+    this.configLoadedAt = Date.now();
+  }
+
+  /**
+   * Set up real-time listener for config changes
+   */
+  _setupRealtimeListener() {
+    if (this._rtdbListenerActive) {
+      return;
     }
-    return Date.now() - this.configLoadedAt < CACHE_DURATION;
+
+    const configRef = ref(database, RTDB_PATH);
+    this._unsubscribe = onValue(configRef, (snapshot) => {
+      if (snapshot.exists()) {
+        this.config = snapshot.val();
+        this.configLoadedAt = Date.now();
+        this.applyConfig(this.config);
+      }
+    });
+    this._rtdbListenerActive = true;
   }
 
   /**
@@ -222,7 +254,7 @@ class ThemeLoader {
   }
 
   /**
-   * Load and apply configuration in one step
+   * Load and apply configuration, then set up real-time listener
    * @returns {Promise<Object|null>} Applied configuration
    */
   async loadAndApply() {
@@ -231,6 +263,8 @@ class ThemeLoader {
     if (config) {
       this.applyConfig(config);
     }
+
+    this._setupRealtimeListener();
 
     return config;
   }
@@ -288,7 +322,7 @@ class ThemeLoader {
   }
 
   /**
-   * Force reload configuration from server
+   * Force reload configuration
    * @returns {Promise<Object|null>} Fresh configuration
    */
   async reloadConfig() {
