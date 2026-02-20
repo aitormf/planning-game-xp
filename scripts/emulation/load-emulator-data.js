@@ -17,12 +17,28 @@ process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9001';
 // process.env.FIREBASE_STORAGE_EMULATOR_HOST = '127.0.0.1:9199';
 // process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
 
+// --- Read projectId from .env.dev (symlinked to active instance) ---
+function getProjectIdFromEnv() {
+  const envPath = path.join(__dirname, '../../.env.dev');
+  if (!fs.existsSync(envPath)) {
+    throw new Error('No .env.dev found. Run: npm run instance:use -- <name>');
+  }
+  const content = fs.readFileSync(envPath, 'utf8');
+  const match = content.match(/^PUBLIC_FIREBASE_PROJECT_ID=(.+)$/m);
+  if (!match) {
+    throw new Error('PUBLIC_FIREBASE_PROJECT_ID not found in .env.dev');
+  }
+  return match[1].trim();
+}
+
+const projectId = getProjectIdFromEnv();
+
 // --- Inicialización de Firebase Admin ---
-// Usamos el mismo projectId que la aplicación y especificamos el namespace correcto
+// Usamos el projectId de la instancia activa y especificamos el namespace correcto
 // Nota: El emulador en desarrollo usa el namespace de tests
 admin.initializeApp({
-  projectId: 'planning-gamexp',
-  databaseURL: 'http://localhost:9001?ns=planning-gamexp-tests-rtdb'
+  projectId,
+  databaseURL: `http://localhost:9001?ns=${projectId}-tests-rtdb`
 });
 
 // Obtén una referencia a la Realtime Database
@@ -30,8 +46,15 @@ const db = admin.database();
 const dbRef = db.ref('/'); // Referencia a la raíz de la base de datos
 
 // --- Carga y subida de datos ---
-// Ruta al archivo JSON - usar el archivo más actualizado
-const jsonPath = path.join(__dirname, '../../emulator-data/planning-gamexp-default-rtdb.json');
+// Find the first .json file in emulator-data/ (the exported database)
+const emulatorDataDir = path.join(__dirname, '../../emulator-data');
+const jsonFiles = fs.readdirSync(emulatorDataDir).filter(f => f.endsWith('.json'));
+if (jsonFiles.length === 0) {
+  console.error('No .json files found in emulator-data/. Export your database first.');
+  process.exit(1);
+}
+const jsonPath = path.join(emulatorDataDir, jsonFiles[0]);
+console.log(`Using emulator data: ${jsonFiles[0]}`);
 
 // Lee el archivo de forma síncrona
 try {

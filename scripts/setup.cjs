@@ -44,6 +44,8 @@ const ENV_TEMPLATE = {
   ]
 };
 
+const INSTANCES_DIR = path.join(ROOT_DIR, 'planning-game-instances');
+
 class SetupWizard {
   constructor() {
     this.rl = readline.createInterface({
@@ -54,6 +56,8 @@ class SetupWizard {
       client: {},
       functions: {}
     };
+    this.instanceName = null;
+    this.instanceDir = null;
   }
 
   async question(prompt, defaultValue = '') {
@@ -100,38 +104,42 @@ class SetupWizard {
       return;
     }
 
-    const totalSteps = 8;
+    const totalSteps = 9;
 
-    // Step 1: Check prerequisites
-    this.printStep(1, totalSteps, 'Verificando prerequisitos...');
+    // Step 1: Instance name
+    this.printStep(1, totalSteps, 'Nombre de la instancia');
+    await this.configureInstance();
+
+    // Step 2: Check prerequisites
+    this.printStep(2, totalSteps, 'Verificando prerequisitos...');
     await this.checkPrerequisites();
 
-    // Step 2: Auth provider selection
-    this.printStep(2, totalSteps, 'Selección de proveedor de autenticación');
+    // Step 3: Auth provider selection
+    this.printStep(3, totalSteps, 'Selección de proveedor de autenticación');
     await this.configureAuth();
 
-    // Step 3: Firebase configuration
-    this.printStep(3, totalSteps, 'Configuración de Firebase');
+    // Step 4: Firebase configuration
+    this.printStep(4, totalSteps, 'Configuración de Firebase');
     await this.configureFirebase();
 
-    // Step 4: Environment files
-    this.printStep(4, totalSteps, 'Generando archivos de entorno');
+    // Step 5: Environment files
+    this.printStep(5, totalSteps, 'Generando archivos de entorno');
     await this.generateEnvFiles();
 
-    // Step 5: Email service (optional)
-    this.printStep(5, totalSteps, 'Configuración de servicio de emails (opcional)');
+    // Step 6: Email service (optional)
+    this.printStep(6, totalSteps, 'Configuración de servicio de emails (opcional)');
     await this.configureMicrosoftGraph();
 
-    // Step 6: Deploy
-    this.printStep(6, totalSteps, 'Despliegue inicial');
+    // Step 7: Deploy
+    this.printStep(7, totalSteps, 'Despliegue inicial');
     await this.deploy();
 
-    // Step 7: First App Admin
-    this.printStep(7, totalSteps, 'Configuración del primer App Admin');
+    // Step 8: First App Admin
+    this.printStep(8, totalSteps, 'Configuración del primer App Admin');
     await this.setupFirstAdmin();
 
-    // Step 8: MCP Server (optional)
-    this.printStep(8, totalSteps, 'MCP Server (opcional)');
+    // Step 9: MCP Server (optional)
+    this.printStep(9, totalSteps, 'MCP Server (opcional)');
     await this.setupMCP();
 
     // Done
@@ -139,6 +147,32 @@ class SetupWizard {
     this.printNextSteps();
 
     this.rl.close();
+  }
+
+  async configureInstance() {
+    this.print('Cada despliegue de Planning Game necesita un nombre de instancia.');
+    this.print('Ejemplos: "personal", "mi-empresa", "geniova"\n');
+
+    let name = '';
+    while (!name) {
+      name = await this.question('Nombre de la instancia (minúsculas, sin espacios)');
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) {
+        this.print('  El nombre debe ser alfanumérico en minúsculas con guiones (ej: "mi-empresa")');
+        name = '';
+      }
+    }
+
+    this.instanceName = name;
+    this.instanceDir = path.join(INSTANCES_DIR, name);
+
+    // Create the instance directory
+    if (!fs.existsSync(this.instanceDir)) {
+      fs.mkdirSync(path.join(this.instanceDir, 'functions'), { recursive: true });
+      fs.mkdirSync(path.join(this.instanceDir, 'emulator-data'), { recursive: true });
+      this.print(`\n  Creado: planning-game-instances/${name}/`);
+    } else {
+      this.print(`\n  La instancia "${name}" ya existe, se actualizará.`);
+    }
   }
 
   async checkPrerequisites() {
@@ -251,10 +285,11 @@ class SetupWizard {
   }
 
   async generateEnvFiles() {
+    const targetDir = this.instanceDir || ROOT_DIR;
     const environments = ['dev', 'pre', 'prod'];
 
     for (const env of environments) {
-      const envPath = path.join(ROOT_DIR, `.env.${env}`);
+      const envPath = path.join(targetDir, `.env.${env}`);
       let content = '# Firebase Configuration\n';
 
       for (const [key, value] of Object.entries(this.config.client)) {
@@ -277,7 +312,11 @@ class SetupWizard {
     }
 
     // Functions .env
-    const functionsEnvPath = path.join(ROOT_DIR, 'functions', '.env');
+    const functionsDir = path.join(targetDir, 'functions');
+    if (!fs.existsSync(functionsDir)) {
+      fs.mkdirSync(functionsDir, { recursive: true });
+    }
+    const functionsEnvPath = path.join(functionsDir, '.env');
     let functionsContent = '# Cloud Functions Environment\n';
     for (const [key, value] of Object.entries(this.config.functions)) {
       if (value) {
@@ -286,6 +325,55 @@ class SetupWizard {
     }
     fs.writeFileSync(functionsEnvPath, functionsContent);
     this.print(`  ✅ Creado: functions/.env`);
+
+    // Generate .firebaserc in the instance directory
+    if (this.instanceDir) {
+      const projectId = this.config.client['PUBLIC_FIREBASE_PROJECT_ID'];
+      if (projectId) {
+        const firebaserc = {
+          projects: { default: projectId },
+          targets: {
+            [projectId]: {
+              database: {
+                main: [`${projectId}-default-rtdb`],
+                tests: [`${projectId}-tests-rtdb`]
+              }
+            }
+          }
+        };
+        fs.writeFileSync(
+          path.join(this.instanceDir, '.firebaserc'),
+          JSON.stringify(firebaserc, null, 2) + '\n'
+        );
+        this.print(`  ✅ Creado: .firebaserc`);
+      }
+
+      // Copy rule templates
+      const rulesCopies = [
+        { src: 'database.rules.example.json', dest: 'database.rules.json' },
+        { src: 'storage.rules.example', dest: 'storage.rules' },
+      ];
+      for (const rule of rulesCopies) {
+        const srcPath = path.join(ROOT_DIR, rule.src);
+        const destPath = path.join(this.instanceDir, rule.dest);
+        if (fs.existsSync(srcPath) && !fs.existsSync(destPath)) {
+          fs.copyFileSync(srcPath, destPath);
+          this.print(`  ✅ Copiado: ${rule.dest}`);
+        }
+      }
+
+      // Activate the instance
+      this.print(`\n  Activando instancia "${this.instanceName}"...`);
+      try {
+        execSync(`node scripts/instance-manager.cjs use ${this.instanceName}`, {
+          stdio: 'inherit',
+          cwd: ROOT_DIR
+        });
+      } catch (error) {
+        this.print(`  ⚠️  Error activando instancia: ${error.message}`);
+        this.print(`  Ejecuta después: npm run instance:use -- ${this.instanceName}`);
+      }
+    }
   }
 
   async configureMicrosoftGraph() {
@@ -308,7 +396,8 @@ class SetupWizard {
     }
 
     // Update functions .env
-    const functionsEnvPath = path.join(ROOT_DIR, 'functions', '.env');
+    const targetDir = this.instanceDir || ROOT_DIR;
+    const functionsEnvPath = path.join(targetDir, 'functions', '.env');
     let content = fs.readFileSync(functionsEnvPath, 'utf8');
     for (const [key, value] of Object.entries(this.config.functions)) {
       if (value && key.startsWith('MS_')) {
@@ -399,10 +488,12 @@ class SetupWizard {
     this.print('  2. Cierra sesión y vuelve a entrar para cargar los permisos');
     this.print('  3. Ve a la sección de Apps para gestionar aplicaciones\n');
     this.print('Comandos útiles:\n');
-    this.print('  npm run dev          # Iniciar en desarrollo');
-    this.print('  npm run emulator     # Iniciar emuladores de Firebase');
-    this.print('  npm run build        # Construir para producción');
-    this.print('  npm run deploy       # Desplegar a Firebase\n');
+    this.print('  npm run dev              # Iniciar en desarrollo');
+    this.print('  npm run emulator         # Iniciar emuladores de Firebase');
+    this.print('  npm run build            # Construir para producción');
+    this.print('  npm run deploy           # Desplegar a Firebase');
+    this.print('  npm run instance:list    # Ver instancias disponibles');
+    this.print('  npm run instance:current # Ver instancia activa\n');
     this.print('Documentación:\n');
     this.print('  README.md            # Visión general');
     this.print('  INSTALL.md           # Guía de instalación detallada');

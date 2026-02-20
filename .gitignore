@@ -102,6 +102,11 @@ serviceAccountKey.json
 # Already ignored by *.json rule, but explicit for clarity
 .mcp-user.json
 
+# Multi-instance configuration (contains secrets per instance)
+planning-game-instances/*
+!planning-game-instances/README.md
+.last-instance
+
 # Test coverage
 coverage/
 functions/.env

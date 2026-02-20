@@ -1,6 +1,1 @@
-{
-  "rules": {
-    ".read": true,
-    ".write": true
-  }
-}
+planning-game-instances/geniova/database.emulator.rules

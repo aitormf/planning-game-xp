@@ -4030,7 +4030,11 @@ this._showNotification('No se pudo generar el enlace IA', 'error');
 
   _buildIaLinkUrl(token) {
     const region = 'europe-west1';
-    const projectId = firebaseConfig?.projectId || 'planning-gamexp';
+    const projectId = firebaseConfig?.projectId;
+    if (!projectId) {
+      console.error('firebaseConfig.projectId is not configured');
+      return '';
+    }
     return `https://${region}-${projectId}.cloudfunctions.net/getIaContext/${token}`;
   }
 

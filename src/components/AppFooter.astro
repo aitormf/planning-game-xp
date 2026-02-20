@@ -33,7 +33,21 @@ try {
     const versionBtn = document.getElementById('versionBtn');
     if (!versionBtn) return;
 
+    let changelogModal = null;
+
     versionBtn.addEventListener('click', async () => {
+      // Close existing changelog modal if open (toggle behavior)
+      if (changelogModal) {
+        changelogModal.remove();
+        changelogModal = null;
+        return;
+      }
+
+      // Ensure app-modal custom element is registered
+      if (!customElements.get('app-modal')) {
+        await import('@manufosela/app-modal');
+      }
+
       const { modalService } = await import('/js/services/modal-service.js');
 
       // Convert markdown to simple HTML
@@ -92,11 +106,13 @@ try {
         </div>
       `;
 
-      modalService.createModal({
+      changelogModal = await modalService.createModal({
         title: 'Changelog',
         content,
         maxWidth: '700px',
-        maxHeight: '85vh'
+        maxHeight: '85vh',
+        className: 'changelog-modal',
+        onClose: () => { changelogModal = null; }
       });
     });
   });

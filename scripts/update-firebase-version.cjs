@@ -17,7 +17,23 @@ const packageJsonPath = path.join(__dirname, '../package.json');
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const version = packageJson.version;
 
-const DATABASE_URL = 'https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app';
+/**
+ * Reads PUBLIC_FIREBASE_DATABASE_URL from .env.prod (symlinked to active instance).
+ */
+function getDatabaseUrl() {
+  const envPath = path.join(__dirname, '..', '.env.prod');
+  if (!fs.existsSync(envPath)) {
+    throw new Error('No .env.prod found. Run: npm run instance:use -- <name>');
+  }
+  const content = fs.readFileSync(envPath, 'utf8');
+  const match = content.match(/^PUBLIC_FIREBASE_DATABASE_URL=(.+)$/m);
+  if (!match) {
+    throw new Error('PUBLIC_FIREBASE_DATABASE_URL not found in .env.prod');
+  }
+  return match[1].trim();
+}
+
+const DATABASE_URL = getDatabaseUrl();
 
 // Paths to check for service account
 const serviceAccountPaths = [

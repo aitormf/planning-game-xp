@@ -18,6 +18,24 @@
  */
 
 const admin = require('firebase-admin');
+const fs = require('fs');
+const path = require('path');
+
+/**
+ * Reads PUBLIC_FIREBASE_DATABASE_URL from .env.prod (symlinked to active instance).
+ */
+function getDatabaseUrl() {
+  const envPath = path.join(__dirname, '..', '.env.prod');
+  if (!fs.existsSync(envPath)) {
+    throw new Error('No .env.prod found. Run: npm run instance:use -- <name>');
+  }
+  const content = fs.readFileSync(envPath, 'utf8');
+  const match = content.match(/^PUBLIC_FIREBASE_DATABASE_URL=(.+)$/m);
+  if (!match) {
+    throw new Error('PUBLIC_FIREBASE_DATABASE_URL not found in .env.prod');
+  }
+  return match[1].trim();
+}
 
 // Encode email for Firebase key
 function encodeEmailForFirebase(email) {
@@ -42,7 +60,7 @@ async function setupAppAdmin(email) {
   // Initialize Firebase Admin
   try {
     admin.initializeApp({
-      databaseURL: 'https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app'
+      databaseURL: getDatabaseUrl()
     });
     console.log('✅ Firebase Admin inicializado');
   } catch (error) {

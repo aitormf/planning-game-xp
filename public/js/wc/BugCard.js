@@ -9,7 +9,7 @@ import { CommitsListStyles } from './commits-list-styles.js';
 import { KANBAN_STATUS_COLORS_CSS } from '../config/theme-config.js';
 import { APP_CONSTANTS } from '../constants/app-constants.js';
 import { permissionService } from '../services/permission-service.js';
-import { database, ref, get, functions, httpsCallable, set as dbSet, auth } from '../../firebase-config.js';
+import { database, ref, get, functions, httpsCallable, set as dbSet, auth, firebaseConfig } from '../../firebase-config.js';
 import { normalizeDeveloperEntries, normalizeDeveloperEntry, buildDeveloperSelectOptions, getDeveloperKey } from '../utils/developer-normalizer.js';
 import { developerDirectory } from '../config/developer-directory.js';
 import { entityDirectoryService } from '../services/entity-directory-service.js';
@@ -2743,7 +2743,11 @@ this.attachment = '';
    */
   _buildIaLinkUrl(token) {
     const region = 'europe-west1';
-    const projectId = 'planning-gamexp';
+    const projectId = firebaseConfig?.projectId;
+    if (!projectId) {
+      console.error('firebaseConfig.projectId is not configured');
+      return '';
+    }
     return `https://${region}-${projectId}.cloudfunctions.net/getIaContext/${token}`;
   }
 
