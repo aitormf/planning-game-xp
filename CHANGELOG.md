@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Enable Trash tab in adminproject with bin icon
+
+## [1.123.0] - 2026-02-20
+
+### Added
+
 - Multi-instance architecture, trash tab in admin, changelog modal fix
 - SPA URL navigation for wip, sprintview and proposals (#10)
 
