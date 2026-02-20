@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Deploy verifies build instance + org logo auto-detection (#13)
+
+## [1.125.0] - 2026-02-20
+
 ### Added
 
 - Add per-instance theming and org branding support (#12)
