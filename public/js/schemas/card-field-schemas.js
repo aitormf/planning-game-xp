@@ -27,7 +27,8 @@ export const TASK_SCHEMA = {
     'group', 'developerHistory', 'blockedHistory',
     'attachment', 'relatedTasks', 'repositoryLabel', 'year',
     'commits', 'validatedAt', 'reopenCycles', 'reopenCount',
-    'implementationPlan', 'implementationNotes'
+    'implementationPlan', 'implementationNotes',
+    'aiUsage'
   ],
   VIEW_FIELDS: [
     'firebaseId', 'cardId', 'title', 'status',
@@ -47,7 +48,8 @@ export const BUG_SCHEMA = {
     'bugType', 'attachment', 'repositoryLabel', 'year', 'group',
     'epic', 'sprint', 'commits',
     'cinemaFile', 'exportedFile', 'importedFile',
-    'plugin', 'pluginVersion', 'treatmentType'
+    'plugin', 'pluginVersion', 'treatmentType',
+    'aiUsage'
   ],
   VIEW_FIELDS: [
     'firebaseId', 'cardId', 'title', 'status', 'priority',

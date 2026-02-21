@@ -398,6 +398,9 @@ npm run test:coverage                           # 3. Verify coverage
 │      - status: "In Progress"                                   │
 │      - developer: "dev_010" (or assigned dev)                  │
 │      - startDate: "YYYY-MM-DD" (today)                         │
+│      ⚠️ ATOMIC: This uses a Firebase transaction. If another    │
+│      agent claimed the task first, you'll get a CONFLICT error. │
+│      Handle it gracefully by selecting a different task.        │
 ├─────────────────────────────────────────────────────────────────┤
 │ PHASE 3: IMPLEMENTATION                                        │
 ├─────────────────────────────────────────────────────────────────┤
@@ -413,6 +416,9 @@ npm run test:coverage                           # 3. Verify coverage
 │      - endDate: "YYYY-MM-DD" (today)                           │
 │      - implementationNotes: "Summary of what was done"         │
 │        (files changed, tests added, key decisions)             │
+│      - aiUsage: [{sessionId, timestamp, model, inputTokens,    │
+│        outputTokens, totalTokens, estimatedCostUSD,            │
+│        durationMinutes, action}] (if AI-assisted)              │
 │ □ 9. Confirm update was successful                             │
 │                                                                 │
 │ ⛔ NEVER set status to "Done" or "Done&Validated"              │

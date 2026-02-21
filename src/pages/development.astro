@@ -542,7 +542,11 @@ return {
           totalDevPoints: 0,
           bugsTotal: 0,
           bugsResolved: 0,
-          bugsOpen: 0
+          bugsOpen: 0,
+          aiTaskCount: 0,
+          aiSessionCount: 0,
+          aiTotalTokens: 0,
+          aiTotalCostUSD: 0
         });
       }
 
@@ -573,6 +577,17 @@ return {
       }
 
       stats.totalDevPoints += devPoints;
+
+      // Accumulate AI usage metrics
+      const aiUsage = Array.isArray(task.aiUsage) ? task.aiUsage : [];
+      if (aiUsage.length > 0) {
+        stats.aiTaskCount += 1;
+        stats.aiSessionCount += aiUsage.length;
+        for (const entry of aiUsage) {
+          stats.aiTotalTokens += Number(entry.totalTokens) || 0;
+          stats.aiTotalCostUSD += Number(entry.estimatedCostUSD) || 0;
+        }
+      }
     }
 
     processBug(stats, bug) {
@@ -583,6 +598,17 @@ return {
         stats.bugsResolved += 1;
       } else {
         stats.bugsOpen += 1;
+      }
+
+      // Accumulate AI usage metrics from bugs
+      const aiUsage = Array.isArray(bug.aiUsage) ? bug.aiUsage : [];
+      if (aiUsage.length > 0) {
+        stats.aiTaskCount += 1;
+        stats.aiSessionCount += aiUsage.length;
+        for (const entry of aiUsage) {
+          stats.aiTotalTokens += Number(entry.totalTokens) || 0;
+          stats.aiTotalCostUSD += Number(entry.estimatedCostUSD) || 0;
+        }
       }
     }
 
@@ -602,6 +628,10 @@ return {
         acc.bugsTotal += row.bugsTotal;
         acc.bugsResolved += row.bugsResolved;
         acc.bugsOpen += row.bugsOpen;
+        acc.aiTaskCount += row.aiTaskCount;
+        acc.aiSessionCount += row.aiSessionCount;
+        acc.aiTotalTokens += row.aiTotalTokens;
+        acc.aiTotalCostUSD += row.aiTotalCostUSD;
         return acc;
       }, {
         totalTasks: 0,
@@ -612,7 +642,11 @@ return {
         totalDevPoints: 0,
         bugsTotal: 0,
         bugsResolved: 0,
-        bugsOpen: 0
+        bugsOpen: 0,
+        aiTaskCount: 0,
+        aiSessionCount: 0,
+        aiTotalTokens: 0,
+        aiTotalCostUSD: 0
       });
 
       return {
@@ -665,7 +699,19 @@ return {
           label: 'Bugs',
           value: totals.bugsOpen,
           detail: `${this.formatNumber(totals.bugsResolved)} resueltos`
-        }
+        },
+        ...(totals.aiTaskCount > 0 ? [
+          {
+            label: 'Tareas con IA',
+            value: totals.aiTaskCount,
+            detail: `${this.formatNumber(totals.aiSessionCount)} sesiones`
+          },
+          {
+            label: 'Coste IA',
+            value: `$${totals.aiTotalCostUSD.toFixed(2)}`,
+            detail: `${this.formatNumber(totals.aiTotalTokens)} tokens`
+          }
+        ] : [])
       ];
 
       this.elements.summaryCards.innerHTML = cards.map((card) => `

@@ -2,10 +2,12 @@ import { html, css, unsafeCSS } from 'https://cdn.jsdelivr.net/npm/lit@3.0.2/+es
 import { BaseCard } from './base-card.js';
 import { NotesManagerMixin } from '../mixins/notes-manager-mixin.js';
 import { CommitsDisplayMixin } from '../mixins/commits-display-mixin.js';
+import { AiUsageDisplayMixin } from '../mixins/ai-usage-display-mixin.js';
 import { format, parse, isValid } from 'https://cdn.jsdelivr.net/npm/date-fns@3.6.0/+esm';
 import { TaskCardStyles } from './task-card-styles.js';
 import { NotesStyles } from '../ui/styles/notes-styles.js';
 import { CommitsListStyles } from './commits-list-styles.js';
+import { AiUsageStyles } from './ai-usage-styles.js';
 import { ref, onValue, get, set as dbSet, database, auth, firebaseConfig, functions, httpsCallable } from '../../firebase-config.js';
 import { KANBAN_STATUS_COLORS_CSS } from '../config/theme-config.js';
 import { permissionService } from '../services/permission-service.js';
@@ -22,7 +24,7 @@ import { generateTimestamp, extractDateTimeLocal } from '../utils/timestamp-util
 import './FirebaseStorageUploader.js';
 import 'https://cdn.jsdelivr.net/npm/@manufosela/loading-layer@2.0.1/+esm';
 
-export class TaskCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
+export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManagerMixin(BaseCard))) {
   static PLAN_STATUS_CONFIG = {
     pending:     { label: 'Plan',       color: '#6b7280', textColor: '#fff' },
     proposed:    { label: 'Plan: Prop', color: '#3b82f6', textColor: '#fff' },
@@ -110,6 +112,7 @@ export class TaskCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
       TaskCardStyles,
       NotesStyles,
       CommitsListStyles,
+      AiUsageStyles,
       css`${unsafeCSS(KANBAN_STATUS_COLORS_CSS)}`,
       css`
         .copy-link-button {
@@ -3108,6 +3111,11 @@ return html`<div class="no-related-tasks">No hay tareas relacionadas</div>`;
         <color-tab name="commits" label="${this._getCommitsTabLabel()}" color="#0ea5e9">
         ${this.renderCommitsPanel()}
         </color-tab>
+        ${this._getAiUsageArray().length > 0 ? html`
+        <color-tab name="aiUsage" label="${this._getAiUsageTabLabel()}" color="#8b5cf6">
+        ${this.renderAiUsagePanel()}
+        </color-tab>
+        ` : ''}
         <color-tab name="history" label="Histórico" color="var(--color-orange-800)">
         <div class="history-panel">
           <card-history-viewer

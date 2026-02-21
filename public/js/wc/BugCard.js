@@ -3,9 +3,11 @@ import { format, isValid, parse } from 'https://cdn.jsdelivr.net/npm/date-fns@3.
 import { BaseCard } from './base-card.js';
 import { NotesManagerMixin } from '../mixins/notes-manager-mixin.js';
 import { CommitsDisplayMixin } from '../mixins/commits-display-mixin.js';
+import { AiUsageDisplayMixin } from '../mixins/ai-usage-display-mixin.js';
 import { BugCardStyles } from './bug-card-styles.js';
 import { NotesStyles } from '../ui/styles/notes-styles.js';
 import { CommitsListStyles } from './commits-list-styles.js';
+import { AiUsageStyles } from './ai-usage-styles.js';
 import { KANBAN_STATUS_COLORS_CSS } from '../config/theme-config.js';
 import { APP_CONSTANTS } from '../constants/app-constants.js';
 import { permissionService } from '../services/permission-service.js';
@@ -18,7 +20,7 @@ import { BUG_SCHEMA } from '../schemas/card-field-schemas.js';
 import { generateTimestamp, extractDateTimeLocal } from '../utils/timestamp-utils.js';
 import './FirebaseStorageUploader.js';
 
-export class BugCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
+export class BugCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManagerMixin(BaseCard))) {
   // Static cache for project developers to avoid redundant Firebase calls
   static _developerCache = new Map();
   static _loadingPromises = new Map();
@@ -82,6 +84,7 @@ export class BugCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
       BugCardStyles,
       NotesStyles,
       CommitsListStyles,
+      AiUsageStyles,
       css`${unsafeCSS(KANBAN_STATUS_COLORS_CSS)}`
     ];
   }
@@ -1324,6 +1327,9 @@ if (this.userAuthorizedEmails.includes(this.userEmail)) {
         ${this._getCommitsArray().length > 0 ? html`
         <button class="commits tab-button ${this.activeTab === 'commits' ? 'active' : ''}" @click=${() => this._setActiveTab('commits')}>${this._getCommitsTabLabel()}</button>
         ` : ''}
+        ${this._getAiUsageArray().length > 0 ? html`
+        <button class="ai-usage tab-button ${this.activeTab === 'aiUsage' ? 'active' : ''}" @click=${() => this._setActiveTab('aiUsage')}>${this._getAiUsageTabLabel()}</button>
+        ` : ''}
       </div>
       <div class="tab-content">
         ${this.activeTab === 'description' ? html`
@@ -1394,6 +1400,7 @@ if (this.userAuthorizedEmails.includes(this.userEmail)) {
             ></firebase-storage-uploader>
           </div>` : ''}
         ${this.activeTab === 'commits' ? this.renderCommitsPanel() : ''}
+        ${this.activeTab === 'aiUsage' ? this.renderAiUsagePanel() : ''}
       </div>
       <div class="expanded-footer ia-footer">
         <div class="footer-left"></div>

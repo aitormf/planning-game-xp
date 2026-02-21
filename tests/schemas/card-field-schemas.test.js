@@ -90,6 +90,10 @@ describe('Card Field Schemas', () => {
       expect(TASK_SCHEMA.VIEW_FIELDS).toContain('coDeveloper');
     });
 
+    it('should include aiUsage in PERSISTENT_FIELDS', () => {
+      expect(TASK_SCHEMA.PERSISTENT_FIELDS).toContain('aiUsage');
+    });
+
     it('should NOT include UI-only fields', () => {
       const uiFields = ['statusList', 'activeTab', 'expanded', 'isEditable',
         'isSaving', 'invalidFields', 'canEditPermission'];
@@ -134,6 +138,10 @@ describe('Card Field Schemas', () => {
       for (const field of uiFields) {
         expect(BUG_SCHEMA.PERSISTENT_FIELDS).not.toContain(field);
       }
+    });
+
+    it('should include aiUsage in PERSISTENT_FIELDS', () => {
+      expect(BUG_SCHEMA.PERSISTENT_FIELDS).toContain('aiUsage');
     });
 
     it('should include Cinema4D-specific fields', () => {
