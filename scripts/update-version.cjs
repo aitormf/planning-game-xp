@@ -114,24 +114,40 @@ export const instance = '${versionData.instance}';
   console.log(`✅ Version updated to ${newVersion}`);
 }
 
+/**
+ * Find the last version bump commit hash from git history.
+ * Uses git as source of truth instead of the fragile lastBuildCommit field
+ * in version.json (which gets out of sync when postbuild creates a new commit).
+ */
+function getLastBumpCommitFromGit() {
+  try {
+    const hash = execSync(
+      'git log --format="%H" --grep="^chore: bump client version to" -1',
+      { encoding: 'utf8' }
+    ).trim();
+    return hash || '';
+  } catch {
+    return '';
+  }
+}
+
 function hasNewCommitsSinceLastBuild() {
-  if (!fs.existsSync(versionFilePath)) return true;
+  const lastBumpCommit = getLastBumpCommitFromGit();
+  if (!lastBumpCommit) return true;
 
   try {
-    const versionData = JSON.parse(fs.readFileSync(versionFilePath, 'utf8'));
-    const lastBuildCommit = versionData.lastBuildCommit;
-    if (!lastBuildCommit) return true;
-
     const headCommit = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
-    if (lastBuildCommit === headCommit) return false;
+    if (lastBumpCommit === headCommit) return false;
 
     // Check if there are relevant commits (not just version bumps)
-    const range = `${lastBuildCommit}..${headCommit}`;
+    const range = `${lastBumpCommit}..${headCommit}`;
     const logOutput = execSync(`git log ${range} --pretty=%s`, { encoding: 'utf8' }).trim();
     if (!logOutput) return false;
 
     const commits = logOutput.split('\n').filter(msg =>
-      !msg.startsWith('chore: bump client version to')
+      !msg.startsWith('chore: bump client version to') &&
+      !msg.startsWith('chore: pre-build') &&
+      !msg.startsWith('Merge ')
     );
     return commits.length > 0;
   } catch (error) {
@@ -155,13 +171,13 @@ function main() {
 
   // Read current version
   let currentVersion = '1.0.0';
-  let lastBuildCommit = '';
   if (fs.existsSync(versionFilePath)) {
     const versionData = JSON.parse(fs.readFileSync(versionFilePath, 'utf8'));
     currentVersion = versionData.version;
-    lastBuildCommit = versionData.lastBuildCommit || '';
   }
-  
+
+  // Use git as source of truth: find last bump commit from git history
+  const lastBumpCommit = getLastBumpCommitFromGit();
   let commitMessages = [];
   let headCommit = '';
   try {
@@ -170,16 +186,16 @@ function main() {
     console.error('Error getting HEAD commit:', error.message);
   }
 
-  if (lastBuildCommit && headCommit && lastBuildCommit !== headCommit) {
+  if (lastBumpCommit && headCommit && lastBumpCommit !== headCommit) {
     try {
-      const range = `${lastBuildCommit}..${headCommit}`;
+      const range = `${lastBumpCommit}..${headCommit}`;
       const logOutput = execSync(`git log ${range} --pretty=%s`, { encoding: 'utf8' }).trim();
       commitMessages = logOutput ? logOutput.split('\n').map(line => line.trim()).filter(Boolean) : [];
-      console.log(`📝 Commits since last build (${range}): ${commitMessages.length}`);
+      console.log(`📝 Commits since last bump (${lastBumpCommit.slice(0, 7)}..${headCommit.slice(0, 7)}): ${commitMessages.length}`);
     } catch (error) {
       console.error('Error getting commit range:', error.message);
     }
-  } else if (lastBuildCommit && headCommit && lastBuildCommit === headCommit) {
+  } else if (lastBumpCommit && headCommit && lastBumpCommit === headCommit) {
     console.log('📝 No hay commits nuevos desde la última build.');
     updateVersionFile(currentVersion, headCommit);
     return;
@@ -194,7 +210,9 @@ function main() {
   }
 
   const relevantMessages = commitMessages.filter((message) =>
-    !message.startsWith('chore: bump client version to')
+    !message.startsWith('chore: bump client version to') &&
+    !message.startsWith('chore: pre-build') &&
+    !message.startsWith('Merge ')
   );
 
   if (commitMessages.length > 0 && relevantMessages.length === 0) {

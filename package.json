@@ -27,7 +27,7 @@
     "deploy": "node scripts/instance-manager.cjs verify-deploy && firebase deploy --only=hosting && node scripts/update-firebase-version.cjs",
     "deploy:no-notify": "node scripts/instance-manager.cjs verify-deploy && firebase deploy --only=hosting",
     "deploy:functions": "node scripts/instance-manager.cjs select && firebase deploy --only functions",
-    "deploy:hosting": "node scripts/instance-manager.cjs verify-deploy && firebase deploy --only hosting",
+    "deploy:hosting": "node scripts/instance-manager.cjs verify-deploy && firebase deploy --only hosting && node scripts/update-firebase-version.cjs",
     "deploy:rules": "node scripts/instance-manager.cjs select && firebase deploy --only firestore && firebase deploy --only database:main",
     "deploy:rules:test": "node scripts/instance-manager.cjs select && firebase deploy --only database:tests",
     "emulator": "node scripts/instance-manager.cjs select && ./scripts/emulation/start-emulators.sh",
