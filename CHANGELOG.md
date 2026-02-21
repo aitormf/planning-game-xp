@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Align updateTableRow styles with table-renderer rendering
+
+## [1.128.3] - 2026-02-21
+
+### Fixed
+
 - Resolve table view bugs and add notes tooltip
 
 ## [1.128.2] - 2026-02-21
