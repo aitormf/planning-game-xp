@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Added
+
+- Add auto-heal mechanism to version-check-service
+
+### Fixed
+
+- Use git history for version bump detection and notify on deploy:hosting
+
 ## [1.126.0] - 2026-02-21
 
 ### Added
