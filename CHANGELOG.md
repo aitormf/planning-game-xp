@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Use update() instead of set() for existing cards to prevent data loss
+
+## [1.128.1] - 2026-02-21
+
+### Fixed
+
 - Resolve notes badge, dark mode textarea, and date input issues
 
 ## [1.128.0] - 2026-02-21
