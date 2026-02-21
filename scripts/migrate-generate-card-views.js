@@ -46,7 +46,9 @@ function extractTaskViewFields(taskData, firebaseId) {
     blockedByBusiness: taskData.blockedByBusiness,
     blockedByDevelopment: taskData.blockedByDevelopment,
     coValidator: taskData.coValidator,
-    notesCount: Array.isArray(taskData.notes) ? taskData.notes.length : 0,
+    notesCount: Array.isArray(taskData.notes)
+      ? taskData.notes.length
+      : (taskData.notes && typeof taskData.notes === 'object' ? Object.keys(taskData.notes).length : 0),
     year: taskData.year,
     relatedTasks: Array.isArray(taskData.relatedTasks)
       ? taskData.relatedTasks.map(rt => ({
