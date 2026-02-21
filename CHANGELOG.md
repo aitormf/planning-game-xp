@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Resolve notes badge, dark mode textarea, and date input issues
+
+## [1.128.0] - 2026-02-21
+
 ### Added
 
 - Add auto-heal mechanism to version-check-service
