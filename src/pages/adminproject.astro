@@ -260,6 +260,24 @@ import Layout from '../layouts/Layout.astro';
   .error-message {
     color: var(--text-danger, #dc3545);
   }
+  .btn-restore {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.8rem;
+    border: 1px solid #28a745;
+    border-radius: 4px;
+    background: transparent;
+    color: #28a745;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-restore:hover {
+    background: #28a745;
+    color: #fff;
+  }
+  .btn-restore:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 </style>
 
 <script>
@@ -1240,6 +1258,7 @@ isYearReadOnly = yearReadOnly;
 import { showModal } from '@manufosela/app-modal';
 import 'https://esm.sh/@manufosela/md-renderer';
 import { database, ref, get, set, auth, superAdminEmail } from '/firebase-config.js';
+import { FirebaseService } from '/js/services/firebase-service.js';
 import '/js/wc/ProjectForm.js';
 import '/js/wc/CardSearch.js';
 
@@ -1531,6 +1550,7 @@ async function loadTrashCards(projectName) {
           <th>Estado</th>
           <th>Eliminado por</th>
           <th>Fecha eliminación</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -1549,12 +1569,32 @@ async function loadTrashCards(projectName) {
             <td>${item.status || '-'} ${reason ? `<span class="moved-badge">${reason}</span>` : ''}</td>
             <td>${item.deletedBy || '-'}</td>
             <td>${deletedDate}</td>
+            <td><button class="btn-restore" data-action="restore" data-firebase-id="${item._firebaseId}" data-card-type="${item._cardType}">Restaurar</button></td>
           </tr>`;
         }).join('')}
       </tbody>
     `;
     container.innerHTML = '';
     container.append(table);
+
+    // Attach restore button handlers
+    table.querySelectorAll('[data-action="restore"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const fbId = btn.dataset.firebaseId;
+        const cardType = btn.dataset.cardType;
+        btn.disabled = true;
+        btn.textContent = 'Restaurando...';
+        try {
+          await FirebaseService.restoreCard(projectName, cardType, fbId);
+          trashLoaded = false;
+          loadTrashCards(projectName);
+        } catch {
+          btn.disabled = false;
+          btn.textContent = 'Restaurar';
+        }
+      });
+    });
+
     trashLoaded = true;
   } catch (error) {
     console.error('Error loading trash:', error);
@@ -1568,6 +1608,14 @@ document.addEventListener('tab-changed', (e) => {
     const projectName = new URLSearchParams(window.location.search).get('projectId');
     if (projectName) loadTrashCards(projectName);
   }
+});
+
+// Invalidate trash cache when a card is deleted or restored so it reloads on next visit
+document.addEventListener('card-deleted', () => {
+  trashLoaded = false;
+});
+document.addEventListener('card-restored', () => {
+  trashLoaded = false;
 });
 
 // Initialize on DOMContentLoaded

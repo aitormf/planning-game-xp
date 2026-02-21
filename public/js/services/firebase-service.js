@@ -949,6 +949,73 @@ try {
   },
 
   /**
+   * Restore a card from trash back to the active cards collection.
+   * Resets status to "To Do" and generates a new firebaseId via push().
+   * @param {string} projectName - Project ID
+   * @param {string} cardType - Section key in trash (e.g. "TASKS_ProjectName")
+   * @param {string} firebaseId - Firebase key of the trashed card
+   */
+  async restoreCard(projectName, cardType, firebaseId) {
+    if (!auth.currentUser) {
+      document.dispatchEvent(new CustomEvent('show-slide-notification', {
+        detail: { options: { message: 'You must be logged in to restore a card', type: 'error' } }
+      }));
+      return;
+    }
+
+    const trashPath = `/trash/cards/${projectName}/${cardType}/${firebaseId}`;
+    const trashRef = ref(database, trashPath);
+
+    try {
+      const snapshot = await get(trashRef);
+      const cardData = snapshot.val();
+      if (!cardData) {
+        throw new Error('Card not found in trash');
+      }
+
+      // Clean trash metadata
+      delete cardData.deletedBy;
+      delete cardData.deletedAt;
+      delete cardData.deleteReason;
+      delete cardData.movedTo;
+
+      // Reset status and progress fields
+      cardData.status = 'To Do';
+      delete cardData.startDate;
+      delete cardData.endDate;
+
+      // Add restore metadata
+      const userEmail = document.body.dataset.userEmail;
+      cardData.restoredBy = userEmail;
+      cardData.restoredAt = new Date().toISOString();
+
+      // Derive section from cardType key (e.g. "TASKS_ProjectName" → "TASKS")
+      const section = cardType.replace(`_${projectName}`, '');
+      const cardsBasePath = this.getPathBySectionAndProjectId(section, projectName);
+
+      // Push with new firebaseId
+      const newRef = push(ref(database, cardsBasePath));
+      cardData.id = newRef.key;
+      cardData.firebaseId = newRef.key;
+      await set(newRef, cardData);
+
+      // Remove from trash
+      await set(trashRef, null);
+
+      document.dispatchEvent(new CustomEvent('card-restored', { bubbles: true, composed: true, detail: { cardId: cardData.cardId } }));
+      document.dispatchEvent(new CustomEvent('show-slide-notification', {
+        detail: { options: { message: `Card ${cardData.cardId || ''} restored successfully` } }
+      }));
+    } catch (error) {
+      console.error('Restore card error:', error);
+      document.dispatchEvent(new CustomEvent('show-slide-notification', {
+        detail: { options: { message: 'Failed to restore card', type: 'error' } }
+      }));
+      throw error;
+    }
+  },
+
+  /**
    * Cleanup orphan entry from optimized view when card doesn't exist in /cards/
    * @param {Object} card - Card data with projectId and cardType
    * @param {string} firebaseId - Firebase key of the orphan entry
