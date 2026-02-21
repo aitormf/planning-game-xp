@@ -170,7 +170,7 @@ const isNewNote = this.editingNoteIndex === null;
             type="text"
             value="${isNewNote ? this._formatNoteDate(new Date().toISOString()) : this._formatNoteDate(this.editingNote.timestamp)}"
             disabled
-            style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-default, #ced4da); border-radius: 0.25rem; font-size: 0.9rem; background-color: var(--surface-secondary, #e9ecef); color: var(--text-secondary, #495057); box-sizing: border-box;"
+            style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-default, #ced4da); border-radius: 0.25rem; font-size: 0.9rem; background-color: var(--bg-muted, #e9ecef); color: var(--text-secondary, #495057); box-sizing: border-box;"
           />
         </div>
 
@@ -180,7 +180,7 @@ const isNewNote = this.editingNoteIndex === null;
             type="text"
             value="${isNewNote ? this._getDisplayNameForEmail(document.body.dataset.userEmail || this.userEmail) : this._getDisplayNameForEmail(this.editingNote.author)}"
             disabled
-            style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-default, #ced4da); border-radius: 0.25rem; font-size: 0.9rem; background-color: var(--surface-secondary, #e9ecef); color: var(--text-secondary, #495057); box-sizing: border-box;"
+            style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-default, #ced4da); border-radius: 0.25rem; font-size: 0.9rem; background-color: var(--bg-muted, #e9ecef); color: var(--text-secondary, #495057); box-sizing: border-box;"
           />
         </div>
       </div>

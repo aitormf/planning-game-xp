@@ -13,8 +13,8 @@ import { getPriorityDisplay } from '../utils/priority-utils.js';
 export class TableRenderer {
   constructor() {
     this.filters = {};
-    this.sortField = 'Prioridad';
-    this.sortDirection = 'asc';
+    this.sortField = 'ID';
+    this.sortDirection = 'desc';
     this.isLoading = true; // Estado de carga inicial
   }
 
@@ -429,6 +429,87 @@ include = false;
       return [{ content: notes, author: 'legacy', timestamp: '' }];
     }
     return [];
+  }
+
+  /**
+   * Create a notes badge with custom CSS tooltip (not native title)
+   * Shows note contents on hover if available, otherwise just the count
+   */
+  _createNotesBadgeWithTooltip(notes, notesCount) {
+    const container = UIUtils.createElement('span', {
+      style: {
+        position: 'relative',
+        display: 'inline-flex',
+        flexShrink: '0'
+      }
+    });
+
+    const badge = UIUtils.createElement('span', {
+      style: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '2px',
+        background: '#6f42c1',
+        color: '#fff',
+        padding: '0 5px',
+        borderRadius: '10px',
+        fontSize: '0.7rem',
+        fontWeight: 'bold',
+        whiteSpace: 'nowrap',
+        lineHeight: '1.4',
+        cursor: 'default'
+      }
+    }, `📝${notesCount}`);
+    container.appendChild(badge);
+
+    // Build tooltip content
+    let tooltipHtml = '';
+    if (notes.length > 0) {
+      const maxNotes = 5;
+      const displayNotes = notes.slice(-maxNotes);
+      tooltipHtml = displayNotes.map(note => {
+        const content = (note.content || '').substring(0, 80);
+        const author = note.author ? note.author.split('@')[0] : '';
+        return `<div style="margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.15);">` +
+          `<div style="font-size:0.75rem;opacity:0.7;">${author}</div>` +
+          `<div>${content}${(note.content || '').length > 80 ? '...' : ''}</div>` +
+          `</div>`;
+      }).join('');
+      if (notes.length > maxNotes) {
+        tooltipHtml += `<div style="opacity:0.7;font-style:italic;">+${notes.length - maxNotes} más</div>`;
+      }
+    } else {
+      tooltipHtml = `${notesCount} nota${notesCount > 1 ? 's' : ''}`;
+    }
+
+    const tooltip = UIUtils.createElement('div');
+    tooltip.innerHTML = tooltipHtml;
+    Object.assign(tooltip.style, {
+      display: 'none',
+      position: 'absolute',
+      bottom: '100%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      marginBottom: '6px',
+      background: '#1a1a2e',
+      color: '#fff',
+      padding: '8px 10px',
+      borderRadius: '6px',
+      fontSize: '0.78rem',
+      lineHeight: '1.3',
+      maxWidth: '280px',
+      minWidth: '140px',
+      whiteSpace: 'normal',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+      zIndex: '9999',
+      pointerEvents: 'none'
+    });
+    container.appendChild(tooltip);
+
+    container.addEventListener('mouseenter', () => { tooltip.style.display = 'block'; });
+    container.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+    return container;
   }
 
   getDeveloperDisplay(value) {
@@ -1195,28 +1276,12 @@ const style = {
       titleText.title = card.title || '';
       titleWrapper.appendChild(titleText);
 
-      // Notes badge next to title
+      // Notes badge next to title (with custom tooltip)
       const notes = this._getNotesArray(card.notes);
       const notesCount = notes.length > 0 ? notes.length : (card.notesCount || 0);
       if (notesCount > 0) {
-        const notesBadge = UIUtils.createElement('span', {
-          style: {
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '2px',
-            background: '#6f42c1',
-            color: '#fff',
-            padding: '0 5px',
-            borderRadius: '10px',
-            fontSize: '0.7rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0',
-            lineHeight: '1.4'
-          }
-        }, `📝${notesCount}`);
-        notesBadge.title = `${notesCount} nota${notesCount > 1 ? 's' : ''}`;
-        titleWrapper.appendChild(notesBadge);
+        const notesContainer = this._createNotesBadgeWithTooltip(notes, notesCount);
+        titleWrapper.appendChild(notesContainer);
       }
 
       // Badges de bloqueo (business/dev) - only show if status is "Blocked"

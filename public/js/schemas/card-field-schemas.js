@@ -34,7 +34,8 @@ export const TASK_SCHEMA = {
     'businessPoints', 'devPoints', 'sprint',
     'developer', 'coDeveloper', 'validator', 'coValidator',
     'epic', 'startDate', 'endDate', 'spike', 'expedited',
-    'blockedByBusiness', 'blockedByDevelopment', 'year', 'relatedTasks'
+    'blockedByBusiness', 'blockedByDevelopment', 'year', 'relatedTasks',
+    'notesCount', 'planStatus'
   ]
 };
 

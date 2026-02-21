@@ -133,7 +133,8 @@ describe('TaskCard Schema Integration', () => {
         'businessPoints', 'devPoints', 'sprint',
         'developer', 'coDeveloper', 'validator', 'coValidator',
         'epic', 'startDate', 'endDate', 'spike', 'expedited',
-        'blockedByBusiness', 'blockedByDevelopment', 'year', 'relatedTasks'
+        'blockedByBusiness', 'blockedByDevelopment', 'year', 'relatedTasks',
+        'notesCount', 'planStatus'
       ];
 
       expect(new Set(TASK_SCHEMA.VIEW_FIELDS)).toEqual(new Set(expectedViewFields));
