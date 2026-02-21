@@ -7,6 +7,26 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Add restore card functionality from trash
+
+### Fixed
+
+- Require date updates on status transitions
+
+### Documentation
+
+- Require deploy-before-version-notify
+
+## [1.129.1] - 2026-02-22
+
+### Fixed
+
+- Resolve epic title without full reload
+
+## [1.129.0] - 2026-02-21
+
+### Added
+
 - Add AI usage tracking and optimistic locking for AI agents
 
 ## [1.128.6] - 2026-02-21
