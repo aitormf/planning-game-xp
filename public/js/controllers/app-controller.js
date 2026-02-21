@@ -592,6 +592,11 @@ this.applyInitialView(section);
         return;
       }
 
+      // Trash and tasksGenerator are managed by adminproject.astro, not by the card system
+      if (section === 'trash' || section === 'tasksGenerator') {
+        return;
+      }
+
       const currentFilters = this._getPreservedFilters(section, preserveFilters);
 
       const dataSection = section;
