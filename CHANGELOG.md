@@ -5,6 +5,18 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Format startDate/endDate in table view with friendly Spanish locale
+- Add hourly validation digest scheduled function
+- Add email queue module for RTDB-based notification batching
+
+### Changed
+
+- Replace immediate emails with queue-based hourly digest
+
+## [1.125.5] - 2026-02-20
+
 ### Testing
 
 - Add deep link card opening tests
