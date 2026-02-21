@@ -59,6 +59,13 @@ function _createRepoBadgeElement(cardData, projectId) {
   return badge;
 }
 
+function _resolveEpicDisplayName(epicValue) {
+  if (!epicValue) return '';
+  const epicList = Array.isArray(window.globalEpicList) ? window.globalEpicList : [];
+  const epic = epicList.find((e) => e && (e.id === epicValue || e.name === epicValue || e.title === epicValue));
+  return epic ? (epic.name || epic.title || epicValue) : epicValue;
+}
+
 /**
  * Devuelve los colores de fondo y texto para un status
  * @param {string} status - El status de la tarea
@@ -385,13 +392,7 @@ export function updateTableRow(row, cardData) {
       cells[TASK_COLS.VALIDATOR].textContent = validatorDisplay;
 
       // Épica
-      let epicName = '';
-      if (cardData.epic) {
-        const epicList = window.globalEpicList || [];
-        const epic = epicList.find(e => e.id === cardData.epic || e.name === cardData.epic);
-        epicName = epic ? epic.name : cardData.epic;
-      }
-      cells[TASK_COLS.EPIC].textContent = epicName;
+      cells[TASK_COLS.EPIC].textContent = _resolveEpicDisplayName(cardData.epic);
 
       cells[TASK_COLS.START_DATE].textContent = UIUtils.formatDateFriendly(cardData.startDate);
       cells[TASK_COLS.END_DATE].textContent = UIUtils.formatDateFriendly(cardData.endDate);

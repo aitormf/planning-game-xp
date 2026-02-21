@@ -190,6 +190,13 @@ export class TableRenderer {
     return '';
   }
 
+  _getEpicDisplay(epicValue) {
+    if (!epicValue) return '';
+    const epicList = Array.isArray(globalThis.globalEpicList) ? globalThis.globalEpicList : [];
+    const epic = epicList.find((e) => e && (e.id === epicValue || e.name === epicValue || e.title === epicValue));
+    return epic ? (epic.name || epic.title || epicValue) : epicValue;
+  }
+
   sortRows(rows) {
     const field = this.sortField;
     const dir = this.sortDirection === 'asc' ? 1 : -1;
@@ -210,13 +217,7 @@ export class TableRenderer {
           return '';
         case 'Developer': return this.getDeveloperDisplay(card.developer);
         case 'Validator': return this.getValidatorDisplay(card.validator);
-        case 'Épica':
-          if (card.epic) {
-            const epicList = globalThis.globalEpicList || [];
-            const epic = epicList.find(e => e.id === card.epic || e.name === card.epic);
-            return epic ? epic.name : card.epic;
-          }
-          return '';
+        case 'Épica': return this._getEpicDisplay(card.epic);
         case 'Fecha registro': return UIUtils.formatDate(card.registerDate);
         case 'Fecha inicio': return card.startDate || '';
         case 'Fecha fin': return card.endDate || '';
@@ -1460,13 +1461,7 @@ const style = {
       row.dataset.coValidatorValue = card.coValidator || '';
       row.appendChild(validatorCell);
       // Épica
-      let epicName = '';
-      if (card.epic) {
-        // Buscar la épica en la lista global o en globalThis.globalEpicList
-        const epicList = globalThis.globalEpicList || [];
-        const epic = epicList.find(e => e.id === card.epic || e.name === card.epic);
-        epicName = epic ? epic.name : card.epic;
-      }
+      const epicName = this._getEpicDisplay(card.epic);
       row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, epicName));
       // Fecha inicio
       row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.startDate)));
