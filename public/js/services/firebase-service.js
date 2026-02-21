@@ -851,7 +851,14 @@ export const FirebaseService = {
           cardToSave.priority = 'Not Evaluated';
 }
       }
-      await set(cardRef, cardToSave);
+      // Use update() for existing cards to preserve fields not loaded on the component
+      // (e.g. startDate, endDate, commits when editing only notes).
+      // Use set() for new cards to create the full entry.
+      if (isNewCard) {
+        await set(cardRef, cardToSave);
+      } else {
+        await update(cardRef, cardToSave);
+      }
 
       await this._executeWipOperations(wipOperations);
 
