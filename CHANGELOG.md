@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Resolve table view bugs and add notes tooltip
+
+## [1.128.2] - 2026-02-21
+
+### Fixed
+
 - Use update() instead of set() for existing cards to prevent data loss
 
 ## [1.128.1] - 2026-02-21
