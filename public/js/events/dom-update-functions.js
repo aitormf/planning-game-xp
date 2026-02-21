@@ -4,6 +4,8 @@
  */
 import { entityDirectoryService } from '../services/entity-directory-service.js';
 import { APP_CONSTANTS } from '../constants/app-constants.js';
+import { getPriorityDisplay } from '../utils/priority-utils.js';
+import { formatDateFriendly } from '../utils/timestamp-utils.js';
 
 // Column indices from centralized constants
 const TASK_COLS = APP_CONSTANTS.TABLE_COLUMNS.TASKS;
@@ -66,8 +68,15 @@ function _createRepoBadgeElement(cardData, projectId) {
 function getStatusColor(status, type = 'task') {
   const value = (status || '').toString();
   const lower = value.toLowerCase();
+  const upper = value.toUpperCase();
 
   if (type === 'bug') {
+    // Bug statuses use kanban colors (mixed case keys)
+    const kanbanColors = APP_CONSTANTS?.KANBAN_COLORS || {};
+    const kanbanBg = kanbanColors[value] || kanbanColors[upper];
+    if (kanbanBg) {
+      return { bg: kanbanBg, fg: '#fff' };
+    }
     const palette = {
       'created': '#6c757d',
       'triaged': '#6c757d',
@@ -87,7 +96,13 @@ function getStatusColor(status, type = 'task') {
     return { bg, fg: '#fff' };
   }
 
-  // Task status palette
+  // Task status: try kanban gradient colors first (same as table-renderer)
+  const kanbanColors = APP_CONSTANTS?.KANBAN_COLORS || {};
+  const kanbanBg = kanbanColors[upper];
+  if (kanbanBg) {
+    return { bg: kanbanBg, fg: '#fff' };
+  }
+
   const palette = {
     'backlog': '#6c757d',
     'todo': '#6c757d',
@@ -294,17 +309,33 @@ export function updateTableRow(row, cardData) {
       `;
       cells[TASK_COLS.STATUS].appendChild(statusTag);
 
-      // Prioridad (calculada) - No mostrar para spikes
-      let priorityText = '';
-      if (cardData.isSpike) {
-        priorityText = '';
-      } else if (!cardData.businessPoints || !cardData.devPoints || cardData.businessPoints === 0 || cardData.devPoints === 0) {
-        priorityText = 'No evaluado';
+      // Prioridad (calculada) - Same rendering as table-renderer
+      cells[TASK_COLS.PRIORITY].innerHTML = '';
+      if (cardData.spike || cardData.isSpike) {
+        // No priority for spikes
       } else {
-        const priorityValue = (cardData.businessPoints / cardData.devPoints) * 100;
-        priorityText = isNaN(priorityValue) ? 'No evaluado' : Math.round(priorityValue).toString();
+        const priorityInfo = getPriorityDisplay(cardData.businessPoints, cardData.devPoints);
+        if (priorityInfo.hasPriority) {
+          const priorityTag = document.createElement('span');
+          priorityTag.style.cssText = `
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.85rem;
+            font-weight: 600; background: ${priorityInfo.backgroundColor};
+            color: ${priorityInfo.color}; white-space: nowrap;
+          `;
+          priorityTag.textContent = priorityInfo.label;
+          priorityTag.title = `${cardData.businessPoints}/${cardData.devPoints} = ${priorityInfo.value}`;
+          const badge = document.createElement('span');
+          badge.style.cssText = 'font-size:0.7rem;background:rgba(0,0,0,0.3);padding:0 4px;border-radius:4px;margin-left:4px';
+          badge.textContent = priorityInfo.badge;
+          priorityTag.appendChild(badge);
+          cells[TASK_COLS.PRIORITY].appendChild(priorityTag);
+        } else {
+          cells[TASK_COLS.PRIORITY].textContent = 'No evaluado';
+          cells[TASK_COLS.PRIORITY].style.color = 'var(--text-muted, #6c757d)';
+          cells[TASK_COLS.PRIORITY].style.fontStyle = 'italic';
+        }
       }
-      cells[TASK_COLS.PRIORITY].textContent = priorityText;
 
       // Sprint
       let sprintTitle = '';
@@ -362,8 +393,8 @@ export function updateTableRow(row, cardData) {
       }
       cells[TASK_COLS.EPIC].textContent = epicName;
 
-      cells[TASK_COLS.START_DATE].textContent = cardData.startDate || '';
-      cells[TASK_COLS.END_DATE].textContent = cardData.endDate || '';
+      cells[TASK_COLS.START_DATE].textContent = formatDateFriendly(cardData.startDate);
+      cells[TASK_COLS.END_DATE].textContent = formatDateFriendly(cardData.endDate);
       // ACTIONS column is not updated
     }
   } else if (isBugTable) {
@@ -423,9 +454,9 @@ export function updateTableRow(row, cardData) {
       }
       cells[4].textContent = developerDisplay;
       cells[5].textContent = cardData.createdBy || ''; // Creado por (email)
-      cells[6].textContent = cardData.registerDate || ''; // Fecha registro
-      cells[7].textContent = cardData.startDate || ''; // Fecha inicio
-      cells[8].textContent = cardData.endDate || ''; // Fecha fin
+      cells[6].textContent = formatDateFriendly(cardData.registerDate); // Fecha registro
+      cells[7].textContent = formatDateFriendly(cardData.startDate); // Fecha inicio
+      cells[8].textContent = formatDateFriendly(cardData.endDate); // Fecha fin
       // cells[9] es el botón detalle, no se actualiza
     }
   }
