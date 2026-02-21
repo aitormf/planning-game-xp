@@ -5,7 +5,7 @@
 import { entityDirectoryService } from '../services/entity-directory-service.js';
 import { APP_CONSTANTS } from '../constants/app-constants.js';
 import { getPriorityDisplay } from '../utils/priority-utils.js';
-import { formatDateFriendly } from '../utils/timestamp-utils.js';
+import { UIUtils } from '../utils/ui-utils.js';
 
 // Column indices from centralized constants
 const TASK_COLS = APP_CONSTANTS.TABLE_COLUMNS.TASKS;
@@ -393,8 +393,8 @@ export function updateTableRow(row, cardData) {
       }
       cells[TASK_COLS.EPIC].textContent = epicName;
 
-      cells[TASK_COLS.START_DATE].textContent = formatDateFriendly(cardData.startDate);
-      cells[TASK_COLS.END_DATE].textContent = formatDateFriendly(cardData.endDate);
+      cells[TASK_COLS.START_DATE].textContent = UIUtils.formatDateFriendly(cardData.startDate);
+      cells[TASK_COLS.END_DATE].textContent = UIUtils.formatDateFriendly(cardData.endDate);
       // ACTIONS column is not updated
     }
   } else if (isBugTable) {
@@ -454,9 +454,9 @@ export function updateTableRow(row, cardData) {
       }
       cells[4].textContent = developerDisplay;
       cells[5].textContent = cardData.createdBy || ''; // Creado por (email)
-      cells[6].textContent = formatDateFriendly(cardData.registerDate); // Fecha registro
-      cells[7].textContent = formatDateFriendly(cardData.startDate); // Fecha inicio
-      cells[8].textContent = formatDateFriendly(cardData.endDate); // Fecha fin
+      cells[6].textContent = UIUtils.formatDateFriendly(cardData.registerDate); // Fecha registro
+      cells[7].textContent = UIUtils.formatDateFriendly(cardData.startDate); // Fecha inicio
+      cells[8].textContent = UIUtils.formatDateFriendly(cardData.endDate); // Fecha fin
       // cells[9] es el botón detalle, no se actualiza
     }
   }
