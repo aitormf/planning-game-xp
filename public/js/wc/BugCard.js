@@ -15,7 +15,7 @@ import { developerDirectory } from '../config/developer-directory.js';
 import { entityDirectoryService } from '../services/entity-directory-service.js';
 import { openScenarioModal } from '../utils/scenario-modal.js';
 import { BUG_SCHEMA } from '../schemas/card-field-schemas.js';
-import { generateTimestamp, extractDatePart } from '../utils/timestamp-utils.js';
+import { generateTimestamp, extractDateTimeLocal } from '../utils/timestamp-utils.js';
 import './FirebaseStorageUploader.js';
 
 export class BugCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
@@ -1200,20 +1200,20 @@ if (this.userAuthorizedEmails.includes(this.userEmail)) {
         <div class="field-group">
           <label>Start Date:</label>
           <input
-            type="date"
+            type="datetime-local"
             class="${this._getFieldClass('startDate')}"
-            .value=${extractDatePart(this.startDate)}
+            .value=${extractDateTimeLocal(this.startDate, 'start')}
             @input=${this._handleStartDateChange}
             ?disabled=${!this.isEditable}
           />
         </div>
-        
+
         <div class="field-group">
           <label>End Date:</label>
           <input
-            type="date"
+            type="datetime-local"
             class="${this._getFieldClass('endDate')}"
-            .value=${extractDatePart(this.endDate)}
+            .value=${extractDateTimeLocal(this.endDate, 'end')}
             @input=${this._handleEndDateChange}
             ?disabled=${!this.isEditable}
           />

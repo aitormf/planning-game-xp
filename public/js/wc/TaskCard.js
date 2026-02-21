@@ -18,7 +18,7 @@ import { openScenarioModal } from '../utils/scenario-modal.js';
 import { getPriorityDisplay } from '../utils/priority-utils.js';
 import { stateTransitionService } from '../services/state-transition-service.js';
 import { TASK_SCHEMA } from '../schemas/card-field-schemas.js';
-import { generateTimestamp, extractDatePart } from '../utils/timestamp-utils.js';
+import { generateTimestamp, extractDateTimeLocal } from '../utils/timestamp-utils.js';
 import './FirebaseStorageUploader.js';
 import 'https://cdn.jsdelivr.net/npm/@manufosela/loading-layer@2.0.1/+esm';
 
@@ -2874,16 +2874,16 @@ this.isSuperAdmin = false;
         ` : ''}
         <div class="form-field inline">
           <label class="${this._getLabelClass('startDate')}">Start</label>
-          <input type="date" class="${this._getFieldClass('startDate')}" .value=${extractDatePart(this.startDate)} @change=${this._handleStartDateChange} ?disabled=${!this.canEdit}>
+          <input type="datetime-local" class="${this._getFieldClass('startDate')}" .value=${extractDateTimeLocal(this.startDate, 'start')} @change=${this._handleStartDateChange} ?disabled=${!this.canEdit}>
         </div>
         <div class="form-field inline">
           <label class="${this._getLabelClass('endDate')}">End</label>
-          <input type="date" class="${this._getFieldClass('endDate')}" .value=${extractDatePart(this.endDate)} @change=${this._handleEndDateChange} ?disabled=${!this.canEdit}>
+          <input type="datetime-local" class="${this._getFieldClass('endDate')}" .value=${extractDateTimeLocal(this.endDate, 'end')} @change=${this._handleEndDateChange} ?disabled=${!this.canEdit}>
         </div>
         ${this.validatedAt ? html`
         <div class="form-field inline">
           <label>Validated</label>
-          <input type="date" .value=${extractDatePart(this.validatedAt)} disabled>
+          <input type="datetime-local" .value=${extractDateTimeLocal(this.validatedAt)} disabled>
         </div>
         ` : ''}
       </div>

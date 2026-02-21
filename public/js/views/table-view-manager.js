@@ -664,7 +664,9 @@ export class TableViewManager {
 
     // Computed fields for tasks
     if (section === 'tasks') {
-      result.notesCount = Array.isArray(fullCard.notes) ? fullCard.notes.length : 0;
+      result.notesCount = Array.isArray(fullCard.notes)
+        ? fullCard.notes.length
+        : (fullCard.notes && typeof fullCard.notes === 'object' ? Object.keys(fullCard.notes).length : 0);
       if (!result.relatedTasks) result.relatedTasks = undefined;
       if (fullCard.implementationPlan?.planStatus) {
         result.planStatus = fullCard.implementationPlan.planStatus;

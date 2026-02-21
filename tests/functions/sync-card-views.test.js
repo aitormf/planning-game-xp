@@ -178,6 +178,36 @@ describe('Sync Card Views Handler', () => {
       expect(viewData.relatedTasks).toBeUndefined();
     });
 
+    it('should count notes correctly when Firebase stores them as object (sparse array)', () => {
+      const taskWithObjectNotes = {
+        cardId: 'PLN-TSK-0070',
+        title: 'Task with object notes',
+        status: 'In Progress',
+        notes: {
+          0: { content: 'First note', author: 'user@test.com', timestamp: '2026-01-01' },
+          2: { content: 'Third note', author: 'user@test.com', timestamp: '2026-01-03' },
+          5: { content: 'Sixth note', author: 'user@test.com', timestamp: '2026-01-06' }
+        },
+        year: 2026
+      };
+
+      const viewData = extractTaskViewFields(taskWithObjectNotes, 'key-obj-notes');
+
+      expect(viewData.notesCount).toBe(3);
+    });
+
+    it('should return notesCount 0 when notes is null or undefined', () => {
+      const taskNoNotes = {
+        cardId: 'PLN-TSK-0071',
+        title: 'No notes',
+        status: 'To Do',
+        notes: null
+      };
+
+      expect(extractTaskViewFields(taskNoNotes, 'key-null').notesCount).toBe(0);
+      expect(extractTaskViewFields({ ...taskNoNotes, notes: undefined }, 'key-undef').notesCount).toBe(0);
+    });
+
     it('should handle missing optional fields gracefully', () => {
       const minimalTask = {
         cardId: 'PLN-TSK-0002',

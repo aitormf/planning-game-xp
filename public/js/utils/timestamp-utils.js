@@ -5,7 +5,7 @@
  * - If the date is today → actual client time is used
  * - If the date is in the past → 09:00:00 (start) or 17:00:00 (end)
  *
- * UI date inputs continue showing only YYYY-MM-DD via extractDatePart().
+ * UI date inputs use datetime-local via extractDateTimeLocal().
  * Backward compatible: old YYYY-MM-DD values still work everywhere.
  */
 
@@ -14,11 +14,20 @@ const DEFAULT_END_TIME = '17:00:00';
 
 /**
  * Generate a timestamp string with time component.
- * @param {Date|string} [date=new Date()] - Date object or YYYY-MM-DD string
+ * @param {Date|string} [date=new Date()] - Date object, YYYY-MM-DD, or YYYY-MM-DDTHH:mm string
  * @param {'start'|'end'} [context='start'] - Context for default time on past dates
  * @returns {string} Formatted as YYYY-MM-DDTHH:mm:ss
  */
 export function generateTimestamp(date = new Date(), context = 'start') {
+  // If the string already includes a time part (from datetime-local input), preserve it
+  if (typeof date === 'string' && date.includes('T')) {
+    const datePart = date.split('T')[0];
+    const timePart = date.split('T')[1];
+    // datetime-local gives HH:mm, normalize to HH:mm:ss
+    const normalizedTime = timePart.length === 5 ? `${timePart}:00` : timePart;
+    return `${datePart}T${normalizedTime}`;
+  }
+
   const dateObj = typeof date === 'string' ? _parseDate(date) : date;
   const datePart = _formatDate(dateObj);
 
@@ -41,6 +50,23 @@ export function generateTimestamp(date = new Date(), context = 'start') {
 export function extractDatePart(timestamp) {
   if (!timestamp) return '';
   return timestamp.split('T')[0];
+}
+
+/**
+ * Extract a value suitable for <input type="datetime-local"> from a timestamp.
+ * Returns YYYY-MM-DDTHH:mm format.
+ * For date-only values (no T separator), appends a default time.
+ * @param {string|null|undefined} timestamp
+ * @param {'start'|'end'} [context='start'] - Context for default time on date-only values
+ * @returns {string} YYYY-MM-DDTHH:mm or empty string
+ */
+export function extractDateTimeLocal(timestamp, context = 'start') {
+  if (!timestamp) return '';
+  if (!timestamp.includes('T')) {
+    const defaultTime = context === 'end' ? '17:00' : '09:00';
+    return `${timestamp}T${defaultTime}`;
+  }
+  return timestamp.substring(0, 16); // YYYY-MM-DDTHH:mm
 }
 
 /**
