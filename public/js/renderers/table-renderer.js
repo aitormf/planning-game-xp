@@ -1404,9 +1404,9 @@ const style = {
       }
       row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, epicName));
       // Fecha inicio
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, card.startDate || ''));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.startDate)));
       // Fecha fin
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, card.endDate || ''));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.endDate)));
       // Acciones: editar, eliminar, copiar, IA
       const actionsTd = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', textAlign: 'left', whiteSpace: 'nowrap' } });
       const firebaseId = card.id || id;
@@ -1623,9 +1623,9 @@ const style = {
       // Fecha registro
       row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDate(card.registerDate)));
       // Fecha inicio
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, card.startDate || ''));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.startDate)));
       // Fecha fin
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, card.endDate || ''));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.endDate)));
       // Columna Acciones - iconos ver y borrar
       const actionsTd = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', textAlign: 'center', whiteSpace: 'nowrap' } });
 

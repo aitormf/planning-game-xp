@@ -39,4 +39,26 @@ export class UIUtils {
     if (Number.isNaN(date.getTime())) return '';
     return date.toISOString().slice(0, 10);
   }
+
+  /**
+   * Formats a date/timestamp into a friendly Spanish format.
+   * e.g. "20 feb 2026, 14:30"
+   * If the value has no time component (date-only), omits the time.
+   * Returns empty string for falsy or invalid values.
+   */
+  static formatDateFriendly(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const hasTime = typeof value === 'string' && /T\d{2}:\d{2}/.test(value);
+
+    const options = { day: 'numeric', month: 'short', year: 'numeric' };
+    if (hasTime) {
+      options.hour = '2-digit';
+      options.minute = '2-digit';
+      options.hour12 = false;
+    }
+    return date.toLocaleDateString('es-ES', options);
+  }
 }
