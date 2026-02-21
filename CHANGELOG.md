@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Add AI usage tracking and optimistic locking for AI agents
+
+## [1.128.6] - 2026-02-21
+
 ### Fixed
 
 - Use UIUtils.formatDateFriendly instead of non-existent import
