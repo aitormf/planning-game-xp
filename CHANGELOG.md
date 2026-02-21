@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Use UIUtils.formatDateFriendly instead of non-existent import
+
+## [1.128.5] - 2026-02-21
+
+### Fixed
+
 - Align updateTableRow styles with table-renderer rendering
 
 ## [1.128.3] - 2026-02-21
