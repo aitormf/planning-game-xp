@@ -75,7 +75,7 @@ class ThemeToggle extends LitElement {
 
   render() {
     const title = this.isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro';
-    const mode = this.isDark ? 'dark' : 'light';
+    const mode = this.isDark ? 'light' : 'dark';
 
     return html`
       <button
