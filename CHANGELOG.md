@@ -7,6 +7,16 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Replace dark/light SVGs with avatar-eyes web component
+
+### Fixed
+
+- Add commits/pipelineStatus to VIEW_FIELDS and CF sync
+
+## [1.131.0] - 2026-02-22
+
+### Added
+
 - Add pipeline status badges (C/PR/M/D) to card components
 - Add Claude Code PostToolUse pipeline reminders
 - Add pre-push PR check and post-merge pipeline reminder
