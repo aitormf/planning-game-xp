@@ -43,13 +43,14 @@ public/images/org-logo.*
 .firebase/**/*
 .qodo
 
-#firebase-config
+#firebase-config (symlinks to active instance - instance-specific)
 .firebaserc
 firestore.rules
 database.rules.json
 storage.rules
-storage.emulator.rules
 database.test.rules.json
+# Shared emulator/dev rules are real files in root (NOT symlinks, tracked in git):
+# database.emulator.rules, firestore.emulator.rules, firestore.rules.dev, storage.emulator.rules
 
 # Firebase debug logs
 firebase-debug.log
