@@ -392,7 +392,7 @@ npm run test:coverage                           # 3. Verify coverage
 │ □ 3. Verify `devPoints` > 0 AND `businessPoints` > 0           │
 │      → If missing: STOP, notify user                           │
 ├─────────────────────────────────────────────────────────────────┤
-│ PHASE 2: START WORK (update card status)                       │
+│ PHASE 2: START WORK (update card status + create branch)       │
 ├─────────────────────────────────────────────────────────────────┤
 │ □ 4. Update card via MCP:                                      │
 │      - status: "In Progress"                                   │
@@ -401,28 +401,40 @@ npm run test:coverage                           # 3. Verify coverage
 │      ⚠️ ATOMIC: This uses a Firebase transaction. If another    │
 │      agent claimed the task first, you'll get a CONFLICT error. │
 │      Handle it gracefully by selecting a different task.        │
+│ □ 5. Create a feature branch from main:                        │
+│      git checkout -b feat/{CARD-ID}-short-description          │
+│      (e.g. feat/PLN-TSK-0206-pipeline-instructions)            │
+│      ⚠️ NEVER commit directly to main                          │
 ├─────────────────────────────────────────────────────────────────┤
 │ PHASE 3: IMPLEMENTATION                                        │
 ├─────────────────────────────────────────────────────────────────┤
-│ □ 5. Create/update tests based on acceptance criteria          │
-│ □ 6. Implement the feature/fix                                 │
-│ □ 7. Run tests: `npm test`                                     │
+│ □ 6. Create/update tests based on acceptance criteria          │
+│ □ 7. Implement the feature/fix                                 │
+│ □ 8. Run tests: `npm test`                                     │
 │      → All tests MUST pass before continuing                   │
 ├─────────────────────────────────────────────────────────────────┤
-│ PHASE 4: FINISH WORK (update card status) ⚠️ DON'T SKIP!       │
+│ PHASE 4: DELIVERY PIPELINE (commit → PR) ⚠️ DON'T SKIP!       │
 ├─────────────────────────────────────────────────────────────────┤
-│ □ 8. Update card via MCP:                                      │
+│ □ 9. Commit changes with conventional commits:                 │
+│      git add <files> && git commit -m "feat: description"      │
+│ □ 10. Push branch and create Pull Request:                     │
+│      git push -u origin feat/{CARD-ID}-description             │
+│      gh pr create --title "..." --body "..."                   │
+│ □ 11. Update card via MCP to "To Validate":                    │
 │      - status: "To Validate"                                   │
 │      - endDate: "YYYY-MM-DD" (today)                           │
-│      - implementationNotes: "Summary of what was done"         │
-│        (files changed, tests added, key decisions)             │
+│      - commits: [{hash, message, date, author}]                │
+│      - pipelineStatus: {                                       │
+│          prCreated: { date, prUrl, prNumber }                  │
+│        }                                                       │
 │      - aiUsage: [{sessionId, timestamp, model, inputTokens,    │
 │        outputTokens, totalTokens, estimatedCostUSD,            │
 │        durationMinutes, action}] (if AI-assisted)              │
-│ □ 9. Confirm update was successful                             │
+│ □ 12. Confirm update was successful                            │
 │                                                                 │
 │ ⛔ NEVER set status to "Done" or "Done&Validated"              │
 │    (validator's responsibility)                                 │
+│ ⛔ NEVER push directly to main - always use branches + PRs     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -443,10 +455,11 @@ npm run test:coverage                           # 3. Verify coverage
 │   → Do NOT assume bug is real just because it was reported     │
 ├─────────────────────────────────────────────────────────────────┤
 │ If bug IS CONFIRMED:                                           │
-│   → Continue with phases below                                 │
-│   → Same as Task, except:                                      │
+│   → Follow same workflow as Task, except:                      │
 │   - PHASE 2: status → "Assigned" (not "In Progress")           │
+│   - Branch: fix/{CARD-ID}-description (not feat/)              │
 │   - PHASE 4: status → "Fixed" (not "To Validate")              │
+│   - PHASE 4: include pipelineStatus.prCreated + commits        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -572,6 +585,46 @@ and let the validator approve it."
 **Testing:**
 - MCP commits validation: `npm test -- tests/mcp-server/commits-field.test.js`
 - Cloud Function validation: `npm test -- tests/functions/on-task-status-validation.test.js`
+
+### Delivery Pipeline Tracking
+
+Every task and bug must follow a delivery pipeline tracked via `pipelineStatus` in the card. This ensures full traceability from code to deployment.
+
+**Pipeline events (tracked in order):**
+
+| Event | When | Required Fields |
+|-------|------|-----------------|
+| `committed` | After git commit | `date`, `commitHash`, `branch` |
+| `prCreated` | After creating PR | `date`, `prUrl`, `prNumber` |
+| `merged` | After PR is merged | `date`, `mergedBy` |
+| `deployed` | After deployment | `date`, `environment` |
+
+**MCP enforcement:**
+- `pipelineStatus.prCreated` (with `prUrl` and `prNumber`) is **required** to transition tasks to "To Validate" or bugs to "Fixed"
+- The MCP server validates this automatically and rejects transitions without PR info
+- `aiUsage` is **required** when the developer is BecarIA (`dev_016`)
+
+**Branch naming:**
+- Tasks: `feat/{CARD-ID}-short-description` (e.g. `feat/PLN-TSK-0206-pipeline-instructions`)
+- Bugs: `fix/{CARD-ID}-short-description` (e.g. `fix/PLN-BUG-0015-modal-crash`)
+- NEVER commit directly to main
+
+**Example `update_card` with full pipeline info:**
+```json
+{
+  "status": "To Validate",
+  "endDate": "2026-02-22",
+  "commits": [{"hash": "abc1234", "message": "feat: add pipeline tracking", "date": "2026-02-22T10:00:00Z", "author": "dev"}],
+  "pipelineStatus": {
+    "prCreated": {
+      "date": "2026-02-22T10:30:00Z",
+      "prUrl": "https://github.com/org/repo/pull/42",
+      "prNumber": 42
+    }
+  },
+  "aiUsage": [{"sessionId": "uuid", "timestamp": "2026-02-22T10:30:00Z", "model": "claude-opus-4-6", "inputTokens": 0, "outputTokens": 0, "totalTokens": 0, "estimatedCostUSD": 0, "durationMinutes": 30, "action": "implementation"}]
+}
+```
 
 ### Database Maintenance Scripts
 
