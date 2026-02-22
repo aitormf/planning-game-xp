@@ -113,6 +113,22 @@ describe('Pipeline Badges (_renderPipelineBadges)', () => {
       const result = card._renderPipelineBadges();
       expect(result).toBe('');
     });
+
+    it('should show C badge when commitsCount > 0 (view mode)', () => {
+      card.commits = [];
+      card.commitsCount = 3;
+      const result = card._renderPipelineBadges();
+      expect(result).not.toBe('');
+      expect(result.__html).toContain('pipeline-badge commit');
+      expect(result.__html).toContain('Commits: 3');
+    });
+
+    it('should prefer commits array length over commitsCount', () => {
+      card.commits = [{ hash: 'abc123', message: 'feat: a' }];
+      card.commitsCount = 5;
+      const result = card._renderPipelineBadges();
+      expect(result.__html).toContain('Commits: 1');
+    });
   });
 
   describe('PR badge', () => {

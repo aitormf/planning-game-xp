@@ -36,7 +36,8 @@ export const TASK_SCHEMA = {
     'developer', 'coDeveloper', 'validator', 'coValidator',
     'epic', 'startDate', 'endDate', 'spike', 'expedited',
     'blockedByBusiness', 'blockedByDevelopment', 'year', 'relatedTasks',
-    'notesCount', 'planStatus'
+    'notesCount', 'planStatus',
+    'commitsCount', 'pipelineStatus'
   ]
 };
 
@@ -54,7 +55,8 @@ export const BUG_SCHEMA = {
   VIEW_FIELDS: [
     'firebaseId', 'cardId', 'title', 'status', 'priority',
     'developer', 'coDeveloper', 'createdBy',
-    'registerDate', 'startDate', 'endDate', 'year'
+    'registerDate', 'startDate', 'endDate', 'year',
+    'commitsCount', 'pipelineStatus'
   ]
 };
 

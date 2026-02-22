@@ -52,7 +52,7 @@ describe('Card Field Schemas', () => {
 
     it('VIEW_FIELDS should be subset of PERSISTENT_FIELDS (except computed fields)', () => {
       const persistent = new Set(TASK_SCHEMA.PERSISTENT_FIELDS);
-      const computedViewFields = new Set(['notesCount', 'planStatus']);
+      const computedViewFields = new Set(['notesCount', 'planStatus', 'commitsCount']);
       for (const field of TASK_SCHEMA.VIEW_FIELDS) {
         if (!computedViewFields.has(field)) {
           expect(persistent.has(field)).toBe(true);
@@ -119,10 +119,13 @@ describe('Card Field Schemas', () => {
       expect(unique.size).toBe(BUG_SCHEMA.VIEW_FIELDS.length);
     });
 
-    it('VIEW_FIELDS should be subset of PERSISTENT_FIELDS', () => {
+    it('VIEW_FIELDS should be subset of PERSISTENT_FIELDS (except computed fields)', () => {
       const persistent = new Set(BUG_SCHEMA.PERSISTENT_FIELDS);
+      const computedViewFields = new Set(['commitsCount']);
       for (const field of BUG_SCHEMA.VIEW_FIELDS) {
-        expect(persistent.has(field)).toBe(true);
+        if (!computedViewFields.has(field)) {
+          expect(persistent.has(field)).toBe(true);
+        }
       }
     });
 

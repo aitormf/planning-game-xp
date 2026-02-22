@@ -24,7 +24,10 @@ describe('View Fields Consistency (CF vs Schema)', () => {
         spike: true, expedited: false,
         blockedByBusiness: false, blockedByDevelopment: true,
         notes: [{ text: 'note' }], year: 2026,
-        relatedTasks: [{ id: 'PLN-TSK-0002', type: 'related', projectId: 'PlanningGame' }]
+        relatedTasks: [{ id: 'PLN-TSK-0002', type: 'related', projectId: 'PlanningGame' }],
+        commits: [{ hash: 'abc123', message: 'feat: something' }],
+        pipelineStatus: { prCreated: { date: '2026-02-22', prNumber: 42 } },
+        implementationPlan: { planStatus: 'completed' }
       };
 
       const cfResult = extractTaskViewFields(fullTask, '-Oabc123');
@@ -34,7 +37,7 @@ describe('View Fields Consistency (CF vs Schema)', () => {
       for (const field of TASK_SCHEMA.VIEW_FIELDS) {
         expect(cfFields.has(field)).toBe(true);
       }
-      // CF also includes notesCount (computed)
+      // CF also includes notesCount (computed from notes array)
       expect(cfResult.notesCount).toBeDefined();
     });
 
@@ -78,7 +81,9 @@ describe('View Fields Consistency (CF vs Schema)', () => {
         developer: 'dev_001', coDeveloper: 'dev_002',
         createdBy: 'user@test.com',
         registerDate: '2026-01-01', startDate: '2026-01-02', endDate: '2026-01-10',
-        year: 2026
+        year: 2026,
+        commits: [{ hash: 'abc123', message: 'fix: bug' }],
+        pipelineStatus: { prCreated: { date: '2026-02-22', prNumber: 10 } }
       };
 
       const cfResult = extractBugViewFields(fullBug, '-Odef456');
