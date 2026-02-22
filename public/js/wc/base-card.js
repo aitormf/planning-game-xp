@@ -155,6 +155,7 @@ allCards.forEach(card => {
 
       // Pipeline tracking
       pipelineStatus: { type: Object },
+      commitsCount: { type: Number },
     };
   }
 
@@ -191,6 +192,7 @@ allCards.forEach(card => {
     this.isSaving = false;
     this.viewMode = 'compact'; // Default view mode: 'compact' | 'ultra-compact'
     this.pipelineStatus = null;
+    this.commitsCount = 0;
 
     // ID para Firebase (separado del ID DOM)
     this._firebaseId = '';
@@ -424,7 +426,8 @@ this.canEditPermission = permissions.canEdit || false;
    * @returns {TemplateResult|string} Badge HTML or empty string
    */
   _renderPipelineBadges() {
-    const hasCommits = Array.isArray(this.commits) && this.commits.length > 0;
+    const commitsLen = (Array.isArray(this.commits) && this.commits.length > 0) ? this.commits.length : (this.commitsCount || 0);
+    const hasCommits = commitsLen > 0;
     const ps = this.pipelineStatus;
     const hasPR = ps?.prCreated;
     const hasMerged = ps?.merged;
@@ -432,7 +435,7 @@ this.canEditPermission = permissions.canEdit || false;
 
     if (!hasCommits && !hasPR && !hasMerged && !hasDeployed) return '';
 
-    return html`<span class="pipeline-badges">${hasCommits ? html`<span class="pipeline-badge commit" title="Commits: ${this.commits.length}">C</span>` : ''}${hasPR ? html`<a class="pipeline-badge pr" href="${ps.prCreated.prUrl || '#'}" target="_blank" rel="noopener" title="PR #${ps.prCreated.prNumber || ''}" @click=${(e) => e.stopPropagation()}>PR</a>` : ''}${hasMerged ? html`<span class="pipeline-badge merge" title="Merged: ${ps.merged.date || ''}">M</span>` : ''}${hasDeployed ? html`<span class="pipeline-badge deploy" title="Deployed: ${ps.deployed.environment || ''} ${ps.deployed.version || ''}">D</span>` : ''}</span>`;
+    return html`<span class="pipeline-badges">${hasCommits ? html`<span class="pipeline-badge commit" title="Commits: ${commitsLen}">C</span>` : ''}${hasPR ? html`<a class="pipeline-badge pr" href="${ps.prCreated.prUrl || '#'}" target="_blank" rel="noopener" title="PR #${ps.prCreated.prNumber || ''}" @click=${(e) => e.stopPropagation()}>PR</a>` : ''}${hasMerged ? html`<span class="pipeline-badge merge" title="Merged: ${ps.merged.date || ''}">M</span>` : ''}${hasDeployed ? html`<span class="pipeline-badge deploy" title="Deployed: ${ps.deployed.environment || ''} ${ps.deployed.version || ''}">D</span>` : ''}</span>`;
   }
 
   /**

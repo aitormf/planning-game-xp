@@ -248,6 +248,66 @@ describe('Sync Card Views Handler', () => {
 
       expect(viewData.planStatus).toBeUndefined();
     });
+
+    it('should extract commitsCount from commits array', () => {
+      const taskWithCommits = {
+        cardId: 'PLN-TSK-0080',
+        title: 'Task with commits',
+        status: 'To Validate',
+        commits: [
+          { hash: 'abc123', message: 'feat: something', date: '2026-02-22', author: 'dev' },
+          { hash: 'def456', message: 'fix: something', date: '2026-02-22', author: 'dev' }
+        ]
+      };
+
+      const viewData = extractTaskViewFields(taskWithCommits, 'key-commits');
+
+      expect(viewData.commitsCount).toBe(2);
+      expect(viewData.commits).toBeUndefined();
+    });
+
+    it('should return commitsCount 0 when no commits', () => {
+      const taskNoCommits = {
+        cardId: 'PLN-TSK-0081',
+        title: 'No commits',
+        status: 'To Do'
+      };
+
+      const viewData = extractTaskViewFields(taskNoCommits, 'key-nocommits');
+
+      expect(viewData.commitsCount).toBe(0);
+    });
+
+    it('should extract pipelineStatus when present', () => {
+      const taskWithPipeline = {
+        cardId: 'PLN-TSK-0082',
+        title: 'Task with pipeline',
+        status: 'To Validate',
+        pipelineStatus: {
+          prCreated: { date: '2026-02-22', prUrl: 'https://github.com/org/repo/pull/42', prNumber: 42 },
+          merged: { date: '2026-02-22', mergedBy: 'dev_010' }
+        }
+      };
+
+      const viewData = extractTaskViewFields(taskWithPipeline, 'key-pipeline');
+
+      expect(viewData.pipelineStatus).toEqual({
+        prCreated: { date: '2026-02-22', prUrl: 'https://github.com/org/repo/pull/42', prNumber: 42 },
+        merged: { date: '2026-02-22', mergedBy: 'dev_010' }
+      });
+    });
+
+    it('should not include pipelineStatus when absent', () => {
+      const taskNoPipeline = {
+        cardId: 'PLN-TSK-0083',
+        title: 'No pipeline',
+        status: 'To Do'
+      };
+
+      const viewData = extractTaskViewFields(taskNoPipeline, 'key-nopipeline');
+
+      expect(viewData.pipelineStatus).toBeUndefined();
+    });
   });
 
   describe('extractBugViewFields', () => {
@@ -289,6 +349,44 @@ describe('Sync Card Views Handler', () => {
       expect(viewData.bugType).toBeUndefined();
       expect(viewData.cinemaFile).toBeUndefined();
       expect(viewData.notes).toBeUndefined();
+    });
+
+    it('should extract commitsCount and pipelineStatus for bugs', () => {
+      const bugWithPipeline = {
+        cardId: 'PLN-BUG-0010',
+        title: 'Bug with pipeline',
+        status: 'Fixed',
+        priority: 'INDIVIDUAL BLOCKER',
+        developer: 'dev_016',
+        year: 2026,
+        commits: [{ hash: 'abc123', message: 'fix: something' }],
+        pipelineStatus: {
+          prCreated: { date: '2026-02-22', prNumber: 10 },
+          merged: { date: '2026-02-22' }
+        }
+      };
+
+      const viewData = extractBugViewFields(bugWithPipeline, 'bug-key-pipeline');
+
+      expect(viewData.commitsCount).toBe(1);
+      expect(viewData.pipelineStatus).toEqual({
+        prCreated: { date: '2026-02-22', prNumber: 10 },
+        merged: { date: '2026-02-22' }
+      });
+      expect(viewData.commits).toBeUndefined();
+    });
+
+    it('should return commitsCount 0 and no pipelineStatus when absent', () => {
+      const bugNoPipeline = {
+        cardId: 'PLN-BUG-0011',
+        title: 'Bug no pipeline',
+        status: 'Created'
+      };
+
+      const viewData = extractBugViewFields(bugNoPipeline, 'bug-key-nopipeline');
+
+      expect(viewData.commitsCount).toBe(0);
+      expect(viewData.pipelineStatus).toBeUndefined();
     });
   });
 
