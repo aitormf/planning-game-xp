@@ -1033,7 +1033,7 @@ this.expanded = false;
       <div class="card-header">
         <div class="title" title="${this.title || ''}">${this.title || ''}</div>
         <div class="card-id-row">
-          <div class="cardid" title="Click para copiar ID" style="cursor:pointer" @click=${this._copyCardId}>${this.cardId || ''}${this._renderRepoBadge()}</div>
+          <div class="cardid" title="Click para copiar ID" style="cursor:pointer" @click=${this._copyCardId}>${this.cardId || ''}${this._renderRepoBadge()}${this._renderPipelineBadges()}</div>
           <div class="card-actions">
             ${this.attachment ? html`<span class="attachment-indicator" title="Tiene archivo adjunto">📎</span>` : ''}
             <button class="copy-link-button" title="Copiar enlace" @click=${this.copyCardUrl}>🔗</button>
@@ -1095,7 +1095,7 @@ this.expanded = false;
     return html`
       <div class="card-container ultra-compact" @click=${this._handleClick}>
         <div class="uc-row-top">
-          <span class="uc-cardid">${this.cardId || ''}</span>
+          <span class="uc-cardid">${this.cardId || ''}${this._renderPipelineBadges()}</span>
           <span class="uc-priority ${priorityClass}">${this.priority || 'Medium'}</span>
         </div>
         <div class="uc-title" title="${this.title || ''}">${truncatedTitle || ''}</div>
@@ -1545,7 +1545,10 @@ if (this.userAuthorizedEmails.includes(this.userEmail)) {
       repositoryLabel: repoLabel,
 
       // IA Features - Acceptance Criteria structured
-      acceptanceCriteriaStructured: this._getAcceptanceCriteriaStructuredForSave()
+      acceptanceCriteriaStructured: this._getAcceptanceCriteriaStructuredForSave(),
+
+      // Pipeline tracking
+      ...(this.pipelineStatus ? { pipelineStatus: this.pipelineStatus } : {})
     };
 
     return cardData;

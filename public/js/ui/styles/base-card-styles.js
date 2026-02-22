@@ -472,4 +472,33 @@ export const BaseCardStyles = css`
     opacity: 0.5;
     transform: rotate(2deg);
   }
+
+  /* ======================== PIPELINE BADGES ======================== */
+  .pipeline-badges {
+    display: inline-flex;
+    gap: 0.15rem;
+    align-items: center;
+    margin-left: 0.3em;
+    vertical-align: middle;
+  }
+
+  .pipeline-badge {
+    display: inline-block;
+    font-size: 0.6em;
+    font-weight: 700;
+    padding: 0.1em 0.3em;
+    border-radius: 2px;
+    white-space: nowrap;
+    color: white;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    line-height: 1.2;
+    cursor: default;
+  }
+
+  .pipeline-badge.commit { background-color: #6366f1; }
+  .pipeline-badge.pr { background-color: #3b82f6; cursor: pointer; }
+  .pipeline-badge.pr:hover { background-color: #2563eb; }
+  .pipeline-badge.merge { background-color: #8b5cf6; }
+  .pipeline-badge.deploy { background-color: #10b981; }
 `;

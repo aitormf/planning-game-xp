@@ -2586,7 +2586,7 @@ this.isSuperAdmin = false;
           ${this._renderPlanBadge()}
         </div>
         <div class="card-id-row">
-          <div class="cardid" title="Click para copiar ID" style="cursor:pointer" @click=${this._copyCardId}>${this.cardId || ''}${this._renderRepoBadge()}</div>
+          <div class="cardid" title="Click para copiar ID" style="cursor:pointer" @click=${this._copyCardId}>${this.cardId || ''}${this._renderRepoBadge()}${this._renderPipelineBadges()}</div>
           <div class="card-actions">
             ${this.attachment ? html`<span class="attachment-indicator" title="Tiene archivo adjunto">📎</span>` : ''}
             <button class="copy-link-button" title="Copiar enlace" @click=${this.copyCardUrl}>🔗</button>
@@ -2618,6 +2618,7 @@ this.isSuperAdmin = false;
           />
           <span class="cardid-badge" title="Click para copiar ID" style="cursor:pointer" @click=${this._copyCardId}>${this.cardId || ''}</span>
           ${this._renderPlanBadge()}
+          ${this._renderPipelineBadges()}
         </section>
       </div>
     `;
@@ -2707,7 +2708,7 @@ this.isSuperAdmin = false;
     return html`
       <div class="card-container ultra-compact ${this.selected ? 'selected' : ''} ${this.expedited ? 'expedited' : ''} ${this.spike ? 'spike' : ''}" @click=${this._handleClick}>
         <div class="uc-row-top">
-          <span class="uc-cardid">${this.cardId || ''}</span>
+          <span class="uc-cardid">${this.cardId || ''}${this._renderPipelineBadges()}</span>
           <span class="uc-priority ${priorityInfo.hasPriority ? '' : 'no-priority'}" style="${priorityInfo.hasPriority ? `background-color: ${priorityInfo.backgroundColor}` : ''}" title="${priorityInfo.hasPriority ? `${priorityInfo.label} (${this.businessPoints}/${this.devPoints} = ${priorityInfo.value})` : priorityInfo.label}">${priorityInfo.shortLabel}</span>
         </div>
         <div class="uc-title" title="${this.title || ''}">${truncatedTitle || ''}</div>
@@ -3361,6 +3362,7 @@ return html`<div class="no-related-tasks">No hay tareas relacionadas</div>`;
     props.reopenCycles = this.reopenCycles || [];
     props.reopenCount = this.reopenCount || 0;
     props.implementationNotes = this.implementationNotes || '';
+    if (this.pipelineStatus) props.pipelineStatus = this.pipelineStatus;
 
     // Validate status
     if (!props.status || props.status.trim() === '') {
