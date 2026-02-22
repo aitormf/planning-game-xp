@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Swap avatar-eyes mode to match visual theme
+
+## [1.132.0] - 2026-02-22
+
 ### Added
 
 - Replace dark/light SVGs with avatar-eyes web component
