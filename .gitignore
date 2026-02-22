@@ -84,6 +84,7 @@ scripts/*-credentials.sh
 !version.json
 !.audit-allowlist.json
 !.mcp.json
+!.claude/settings.json
 !public/theme-config.example.json
 !public/theme-config.json
 !storage.rules.example
