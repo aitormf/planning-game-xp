@@ -28,7 +28,7 @@ export const TASK_SCHEMA = {
     'attachment', 'relatedTasks', 'repositoryLabel', 'year',
     'commits', 'validatedAt', 'reopenCycles', 'reopenCount',
     'implementationPlan', 'implementationNotes',
-    'aiUsage'
+    'aiUsage', 'pipelineStatus'
   ],
   VIEW_FIELDS: [
     'firebaseId', 'cardId', 'title', 'status',
@@ -49,7 +49,7 @@ export const BUG_SCHEMA = {
     'epic', 'sprint', 'commits',
     'cinemaFile', 'exportedFile', 'importedFile',
     'plugin', 'pluginVersion', 'treatmentType',
-    'aiUsage'
+    'aiUsage', 'pipelineStatus'
   ],
   VIEW_FIELDS: [
     'firebaseId', 'cardId', 'title', 'status', 'priority',
