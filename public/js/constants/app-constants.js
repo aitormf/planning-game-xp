@@ -58,8 +58,8 @@ export const APP_CONSTANTS = {
   // Reopened is a special status for tasks that were validated but need rework
   TASK_STATUS_ORDER: ['To Do', 'In Progress', 'To Validate', 'Done&Validated', 'Blocked', 'Reopened'],
 
-  // Bug Status Order (logical workflow order)
-  BUG_STATUS_ORDER: ['Created', 'Triaged', 'Assigned', 'In Progress', 'In Testing', 'Fixed', 'Verified', 'Closed', 'Blocked', 'Rejected'],
+  // Bug Status Order (logical workflow order — aligned with shared/constants.js)
+  BUG_STATUS_ORDER: ['Created', 'Assigned', 'Fixed', 'Verified', 'Closed'],
 
   // Bug Priority Order (severity order)
   BUG_PRIORITY_ORDER: ['APPLICATION BLOCKER', 'DEPARTMENT BLOCKER', 'INDIVIDUAL BLOCKER', 'USER EXPERIENCE ISSUE', 'WORKFLOW IMPROVEMENT', 'WORKAROUND AVAILABLE ISSUE'],
@@ -81,17 +81,12 @@ export const APP_CONSTANTS = {
     'LOW': 'linear-gradient(135deg, #28a745, #20c997)',
     'DEFAULT': 'linear-gradient(135deg, #6c757d, #495057)',
     
-    // Bug Status Colors
+    // Bug Status Colors (aligned with shared/constants.js — 5 statuses)
     'Created': 'linear-gradient(135deg, #6c757d, #495057)',
-    'Triaged': 'linear-gradient(135deg, #17a2b8, #138496)',
     'Assigned': 'linear-gradient(135deg, #4a9eff, #007bff)',
-    'In Progress': 'linear-gradient(135deg, #ffc107, #fd7e14)',
-    'In Testing': 'linear-gradient(135deg, #17a2b8, #138496)',
     'Fixed': 'linear-gradient(135deg, #28a745, #218838)',
     'Verified': 'linear-gradient(135deg, #20c997, #198754)',
     'Closed': 'linear-gradient(135deg, #14532d, #276749)',
-    'Blocked': 'linear-gradient(135deg, #dc3545, #c82333)',
-    'Rejected': 'linear-gradient(135deg, #dc3545, #c82333)',
     
     // Bug Priority Colors
     'APPLICATION BLOCKER': 'linear-gradient(135deg, #dc3545, #c82333)',
