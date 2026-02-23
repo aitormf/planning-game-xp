@@ -109,7 +109,7 @@ export class BugCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManage
       this.priorityList = window.globalBugPriorityList;
       this.priority = this.priorityList[0];
     }
-    this.statusList = window.statusBugList ? this._getOrderedStatusList(window.statusBugList) : ['Created', 'Open', 'In Progress', 'Fixed', 'Closed'];
+    this.statusList = window.statusBugList ? this._getOrderedStatusList(window.statusBugList) : ['Created', 'Assigned', 'Fixed', 'Verified', 'Closed'];
     this.status = 'Created'; // Bug nuevo siempre empieza en Created
     this.registerDate = new Date().toISOString(); // Fecha de creación por defecto
     this.userAuthorizedEmails = [];
@@ -1647,7 +1647,7 @@ return;
   _handleStatusChange(e) {
     const previousStatus = this.status;
     const newStatus = e.target.value;
-    const finalStatuses = ['Fixed', 'Verified', 'Closed', 'Rejected'];
+    const finalStatuses = ['Fixed', 'Verified', 'Closed'];
 
     // Auto-rellenar endDate cuando se cambia a un estado final (si no tiene valor)
     if (finalStatuses.includes(newStatus) && !finalStatuses.includes(previousStatus)) {
