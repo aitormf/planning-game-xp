@@ -6,24 +6,17 @@
  * Usage: node scripts/resync-all-views.js
  */
 
-const admin = require('firebase-admin');
 const {
   extractTaskViewFields,
   extractBugViewFields,
   extractProposalViewFields,
   getViewPathForSection
 } = require('../functions/handlers/sync-card-views.js');
-
-const serviceAccount = require('../planning-game-instances/geniova/serviceAccountKey.json');
-
-const app = admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app'
-});
-
-const db = admin.database();
+const { initFirebase } = require('./lib/instance-firebase-init.cjs');
 
 async function resyncAll() {
+  const { db, instanceName, projectId } = await initFirebase();
+  console.log(`Resync for instance: ${instanceName} (${projectId})\n`);
   console.log('Reading all cards from /cards...');
   const cardsSnap = await db.ref('/cards').once('value');
   if (!cardsSnap.exists()) {

@@ -9,16 +9,13 @@
  *   node scripts/import-views-to-firebase.js <input_with_views.json>
  *
  * Requisitos:
- *   - Archivo de credenciales de servicio en GOOGLE_APPLICATION_CREDENTIALS
- *   - O ejecutar desde un entorno con permisos de Firebase Admin
+ *   - Active instance with serviceAccountKey.json (see instance-manager.cjs)
  */
 
 import fs from 'fs';
-import { initializeApp, cert } from 'firebase-admin/app';
-import { getDatabase } from 'firebase-admin/database';
-
-// Configuration
-const FIREBASE_DATABASE_URL = process.env.FIREBASE_DATABASE_URL || 'https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { initFirebase } = require('./lib/instance-firebase-init.cjs');
 
 async function main() {
   const args = process.argv.slice(2);
@@ -29,9 +26,7 @@ async function main() {
     console.log('Imports only the /views section to Firebase using Admin SDK.');
     console.log('This avoids triggering Cloud Functions on /cards.');
     console.log('');
-    console.log('Environment variables:');
-    console.log('  GOOGLE_APPLICATION_CREDENTIALS - Path to service account JSON');
-    console.log('  FIREBASE_DATABASE_URL - Database URL (optional)');
+    console.log('Uses active instance from .last-instance (see instance-manager.cjs)');
     process.exit(1);
   }
 
@@ -41,18 +36,6 @@ async function main() {
   // Check input file exists
   if (!fs.existsSync(inputFile)) {
     console.error(`Error: Input file not found: ${inputFile}`);
-    process.exit(1);
-  }
-
-  // Check credentials
-  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    console.error('Error: GOOGLE_APPLICATION_CREDENTIALS environment variable not set.');
-    console.error('');
-    console.error('To set it:');
-    console.error('  1. Go to Firebase Console > Project Settings > Service Accounts');
-    console.error('  2. Click "Generate new private key"');
-    console.error('  3. Save the JSON file');
-    console.error('  4. Run: export GOOGLE_APPLICATION_CREDENTIALS="/path/to/serviceAccountKey.json"');
     process.exit(1);
   }
 
@@ -94,21 +77,8 @@ async function main() {
     process.exit(0);
   }
 
-  // Initialize Firebase Admin
-  console.log('Initializing Firebase Admin...');
-  console.log(`Database URL: ${FIREBASE_DATABASE_URL}`);
-
-  try {
-    initializeApp({
-      credential: cert(process.env.GOOGLE_APPLICATION_CREDENTIALS),
-      databaseURL: FIREBASE_DATABASE_URL
-    });
-  } catch (error) {
-    console.error('Error initializing Firebase:', error.message);
-    process.exit(1);
-  }
-
-  const db = getDatabase();
+  // Initialize Firebase Admin via instance helper
+  const { db } = await initFirebase();
 
   // Write views to Firebase
   console.log('');

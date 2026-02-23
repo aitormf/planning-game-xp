@@ -16,8 +16,8 @@
  *   - Or run with emulator for testing
  */
 
-const admin = require('firebase-admin');
 const path = require('path');
+const { initFirebase } = require('./lib/instance-firebase-init.cjs');
 
 // Mapping: old duplicate ID -> consolidated ID
 const DEVELOPER_MIGRATION = {
@@ -34,39 +34,10 @@ const DEVELOPER_NAMES = {
 
 const isDryRun = process.argv.includes('--dry-run');
 
-async function initializeFirebase() {
-  // Try to load service account from common locations
-  const possiblePaths = [
-    path.join(__dirname, '..', 'serviceAccountKey.json'),
-    path.join(__dirname, '..', 'firebase-admin-key.json'),
-    path.join(__dirname, '..', '.firebase-admin-key.json'),
-  ];
-
-  let serviceAccount = null;
-  for (const p of possiblePaths) {
-    try {
-      serviceAccount = require(p);
-      console.log(`Using service account from: ${p}`);
-      break;
-    } catch (e) {
-      // Continue trying
-    }
-  }
-
-  if (!serviceAccount) {
-    console.error('Error: No service account key found.');
-    console.error('Please place your Firebase Admin SDK key in one of these locations:');
-    possiblePaths.forEach(p => console.error(`  - ${p}`));
-    console.error('\nYou can download it from Firebase Console > Project Settings > Service Accounts');
-    process.exit(1);
-  }
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: 'https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app'
-  });
-
-  return admin.database();
+async function initializeFirebaseInstance() {
+  const { db, instanceName, projectId } = await initFirebase();
+  console.log(`Using instance: ${instanceName} (${projectId})`);
+  return db;
 }
 
 async function findAndMigrateCards(db) {
@@ -211,7 +182,7 @@ async function main() {
     console.log(`  ${oldId} -> ${newId} (${DEVELOPER_NAMES[newId]})`);
   }
 
-  const db = await initializeFirebase();
+  const db = await initializeFirebaseInstance();
   await findAndMigrateCards(db);
 
   process.exit(0);
