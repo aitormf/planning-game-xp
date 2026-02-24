@@ -35,9 +35,12 @@ export function initFirebase() {
   const serviceAccount = JSON.parse(readFileSync(credentialsPath, 'utf8'));
   firebaseProjectId = serviceAccount.project_id || null;
 
+  const databaseURL = process.env.FIREBASE_DATABASE_URL ||
+    `https://${serviceAccount.project_id}-default-rtdb.europe-west1.firebasedatabase.app`;
+
   app = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: process.env.FIREBASE_DATABASE_URL
+    databaseURL
   });
 
   db = admin.database();
