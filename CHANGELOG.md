@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Fixed
+
+- Prevent build loop caused by update-version committing build artifacts
+
 ## [1.133.0] - 2026-02-24
 
 ### Added
