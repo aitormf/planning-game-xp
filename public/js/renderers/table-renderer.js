@@ -800,6 +800,60 @@ include = false;
   }
 
   /**
+   * Creates pipeline badges (C/PR/M/D) for table view
+   * @param {Object} card - Card data with pipelineStatus and commits/commitsCount
+   * @returns {HTMLElement|null} Wrapper element with badges, or null if no pipeline data
+   */
+  _createPipelineBadges(card) {
+    const commitsLen = (Array.isArray(card.commits) && card.commits.length > 0) ? card.commits.length : (card.commitsCount || 0);
+    const hasCommits = commitsLen > 0;
+    const ps = card.pipelineStatus;
+    const hasPR = ps?.prCreated;
+    const hasMerged = ps?.merged;
+    const hasDeployed = ps?.deployed;
+
+    if (!hasCommits && !hasPR && !hasMerged && !hasDeployed) return null;
+
+    const badgeBase = {
+      padding: '0 5px',
+      borderRadius: '8px',
+      fontSize: '0.7rem',
+      fontWeight: 'bold',
+      color: '#fff',
+      whiteSpace: 'nowrap',
+      flexShrink: '0',
+      lineHeight: '1.4'
+    };
+
+    const wrapper = UIUtils.createElement('span', {
+      style: { display: 'inline-flex', gap: '2px', flexShrink: '0' }
+    });
+
+    if (hasCommits) {
+      const b = UIUtils.createElement('span', { style: { ...badgeBase, background: '#6366f1' } }, 'C');
+      b.title = `Commits: ${commitsLen}`;
+      wrapper.appendChild(b);
+    }
+    if (hasPR) {
+      const b = UIUtils.createElement('span', { style: { ...badgeBase, background: '#3b82f6' } }, 'PR');
+      b.title = `PR #${ps.prCreated.prNumber || ''}${ps.prCreated.date ? ' - ' + ps.prCreated.date : ''}`;
+      wrapper.appendChild(b);
+    }
+    if (hasMerged) {
+      const b = UIUtils.createElement('span', { style: { ...badgeBase, background: '#8b5cf6' } }, 'M');
+      b.title = `Merged${ps.merged.date ? ': ' + ps.merged.date : ''}${ps.merged.mergedBy ? ' por ' + ps.merged.mergedBy : ''}`;
+      wrapper.appendChild(b);
+    }
+    if (hasDeployed) {
+      const b = UIUtils.createElement('span', { style: { ...badgeBase, background: '#10b981' } }, 'D');
+      b.title = `Deployed${ps.deployed.date ? ': ' + ps.deployed.date : ''}${ps.deployed.environment ? ' (' + ps.deployed.environment + ')' : ''}${ps.deployed.version ? ' v' + ps.deployed.version : ''}`;
+      wrapper.appendChild(b);
+    }
+
+    return wrapper;
+  }
+
+  /**
    * Creates relation badges (blockedBy, blocks, related) with hover popover
    * @param {Array|undefined} relatedTasks - Array of related task objects
    * @param {Object} cardIdMap - Map of cardId -> card data for status lookup
@@ -1378,6 +1432,9 @@ const style = {
         planBadge.title = `Plan de implementación: ${card.planStatus}`;
         titleWrapper.appendChild(planBadge);
       }
+      // Pipeline badges (C/PR/M/D)
+      const pipelineBadges = this._createPipelineBadges(card);
+      if (pipelineBadges) titleWrapper.appendChild(pipelineBadges);
 
       titleCell.appendChild(titleWrapper);
       row.appendChild(titleCell);
@@ -1653,9 +1710,15 @@ const style = {
       if (bugRepoBadge) bugIdCell.appendChild(bugRepoBadge);
       if (card.cardId) this._makeIdCellCopyable(bugIdCell, card.cardId);
       row.appendChild(bugIdCell);
-      // Título
-      const titleCellBug = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, card.title || '');
-      titleCellBug.title = card.title || '';
+      // Título + pipeline badges
+      const titleCellBug = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', maxWidth: '250px' } });
+      const bugTitleWrapper = UIUtils.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden' } });
+      const bugTitleText = UIUtils.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '0' } }, card.title || '');
+      bugTitleText.title = card.title || '';
+      bugTitleWrapper.appendChild(bugTitleText);
+      const bugPipelineBadges = this._createPipelineBadges(card);
+      if (bugPipelineBadges) bugTitleWrapper.appendChild(bugPipelineBadges);
+      titleCellBug.appendChild(bugTitleWrapper);
       row.appendChild(titleCellBug);
       // Estado
       this._appendStatusCell(row, card.status, 'bug');
