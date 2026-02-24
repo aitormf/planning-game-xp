@@ -10,6 +10,7 @@ const filesToTrack = [
   'version.json',
   'public/js/version.js',
   'package.json',
+  'package-lock.json',
   'CHANGELOG.md'
 ];
 
