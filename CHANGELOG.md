@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Added
+
+- Add pipeline badges (C/PR/M/D) to table view for tasks and bugs
+
 ## [1.132.2] - 2026-02-24
 
 ### Fixed
