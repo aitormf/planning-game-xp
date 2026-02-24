@@ -1519,8 +1519,8 @@ if (this.projectRepositories.length < 2) return '';
   }
 
   get canSave() {
-    // Permitimos guardar siempre que haya título y permisos de edición; las validaciones se manejan al cambiar estado.
-    return this.canEdit && this.title.trim();
+    // Permitimos guardar siempre que haya título y permisos de edición o sea validator en "To Validate".
+    return (this.canEdit || this.canEditStatus) && this.title.trim();
   }
 
   async _handleSave() {
@@ -2145,6 +2145,18 @@ this.isSuperAdmin = false;
   }
 
   /**
+   * Determina si el select de status debe estar habilitado.
+   * Además de canEdit (admin en modo gestión), se habilita para
+   * validators/covalidators cuando la tarea está en "To Validate".
+   */
+  get canEditStatus() {
+    if (this.canEdit) return true;
+    const normalized = (this.status || '').toLowerCase().replace(/&/g, '').replace(/\s+/g, '');
+    if (normalized === 'tovalidate' && this.canSetDoneValidated) return true;
+    return false;
+  }
+
+  /**
    * Determina si el usuario actual puede establecer el estado "Done&Validated"
    * Solo pueden: SuperAdmin, Validator asignado, o CoValidator asignado
    */
@@ -2758,7 +2770,7 @@ this.isSuperAdmin = false;
       <div class="form-row compact-row">
         <div class="form-field inline">
           <label>Status</label>
-          <select class="status-select ${this._getFieldClass('status')}" .value=${this.status} @change=${this._handleStatusChange} ?disabled=${!this.canEdit}>
+          <select class="status-select ${this._getFieldClass('status')}" .value=${this.status} @change=${this._handleStatusChange} ?disabled=${!this.canEditStatus}>
             ${this.statusListArray.map(status => html`
               <option
                 value="${status}"
