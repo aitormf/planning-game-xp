@@ -86,18 +86,10 @@ function getStatusColor(status, type = 'task') {
     }
     const palette = {
       'created': '#6c757d',
-      'triaged': '#6c757d',
       'assigned': '#0d6efd',
-      'in progress': '#0d6efd',
-      'blocked': '#d63384',
       'fixed': '#2ab27b',
-      'in testing': '#6f42c1',
       'verified': '#198754',
-      'cerrado': '#6c757d',
-      'closed': '#6c757d',
-      'rechazado': '#343a40',
-      'rejected': '#343a40',
-      'reopened': '#fd7e14'
+      'closed': '#6c757d'
     };
     const bg = palette[lower] || '#adb5bd';
     return { bg, fg: '#fff' };

@@ -11,7 +11,7 @@ export class BugFilters extends BaseFilters {
     super();
     this._optionsLoaded = false;
     this._loadingPromise = null;
-    this.defaultStatusSelection = ['Created', 'Triaged', 'Assigned', 'In Progress', 'In Testing'];
+    this.defaultStatusSelection = ['Created', 'Assigned'];
 // Configuraciones específicas de BugFilters
     this.defaultConfigs = {
       status: {
@@ -240,15 +240,10 @@ return true;
         <div style='margin: 8px 0 4px 0;'><b>Estados disponibles:</b></div>
         <ul style='padding-left: 18px; margin: 0;'>
           <li><b>Created</b>: Ticket nuevo reportado sin gestionar</li>
-          <li><b>Triaged</b>: El ticket está siendo analizado</li>
           <li><b>Assigned</b>: Ticket asignado para su resolución</li>
-          <li><b>In Progress</b>: Ticket en proceso de corrección</li>
-          <li><b>Blocked</b>: Ticket bloqueado por dependencias</li>
           <li><b>Fixed</b>: Ticket resuelto sin verificar por su creador</li>
-          <li><b>In testing</b>: Ticket en fase de testing</li>
           <li><b>Verified</b>: Ticket resuelto y verificado</li>
-          <li><b>Cerrado</b>: Ticket resuelto, verificado y cerrado</li>
-          <li><b>Rechazado</b>: Ticket no válido o duplicado</li>
+          <li><b>Closed</b>: Ticket resuelto, verificado y cerrado</li>
         </ul>
       `;
     }

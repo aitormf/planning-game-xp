@@ -26,25 +26,12 @@ function sanitizeEmailForKey(email) {
   return email.replace(/[.#$[\]/]/g, '_');
 }
 
-/**
- * Required fields before transitioning OUT of "To Do" to any other status.
- * A task cannot leave "To Do" without ALL these fields populated.
- */
-const REQUIRED_FIELDS_TO_LEAVE_TODO = [
-  'title',
-  'developer',
-  'validator',
-  'epic',
-  'sprint',
-  'devPoints',
-  'businessPoints',
-  'acceptanceCriteria'  // Can also be acceptanceCriteriaStructured
-];
-
-/**
- * Status values that require validator permission
- */
-const VALIDATOR_ONLY_STATUSES = ['Done', 'Done&Validated'];
+// Import shared constants and validation (single source of truth)
+const {
+  REQUIRED_FIELDS_TO_LEAVE_TODO,
+  VALIDATOR_ONLY_STATUSES,
+  hasValidValue
+} = require('../../shared/index.cjs');
 
 /**
  * Check if email matches a stakeholder ID
@@ -58,50 +45,6 @@ function isEmailMatchingStakeholder(email, stakeholderId, stakeholdersData) {
   const stakeholder = stakeholdersData[stakeholderId];
   if (!stakeholder || !stakeholder.email) return false;
   return email.toLowerCase().trim() === stakeholder.email.toLowerCase().trim();
-}
-
-/**
- * Check if a field has a valid value (not empty, not null, not undefined)
- * @param {Object} data - Card data
- * @param {string} field - Field name to check
- * @returns {boolean} - True if field has a valid value
- */
-function hasValidValue(data, field) {
-  // Special case: acceptanceCriteria can be in either field
-  if (field === 'acceptanceCriteria') {
-    const ac = data.acceptanceCriteria;
-    const acs = data.acceptanceCriteriaStructured;
-
-    // Check acceptanceCriteria string
-    if (ac && typeof ac === 'string' && ac.trim() !== '') {
-      return true;
-    }
-
-    // Check acceptanceCriteriaStructured array
-    if (Array.isArray(acs) && acs.length > 0) {
-      // Ensure at least one scenario has content
-      return acs.some(scenario =>
-        (scenario.given && scenario.given.trim()) ||
-        (scenario.when && scenario.when.trim()) ||
-        (scenario.then && scenario.then.trim()) ||
-        (scenario.raw && scenario.raw.trim())
-      );
-    }
-
-    return false;
-  }
-
-  // Special case: numeric fields (devPoints, businessPoints)
-  if (field === 'devPoints' || field === 'businessPoints') {
-    const value = data[field];
-    return value !== null && value !== undefined && value !== '' && Number(value) > 0;
-  }
-
-  // Standard string/value check
-  const value = data[field];
-  if (value === null || value === undefined) return false;
-  if (typeof value === 'string') return value.trim() !== '';
-  return true;
 }
 
 /**

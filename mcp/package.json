@@ -1,0 +1,12 @@
+{
+  "name": "planning-game-mcp-local",
+  "version": "1.0.0",
+  "description": "Integrated MCP Server for Planning GameXP",
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "firebase-admin": "^12.6.0",
+    "zod": "^3.22.0"
+  }
+}

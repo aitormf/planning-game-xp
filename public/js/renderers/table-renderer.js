@@ -1118,19 +1118,10 @@ const style = {
     if (type === 'bug') {
       const palette = {
         'created': '#6c757d',
-        'open': '#0d6efd',
-        'triaged': '#6c757d',
         'assigned': '#0d6efd',
-        'in progress': '#0d6efd',
-        'blocked': '#d63384',
         'fixed': '#2ab27b',
-        'in testing': '#6f42c1',
         'verified': '#198754',
-        'cerrado': '#6c757d',
-        'closed': '#6c757d',
-        'rechazado': '#343a40',
-        'rejected': '#343a40',
-        'reopened': '#fd7e14'
+        'closed': '#6c757d'
       };
       const bg = palette[lower] || '#adb5bd';
       return { bg, fg: '#fff' };
@@ -1324,88 +1315,52 @@ const style = {
       if (relationBadges) idCell.appendChild(relationBadges);
       if (card.cardId) this._makeIdCellCopyable(idCell, card.cardId);
       row.appendChild(idCell);
-      // Título + notes badge + badges de bloqueo
-      const titleCell = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', maxWidth: '250px' } });
-      const titleWrapper = UIUtils.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden' } });
+      // Título (línea 1) + badges (línea 2)
+      const titleCell = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.3rem 0.5rem', maxWidth: '300px' } });
+
+      // Línea 1: Título con notes badge inline
+      const titleRow = UIUtils.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.3rem', overflow: 'hidden' } });
       const titleText = UIUtils.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '0' } }, card.title || '');
       titleText.title = card.title || '';
-      titleWrapper.appendChild(titleText);
+      titleRow.appendChild(titleText);
 
       // Notes badge next to title (with custom tooltip)
       const notes = this._getNotesArray(card.notes);
       const notesCount = notes.length > 0 ? notes.length : (card.notesCount || 0);
       if (notesCount > 0) {
         const notesContainer = this._createNotesBadgeWithTooltip(notes, notesCount);
-        titleWrapper.appendChild(notesContainer);
+        titleRow.appendChild(notesContainer);
       }
+
+      titleCell.appendChild(titleRow);
+
+      // Línea 2: Badges (solo si hay alguno)
+      const badgeStyle = { padding: '0 5px', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 'bold', whiteSpace: 'nowrap', lineHeight: '1.4' };
+      const badges = [];
 
       // Badges de bloqueo (business/dev) - only show if status is "Blocked"
       const isBlockedStatus = (card.status || '').toLowerCase() === 'blocked';
       if (isBlockedStatus && card.blockedByBusiness) {
-        const badge = UIUtils.createElement('span', {
-          style: {
-            background: '#e74c3c',
-            color: '#fff',
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0'
-          }
-        }, 'BUS');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#e74c3c', color: '#fff' } }, 'BUS');
         badge.title = 'Bloqueada por negocio';
-        titleWrapper.appendChild(badge);
+        badges.push(badge);
       }
       if (isBlockedStatus && card.blockedByDevelopment) {
-        const badge = UIUtils.createElement('span', {
-          style: {
-            background: '#f39c12',
-            color: '#fff',
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0'
-          }
-        }, 'DEV');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#f39c12', color: '#fff' } }, 'DEV');
         badge.title = 'Bloqueada por desarrollo';
-        titleWrapper.appendChild(badge);
+        badges.push(badge);
       }
       // Badge de SPIKE
       if (card.spike) {
-        const badge = UIUtils.createElement('span', {
-          style: {
-            background: '#9c27b0',
-            color: '#fff',
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0'
-          }
-        }, 'SPIKE');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#9c27b0', color: '#fff' } }, 'SPIKE');
         badge.title = 'Spike - Investigación técnica';
-        titleWrapper.appendChild(badge);
+        badges.push(badge);
       }
       // Badge de EXPEDIT
       if (card.expedited) {
-        const badge = UIUtils.createElement('span', {
-          style: {
-            background: '#ffc107',
-            color: '#000',
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0'
-          }
-        }, 'EXPEDIT');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#ffc107', color: '#000' } }, 'EXPEDIT');
         badge.title = 'Tarea urgente';
-        titleWrapper.appendChild(badge);
+        badges.push(badge);
       }
       // Badge de PLAN
       if (card.planStatus) {
@@ -1417,26 +1372,19 @@ const style = {
           completed:   { label: 'Plan: OK',   bg: '#10b981', color: '#fff' }
         };
         const cfg = planConfig[card.planStatus] || planConfig.pending;
-        const planBadge = UIUtils.createElement('span', {
-          style: {
-            background: cfg.bg,
-            color: cfg.color,
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0'
-          }
-        }, cfg.label);
+        const planBadge = UIUtils.createElement('span', { style: { ...badgeStyle, background: cfg.bg, color: cfg.color } }, cfg.label);
         planBadge.title = `Plan de implementación: ${card.planStatus}`;
-        titleWrapper.appendChild(planBadge);
+        badges.push(planBadge);
       }
       // Pipeline badges (C/PR/M/D)
       const pipelineBadges = this._createPipelineBadges(card);
       if (pipelineBadges) titleWrapper.appendChild(pipelineBadges);
 
-      titleCell.appendChild(titleWrapper);
+      if (badges.length > 0) {
+        const badgeRow = UIUtils.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '0.2rem', marginTop: '0.15rem' } });
+        badges.forEach(b => badgeRow.appendChild(b));
+        titleCell.appendChild(badgeRow);
+      }
       row.appendChild(titleCell);
       // Estado
       this._appendStatusCell(row, card.status, 'task');

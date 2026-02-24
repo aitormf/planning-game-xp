@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   calculatePriorityValue,
+  calculatePriorityRank,
   findClosestRank,
   getPriorityDisplay,
   getPriorityColor,
@@ -43,12 +44,35 @@ describe('priority-utils', () => {
     });
   });
 
+  describe('calculatePriorityRank', () => {
+    it('should return rank 1 for 5/1 (highest priority)', () => {
+      expect(calculatePriorityRank(5, 1)).toBe(1);
+    });
+
+    it('should return rank 25 for 1/5 (lowest priority in 1-5)', () => {
+      expect(calculatePriorityRank(1, 5)).toBe(25);
+    });
+
+    it('should return null for invalid inputs', () => {
+      expect(calculatePriorityRank(0, 3)).toBeNull();
+      expect(calculatePriorityRank(null, 3)).toBeNull();
+      expect(calculatePriorityRank(3, 0)).toBeNull();
+    });
+
+    it('should support fibonacci scoring', () => {
+      const rank = calculatePriorityRank(13, 1, 'fibonacci');
+      expect(rank).toBe(1);
+      const rankLow = calculatePriorityRank(1, 13, 'fibonacci');
+      expect(rankLow).toBe(36);
+    });
+  });
+
   describe('findClosestRank', () => {
-    it('should return exact rank for known values', () => {
-      expect(findClosestRank(500)).toBe(1);
-      expect(findClosestRank(400)).toBe(2);
-      expect(findClosestRank(100)).toBe(9);
-      expect(findClosestRank(20)).toBe(18);
+    it('should return exact rank for known ratio values', () => {
+      expect(findClosestRank(500)).toBe(1);   // 5/1
+      expect(findClosestRank(400)).toBe(2);   // 4/1
+      expect(findClosestRank(100)).toBe(11);  // x/x
+      expect(findClosestRank(20)).toBe(25);   // 1/5
     });
 
     it('should return null for 0 or invalid values', () => {
@@ -57,16 +81,16 @@ describe('priority-utils', () => {
       expect(findClosestRank(undefined)).toBeNull();
     });
 
-    it('should find closest rank for non-standard values', () => {
-      // 450 is equidistant from 500 and 400, algorithm returns first match (rank 1)
-      expect(findClosestRank(450)).toBe(1);
+    it('should find rank for values between known ratios', () => {
+      // 450 is >= 400 (rank 2), so rank 1 (first entry whose ratio <= 450 is rank 1 at 500? No, 450 < 500)
+      // Walk: 500 > 450? No → 400 <= 450? Yes → rank 2
+      expect(findClosestRank(450)).toBe(2);
 
-      // 420 is closer to 400 (rank 2) than to 500 (rank 1)
+      // 420 is >= 400 (rank 2), so rank 2
       expect(findClosestRank(420)).toBe(2);
 
-      // 95 is between 100 (rank 9) and 80 (rank 10)
-      // 95 is closer to 100, so should return rank 9
-      expect(findClosestRank(95)).toBe(9);
+      // 95 is < 100 but >= 80, so matches rank 16 (4/5 ratio=80)
+      expect(findClosestRank(95)).toBe(16);
     });
   });
 
@@ -85,9 +109,9 @@ describe('priority-utils', () => {
 
     it('should return correct display for lowest priority (1/5)', () => {
       const result = getPriorityDisplay(1, 5);
-      expect(result.label).toBe('Prioridad 18');
-      expect(result.shortLabel).toBe('P18');
-      expect(result.rank).toBe(18);
+      expect(result.label).toBe('Prioridad 25');
+      expect(result.shortLabel).toBe('P25');
+      expect(result.rank).toBe(25);
       expect(result.badge).toBe('20');
       expect(result.value).toBe(20);
       expect(result.hasPriority).toBe(true);
@@ -95,9 +119,8 @@ describe('priority-utils', () => {
 
     it('should return correct display for equal points (3/3)', () => {
       const result = getPriorityDisplay(3, 3);
-      expect(result.label).toBe('Prioridad 9');
-      expect(result.shortLabel).toBe('P9');
-      expect(result.rank).toBe(9);
+      // 3/3 = ratio 100, all x/x combinations share rank 11
+      expect(result.rank).toBe(11);
       expect(result.badge).toBe('100');
       expect(result.value).toBe(100);
       expect(result.hasPriority).toBe(true);
@@ -125,26 +148,35 @@ describe('priority-utils', () => {
       expect(result.label).toBe('Sin prioridad');
     });
 
-    // Test all 18 priority combinations
+    // Test all 25 priority combinations for 1-5 system.
+    // Combinations with the same ratio share the same rank
+    // (the rank of the first occurrence in the sorted map).
     const priorityCombinations = [
-      { b: 5, d: 1, expectedRank: 1 },
-      { b: 4, d: 1, expectedRank: 2 },
-      { b: 3, d: 1, expectedRank: 3 },
-      { b: 5, d: 2, expectedRank: 4 },
-      { b: 2, d: 1, expectedRank: 5 },
-      { b: 3, d: 2, expectedRank: 6 },
-      { b: 4, d: 3, expectedRank: 7 },
-      { b: 5, d: 4, expectedRank: 8 },
-      { b: 2, d: 2, expectedRank: 9 },  // any x/x
-      { b: 4, d: 5, expectedRank: 10 },
-      { b: 3, d: 4, expectedRank: 11 },
-      { b: 2, d: 3, expectedRank: 12 },
-      { b: 3, d: 5, expectedRank: 13 },
-      { b: 1, d: 2, expectedRank: 14 },
-      { b: 2, d: 5, expectedRank: 15 },
-      { b: 1, d: 3, expectedRank: 16 },
-      { b: 1, d: 4, expectedRank: 17 },
-      { b: 1, d: 5, expectedRank: 18 }
+      { b: 5, d: 1, expectedRank: 1 },   // ratio=500
+      { b: 4, d: 1, expectedRank: 2 },   // ratio=400
+      { b: 3, d: 1, expectedRank: 3 },   // ratio=300
+      { b: 5, d: 2, expectedRank: 4 },   // ratio=250
+      { b: 2, d: 1, expectedRank: 5 },   // ratio=200
+      { b: 4, d: 2, expectedRank: 5 },   // ratio=200 (same as 2/1)
+      { b: 5, d: 3, expectedRank: 7 },   // ratio=166.67
+      { b: 3, d: 2, expectedRank: 8 },   // ratio=150
+      { b: 4, d: 3, expectedRank: 9 },   // ratio=133.33
+      { b: 5, d: 4, expectedRank: 10 },  // ratio=125
+      { b: 1, d: 1, expectedRank: 11 },  // ratio=100
+      { b: 2, d: 2, expectedRank: 11 },  // ratio=100 (same)
+      { b: 3, d: 3, expectedRank: 11 },  // ratio=100 (same)
+      { b: 4, d: 4, expectedRank: 11 },  // ratio=100 (same)
+      { b: 5, d: 5, expectedRank: 11 },  // ratio=100 (same)
+      { b: 4, d: 5, expectedRank: 16 },  // ratio=80
+      { b: 3, d: 4, expectedRank: 17 },  // ratio=75
+      { b: 2, d: 3, expectedRank: 18 },  // ratio=66.67
+      { b: 3, d: 5, expectedRank: 19 },  // ratio=60
+      { b: 1, d: 2, expectedRank: 20 },  // ratio=50
+      { b: 2, d: 4, expectedRank: 20 },  // ratio=50 (same as 1/2)
+      { b: 2, d: 5, expectedRank: 22 },  // ratio=40
+      { b: 1, d: 3, expectedRank: 23 },  // ratio=33.33
+      { b: 1, d: 4, expectedRank: 24 },  // ratio=25
+      { b: 1, d: 5, expectedRank: 25 }   // ratio=20
     ];
 
     priorityCombinations.forEach(({ b, d, expectedRank }) => {
@@ -166,50 +198,62 @@ describe('priority-utils', () => {
       expect(result.backgroundColor).toBe('rgba(230, 0, 206, 1.00)');
     });
 
-    it('should return most faded color for rank 18', () => {
-      const result = getPriorityColor(18);
+    it('should return most faded color for max rank (25)', () => {
+      const result = getPriorityColor(25);
       expect(result.color).toBe('white');
       expect(result.backgroundColor).toBe('rgba(230, 0, 206, 0.35)');
     });
 
-    it('should return intermediate color for rank 9', () => {
-      const result = getPriorityColor(9);
+    it('should return intermediate color for middle rank', () => {
+      const result = getPriorityColor(13);
       expect(result.color).toBe('white');
-      // Rank 9 is middle, alpha should be around 0.65-0.70
       expect(result.backgroundColor).toContain('rgba(230, 0, 206,');
     });
 
     it('should return fallback colors for invalid ranks', () => {
       expect(getPriorityColor(null).backgroundColor).toBe('var(--bg-muted)');
       expect(getPriorityColor(0).backgroundColor).toBe('var(--bg-muted)');
-      expect(getPriorityColor(19).backgroundColor).toBe('var(--bg-muted)');
+      expect(getPriorityColor(26).backgroundColor).toBe('var(--bg-muted)');
     });
 
     it('should have decreasing alpha as rank increases', () => {
       const color1 = getPriorityColor(1);
-      const color10 = getPriorityColor(10);
-      const color18 = getPriorityColor(18);
+      const color13 = getPriorityColor(13);
+      const color25 = getPriorityColor(25);
 
-      // Extract alpha values
       const alpha1 = parseFloat(color1.backgroundColor.match(/[\d.]+\)$/)[0]);
-      const alpha10 = parseFloat(color10.backgroundColor.match(/[\d.]+\)$/)[0]);
-      const alpha18 = parseFloat(color18.backgroundColor.match(/[\d.]+\)$/)[0]);
+      const alpha13 = parseFloat(color13.backgroundColor.match(/[\d.]+\)$/)[0]);
+      const alpha25 = parseFloat(color25.backgroundColor.match(/[\d.]+\)$/)[0]);
 
-      expect(alpha1).toBeGreaterThan(alpha10);
-      expect(alpha10).toBeGreaterThan(alpha18);
+      expect(alpha1).toBeGreaterThan(alpha13);
+      expect(alpha13).toBeGreaterThan(alpha25);
+    });
+
+    it('should support fibonacci scoring (36 ranks)', () => {
+      const result = getPriorityColor(36, 'fibonacci');
+      expect(result.color).toBe('white');
+      expect(result.backgroundColor).toBe('rgba(230, 0, 206, 0.35)');
+
+      // Rank 37 should be invalid for fibonacci
+      expect(getPriorityColor(37, 'fibonacci').backgroundColor).toBe('var(--bg-muted)');
     });
   });
 
   describe('getAllPriorityRanks', () => {
-    it('should return 18 priority ranks', () => {
+    it('should return 25 priority ranks for 1-5 system', () => {
       const ranks = getAllPriorityRanks();
-      expect(ranks).toHaveLength(18);
+      expect(ranks).toHaveLength(25);
     });
 
-    it('should return ranks sorted from 1 to 18', () => {
+    it('should return 36 priority ranks for fibonacci system', () => {
+      const ranks = getAllPriorityRanks('fibonacci');
+      expect(ranks).toHaveLength(36);
+    });
+
+    it('should return ranks sorted from 1 to max', () => {
       const ranks = getAllPriorityRanks();
       expect(ranks[0].rank).toBe(1);
-      expect(ranks[17].rank).toBe(18);
+      expect(ranks[24].rank).toBe(25);
 
       for (let i = 0; i < ranks.length - 1; i++) {
         expect(ranks[i].rank).toBeLessThan(ranks[i + 1].rank);
@@ -218,8 +262,8 @@ describe('priority-utils', () => {
 
     it('should have correct values for first and last ranks', () => {
       const ranks = getAllPriorityRanks();
-      expect(ranks[0]).toEqual({ rank: 1, value: 500 });
-      expect(ranks[17]).toEqual({ rank: 18, value: 20 });
+      expect(ranks[0]).toEqual({ rank: 1, value: 500, biz: 5, dev: 1 });
+      expect(ranks[24]).toEqual({ rank: 25, value: 20, biz: 1, dev: 5 });
     });
   });
 });

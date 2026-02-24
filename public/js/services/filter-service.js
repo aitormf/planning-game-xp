@@ -359,7 +359,7 @@ export class FilterService {
           type: 'select',
           label: 'Status',
           multiple: true,
-          options: ['CREATED', 'TRIAGED', 'ASSIGNED', 'IN PROGRESS', 'FIXED', 'VERIFIED', 'CLOSED']
+          options: ['CREATED', 'ASSIGNED', 'FIXED', 'VERIFIED', 'CLOSED']
         },
         priority: {
           type: 'select',
