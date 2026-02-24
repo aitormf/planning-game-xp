@@ -3,7 +3,13 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
-## [Unreleased]
+## [1.132.2] - 2026-02-24
+
+### Fixed
+
+- Enable status select for validators on tasks in "To Validate"
+
+## [1.132.1] - 2026-02-22
 
 ### Fixed
 
