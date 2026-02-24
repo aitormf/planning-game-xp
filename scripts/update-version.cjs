@@ -156,8 +156,10 @@ function hasNewCommitsSinceLastBuild() {
 }
 
 function main() {
-  // First, check and commit any pending changes
-  const hadChanges = commitPendingChanges();
+  // Skip committing pending changes during FORCE_BUILD — they are artifacts
+  // from a previous build (changelog, SW, version files) and will be included
+  // in the postbuild:version commit at the end of the pipeline.
+  const hadChanges = process.env.FORCE_BUILD ? false : commitPendingChanges();
 
   // Check if there are new commits since last build
   const hasNewCommits = hasNewCommitsSinceLastBuild();
