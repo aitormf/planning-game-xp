@@ -1378,7 +1378,7 @@ const style = {
       }
       // Pipeline badges (C/PR/M/D)
       const pipelineBadges = this._createPipelineBadges(card);
-      if (pipelineBadges) titleWrapper.appendChild(pipelineBadges);
+      if (pipelineBadges) badges.push(pipelineBadges);
 
       if (badges.length > 0) {
         const badgeRow = UIUtils.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '0.2rem', marginTop: '0.15rem' } });
@@ -1658,15 +1658,20 @@ const style = {
       if (bugRepoBadge) bugIdCell.appendChild(bugRepoBadge);
       if (card.cardId) this._makeIdCellCopyable(bugIdCell, card.cardId);
       row.appendChild(bugIdCell);
-      // Título + pipeline badges
-      const titleCellBug = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', maxWidth: '250px' } });
-      const bugTitleWrapper = UIUtils.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden' } });
+      // Título (línea 1) + pipeline badges (línea 2)
+      const titleCellBug = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.3rem 0.5rem', maxWidth: '300px' } });
+      const bugTitleRow = UIUtils.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.3rem', overflow: 'hidden' } });
       const bugTitleText = UIUtils.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '0' } }, card.title || '');
       bugTitleText.title = card.title || '';
-      bugTitleWrapper.appendChild(bugTitleText);
+      bugTitleRow.appendChild(bugTitleText);
+      titleCellBug.appendChild(bugTitleRow);
+      // Línea 2: Pipeline badges (solo si hay alguno)
       const bugPipelineBadges = this._createPipelineBadges(card);
-      if (bugPipelineBadges) bugTitleWrapper.appendChild(bugPipelineBadges);
-      titleCellBug.appendChild(bugTitleWrapper);
+      if (bugPipelineBadges) {
+        const bugBadgeRow = UIUtils.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '0.2rem', marginTop: '0.15rem' } });
+        bugBadgeRow.appendChild(bugPipelineBadges);
+        titleCellBug.appendChild(bugBadgeRow);
+      }
       row.appendChild(titleCellBug);
       // Estado
       this._appendStatusCell(row, card.status, 'bug');

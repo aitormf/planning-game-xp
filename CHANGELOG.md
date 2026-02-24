@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Move badges to second line in task table to preserve title visibility
+
+## [1.133.1] - 2026-02-24
+
+### Fixed
+
 - Prevent build loop caused by update-version committing build artifacts
 
 ## [1.133.0] - 2026-02-24
@@ -17,9 +23,24 @@ Auto-generated from git commits on each build.
 
 ## [1.132.2] - 2026-02-24
 
+### Added
+
+- Integrate MCP server as local module with stdio transport
+- Add shared/ module as single source of truth for constants and validation
+
+### Changed
+
+- Align bug statuses to 5 and unify imports from shared/
+
 ### Fixed
 
 - Enable status select for validators on tasks in "To Validate"
+- Derive databaseURL from serviceAccountKey when env var is missing
+- Remove references to eliminated bug statuses in UI components
+
+### Documentation
+
+- Add MCP integration status and next steps checklist
 
 ## [1.132.1] - 2026-02-22
 
