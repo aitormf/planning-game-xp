@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
-## [Unreleased]
+## [1.139.0] - 2026-02-25
 
 ### Fixed
 
