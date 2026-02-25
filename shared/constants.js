@@ -12,12 +12,12 @@
 export const VALID_BUG_STATUSES = ['Created', 'Assigned', 'Fixed', 'Verified', 'Closed'];
 
 export const VALID_BUG_PRIORITIES = [
-  'APPLICATION BLOCKER',
-  'DEPARTMENT BLOCKER',
-  'INDIVIDUAL BLOCKER',
-  'USER EXPERIENCE ISSUE',
-  'WORKFLOW IMPROVEMENT',
-  'WORKAROUND AVAILABLE ISSUE'
+  'Application Blocker',
+  'Department Blocker',
+  'Individual Blocker',
+  'User Experience Issue',
+  'Workflow Improvement',
+  'Workaround Available Issue'
 ];
 
 // ──────────────────────────────────────────────
@@ -118,7 +118,7 @@ export const TASK_TRANSITION_RULES = {
 export const TYPE_DEFAULTS = {
   bug: {
     status: 'Created',
-    priority: 'USER EXPERIENCE ISSUE'
+    priority: 'User Experience Issue'
   },
   task: {
     status: 'To Do',
