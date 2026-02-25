@@ -1254,9 +1254,10 @@ isYearReadOnly = yearReadOnly;
 <script type="module" src="/js/main.js"></script>
 <script type="module">
   // ── Development Plans CRUD ──
-  import { database, ref, get, set, push, remove } from '/firebase-config.js';
+  import { database, ref, get, set, push, remove, functions, httpsCallable } from '/firebase-config.js';
 
   let plansCache = [];
+  let aiGenerating = false;
 
   window.loadPlans = async function(projectId) {
     const container = document.getElementById('plansContainer');
@@ -1441,24 +1442,114 @@ isYearReadOnly = yearReadOnly;
     }
   }
 
-  function renderPlanForm(container, projectId, existingPlan) {
+  // ── Plan Creator (AI-powered new plan flow) ──
+  function renderPlanCreator(container, projectId) {
+    let html = `<div class="plan-form-container">`;
+    html += `<div class="plan-form-header"><h2>New Development Plan</h2>`;
+    html += `<button class="plans-btn plans-btn-secondary" id="planFormCancel">Cancel</button></div>`;
+    html += `<p class="plan-creator-hint">Describe what you want to build. You can paste a full specification, user stories, or a brief context. The AI will generate a structured development plan.</p>`;
+    html += `<div class="plan-form-field">`;
+    html += `  <label>Context / Description *</label>`;
+    html += `  <textarea id="planContext" rows="10" placeholder="Describe the feature, project, or change you want to plan...&#10;&#10;Example: We need a notification system that sends email alerts when tasks change status. It should support both immediate and digest modes, with user preferences for notification frequency."></textarea>`;
+    html += `</div>`;
+    html += `<div class="plan-form-field">`;
+    html += `  <label>Or upload a document</label>`;
+    html += `  <input type="file" id="planFileInput" accept=".txt,.md,.markdown" />`;
+    html += `</div>`;
+    html += `<div id="planAiError" class="plan-ai-error" style="display:none;"></div>`;
+    html += `<div class="plan-form-actions">`;
+    html += `  <button type="button" class="plans-btn plans-btn-primary" id="generatePlanBtn">Generate Plan with AI</button>`;
+    html += `  <button type="button" class="plans-btn plans-btn-secondary" id="manualPlanBtn">Create manually</button>`;
+    html += `</div>`;
+    html += `</div>`;
+
+    container.innerHTML = html;
+
+    // File upload fills textarea
+    container.querySelector('#planFileInput').addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        container.querySelector('#planContext').value = text;
+      } catch (err) {
+        container.querySelector('#planAiError').textContent = 'Error reading file: ' + err.message;
+        container.querySelector('#planAiError').style.display = 'block';
+      }
+    });
+
+    container.querySelector('#planFormCancel').addEventListener('click', () => renderPlansList(container, projectId));
+    container.querySelector('#manualPlanBtn').addEventListener('click', () => renderPlanForm(container, projectId, null));
+
+    container.querySelector('#generatePlanBtn').addEventListener('click', async () => {
+      const context = container.querySelector('#planContext').value.trim();
+      if (context.length < 10) {
+        container.querySelector('#planAiError').textContent = 'Please provide at least 10 characters of context.';
+        container.querySelector('#planAiError').style.display = 'block';
+        return;
+      }
+
+      const btn = container.querySelector('#generatePlanBtn');
+      const errorEl = container.querySelector('#planAiError');
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Generating plan...';
+      aiGenerating = true;
+
+      try {
+        const generateDevPlan = httpsCallable(functions, 'generateDevPlan');
+        const result = await generateDevPlan({ projectId, context });
+        const generatedPlan = result.data?.plan;
+        if (!generatedPlan) throw new Error('No plan returned from AI');
+
+        // Convert AI plan to internal format and open in form for review
+        const plan = {
+          title: generatedPlan.title || '',
+          objective: generatedPlan.objective || '',
+          status: 'draft',
+          phases: (generatedPlan.phases || []).map(p => ({
+            name: p.name || '',
+            description: p.description || '',
+            tasks: p.tasks || [],
+            epicIds: [],
+            taskIds: [],
+            status: 'pending'
+          })),
+          _aiContext: context
+        };
+        renderPlanForm(container, projectId, null, plan);
+      } catch (err) {
+        const msg = err.message || 'Unknown error';
+        errorEl.textContent = 'Error generating plan: ' + msg;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Plan with AI';
+        aiGenerating = false;
+      }
+    });
+  }
+
+  // ── Plan Form (edit existing or review AI-generated) ──
+  function renderPlanForm(container, projectId, existingPlan, aiPlan) {
     const isEdit = !!existingPlan;
-    const plan = existingPlan || { title: '', objective: '', status: 'draft', phases: [] };
+    const plan = existingPlan || aiPlan || { title: '', objective: '', status: 'draft', phases: [] };
+    const isAiGenerated = !!aiPlan && !isEdit;
     let phaseCounter = (plan.phases || []).length;
 
     function phaseRow(index, phase = {}) {
+      const tasksPreview = (phase.tasks || []).map(t => t.title).filter(Boolean);
+      const tasksHtml = tasksPreview.length > 0
+        ? `<div class="phase-tasks-preview">${tasksPreview.map(t => `<span class="phase-task-chip">${t}</span>`).join('')}</div>`
+        : '';
       return `<div class="phase-row" data-idx="${index}">
         <div class="phase-row-fields">
           <input type="text" class="phase-name" placeholder="Phase name" value="${phase.name || ''}" />
           <input type="text" class="phase-description" placeholder="Description" value="${phase.description || ''}" />
           <input type="text" class="phase-epics" placeholder="Epic IDs (comma-sep)" value="${(phase.epicIds || []).join(', ')}" />
-          <input type="text" class="phase-tasks" placeholder="Task IDs (comma-sep)" value="${(phase.taskIds || []).join(', ')}" />
-          <select class="phase-status">
-            <option value="pending" ${(phase.status || 'pending') === 'pending' ? 'selected' : ''}>Pending</option>
-            <option value="in_progress" ${phase.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
-            <option value="completed" ${phase.status === 'completed' ? 'selected' : ''}>Completed</option>
-          </select>
+          <input type="text" class="phase-tasks-ids" placeholder="Task IDs (comma-sep)" value="${(phase.taskIds || []).join(', ')}" />
         </div>
+        ${tasksHtml}
         <button type="button" class="phase-remove-btn" onclick="this.closest('.phase-row').remove()">✕</button>
       </div>`;
     }
@@ -1466,15 +1557,31 @@ isYearReadOnly = yearReadOnly;
     let phasesHtml = (plan.phases || []).map((p, i) => phaseRow(i, p)).join('');
 
     let html = `<div class="plan-form-container">`;
-    html += `<div class="plan-form-header"><h2>${isEdit ? 'Edit Plan' : 'New Development Plan'}</h2>`;
+    html += `<div class="plan-form-header"><h2>${isEdit ? 'Edit Plan' : isAiGenerated ? 'Review AI-Generated Plan' : 'New Development Plan'}</h2>`;
     html += `<button class="plans-btn plans-btn-secondary" id="planFormCancel">Cancel</button></div>`;
+
+    if (isAiGenerated) {
+      html += `<div class="plan-ai-notice">This plan was generated by AI. Review and edit before saving.</div>`;
+    }
+
     html += `<form id="planForm" class="plan-form">`;
     html += `<div class="plan-form-field"><label>Title *</label><input type="text" id="planTitle" required value="${plan.title || ''}" placeholder="e.g. MCP Integration" /></div>`;
     html += `<div class="plan-form-field"><label>Objective</label><textarea id="planObjective" rows="3" placeholder="What is the goal?">${plan.objective || ''}</textarea></div>`;
     html += `<div class="plan-form-section"><div class="plan-form-section-header"><h3>Phases</h3>`;
     html += `<button type="button" class="plans-btn plans-btn-small" id="addPhaseBtn">+ Phase</button></div>`;
     html += `<div id="phasesContainer">${phasesHtml}</div></div>`;
-    html += `<div class="plan-form-actions"><button type="submit" class="plans-btn plans-btn-primary">${isEdit ? 'Save Changes' : 'Create Plan'}</button>`;
+
+    if (isAiGenerated && plan._aiContext) {
+      html += `<div class="plan-form-section">`;
+      html += `<div class="plan-form-section-header"><h3>Refine with AI</h3></div>`;
+      html += `<div class="plan-form-field"><label>Add more context and regenerate</label>`;
+      html += `<textarea id="planExtraContext" rows="4" placeholder="Add more details, corrections, or constraints...">${plan._aiContext}</textarea></div>`;
+      html += `<div id="planRegenerateError" class="plan-ai-error" style="display:none;"></div>`;
+      html += `<button type="button" class="plans-btn plans-btn-secondary" id="regeneratePlanBtn">Regenerate with AI</button>`;
+      html += `</div>`;
+    }
+
+    html += `<div class="plan-form-actions"><button type="submit" class="plans-btn plans-btn-primary">${isEdit ? 'Save Changes' : 'Save as Draft'}</button>`;
     if (isEdit) html += `<button type="button" class="plans-btn plans-btn-danger" id="deletePlanBtn">Delete</button>`;
     html += `</div></form></div>`;
 
@@ -1487,32 +1594,65 @@ isYearReadOnly = yearReadOnly;
     container.querySelector('#addPhaseBtn').addEventListener('click', () => {
       document.getElementById('phasesContainer').insertAdjacentHTML('beforeend', phaseRow(phaseCounter++, {}));
     });
+
+    // Regenerate with AI
+    const regenBtn = container.querySelector('#regeneratePlanBtn');
+    if (regenBtn) {
+      regenBtn.addEventListener('click', async () => {
+        const extraContext = container.querySelector('#planExtraContext').value.trim();
+        if (extraContext.length < 10) return;
+
+        const errorEl = container.querySelector('#planRegenerateError');
+        errorEl.style.display = 'none';
+        regenBtn.disabled = true;
+        regenBtn.textContent = 'Regenerating...';
+
+        // Collect current form state as existing plan JSON for refinement
+        const currentPlan = collectFormData(container);
+
+        try {
+          const generateDevPlan = httpsCallable(functions, 'generateDevPlan');
+          const result = await generateDevPlan({
+            projectId,
+            context: extraContext,
+            existingPlanJson: JSON.stringify(currentPlan)
+          });
+          const generatedPlan = result.data?.plan;
+          if (!generatedPlan) throw new Error('No plan returned from AI');
+
+          const newPlan = {
+            title: generatedPlan.title || '',
+            objective: generatedPlan.objective || '',
+            status: 'draft',
+            phases: (generatedPlan.phases || []).map(p => ({
+              name: p.name || '',
+              description: p.description || '',
+              tasks: p.tasks || [],
+              epicIds: [],
+              taskIds: [],
+              status: 'pending'
+            })),
+            _aiContext: extraContext
+          };
+          renderPlanForm(container, projectId, null, newPlan);
+        } catch (err) {
+          errorEl.textContent = 'Error: ' + (err.message || 'Unknown error');
+          errorEl.style.display = 'block';
+        } finally {
+          regenBtn.disabled = false;
+          regenBtn.textContent = 'Regenerate with AI';
+        }
+      });
+    }
+
+    // Save form
     container.querySelector('#planForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const title = container.querySelector('#planTitle').value.trim();
-      if (!title) return;
-
-      const phases = [];
-      container.querySelectorAll('.phase-row').forEach(row => {
-        const name = row.querySelector('.phase-name').value.trim();
-        if (!name) return;
-        phases.push({
-          name,
-          description: row.querySelector('.phase-description').value.trim(),
-          epicIds: row.querySelector('.phase-epics').value.split(',').map(s => s.trim()).filter(Boolean),
-          taskIds: row.querySelector('.phase-tasks').value.split(',').map(s => s.trim()).filter(Boolean),
-          status: row.querySelector('.phase-status').value
-        });
-      });
+      const formData = collectFormData(container);
+      if (!formData.title) return;
 
       const now = new Date().toISOString();
-      const planData = {
-        title,
-        objective: container.querySelector('#planObjective').value.trim(),
-        status: 'draft',
-        phases,
-        updatedAt: now
-      };
+      const planData = { ...formData, updatedAt: now };
 
       try {
         if (isEdit) {
@@ -1530,7 +1670,7 @@ isYearReadOnly = yearReadOnly;
         }
         await window.loadPlans(projectId);
       } catch (err) {
-        container.insertAdjacentHTML('afterbegin', `<div class="error-message" style="color:red;padding:0.5rem;">Error: ${err.message}</div>`);
+        container.insertAdjacentHTML('afterbegin', `<div class="plan-ai-error" style="display:block;">Error: ${err.message}</div>`);
       }
     });
 
@@ -1547,10 +1687,33 @@ isYearReadOnly = yearReadOnly;
     }
   }
 
-  // Wire up the "+ New Plan" button
+  // ── Collect form data from plan form ──
+  function collectFormData(container) {
+    const title = container.querySelector('#planTitle').value.trim();
+    const phases = [];
+    container.querySelectorAll('.phase-row').forEach(row => {
+      const name = row.querySelector('.phase-name').value.trim();
+      if (!name) return;
+      phases.push({
+        name,
+        description: row.querySelector('.phase-description').value.trim(),
+        epicIds: row.querySelector('.phase-epics').value.split(',').map(s => s.trim()).filter(Boolean),
+        taskIds: row.querySelector('.phase-tasks-ids').value.split(',').map(s => s.trim()).filter(Boolean),
+        status: 'pending'
+      });
+    });
+    return {
+      title,
+      objective: container.querySelector('#planObjective').value.trim(),
+      status: 'draft',
+      phases
+    };
+  }
+
+  // Wire up the "+ New Plan" button → opens AI creator
   document.getElementById('addPlanBtn')?.addEventListener('click', () => {
     const projectId = window.currentProjectId || document.body.dataset.projectId;
-    if (projectId) renderPlanForm(document.getElementById('plansContainer'), projectId);
+    if (projectId) renderPlanCreator(document.getElementById('plansContainer'), projectId);
   });
 </script>
 <script type="module">
@@ -2981,4 +3144,9 @@ document.addEventListener('DOMContentLoaded', () => {
   .phase-row-fields { flex: 1; display: grid; grid-template-columns: 1fr 1.5fr; gap: 0.4rem; }
   .phase-row-fields input, .phase-row-fields select { padding: 0.4rem 0.6rem; border: 1px solid var(--border-default, #ced4da); border-radius: 4px; font-size: 0.85rem; background: var(--input-bg, var(--bg-primary, white)); color: var(--text-primary, #333); }
   .phase-remove-btn { background: none; border: none; color: #dc3545; font-size: 1.1rem; cursor: pointer; padding: 0.3rem; line-height: 1; }
+  .plan-creator-hint { color: var(--text-secondary, #555); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem; }
+  .plan-ai-notice { background: #dbeafe; color: #1e40af; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 1rem; border-left: 4px solid #3b82f6; }
+  .plan-ai-error { background: #fee2e2; color: #991b1b; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 0.75rem; border-left: 4px solid #dc3545; }
+  .phase-tasks-preview { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; padding: 0.3rem 0; }
+  .phase-task-chip { background: #e0e7ff; color: #3730a3; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 10px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 </style>
