@@ -136,18 +136,17 @@ describe('onTaskStatusValidation', () => {
       expect(mockDbSet).not.toHaveBeenCalled();
     });
 
-    it('should reject transition to In Progress when startDate is not updated', async () => {
+    it('should reject transition to In Progress when startDate is missing', async () => {
       mockDbOnce.mockResolvedValue({ val: () => ({}) });
       mockDbSet.mockResolvedValue();
 
       const beforeData = {
-        status: 'Blocked',
-        startDate: '2026-01-10'
+        status: 'Blocked'
       };
 
       const afterData = {
         status: 'In Progress',
-        startDate: '2026-01-10', // unchanged -> invalid
+        startDate: '', // missing -> invalid
         title: 'Test Task',
         developer: 'dev_001',
         validator: 'stk_001',
@@ -169,7 +168,7 @@ describe('onTaskStatusValidation', () => {
       expect(result).toEqual({
         reverted: true,
         error: expect.objectContaining({
-          type: 'missing-start-date-update'
+          type: 'missing-start-date'
         })
       });
     });
@@ -407,6 +406,93 @@ describe('onTaskStatusValidation', () => {
 
       expect(result).toBeNull();
       expect(mockDbOnce).not.toHaveBeenCalled();
+    });
+
+    describe('Pausado status', () => {
+      it('should allow transition from In Progress to Pausado when startDate exists', async () => {
+        const afterData = {
+          status: 'Pausado',
+          startDate: '2026-01-25',
+          title: 'Test Task',
+          developer: 'dev_001',
+          validator: 'stk_001'
+        };
+
+        const result = await handleTaskStatusValidation(
+          { projectId: 'Test', section: 'TASKS_Test', cardId: 'card1' },
+          { status: 'In Progress' },
+          afterData,
+          { db: mockDb, logger: mockLogger }
+        );
+
+        expect(result).toBeNull();
+      });
+
+      it('should reject transition to Pausado when startDate is missing', async () => {
+        mockDbOnce.mockResolvedValue({ val: () => ({}) });
+        mockDbSet.mockResolvedValue();
+
+        const afterData = {
+          status: 'Pausado',
+          startDate: '', // missing
+          title: 'Test Task',
+          developer: 'dev_001',
+          validator: 'stk_001',
+          updatedBy: 'user@example.com'
+        };
+
+        const result = await handleTaskStatusValidation(
+          { projectId: 'Test', section: 'TASKS_Test', cardId: 'card1' },
+          { status: 'In Progress' },
+          afterData,
+          { db: mockDb, logger: mockLogger }
+        );
+
+        expect(result).toEqual({
+          reverted: true,
+          error: expect.objectContaining({
+            type: 'missing-start-date-for-pause'
+          })
+        });
+      });
+
+      it('should allow transition from Pausado to In Progress', async () => {
+        const afterData = {
+          status: 'In Progress',
+          startDate: '2026-01-25',
+          title: 'Test Task',
+          developer: 'dev_001',
+          validator: 'stk_001'
+        };
+
+        const result = await handleTaskStatusValidation(
+          { projectId: 'Test', section: 'TASKS_Test', cardId: 'card1' },
+          { status: 'Pausado' },
+          afterData,
+          { db: mockDb, logger: mockLogger }
+        );
+
+        expect(result).toBeNull();
+      });
+
+      it('should allow transition from Pausado to To Do', async () => {
+        const afterData = {
+          status: 'To Do',
+          startDate: '2026-01-25',
+          title: 'Test Task',
+          developer: 'dev_001',
+          validator: 'stk_001'
+        };
+
+        const result = await handleTaskStatusValidation(
+          { projectId: 'Test', section: 'TASKS_Test', cardId: 'card1' },
+          { status: 'Pausado' },
+          afterData,
+          { db: mockDb, logger: mockLogger }
+        );
+
+        expect(result).toBeNull();
+      });
     });
   });
 });

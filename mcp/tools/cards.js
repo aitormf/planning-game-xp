@@ -37,6 +37,7 @@ import {
   migrateImplementationPlan,
   validateImplementationPlan
 } from '../../shared/validation.js';
+import { getListTexts, getListPairs, resolveValue } from '../services/list-service.js';
 
 // Re-export for use by register-tools.js
 export {
@@ -436,6 +437,14 @@ export async function createCard({ projectId, type, title, description, descript
     }
   }
 
+  // Resolve values dynamically from Firebase RTDB (case-insensitive)
+  if (type === 'bug') {
+    if (status) status = await resolveValue('bugStatus', status);
+    if (priority) priority = await resolveValue('bugPriority', priority);
+  } else if (type === 'task') {
+    if (status) status = await resolveValue('taskStatus', status);
+  }
+
   const initialData = { status, priority };
 
   if (type === 'bug') {
@@ -797,6 +806,14 @@ export async function updateCard({ projectId, type, firebaseId, updates, validat
   }
 
   validateEntityIds(updates);
+
+  // Resolve values dynamically from Firebase RTDB (case-insensitive)
+  if (type === 'bug') {
+    if (updates.status) updates.status = await resolveValue('bugStatus', updates.status);
+    if (updates.priority) updates.priority = await resolveValue('bugPriority', updates.priority);
+  } else if (type === 'task') {
+    if (updates.status) updates.status = await resolveValue('taskStatus', updates.status);
+  }
 
   if (type === 'bug') {
     validateBugFields(updates, true);

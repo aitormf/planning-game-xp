@@ -164,12 +164,19 @@ function validateDoneTransitionPermission(afterData, stakeholdersData) {
  */
 function validateStatusDateTransition(beforeData, afterData, afterStatus) {
   if (afterStatus === 'In Progress') {
-    const beforeStart = beforeData?.startDate || null;
-    const afterStart = afterData?.startDate || null;
-    if (!hasValidValue(afterData, 'startDate') || beforeStart === afterStart) {
+    if (!hasValidValue(afterData, 'startDate')) {
       return {
-        type: 'missing-start-date-update',
-        message: 'Cannot change to "In Progress": startDate must be updated in the same status change.'
+        type: 'missing-start-date',
+        message: 'Cannot change to "In Progress": startDate must exist.'
+      };
+    }
+  }
+
+  if (afterStatus === 'Pausado') {
+    if (!hasValidValue(afterData, 'startDate')) {
+      return {
+        type: 'missing-start-date-for-pause',
+        message: 'Cannot change to "Pausado": startDate must exist (task must have been In Progress).'
       };
     }
   }
