@@ -1,7 +1,7 @@
 {
   "name": "planning-game",
   "type": "module",
-  "version": "1.135.0",
+  "version": "1.139.0",
   "private": true,
   "scripts": {
     "generate-sw": "node scripts/generate-sw.js",
@@ -30,6 +30,7 @@
     "deploy:hosting": "node scripts/instance-manager.cjs verify-deploy && firebase deploy --only hosting && node scripts/update-firebase-version.cjs",
     "deploy:rules": "node scripts/instance-manager.cjs select && firebase deploy --only firestore && firebase deploy --only database:main",
     "deploy:rules:test": "node scripts/instance-manager.cjs select && firebase deploy --only database:tests",
+    "deploy:all": "./scripts/deploy-all.sh",
     "emulator": "node scripts/instance-manager.cjs select && ./scripts/emulation/start-emulators.sh",
     "test": "vitest",
     "test:ui": "vitest --ui",
