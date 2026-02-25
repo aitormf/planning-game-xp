@@ -13,6 +13,9 @@
         "firebase-debug.log",
         "firebase-debug.*.log",
         "*.local"
+      ],
+      "predeploy": [
+        "mkdir -p functions/shared && cp -f shared/index.cjs functions/shared/index.cjs"
       ]
     }
   ],

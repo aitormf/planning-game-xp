@@ -31,7 +31,7 @@ const {
   REQUIRED_FIELDS_TO_LEAVE_TODO,
   VALIDATOR_ONLY_STATUSES,
   hasValidValue
-} = require('../../shared/index.cjs');
+} = require('../shared/index.cjs');
 
 /**
  * Check if email matches a stakeholder ID
