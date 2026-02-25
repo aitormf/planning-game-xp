@@ -28,20 +28,20 @@ export const firebaseStorageUploaderStyles = css`
   
   .overlay {
     position: absolute;
-    top: 0; 
-    left: 0; 
-    right: 0; 
+    top: 0;
+    left: 0;
+    right: 0;
     bottom: 0;
-    background: rgba(255,255,255,0.7);
+    background: var(--modal-overlay-bg, rgba(0,0,0,0.6));
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10;
   }
-  
+
   .loader {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
+    border: 4px solid var(--border-subtle, #374151);
+    border-top: 4px solid var(--brand-primary, #3498db);
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -75,10 +75,10 @@ export const firebaseStorageUploaderStyles = css`
   .error-message {
     margin-top: 8px;
     padding: 8px;
-    background: #ffebee;
-    border: 1px solid #ef5350;
+    background: var(--status-error-bg);
+    border: 1px solid var(--status-error-border);
     border-radius: 4px;
-    color: #c62828;
+    color: var(--status-error-text);
     font-size: 0.9em;
   }
   
@@ -115,8 +115,8 @@ export const firebaseStorageUploaderStyles = css`
   }
   
   .select-file-btn {
-    background: #4a9eff;
-    color: white;
+    background: var(--brand-primary);
+    color: var(--text-inverse);
     border: none;
     padding: 0.5rem 1.2rem;
     border-radius: 4px;
@@ -126,24 +126,23 @@ export const firebaseStorageUploaderStyles = css`
     margin-bottom: 4px;
     transition: background 0.2s, color 0.2s;
     font-weight: 500;
-    box-shadow: 0 2px 4px rgba(74,158,255,0.08);
+    box-shadow: var(--shadow-sm);
   }
-  
+
   .select-file-btn:hover:not(:disabled) {
-    background: #3a8eef;
-    color: #fff;
+    background: var(--brand-primary-hover);
   }
-  
+
   .select-file-btn:disabled {
-    background: #b3d4fc;
-    color: #eee;
+    background: var(--text-disabled);
+    color: var(--text-muted);
     cursor: not-allowed;
   }
   
   .delete-file-btn {
     background: none;
     border: none;
-    color: #d9534f;
+    color: var(--color-error);
     font-size: 1.1em;
     margin-left: 8px;
     cursor: pointer;
@@ -152,9 +151,9 @@ export const firebaseStorageUploaderStyles = css`
     border-radius: 50%;
     transition: background 0.2s;
   }
-  
+
   .delete-file-btn:hover {
-    background: #ffeaea;
+    background: var(--status-error-bg);
   }
   
   .delete-confirm-modal {
@@ -187,7 +186,7 @@ export const firebaseStorageUploaderStyles = css`
   
   .delete-confirm-title {
     font-weight: bold;
-    color: #d9534f;
+    color: var(--color-error);
     margin-bottom: 1rem;
     font-size: 1.1em;
   }
@@ -201,9 +200,9 @@ export const firebaseStorageUploaderStyles = css`
     position: absolute;
     top: 2px;
     right: 2px;
-    background: rgba(255,255,255,0.85);
+    background: var(--bg-primary);
     border: none;
-    color: #d9534f;
+    color: var(--color-error);
     font-size: 1.1em;
     padding: 0 4px;
     border-radius: 50%;
@@ -211,8 +210,8 @@ export const firebaseStorageUploaderStyles = css`
     z-index: 2;
     transition: background 0.2s;
   }
-  
+
   .thumbnail-wrapper .delete-file-btn:hover {
-    background: #ffeaea;
+    background: var(--status-error-bg);
   }
 `;

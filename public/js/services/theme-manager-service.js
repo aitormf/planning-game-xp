@@ -122,7 +122,10 @@ class ThemeManager {
       '--modal-bg': '#1a1a2e',
       '--modal-shadow': '0 8px 32px rgba(0, 0, 0, 0.6)',
       '--input-bg': '#1f2937',
+      '--input-border': '#4b5563',
       '--dropdown-bg': '#16213e',
+      '--dropdown-border': '#374151',
+      '--dropdown-item-hover-bg': 'rgba(255, 255, 255, 0.05)',
       '--table-header-bg': '#1f2937',
       '--table-row-bg': '#1a1a2e',
       '--table-row-alt-bg': '#16213e',
@@ -132,6 +135,48 @@ class ThemeManager {
       '--shadow-md': '0 2px 4px rgba(0, 0, 0, 0.4)',
       '--shadow-lg': '0 4px 8px rgba(0, 0, 0, 0.5)',
       '--shadow-xl': '0 8px 16px rgba(0, 0, 0, 0.6)',
+      // Status feedback colors
+      '--status-error-bg': 'rgba(220, 53, 69, 0.2)',
+      '--status-error-text': '#f5a6ae',
+      '--status-error-border': 'rgba(220, 53, 69, 0.3)',
+      '--status-success-bg': 'rgba(40, 167, 69, 0.2)',
+      '--status-success-text': '#6dd98c',
+      '--status-success-border': 'rgba(40, 167, 69, 0.3)',
+      '--status-info-bg': 'rgba(0, 123, 255, 0.2)',
+      '--status-info-text': '#8ec8ff',
+      '--status-info-border': 'rgba(0, 123, 255, 0.3)',
+      '--status-warning-bg': 'rgba(255, 193, 7, 0.2)',
+      '--status-warning-text': '#ffe082',
+      '--status-warning-border': 'rgba(255, 193, 7, 0.3)',
+      // Semantic colors
+      '--color-error': '#f87171',
+      '--color-success': '#4ade80',
+      '--color-info': '#60a5fa',
+      '--color-warning': '#fbbf24',
+      // Interactive states
+      '--hover-overlay': 'rgba(255, 255, 255, 0.04)',
+      '--active-overlay': 'rgba(255, 255, 255, 0.08)',
+      '--focus-ring': '0 0 0 3px rgba(74, 158, 255, 0.4)',
+      // Border
+      '--border-default': '#4b5563',
+      '--border-subtle': '#374151',
+      '--border-strong': '#6b7280',
+      // Card
+      '--card-bg-hover': '#1f2937',
+      '--card-border-color': '#374151',
+      '--card-shadow-hover': '0 6px 12px rgba(74, 158, 255, 0.2)',
+      // Modal
+      '--modal-overlay-bg': 'rgba(0, 0, 0, 0.8)',
+      '--modal-footer-bg': '#16213e',
+      // Table
+      '--table-border': '#374151',
+      '--table-row-hover-bg': '#16213e',
+      // Header & Tab
+      '--header-border': '#374151',
+      '--tab-bg': '#1f2937',
+      '--tab-bg-active': '#1a1a2e',
+      // Progress
+      '--progress-track-bg': 'rgba(255, 255, 255, 0.1)',
       // MultiSelect component (@manufosela/multi-select)
       '--multi-select-bg': '#1f2937',
       '--multi-select-dropdown-bg': '#16213e',

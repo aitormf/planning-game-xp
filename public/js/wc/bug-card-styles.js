@@ -38,13 +38,13 @@ const BugCardSpecificStyles = css`
   }
 
   :host([expanded]) .card-header select:hover {
-    border-color: #4a9eff;
+    border-color: var(--brand-primary);
   }
 
   :host([expanded]) .card-header select:focus {
     outline: none;
-    border-color: #4a9eff;
-    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+    border-color: var(--brand-primary);
+    box-shadow: var(--focus-ring);
   }
   
   .invalid-field {
@@ -107,26 +107,26 @@ const BugCardSpecificStyles = css`
 
   .uploader-group input:focus {
     outline: none;
-    border-color: #4a9eff;
-    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+    border-color: var(--brand-primary);
+    box-shadow: var(--focus-ring);
   }
 
   .files-status {
     margin-top: 0.5rem;
     padding: 0.5rem;
-    background: var(--color-info-light, #e3f2fd);
+    background: var(--status-info-bg);
     border-radius: 4px;
     font-size: 0.85em;
-    color: var(--color-info-dark, #1976d2);
+    color: var(--status-info-text);
   }
 
     margin-top: 1rem;
     padding: 0.5rem;
-    background: var(--color-warning-light, #fff3cd);
-    border: 1px solid var(--color-warning-border, #ffeaa7);
+    background: var(--status-warning-bg);
+    border: 1px solid var(--status-warning-border);
     border-radius: 4px;
     font-size: 0.8em;
-    color: var(--color-warning-dark, #856404);
+    color: var(--status-warning-text);
     display: none;
     visibility: hidden;
     width: 0;
@@ -147,11 +147,11 @@ const BugCardSpecificStyles = css`
   }
   
   .copy-link-button:focus {
-    outline: 2px solid #4a9eff;
+    outline: 2px solid var(--brand-primary);
   }
-  
+
   .copy-link-button:hover {
-    background: rgba(0,0,0,0.05);
+    background: var(--hover-overlay);
   }
 
   .attachment-section {
@@ -175,7 +175,7 @@ const BugCardSpecificStyles = css`
   .attachment-indicator {
     font-size: 1.2em;
     margin-right: 0.3em;
-    color: #4a9eff;
+    color: var(--brand-primary);
     cursor: help;
   }
 
@@ -321,11 +321,11 @@ const BugCardSpecificStyles = css`
   }
 
   .icon-button:hover {
-    background: rgba(0,0,0,0.1);
+    background: var(--hover-overlay);
   }
 
   .icon-button.danger:hover {
-    background: rgba(217, 83, 79, 0.2);
+    background: var(--status-error-bg);
   }
 
   .scenario-actions {
@@ -399,7 +399,7 @@ const BugCardSpecificStyles = css`
   }
 
   .icon-btn:hover {
-    background: rgba(0,0,0,0.1);
+    background: var(--hover-overlay);
   }
 
   .save-button {

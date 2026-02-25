@@ -28,7 +28,7 @@ export const StateHistoryViewerStyles = css`
 
   /* Modal Container */
   .modal-container {
-    background: var(--bg-primary, white);
+    background: var(--bg-primary);
     border-radius: 12px;
     box-shadow: var(--shadow-xl, 0 20px 60px rgba(0, 0, 0, 0.3));
     width: 90%;
@@ -55,7 +55,7 @@ export const StateHistoryViewerStyles = css`
     display: flex;
     align-items: center;
     padding: 16px 20px;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    border-bottom: 1px solid var(--border-default);
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-radius: 12px 12px 0 0;
@@ -105,10 +105,10 @@ export const StateHistoryViewerStyles = css`
   /* Card Title Bar */
   .card-title-bar {
     padding: 10px 20px;
-    background: var(--bg-secondary, #f8f9fa);
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-default);
     font-size: 0.9rem;
-    color: var(--text-primary, #495057);
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -117,8 +117,8 @@ export const StateHistoryViewerStyles = css`
   /* Tabs */
   .tabs {
     display: flex;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
-    background: var(--bg-secondary, #fafafa);
+    border-bottom: 1px solid var(--border-default);
+    background: var(--bg-secondary);
   }
 
   .tab {
@@ -128,14 +128,14 @@ export const StateHistoryViewerStyles = css`
     background: transparent;
     cursor: pointer;
     font-size: 0.9rem;
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
     transition: all 0.2s;
     position: relative;
   }
 
   .tab:hover {
-    background: var(--bg-tertiary, #f0f0f0);
-    color: var(--text-primary, #333);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
   }
 
   .tab.active {
@@ -168,14 +168,14 @@ export const StateHistoryViewerStyles = css`
     align-items: center;
     justify-content: center;
     height: 200px;
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
     gap: 12px;
   }
 
   .spinner {
     width: 32px;
     height: 32px;
-    border: 3px solid var(--border-color, #e0e0e0);
+    border: 3px solid var(--border-default);
     border-top-color: var(--brand-primary, #667eea);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
@@ -189,7 +189,7 @@ export const StateHistoryViewerStyles = css`
   .empty-state {
     text-align: center;
     padding: 40px 20px;
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
   }
 
   .empty-state.success {
@@ -209,7 +209,7 @@ export const StateHistoryViewerStyles = css`
 
   .hint, .empty-hint {
     font-size: 0.85rem;
-    color: var(--text-disabled, #999);
+    color: var(--text-disabled);
   }
 
   /* Timeline Tab */
@@ -224,13 +224,13 @@ export const StateHistoryViewerStyles = css`
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+    background: var(--status-info-bg);
     border-radius: 8px;
-    border-left: 4px solid var(--color-info, #007bff);
+    border-left: 4px solid var(--color-info);
   }
 
   .first-in-progress .label {
-    color: var(--text-primary, #495057);
+    color: var(--text-primary);
     font-weight: 500;
   }
 
@@ -248,8 +248,8 @@ export const StateHistoryViewerStyles = css`
   }
 
   .badge.immutable {
-    background: var(--status-warning-bg, #fff3cd);
-    color: var(--status-warning-text, #856404);
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
   }
 
   .timeline {
@@ -267,7 +267,7 @@ export const StateHistoryViewerStyles = css`
     top: 0;
     bottom: 0;
     width: 2px;
-    background: var(--border-color, #e0e0e0);
+    background: var(--border-default);
   }
 
   .timeline-item {
@@ -288,7 +288,7 @@ export const StateHistoryViewerStyles = css`
   }
 
   .timeline-content {
-    background: var(--bg-secondary, #f8f9fa);
+    background: var(--bg-secondary);
     border-radius: 8px;
     padding: 12px 16px;
   }
@@ -311,7 +311,7 @@ export const StateHistoryViewerStyles = css`
   }
 
   .arrow {
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
     font-size: 1.2rem;
   }
 
@@ -319,7 +319,7 @@ export const StateHistoryViewerStyles = css`
     display: flex;
     gap: 16px;
     font-size: 0.85rem;
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
   }
 
   .timestamp {
@@ -347,13 +347,13 @@ export const StateHistoryViewerStyles = css`
   .duration {
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px dashed var(--border-color, #dee2e6);
+    border-top: 1px dashed var(--border-subtle);
     font-size: 0.85rem;
-    color: var(--text-primary, #495057);
+    color: var(--text-primary);
   }
 
   .duration-label {
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
   }
 
   .duration-value {
@@ -375,7 +375,7 @@ export const StateHistoryViewerStyles = css`
   }
 
   .metric-card {
-    background: var(--bg-secondary, #f8f9fa);
+    background: var(--bg-secondary);
     border-radius: 12px;
     padding: 16px;
     display: flex;
@@ -407,7 +407,7 @@ export const StateHistoryViewerStyles = css`
 
   .metric-label {
     font-size: 0.85rem;
-    color: var(--text-primary, #495057);
+    color: var(--text-primary);
     margin-top: 4px;
   }
 
@@ -417,16 +417,16 @@ export const StateHistoryViewerStyles = css`
 
   .metric-hint {
     font-size: 0.75rem;
-    color: var(--text-disabled, #999);
+    color: var(--text-disabled);
     margin-top: 4px;
   }
 
   .metrics-container h3 {
     margin: 0;
     font-size: 1rem;
-    color: var(--text-primary, #333);
+    color: var(--text-primary);
     padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    border-bottom: 1px solid var(--border-default);
   }
 
   .status-times {
@@ -449,7 +449,7 @@ export const StateHistoryViewerStyles = css`
   .time-bar-container {
     flex: 1;
     height: 8px;
-    background: var(--bg-tertiary, #e9ecef);
+    background: var(--bg-tertiary);
     border-radius: 4px;
     overflow: hidden;
   }
@@ -464,7 +464,7 @@ export const StateHistoryViewerStyles = css`
     min-width: 80px;
     text-align: right;
     font-weight: 500;
-    color: var(--text-primary, #495057);
+    color: var(--text-primary);
     font-size: 0.9rem;
   }
 
@@ -498,9 +498,9 @@ export const StateHistoryViewerStyles = css`
   .cycles-container h3 {
     margin: 0;
     font-size: 1rem;
-    color: var(--text-primary, #333);
+    color: var(--text-primary);
     padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    border-bottom: 1px solid var(--border-default);
   }
 
   .rejections-list {
@@ -513,7 +513,7 @@ export const StateHistoryViewerStyles = css`
     display: flex;
     gap: 16px;
     padding: 16px;
-    background: var(--status-error-bg, #fff5f5);
+    background: var(--status-error-bg);
     border-radius: 8px;
     border-left: 4px solid var(--color-error, #dc3545);
   }
@@ -539,7 +539,7 @@ export const StateHistoryViewerStyles = css`
     align-items: center;
     gap: 8px;
     font-size: 0.9rem;
-    color: var(--text-primary, #495057);
+    color: var(--text-primary);
   }
 
   .rejection-content .icon {

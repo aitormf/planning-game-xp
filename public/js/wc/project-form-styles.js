@@ -52,7 +52,7 @@ export const ProjectFormStyles = css`
     display: block;
     margin-bottom: 0.5rem;
     font-weight: bold;
-    color: var(--secundary-color, #333);
+    color: var(--text-secondary);
   }
 
   .form-group input,
@@ -60,18 +60,20 @@ export const ProjectFormStyles = css`
   .form-group textarea {
     width: 100%;
     padding: 0.75rem;
-    border: 2px solid var(--brand-secondary, #007bff);
+    border: 2px solid var(--brand-secondary);
     border-radius: 8px;
     font-size: 1rem;
     box-sizing: border-box;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
   }
 
   .form-group input:focus,
   .form-group select:focus,
   .form-group textarea:focus {
     outline: none;
-    border-color: var(--brand-secondary, #007bff);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    border-color: var(--brand-secondary);
+    box-shadow: var(--focus-ring);
   }
 
   .stakeholder-input {
@@ -86,7 +88,7 @@ export const ProjectFormStyles = css`
 
   .stakeholder-input button {
     padding: 0.75rem 1rem;
-    background-color: var(--brand-secondary, #007bff);
+    background-color: var(--brand-secondary);
     color: white;
     border: none;
     border-radius: 8px;
@@ -96,7 +98,7 @@ export const ProjectFormStyles = css`
   }
 
   .stakeholder-input button:hover {
-    background-color: #0056b3;
+    background-color: var(--brand-secondary-hover, #0056b3);
   }
 
   .stakeholder-input button:disabled {
@@ -116,7 +118,7 @@ export const ProjectFormStyles = css`
 
   .developer-input button {
     padding: 0.75rem 1rem;
-    background-color: var(--brand-secondary, #007bff);
+    background-color: var(--brand-secondary);
     color: white;
     border: none;
     border-radius: 8px;
@@ -126,7 +128,7 @@ export const ProjectFormStyles = css`
   }
 
   .developer-input button:hover {
-    background-color: #0056b3;
+    background-color: var(--brand-secondary-hover, #0056b3);
   }
 
   .developer-input button:disabled {
@@ -157,7 +159,7 @@ export const ProjectFormStyles = css`
   .developer-name {
     font-size: 0.9rem;
     font-weight: 500;
-    color: var(--secundary-color, #333);
+    color: var(--text-secondary);
   }
 
   .developer-email {
@@ -212,7 +214,7 @@ export const ProjectFormStyles = css`
   .stakeholder-name {
     font-size: 0.9rem;
     font-weight: 500;
-    color: var(--secundary-color, #333);
+    color: var(--text-secondary);
   }
 
   .stakeholder-email {
@@ -255,7 +257,7 @@ export const ProjectFormStyles = css`
   }
 
   .helper-text.warning {
-    color: #a94442;
+    color: var(--color-error);
   }
 
   .helper-text.locked-hint {
@@ -264,7 +266,7 @@ export const ProjectFormStyles = css`
   }
 
   .locked-field {
-    background: var(--bg-tertiary, #f1f5f9);
+    background: var(--bg-tertiary);
     cursor: not-allowed;
     opacity: 0.7;
   }
@@ -288,8 +290,8 @@ export const ProjectFormStyles = css`
   }
 
   .edit-mode-notice {
-    background-color: #e7f3ff;
-    border: 1px solid #007bff;
+    background-color: var(--status-info-bg);
+    border: 1px solid var(--status-info-border);
     border-radius: 6px;
     padding: 0.75rem;
     margin-bottom: 1rem;
@@ -298,7 +300,7 @@ export const ProjectFormStyles = css`
 
   .edit-mode-notice p {
     margin: 0;
-    color: #004085;
+    color: var(--status-info-text);
     font-size: 0.9rem;
   }
 
@@ -317,7 +319,7 @@ export const ProjectFormStyles = css`
   .checkbox-group label {
     margin: 0;
     font-weight: normal;
-    color: var(--secundary-color, #333);
+    color: var(--text-secondary);
     cursor: pointer;
   }
 
@@ -328,10 +330,10 @@ export const ProjectFormStyles = css`
     gap: 0.5rem;
     max-height: 200px;
     overflow-y: auto;
-    border: 1px solid var(--border-color, #ddd);
+    border: 1px solid var(--border-default);
     border-radius: 6px;
     padding: 0.75rem;
-    background: var(--bg-color, #f9f9f9);
+    background: var(--bg-secondary);
   }
 
   .config-option {
@@ -345,7 +347,7 @@ export const ProjectFormStyles = css`
   }
 
   .config-option:hover {
-    background-color: var(--hover-bg, #e9ecef);
+    background-color: var(--hover-overlay);
   }
 
   .config-option input[type="checkbox"] {
@@ -355,18 +357,18 @@ export const ProjectFormStyles = css`
 
   .config-name {
     font-weight: 500;
-    color: var(--primary-color, #333);
+    color: var(--text-primary);
   }
 
   .config-desc {
     display: block;
     font-size: 0.85rem;
-    color: var(--muted-color, #666);
+    color: var(--text-muted);
     margin-top: 0.25rem;
   }
 
   .no-options {
-    color: var(--muted-color, #999);
+    color: var(--text-muted);
     font-style: italic;
     padding: 0.5rem 0;
   }
@@ -386,7 +388,7 @@ export const ProjectFormStyles = css`
   }
 
   .danger-zone .warning-text {
-    color: #721c24;
+    color: var(--status-error-text);
     margin-bottom: 1rem;
     font-size: 0.9rem;
     line-height: 1.4;
@@ -410,8 +412,8 @@ export const ProjectFormStyles = css`
   .delete-confirmation {
     margin-top: 1rem;
     padding: 1rem;
-    background-color: #f5c6cb;
-    border: 1px solid #f1b0b7;
+    background-color: var(--status-error-bg);
+    border: 1px solid var(--status-error-border);
     border-radius: 6px;
   }
 
@@ -454,7 +456,7 @@ export const ProjectFormStyles = css`
 
   .add-btn {
     padding: 0.75rem 1rem;
-    background-color: var(--brand-secondary, #007bff);
+    background-color: var(--brand-secondary);
     color: white;
     border: none;
     border-radius: 8px;
@@ -464,7 +466,7 @@ export const ProjectFormStyles = css`
   }
 
   .add-btn:hover {
-    background-color: #0056b3;
+    background-color: var(--brand-secondary-hover, #0056b3);
   }
 
   .add-btn:disabled {
@@ -490,8 +492,8 @@ export const ProjectFormStyles = css`
   .create-entity-form {
     margin-top: 0.75rem;
     padding: 0.75rem;
-    background-color: #e8f5e9;
-    border: 1px solid #c8e6c9;
+    background-color: var(--status-success-bg);
+    border: 1px solid var(--status-success-border);
     border-radius: 8px;
   }
 
@@ -583,8 +585,8 @@ export const ProjectFormStyles = css`
   }
 
   .repository-item.default-repo {
-    border-color: var(--brand-secondary, #007bff);
-    background-color: #e7f3ff;
+    border-color: var(--brand-secondary);
+    background-color: var(--status-info-bg);
   }
 
   .repo-fields {
@@ -606,7 +608,7 @@ export const ProjectFormStyles = css`
   }
 
   .default-badge {
-    background-color: var(--brand-secondary, #007bff);
+    background-color: var(--brand-secondary);
     color: white;
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
@@ -712,8 +714,8 @@ export const ProjectFormStyles = css`
   /* ========================== */
 
   .apps-permissions-info {
-    background: #f0f4ff;
-    border: 1px solid #c5d5ff;
+    background: var(--status-info-bg);
+    border: 1px solid var(--status-info-border);
     border-radius: 8px;
     padding: 0.75rem 1rem;
     margin-bottom: 1.5rem;
@@ -721,7 +723,7 @@ export const ProjectFormStyles = css`
 
   .apps-permissions-info p {
     margin: 0;
-    color: #4a5568;
+    color: var(--text-secondary);
     font-size: 0.9rem;
   }
 
@@ -772,8 +774,8 @@ export const ProjectFormStyles = css`
     width: 24px;
     height: 24px;
     padding: 0;
-    background: #fee2e2;
-    color: #dc3545;
+    background: var(--status-error-bg);
+    color: var(--color-error);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -785,8 +787,8 @@ export const ProjectFormStyles = css`
   }
 
   .remove-permission-btn:hover {
-    background: #dc3545;
-    color: white;
+    background: var(--color-error);
+    color: var(--text-inverse);
   }
 
   .empty-permission {
@@ -817,8 +819,8 @@ export const ProjectFormStyles = css`
 
   .permission-input:focus {
     outline: none;
-    border-color: #6c5ce7;
-    box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.15);
+    border-color: var(--brand-secondary);
+    box-shadow: var(--focus-ring);
   }
 
   .permission-select {
@@ -834,28 +836,28 @@ export const ProjectFormStyles = css`
 
   .permission-select:focus {
     outline: none;
-    border-color: #6c5ce7;
-    box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.15);
+    border-color: var(--brand-secondary);
+    box-shadow: var(--focus-ring);
   }
 
   .warning-text {
     margin-top: 0.5rem;
     font-size: 0.85rem;
-    color: #856404;
-    background: #fff3cd;
+    color: var(--status-warning-text);
+    background: var(--status-warning-bg);
     padding: 0.5rem 0.75rem;
     border-radius: 4px;
-    border: 1px solid #ffc107;
+    border: 1px solid var(--status-warning-border);
   }
 
   .info-text {
     margin-top: 0.5rem;
     font-size: 0.85rem;
-    color: #0c5460;
-    background: #d1ecf1;
+    color: var(--status-info-text);
+    background: var(--status-info-bg);
     padding: 0.5rem 0.75rem;
     border-radius: 4px;
-    border: 1px solid #bee5eb;
+    border: 1px solid var(--status-info-border);
   }
 
   .add-permission-btn {
@@ -883,22 +885,22 @@ export const ProjectFormStyles = css`
   .roles-info-box {
     margin-top: 1.5rem;
     padding: 1rem;
-    background: #e8f4fd;
-    border: 1px solid #bee5eb;
+    background: var(--status-info-bg);
+    border: 1px solid var(--status-info-border);
     border-radius: 8px;
   }
 
   .roles-info-box h4 {
     margin: 0 0 0.75rem 0;
     font-size: 0.95rem;
-    color: #0c5460;
+    color: var(--status-info-text);
   }
 
   .roles-info-box ul {
     margin: 0;
     padding: 0 0 0 1.25rem;
     font-size: 0.85rem;
-    color: #0c5460;
+    color: var(--status-info-text);
     line-height: 1.6;
   }
 
@@ -906,7 +908,7 @@ export const ProjectFormStyles = css`
     margin: 0.75rem 0 0 0;
     font-size: 0.85rem;
     font-weight: 500;
-    color: #856404;
+    color: var(--status-warning-text);
   }
 
   .roles-info-box li {

@@ -354,6 +354,8 @@ import Layout from '../layouts/Layout.astro';
     const allTabs = document.querySelectorAll('.tablinks');
     allTabs.forEach(tab => {
       const section = tab.dataset.section;
+      // tasksGenerator visibility is managed by app-controller.js - don't override
+      if (section === 'tasksGenerator') return;
       // App tab only visible if project has allowExecutables
       if (section === 'app') {
         tab.style.display = (projectHasApps && visibleTabs.includes(section)) ? '' : 'none';

@@ -36,14 +36,14 @@ export const CommitsListStyles = css`
   }
 
   .commit-row:hover td {
-    background: var(--surface-secondary, #f8f9fa);
+    background: var(--bg-tertiary);
   }
 
   .commit-hash {
     font-family: monospace;
     font-size: 0.85rem;
-    color: var(--color-blue-600, #2563eb);
-    background: var(--surface-tertiary, #e5e5e5);
+    color: var(--brand-primary);
+    background: var(--bg-tertiary);
     padding: 0.15rem 0.4rem;
     border-radius: 3px;
     white-space: nowrap;
