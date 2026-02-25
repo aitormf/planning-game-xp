@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Added
+
+- Add Development Plans tab with CRUD management
+
+### Fixed
+
+- Force build in deploy-all to prevent skip on second instance
+
 ## [1.139.0] - 2026-02-25
 
 ### Fixed
