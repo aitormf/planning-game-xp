@@ -60,6 +60,8 @@ const INSTANCE_FILES = [
   { src: 'sonar-project.properties', dest: 'sonar-project.properties', required: false, desc: 'SonarQube config' },
   { src: 'functions/.env', dest: 'functions/.env', required: false, desc: 'Cloud Functions env vars' },
   { src: 'theme-config.json', dest: 'public/theme-config.json', required: false, desc: 'Theme configuration (colors, branding)' },
+  { src: 'manifest.json', dest: 'public/manifest.json', required: false, desc: 'PWA manifest' },
+  { src: 'developer-directory.js', dest: 'public/js/config/developer-directory.js', required: false, desc: 'Developer name/alias directory' },
 ];
 
 const EMULATOR_DATA = { src: 'emulator-data', dest: 'emulator-data' };

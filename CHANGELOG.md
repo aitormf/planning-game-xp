@@ -7,6 +7,7 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Correct broken titleWrapper reference in table badge layout
 - Move badges to second line in task table to preserve title visibility
 
 ## [1.133.1] - 2026-02-24
