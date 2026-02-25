@@ -28,7 +28,8 @@ export const TASK_SCHEMA = {
     'attachment', 'relatedTasks', 'repositoryLabel', 'year',
     'commits', 'validatedAt', 'reopenCycles', 'reopenCount',
     'implementationPlan', 'implementationNotes',
-    'aiUsage', 'pipelineStatus'
+    'aiUsage', 'pipelineStatus',
+    'timeLog', 'totalElapsedTime', 'effectiveWorkTime', 'totalPausedTime'
   ],
   VIEW_FIELDS: [
     'firebaseId', 'cardId', 'title', 'status',

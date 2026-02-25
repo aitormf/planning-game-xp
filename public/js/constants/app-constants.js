@@ -56,7 +56,7 @@ export const APP_CONSTANTS = {
   
   // Task Status Order (logical workflow order)
   // Reopened is a special status for tasks that were validated but need rework
-  TASK_STATUS_ORDER: ['To Do', 'In Progress', 'To Validate', 'Done&Validated', 'Blocked', 'Reopened'],
+  TASK_STATUS_ORDER: ['To Do', 'In Progress', 'Pausado', 'To Validate', 'Done&Validated', 'Blocked', 'Reopened'],
 
   // Bug Status Order (logical workflow order — aligned with shared/constants.js)
   BUG_STATUS_ORDER: ['Created', 'Assigned', 'Fixed', 'Verified', 'Closed'],
@@ -72,6 +72,7 @@ export const APP_CONSTANTS = {
   KANBAN_COLORS: {
     'TO DO': 'linear-gradient(135deg, #6c757d, #495057)',
     'IN PROGRESS': 'linear-gradient(135deg, #ffc107, #fd7e14)',
+    'PAUSADO': 'linear-gradient(135deg, #ff9800, #f57c00)',
     'TO VALIDATE': 'linear-gradient(135deg, #17a2b8, #20c997)',
     'DONE&VALIDATED': 'linear-gradient(135deg, #28a745, #20c997)',
     'BLOCKED': 'linear-gradient(135deg, #dc3545, #c82333)',

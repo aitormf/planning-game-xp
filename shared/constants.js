@@ -23,7 +23,7 @@ export const VALID_BUG_PRIORITIES = [
 // ──────────────────────────────────────────────
 // Task statuses
 // ──────────────────────────────────────────────
-export const VALID_TASK_STATUSES = ['To Do', 'In Progress', 'To Validate', 'Done&Validated', 'Blocked', 'Reopened'];
+export const VALID_TASK_STATUSES = ['To Do', 'In Progress', 'Pausado', 'To Validate', 'Done&Validated', 'Blocked', 'Reopened'];
 
 export const VALID_TASK_PRIORITIES = ['High', 'Medium', 'Low'];
 
@@ -84,12 +84,21 @@ export const TASK_TRANSITION_RULES = {
     }
   },
   'In Progress': {
-    allowedTransitions: ['To Validate', 'Blocked', 'To Do'],
+    allowedTransitions: ['To Validate', 'Pausado', 'Blocked', 'To Do'],
     requirements: {
       'To Validate': [...REQUIRED_FIELDS_TO_LEAVE_TODO, ...REQUIRED_FIELDS_FOR_TO_VALIDATE],
+      'Pausado': [],
       'Blocked': ['blockedByBusiness OR blockedByDevelopment', 'bbbWhy/bbbWho OR bbdWhy/bbdWho'],
       'To Do': []
     }
+  },
+  'Pausado': {
+    allowedTransitions: ['In Progress', 'To Do'],
+    requirements: {
+      'In Progress': [],
+      'To Do': []
+    },
+    note: 'Task was in progress and paused. startDate is immutable. timeLog tracks pause/resume timestamps.'
   },
   'To Validate': {
     allowedTransitions: ['Reopened'],
