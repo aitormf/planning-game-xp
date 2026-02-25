@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Added
+
+- Add generateDevPlan Cloud Function for AI plan creation
+- AI-powered plan generation from text/context
+
 ## [1.141.0] - 2026-02-25
 
 ### Added
