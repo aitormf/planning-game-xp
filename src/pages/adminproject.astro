@@ -1322,6 +1322,14 @@ isYearReadOnly = yearReadOnly;
       if (isDraft) {
         html += `  <button class="plan-action-btn plan-edit-btn" data-action="edit" title="Edit">✏️</button>`;
       }
+      if (!isDraft) {
+        const genCount = (plan.generatedTasks || []).length;
+        if (genCount > 0) {
+          html += `  <button class="plan-action-btn plan-generate-btn plan-generated-done" data-action="regenerate" title="Regenerate Tasks (${genCount} created)">🔄 ${genCount}</button>`;
+        } else {
+          html += `  <button class="plan-action-btn plan-generate-btn" data-action="generate" title="Generate Tasks">⚡</button>`;
+        }
+      }
       html += `    <button class="plan-action-btn plan-delete-btn" data-action="delete" title="Delete">🗑</button>`;
       html += `  </td>`;
       html += `</tr>`;
@@ -1342,6 +1350,10 @@ isYearReadOnly = yearReadOnly;
           renderPlanDetail(container, projectId, plan);
         } else if (action === 'edit') {
           renderPlanForm(container, projectId, plan);
+        } else if (action === 'generate') {
+          await handleGenerateTasksFromPlan(container, projectId, plan);
+        } else if (action === 'regenerate') {
+          await handleRegenerateTasksFromPlan(container, projectId, plan);
         } else if (action === 'delete') {
           if (window.modalService) {
             const confirmed = await window.modalService.confirm(`Are you sure you want to delete "${plan.title}"?`);
@@ -1394,6 +1406,17 @@ isYearReadOnly = yearReadOnly;
       if (refs.length) {
         phasesHtml += `  <div class="phase-refs">${refs.join(' &middot; ')}</div>`;
       }
+      // Show AI-proposed tasks for this phase
+      if ((phase.tasks || []).length > 0) {
+        phasesHtml += `  <div class="phase-ai-tasks">`;
+        phasesHtml += `    <span class="phase-ai-tasks-label">Proposed tasks (${phase.tasks.length}):</span>`;
+        phasesHtml += `    <div class="phase-tasks-preview">`;
+        for (const t of phase.tasks) {
+          phasesHtml += `<span class="phase-task-chip" title="${t.como || ''} ${t.quiero || ''} ${t.para || ''}">${t.title}</span>`;
+        }
+        phasesHtml += `    </div>`;
+        phasesHtml += `  </div>`;
+      }
       phasesHtml += `</div>`;
     });
 
@@ -1404,6 +1427,13 @@ isYearReadOnly = yearReadOnly;
     if (!isAccepted) {
       html += `  <button class="plans-btn plans-btn-primary" id="planEditBtn">Edit</button>`;
       html += `  <button class="plans-btn plans-btn-accept" id="planAcceptBtn">Accept Plan</button>`;
+    } else {
+      const genCount = (plan.generatedTasks || []).length;
+      if (genCount > 0) {
+        html += `  <button class="plans-btn plans-btn-secondary" id="planRegenerateBtn">🔄 Regenerate Tasks (${genCount} created)</button>`;
+      } else {
+        html += `  <button class="plans-btn plans-btn-generate" id="planGenerateBtn">⚡ Generate Tasks</button>`;
+      }
     }
     html += `  </div>`;
     html += `</div>`;
@@ -1439,6 +1469,123 @@ isYearReadOnly = yearReadOnly;
         if (cached) cached.status = 'accepted';
         renderPlanDetail(container, projectId, plan);
       });
+    }
+    const generateBtn = container.querySelector('#planGenerateBtn');
+    if (generateBtn) {
+      generateBtn.addEventListener('click', () => handleGenerateTasksFromPlan(container, projectId, plan));
+    }
+    const regenerateBtn = container.querySelector('#planRegenerateBtn');
+    if (regenerateBtn) {
+      regenerateBtn.addEventListener('click', () => handleRegenerateTasksFromPlan(container, projectId, plan));
+    }
+  }
+
+  // ── Generate Tasks from Plan ──
+  async function handleGenerateTasksFromPlan(container, projectId, plan) {
+    const totalTasks = (plan.phases || []).reduce((sum, p) => sum + (p.tasks || []).length, 0);
+    if (totalTasks === 0) {
+      if (window.modalService) {
+        await window.modalService.alert('This plan has no tasks defined in its phases. Edit the plan to add tasks first.');
+      }
+      return;
+    }
+
+    if (window.modalService) {
+      const confirmed = await window.modalService.confirm(
+        `Generate ${totalTasks} task(s) from plan "${plan.title}"?\n\nTasks will be created with status "To Do" and linked to their phase epics.`
+      );
+      if (!confirmed) return;
+    }
+
+    const statusEl = container.querySelector('.plan-detail-actions') || container;
+    const originalHtml = statusEl.innerHTML;
+    statusEl.innerHTML = '<span class="plan-generating">Generating tasks...</span>';
+
+    try {
+      const createTasksFromPlan = httpsCallable(functions, 'createTasksFromPlan');
+      const result = await createTasksFromPlan({ projectId, planId: plan._id });
+      const { createdTasks, totalCreated } = result.data;
+
+      // Update local cache
+      plan.generatedTasks = createdTasks.map(t => ({
+        cardId: t.cardId,
+        firebaseId: t.firebaseId,
+        phaseIndex: t.phaseIndex
+      }));
+
+      // Refresh plan data from Firebase
+      const planSnap = await get(ref(database, `plans/${projectId}/${plan._id}`));
+      if (planSnap.exists()) {
+        const updatedPlan = { _id: plan._id, ...planSnap.val() };
+        const cachedIdx = plansCache.findIndex(p => p._id === plan._id);
+        if (cachedIdx >= 0) plansCache[cachedIdx] = updatedPlan;
+        Object.assign(plan, updatedPlan);
+      }
+
+      if (window.modalService) {
+        await window.modalService.alert(`${totalCreated} task(s) created successfully!\n\nTask IDs: ${createdTasks.map(t => t.cardId).join(', ')}`);
+      }
+
+      renderPlanDetail(container, projectId, plan);
+    } catch (err) {
+      statusEl.innerHTML = originalHtml;
+      const msg = err.message || 'Unknown error';
+      if (window.modalService) {
+        await window.modalService.alert(`Error generating tasks: ${msg}`);
+      }
+    }
+  }
+
+  async function handleRegenerateTasksFromPlan(container, projectId, plan) {
+    const prevCount = (plan.generatedTasks || []).length;
+    const totalTasks = (plan.phases || []).reduce((sum, p) => sum + (p.tasks || []).length, 0);
+
+    if (window.modalService) {
+      const confirmed = await window.modalService.confirm(
+        `Regenerate tasks for plan "${plan.title}"?\n\n` +
+        `This will delete ${prevCount} previously generated task(s) that are still in "To Do" status ` +
+        `and create ${totalTasks} new task(s).\n\n` +
+        `Tasks that have already been started (In Progress, etc.) will be kept.`
+      );
+      if (!confirmed) return;
+    }
+
+    const statusEl = container.querySelector('.plan-detail-actions') || container;
+    const originalHtml = statusEl.innerHTML;
+    statusEl.innerHTML = '<span class="plan-generating">Regenerating tasks...</span>';
+
+    try {
+      const regenerateTasksFromPlan = httpsCallable(functions, 'regenerateTasksFromPlan');
+      const result = await regenerateTasksFromPlan({ projectId, planId: plan._id });
+      const { createdTasks, totalCreated, skippedTasks } = result.data;
+
+      // Refresh plan data from Firebase
+      const planSnap = await get(ref(database, `plans/${projectId}/${plan._id}`));
+      if (planSnap.exists()) {
+        const updatedPlan = { _id: plan._id, ...planSnap.val() };
+        const cachedIdx = plansCache.findIndex(p => p._id === plan._id);
+        if (cachedIdx >= 0) plansCache[cachedIdx] = updatedPlan;
+        Object.assign(plan, updatedPlan);
+      }
+
+      let message = `${totalCreated} task(s) created successfully!`;
+      if (skippedTasks && skippedTasks.length > 0) {
+        message += `\n\n${skippedTasks.length} task(s) were kept because they are already in progress:\n`;
+        message += skippedTasks.map(s => `  - ${s.cardId} (${s.status})`).join('\n');
+      }
+      message += `\n\nNew Task IDs: ${createdTasks.map(t => t.cardId).join(', ')}`;
+
+      if (window.modalService) {
+        await window.modalService.alert(message);
+      }
+
+      renderPlanDetail(container, projectId, plan);
+    } catch (err) {
+      statusEl.innerHTML = originalHtml;
+      const msg = err.message || 'Unknown error';
+      if (window.modalService) {
+        await window.modalService.alert(`Error regenerating tasks: ${msg}`);
+      }
     }
   }
 
@@ -3149,4 +3296,10 @@ document.addEventListener('DOMContentLoaded', () => {
   .plan-ai-error { background: #fee2e2; color: #991b1b; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 0.75rem; border-left: 4px solid #dc3545; }
   .phase-tasks-preview { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; padding: 0.3rem 0; }
   .phase-task-chip { background: #e0e7ff; color: #3730a3; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 10px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+  .plans-btn-generate { background: #7c3aed; color: white; padding: 0.5rem 1.25rem; font-size: 0.95rem; }
+  .plan-generate-btn { font-size: 0.9rem !important; }
+  .plan-generated-done { color: #059669 !important; font-weight: 600; }
+  .plan-generating { color: var(--brand-primary, #007bff); font-weight: 500; font-size: 0.9rem; }
+  .phase-ai-tasks { margin-left: 2.5rem; margin-top: 0.5rem; }
+  .phase-ai-tasks-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted, #888); display: block; margin-bottom: 0.25rem; }
 </style>
