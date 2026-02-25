@@ -75,10 +75,10 @@ for INSTANCE in $INSTANCES; do
   node "$ROOT_DIR/scripts/instance-manager.cjs" use "$INSTANCE" >> "$LOGFILE" 2>&1
   log "Instance activated ✓"
 
-  # 2. Build
+  # 2. Build (FORCE_BUILD=1 to skip "no new commits" check per instance)
   STEP_START=$(date +%s)
   log "Building production... (output → $LOGFILE)"
-  if npm run build-prod --prefix "$ROOT_DIR" >> "$LOGFILE" 2>&1; then
+  if FORCE_BUILD=1 npm run build-prod --prefix "$ROOT_DIR" >> "$LOGFILE" 2>&1; then
     STEP_END=$(date +%s)
     STEP_DURATION=$((STEP_END - STEP_START))
     log "Build OK ✓ (${STEP_DURATION}s)"
