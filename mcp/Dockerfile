@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -12,7 +12,9 @@ COPY mcp/tools/ ./mcp/tools/
 COPY mcp/services/ ./mcp/services/
 
 # Copy shared modules (imported by MCP as ../../shared/)
+# Shared uses ESM exports, needs "type": "module" for Node to parse correctly
 COPY shared/*.js ./shared/
+RUN echo '{"type":"module"}' > /app/shared/package.json
 
 # serviceAccountKey.json and mcp.user.json are mounted as volumes, NOT baked in
 
