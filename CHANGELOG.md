@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Replace card grid with table view and fix tasksGenerator tab regression
+
+## [1.140.2] - 2026-02-25
+
 ### Fixed
 
 - Replace hardcoded colors with theme tokens for dark mode consistency
