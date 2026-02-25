@@ -115,6 +115,31 @@ describe('onTaskStatusValidation', () => {
       expect(result).toBeNull();
     });
 
+    it('should allow valid transition to In Progress when startDate is set', async () => {
+      const afterData = {
+        status: 'In Progress',
+        title: 'Test Task',
+        developer: 'dev_001',
+        startDate: '2026-01-25T09:00:00Z',
+        validator: 'stk_001',
+        epic: 'EPC-001',
+        sprint: 'SPR-001',
+        devPoints: 3,
+        businessPoints: 3,
+        acceptanceCriteria: 'Some criteria'
+      };
+
+      const result = await handleTaskStatusValidation(
+        { projectId: 'Test', section: 'TASKS_Test', cardId: 'card1' },
+        { status: 'To Do' },
+        afterData,
+        { db: mockDb, logger: mockLogger }
+      );
+
+      expect(result).toBeNull();
+      expect(mockDbSet).not.toHaveBeenCalled();
+    });
+
     it('should allow valid transition to To Validate when endDate is updated', async () => {
       const afterData = {
         status: 'To Validate',
@@ -136,10 +161,7 @@ describe('onTaskStatusValidation', () => {
       expect(mockDbSet).not.toHaveBeenCalled();
     });
 
-    it('should reject transition to In Progress when startDate is not updated', async () => {
-      mockDbOnce.mockResolvedValue({ val: () => ({}) });
-      mockDbSet.mockResolvedValue();
-
+    it('should allow transition to In Progress when startDate already exists (immutable)', async () => {
       const beforeData = {
         status: 'Blocked',
         startDate: '2026-01-10'
@@ -147,7 +169,40 @@ describe('onTaskStatusValidation', () => {
 
       const afterData = {
         status: 'In Progress',
-        startDate: '2026-01-10', // unchanged -> invalid
+        startDate: '2026-01-10', // unchanged but valid — startDate is immutable
+        title: 'Test Task',
+        developer: 'dev_001',
+        validator: 'stk_001',
+        epic: 'EPC-001',
+        sprint: 'SPR-001',
+        devPoints: 3,
+        businessPoints: 3,
+        acceptanceCriteria: 'Some criteria',
+        updatedBy: 'user@example.com'
+      };
+
+      const result = await handleTaskStatusValidation(
+        { projectId: 'Test', section: 'TASKS_Test', cardId: 'card1' },
+        beforeData,
+        afterData,
+        { db: mockDb, logger: mockLogger }
+      );
+
+      expect(result).toBeNull();
+      expect(mockDbSet).not.toHaveBeenCalled();
+    });
+
+    it('should reject transition to In Progress when startDate is missing', async () => {
+      mockDbOnce.mockResolvedValue({ val: () => ({}) });
+      mockDbSet.mockResolvedValue();
+
+      const beforeData = {
+        status: 'To Do'
+      };
+
+      const afterData = {
+        status: 'In Progress',
+        startDate: '', // missing
         title: 'Test Task',
         developer: 'dev_001',
         validator: 'stk_001',
@@ -169,7 +224,7 @@ describe('onTaskStatusValidation', () => {
       expect(result).toEqual({
         reverted: true,
         error: expect.objectContaining({
-          type: 'missing-start-date-update'
+          type: 'missing-start-date'
         })
       });
     });

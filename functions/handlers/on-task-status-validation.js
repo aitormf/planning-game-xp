@@ -155,7 +155,8 @@ function validateDoneTransitionPermission(afterData, stakeholdersData) {
 
 /**
  * Validate status-date coupling rules.
- * - Any transition to "In Progress" must update startDate
+ * - Any transition to "In Progress" must have a valid startDate
+ *   (startDate is immutable once set, so we only require it exists — not that it changed)
  * - Any transition to "To Validate" must update endDate
  * @param {Object} beforeData - Card data before change
  * @param {Object} afterData - Card data after change
@@ -164,12 +165,13 @@ function validateDoneTransitionPermission(afterData, stakeholdersData) {
  */
 function validateStatusDateTransition(beforeData, afterData, afterStatus) {
   if (afterStatus === 'In Progress') {
-    const beforeStart = beforeData?.startDate || null;
-    const afterStart = afterData?.startDate || null;
-    if (!hasValidValue(afterData, 'startDate') || beforeStart === afterStart) {
+    // startDate is immutable: once set, it should never change.
+    // We only require that a valid startDate EXISTS after the transition,
+    // not that it was updated in this specific write.
+    if (!hasValidValue(afterData, 'startDate')) {
       return {
-        type: 'missing-start-date-update',
-        message: 'Cannot change to "In Progress": startDate must be updated in the same status change.'
+        type: 'missing-start-date',
+        message: 'Cannot change to "In Progress": startDate is required.'
       };
     }
   }

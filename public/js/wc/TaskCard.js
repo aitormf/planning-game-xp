@@ -3873,10 +3873,10 @@ this.repositoryLabel = newLabel;
         this._clearInvalidClasses();
       }
 
-      // Auto-rellenar endDate cuando pasa a "To Validate" (fin de desarrollo)
-      if (!this.endDate) {
-        this.endDate = generateTimestamp(new Date(), 'end');
-      }
+      // Always update endDate when transitioning to "To Validate" (marks end of development).
+      // This must change on every transition because the Cloud Function validates
+      // that endDate was updated in the same write.
+      this.endDate = generateTimestamp(new Date(), 'end');
     }
 
     // Handle "Reopened" status - task needs rework after validation

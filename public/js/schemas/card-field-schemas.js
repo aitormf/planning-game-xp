@@ -13,7 +13,7 @@
 // Base fields shared by all card types
 export const BASE_PERSISTENT_FIELDS = [
   'firebaseId', 'cardId', 'title', 'description', 'notes',
-  'startDate', 'endDate', 'createdBy', 'projectId', 'cardType'
+  'startDate', 'endDate', 'createdBy', 'updatedBy', 'projectId', 'cardType'
 ];
 
 export const TASK_SCHEMA = {
