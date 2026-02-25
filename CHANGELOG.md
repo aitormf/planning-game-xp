@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Fixed
+
+- Use Node 20 and add ESM package.json for shared modules
+
 ## [1.143.0] - 2026-02-25
 
 ### Added
