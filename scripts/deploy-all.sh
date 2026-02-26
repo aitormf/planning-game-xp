@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
-# Deploy to all configured instances
+# Deploy all pre-built instances from dist-all/<instance>/
 # Usage: npm run deploy:all
 #
-# For each instance in planning-game-instances/:
-#   1. Activates the instance (symlinks config)
-#   2. Builds production bundle
+# Prerequisites: Run 'npm run build:all' first to populate dist-all/
+#
+# For each instance in dist-all/:
+#   1. Activates the instance (symlinks .firebaserc etc.)
+#   2. Symlinks dist/ → dist-all/<instance>/
 #   3. Deploys to Firebase hosting
-#   4. Moves to next instance
+#   4. Updates Firebase version notification
 #
 # After completion, restores the last active instance.
-# Build/deploy output is saved to /tmp/deploy-all-<instance>.log
+# Deploy output per instance saved to /tmp/deploy-all-<instance>.log
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 INSTANCES_DIR="$ROOT_DIR/planning-game-instances"
+DIST_ALL_DIR="$ROOT_DIR/dist-all"
 
 timestamp() {
   date "+%H:%M:%S"
@@ -25,18 +28,29 @@ log() {
   echo "  [$(timestamp)] $1"
 }
 
+# Check dist-all/ exists with builds
+if [ ! -d "$DIST_ALL_DIR" ]; then
+  echo ""
+  echo "Error: dist-all/ directory not found."
+  echo "Run 'npm run build:all' first to build all instances."
+  echo ""
+  exit 1
+fi
+
+INSTANCES=$(ls -d "$DIST_ALL_DIR"/*/ 2>/dev/null | xargs -I {} basename {})
+
+if [ -z "$INSTANCES" ]; then
+  echo ""
+  echo "Error: No builds found in dist-all/"
+  echo "Run 'npm run build:all' first."
+  echo ""
+  exit 1
+fi
+
 # Save current instance to restore later
 ORIGINAL_INSTANCE=""
 if [ -f "$ROOT_DIR/.last-instance" ]; then
   ORIGINAL_INSTANCE=$(cat "$ROOT_DIR/.last-instance" | tr -d '[:space:]')
-fi
-
-# Get all instance directories
-INSTANCES=$(ls -d "$INSTANCES_DIR"/*/ 2>/dev/null | xargs -I {} basename {})
-
-if [ -z "$INSTANCES" ]; then
-  echo "Error: No instances found in $INSTANCES_DIR"
-  exit 1
 fi
 
 TOTAL=$(echo "$INSTANCES" | wc -w)
@@ -57,6 +71,15 @@ for INSTANCE in $INSTANCES; do
   LOGFILE="/tmp/deploy-all-${INSTANCE}.log"
   > "$LOGFILE"
 
+  INSTANCE_BUILD="$DIST_ALL_DIR/$INSTANCE"
+
+  # Verify the build exists and has content
+  if [ ! -f "$INSTANCE_BUILD/index.html" ]; then
+    log "Skipping $INSTANCE — no index.html in dist-all/$INSTANCE/"
+    FAILED+=("$INSTANCE (no build)")
+    continue
+  fi
+
   # Get project ID for display
   PROJECT_ID=$(node -e "
     const fs = require('fs');
@@ -67,47 +90,42 @@ for INSTANCE in $INSTANCES; do
   " 2>/dev/null)
 
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "  [$CURRENT/$TOTAL] $INSTANCE → $PROJECT_ID"
+  echo "  [$CURRENT/$TOTAL] Deploying: $INSTANCE → $PROJECT_ID"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-  # 1. Activate instance
+  # 1. Activate instance (for .firebaserc, serviceAccountKey, etc.)
   log "Activating instance..."
   node "$ROOT_DIR/scripts/instance-manager.cjs" use "$INSTANCE" >> "$LOGFILE" 2>&1
-  log "Instance activated ✓"
+  log "Instance activated"
 
-  # 2. Build (FORCE_BUILD=1 to skip "no new commits" check per instance)
-  STEP_START=$(date +%s)
-  log "Building production... (output → $LOGFILE)"
-  if FORCE_BUILD=1 npm run build-prod --prefix "$ROOT_DIR" >> "$LOGFILE" 2>&1; then
-    STEP_END=$(date +%s)
-    STEP_DURATION=$((STEP_END - STEP_START))
-    log "Build OK ✓ (${STEP_DURATION}s)"
-  else
-    STEP_END=$(date +%s)
-    STEP_DURATION=$((STEP_END - STEP_START))
-    log "Build FAILED ✗ (${STEP_DURATION}s) — see $LOGFILE"
-    FAILED+=("$INSTANCE (build)")
-    echo ""
-    continue
-  fi
+  # 2. Symlink dist/ → dist-all/<instance>/
+  rm -rf "$ROOT_DIR/dist"
+  ln -s "$INSTANCE_BUILD" "$ROOT_DIR/dist"
+  log "Linked dist/ → dist-all/$INSTANCE/"
 
   # 3. Deploy
   STEP_START=$(date +%s)
   log "Deploying to Firebase hosting..."
-  if npm run deploy:no-notify --prefix "$ROOT_DIR" >> "$LOGFILE" 2>&1; then
+  if firebase deploy --only=hosting >> "$LOGFILE" 2>&1; then
     STEP_END=$(date +%s)
     STEP_DURATION=$((STEP_END - STEP_START))
-    log "Deploy OK ✓ (${STEP_DURATION}s) → https://${PROJECT_ID}.web.app"
+    log "Deploy OK (${STEP_DURATION}s) → https://${PROJECT_ID}.web.app"
+
+    # 4. Update Firebase version notification
+    node "$ROOT_DIR/scripts/update-firebase-version.cjs" >> "$LOGFILE" 2>&1 || true
     SUCCEEDED+=("$INSTANCE")
   else
     STEP_END=$(date +%s)
     STEP_DURATION=$((STEP_END - STEP_START))
-    log "Deploy FAILED ✗ (${STEP_DURATION}s) — see $LOGFILE"
+    log "Deploy FAILED (${STEP_DURATION}s) — see $LOGFILE"
     FAILED+=("$INSTANCE (deploy)")
   fi
 
   echo ""
 done
+
+# Remove dist symlink
+rm -f "$ROOT_DIR/dist"
 
 # Restore original instance
 if [ -n "$ORIGINAL_INSTANCE" ]; then
@@ -124,11 +142,11 @@ echo "=========================================="
 echo ""
 
 for INST in "${SUCCEEDED[@]}"; do
-  echo "  ✓ $INST"
+  echo "  OK  $INST"
 done
 
 for INST in "${FAILED[@]}"; do
-  echo "  ✗ $INST"
+  echo "  XX  $INST"
 done
 
 echo ""

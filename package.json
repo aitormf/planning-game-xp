@@ -30,6 +30,7 @@
     "deploy:hosting": "node scripts/instance-manager.cjs verify-deploy && firebase deploy --only hosting && node scripts/update-firebase-version.cjs",
     "deploy:rules": "node scripts/instance-manager.cjs select && firebase deploy --only firestore && firebase deploy --only database:main",
     "deploy:rules:test": "node scripts/instance-manager.cjs select && firebase deploy --only database:tests",
+    "build:all": "./scripts/build-all.sh",
     "deploy:all": "./scripts/deploy-all.sh",
     "emulator": "node scripts/instance-manager.cjs select && ./scripts/emulation/start-emulators.sh",
     "test": "vitest",
