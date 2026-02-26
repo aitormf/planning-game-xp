@@ -26,6 +26,7 @@ const { handleHourlyDigest } = require("./handlers/hourly-validation-digest");
 const { handleTaskStatusValidation } = require("./handlers/on-task-status-validation");
 const { handleSyncCardViews } = require("./handlers/sync-card-views");
 const { handlePortalBugResolved } = require("./handlers/on-portal-bug-resolved");
+const { extractKeywords, findBestEpicMatch } = require("./helpers/epic-inference");
 
 const normalizeEmail = (email) => (email || '').toString().trim().toLowerCase();
 
@@ -2636,6 +2637,107 @@ exports.createCard = onRequest({
  * @param {string} planId - The Firebase plan ID
  * @returns {Object} - { createdTasks: [{cardId, firebaseId, title, phaseIndex}], totalCreated }
  */
+
+/**
+ * Infer which epic to assign to each phase.
+ * Strategy:
+ * - If phase already has epicIds assigned, use the first one
+ * - If there are few phases (<=3) and the plan is cohesive, use/create a single epic for the whole plan
+ * - For each phase, try to match its name against existing epic titles using keyword overlap
+ * - If no match found, create a new epic based on the plan title
+ *
+ * @param {Object} db - Firebase database reference
+ * @param {string} projectId - Project ID
+ * @param {Array} phases - Plan phases
+ * @param {Array} existingEpics - Existing epics [{firebaseId, cardId, title}]
+ * @param {string} planTitle - The plan title (used for new epic naming)
+ * @param {string} createdBy - Creator email
+ * @param {string} now - ISO timestamp
+ * @returns {Object} Map of phaseIndex -> epicCardId
+ */
+async function inferEpicsForPhases(db, projectId, phases, existingEpics, planTitle, createdBy, now) {
+  const phaseEpicMap = {};
+
+  // Check if any phase already has epicIds manually assigned
+  const allHaveEpics = phases.every(p => p.epicIds && p.epicIds.length > 0);
+  if (allHaveEpics) {
+    phases.forEach((p, i) => { phaseEpicMap[i] = p.epicIds[0]; });
+    return phaseEpicMap;
+  }
+
+  // Try to find a matching epic for the plan title
+  const planKeywords = extractKeywords(planTitle);
+  let bestMatch = findBestEpicMatch(planKeywords, existingEpics);
+
+  // For cohesive plans (<=3 phases), use a single epic
+  if (phases.length <= 3) {
+    if (!bestMatch) {
+      bestMatch = await createEpicForPlan(db, projectId, planTitle, createdBy, now);
+    }
+    phases.forEach((p, i) => {
+      phaseEpicMap[i] = (p.epicIds && p.epicIds.length > 0) ? p.epicIds[0] : bestMatch;
+    });
+    return phaseEpicMap;
+  }
+
+  // For larger plans, try to match each phase individually
+  const createdEpics = {};
+  for (let i = 0; i < phases.length; i++) {
+    const phase = phases[i];
+    if (phase.epicIds && phase.epicIds.length > 0) {
+      phaseEpicMap[i] = phase.epicIds[0];
+      continue;
+    }
+
+    const phaseKeywords = extractKeywords(phase.name);
+    const match = findBestEpicMatch(phaseKeywords, existingEpics);
+    if (match) {
+      phaseEpicMap[i] = match;
+    } else {
+      // Use the plan-level epic (create once, reuse)
+      if (!createdEpics.plan) {
+        createdEpics.plan = bestMatch || await createEpicForPlan(db, projectId, planTitle, createdBy, now);
+      }
+      phaseEpicMap[i] = createdEpics.plan;
+    }
+  }
+
+  return phaseEpicMap;
+}
+
+/**
+ * Create a new epic card for a plan.
+ */
+async function createEpicForPlan(db, projectId, planTitle, createdBy, now) {
+  const epicCardId = await generateCardId(projectId, 'epics');
+  const epicSectionPath = `EPICS_${projectId}`;
+  const epicPath = `/cards/${projectId}/${epicSectionPath}`;
+  const newEpicRef = db.ref(epicPath).push();
+  const firebaseId = newEpicRef.key;
+
+  const epicData = {
+    cardId: epicCardId,
+    id: firebaseId,
+    firebaseId,
+    cardType: 'epic-card',
+    group: 'epics',
+    section: 'epics',
+    projectId,
+    title: planTitle,
+    status: 'To Do',
+    description: `Epic auto-created from development plan: ${planTitle}`,
+    createdBy,
+    year: new Date().getFullYear(),
+    createdAt: now,
+    updatedAt: now
+  };
+
+  await newEpicRef.set(epicData);
+  logger.info('inferEpicsForPhases: Epic created for plan', { epicCardId, planTitle, projectId });
+
+  return epicCardId;
+}
+
 exports.createTasksFromPlan = onCall({
   region: "europe-west1",
   memory: "256MiB",
@@ -2680,9 +2782,25 @@ exports.createTasksFromPlan = onCall({
   const now = new Date().toISOString();
   const createdBy = request.auth?.token?.email || 'system';
 
+  // Load existing epics for inference
+  const epicsPath = `/cards/${projectId}/EPICS_${projectId}`;
+  const epicsSnap = await db.ref(epicsPath).once('value');
+  const epicsData = epicsSnap.val() || {};
+  const existingEpics = Object.entries(epicsData)
+    .filter(([, epic]) => !epic.deletedAt)
+    .map(([fbId, epic]) => ({
+      firebaseId: fbId,
+      cardId: epic.cardId || fbId,
+      title: (epic.title || '').toLowerCase()
+    }));
+
+  // Infer or create epic for each phase
+  const phaseEpicMap = await inferEpicsForPhases(db, projectId, phases, existingEpics, plan.title, createdBy, now);
+
   for (let phaseIndex = 0; phaseIndex < phases.length; phaseIndex++) {
     const phase = phases[phaseIndex];
     const phaseTasks = phase.tasks || [];
+    const epicId = phaseEpicMap[phaseIndex] || '';
 
     for (const task of phaseTasks) {
       if (!task.title) continue;
@@ -2717,7 +2835,7 @@ exports.createTasksFromPlan = onCall({
         descriptionStructured,
         notes: '',
         sprint: '',
-        epic: (phase.epicIds && phase.epicIds.length > 0) ? phase.epicIds[0] : '',
+        epic: epicId,
         developer: '',
         validator: '',
         businessPoints: 0,
@@ -2745,10 +2863,11 @@ exports.createTasksFromPlan = onCall({
         cardId,
         firebaseId,
         title: task.title.trim(),
-        phaseIndex
+        phaseIndex,
+        epic: epicId
       });
 
-      logger.info('createTasksFromPlan: Task created', { cardId, planId, phaseIndex });
+      logger.info('createTasksFromPlan: Task created', { cardId, planId, phaseIndex, epic: epicId });
     }
   }
 
@@ -2759,14 +2878,19 @@ exports.createTasksFromPlan = onCall({
     phaseIndex: t.phaseIndex
   }));
 
-  // Also update each phase with its taskIds
+  // Also update each phase with its taskIds and inferred epicIds
   const updatedPhases = phases.map((phase, i) => {
     const phaseTaskIds = createdTasks
       .filter(t => t.phaseIndex === i)
       .map(t => t.cardId);
+    const inferredEpic = phaseEpicMap[i];
+    const epicIds = inferredEpic
+      ? [...new Set([...(phase.epicIds || []), inferredEpic])]
+      : (phase.epicIds || []);
     return {
       ...phase,
-      taskIds: [...(phase.taskIds || []), ...phaseTaskIds]
+      taskIds: [...(phase.taskIds || []), ...phaseTaskIds],
+      epicIds
     };
   });
 
@@ -4223,3 +4347,9 @@ exports.syncAppAdminClaim = onValueWritten({
     throw error;
   }
 });
+
+// Export internal functions for testing
+exports._test = {
+  inferEpicsForPhases,
+  createEpicForPlan
+};
