@@ -7,6 +7,7 @@ import { listSprintsSchema, listSprints, createSprintSchema, createSprint, updat
 import { listDevelopersSchema, listDevelopers } from './tools/developers.js';
 import { listStakeholdersSchema, listStakeholders } from './tools/stakeholders.js';
 import { listAdrsSchema, listAdrs, getAdrSchema, getAdr, createAdrSchema, createAdr, updateAdrSchema, updateAdr, deleteAdrSchema, deleteAdr } from './tools/adrs.js';
+import { listPlansSchema, listPlans, getPlanSchema, getPlan, createPlanSchema, createPlan, updatePlanSchema, updatePlan, deletePlanSchema, deletePlan } from './tools/plans.js';
 import { listGlobalConfigSchema, listGlobalConfig, getGlobalConfigSchema, getGlobalConfig, createGlobalConfigSchema, createGlobalConfig, updateGlobalConfigSchema, updateGlobalConfig, deleteGlobalConfigSchema, deleteGlobalConfig } from './tools/global-config.js';
 import { setupMcpUserSchema, setupMcpUser } from './tools/setup-user.js';
 import { checkForUpdates, getUpdateNoticeOnce, getMcpStatus, getLocalVersion, updateMcp, resetNotificationFlag, setLatestVersionInFirebase } from './version-check.js';
@@ -168,6 +169,27 @@ export function createMcpServer(serverName) {
 
   server.tool('delete_adr', 'Delete an ADR (moves to trash)', deleteAdrSchema.shape, wrapWithUpdateNotice(async (params) => {
     return await deleteAdr(params);
+  }));
+
+  // ── Development Plans tools ──
+  server.tool('list_plans', 'List development plans for a project, optionally filtered by status (draft, accepted, rejected)', listPlansSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await listPlans(params);
+  }));
+
+  server.tool('get_plan', 'Get full details of a development plan including phases and proposed tasks', getPlanSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await getPlan(params);
+  }));
+
+  server.tool('create_plan', 'Create a new development plan with phases and proposed tasks', createPlanSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await createPlan(params);
+  }));
+
+  server.tool('update_plan', 'Update a development plan (title, objective, status, phases)', updatePlanSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await updatePlan(params);
+  }));
+
+  server.tool('delete_plan', 'Delete a development plan (moves to trash)', deletePlanSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await deletePlan(params);
   }));
 
   // ── Global Config tools ──
