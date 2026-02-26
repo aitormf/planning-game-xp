@@ -172,7 +172,7 @@ import Layout from '../layouts/Layout.astro';
   <div id="devPlansTabContent" class="tabcontent">
     <section class="subheader">
       <h3>Development Plans</h3>
-      <button id="addPlanBtn" class="add-button">+ New Plan</button>
+      <button id="addPlanBtn" class="add-plan-button">+ New Plan</button>
     </section>
     <div id="plansContainer">
       <p class="loading-message">Select a project to view its development plans.</p>
@@ -386,7 +386,7 @@ import Layout from '../layouts/Layout.astro';
     // Si el año es de solo lectura, deshabilitar todos los botones de edición (excepto excepciones)
     const effectiveCanEdit = canEdit && !isYearReadOnly;
 
-    const editButtons = document.querySelectorAll('.add-button, .edit-button, .delete-button');
+    const editButtons = document.querySelectorAll('.add-button, .add-plan-button, .edit-button, .delete-button');
     editButtons.forEach(btn => {
       // Excepciones especiales: empleados pueden añadir propuestas y QA
       if (btn.id === 'addProposalCard' || btn.id === 'addQACard') {
@@ -2706,10 +2706,11 @@ document.addEventListener('DOMContentLoaded', () => {
     flex-shrink: 0;
   }
 
-  .add-button {
+  .add-button,
+  .add-plan-button {
     width: 12rem;
     padding: 12px;
-    background: #4a9eff;
+    background: var(--brand-primary, #4a9eff);
     color: white;
     border: 3px solid var(--brand-secondary);
     border-radius: 8px;
@@ -2719,9 +2720,10 @@ document.addEventListener('DOMContentLoaded', () => {
     transition: background-color 0.2s;
   }
 
-  .add-button:hover {
+  .add-button:hover,
+  .add-plan-button:hover {
     background: var(--brand-secondary);
-    border: 3px solid #4a9eff;
+    border: 3px solid var(--brand-primary, #4a9eff);
   }
 
   .help-button {
@@ -3311,82 +3313,85 @@ document.addEventListener('DOMContentLoaded', () => {
     cursor: not-allowed;
   }
 
-  /* ── Development Plans ── */
-  .plans-empty { text-align: center; padding: 3rem; color: var(--text-muted, #888); font-size: 1.1rem; }
-  .plans-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
-  .plans-table th { text-align: left; padding: 0.6rem 0.75rem; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #888); border-bottom: 2px solid var(--border-color, #dee2e6); }
-  .plans-table td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--border-color, #dee2e6); font-size: 0.9rem; vertical-align: middle; }
-  .plans-table tbody tr { cursor: pointer; transition: background 0.15s; }
-  .plans-table tbody tr:hover { background: var(--bg-hover, #f8f9fa); }
-  .plan-title-cell { font-weight: 500; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .plan-center-cell { text-align: center; color: var(--text-secondary, #555); }
-  .plan-date-cell { color: var(--text-muted, #888); font-size: 0.85rem; white-space: nowrap; }
-  .plan-actions-cell { white-space: nowrap; text-align: right; }
-  .plan-action-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0.2rem 0.35rem; border-radius: 4px; opacity: 0.7; transition: opacity 0.15s, background 0.15s; }
-  .plan-action-btn:hover { opacity: 1; background: var(--bg-secondary, #e9ecef); }
-  .plan-status-badge { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
-  .plan-status-draft { background: #6b7280; color: white; }
-  .plan-status-accepted { background: #3b82f6; color: white; }
-  .plans-btn { border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: opacity 0.2s; }
-  .plans-btn:hover { opacity: 0.85; }
-  .plans-btn-primary { background: var(--brand-primary, #007bff); color: white; padding: 0.5rem 1.25rem; font-size: 0.95rem; }
-  .plans-btn-secondary { background: var(--bg-secondary, #e9ecef); color: var(--text-primary, #333); padding: 0.5rem 1rem; font-size: 0.9rem; }
-  .plans-btn-small { background: var(--bg-secondary, #e9ecef); color: var(--text-primary, #333); padding: 0.3rem 0.75rem; font-size: 0.85rem; }
-  .plans-btn-danger { background: #dc3545; color: white; padding: 0.5rem 1.25rem; font-size: 0.95rem; }
-  .plans-btn-accept { background: #10b981; color: white; padding: 0.5rem 1.25rem; font-size: 0.95rem; }
-  .plan-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-  .plan-detail-actions { display: flex; gap: 0.5rem; }
-  .plan-detail-title-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
-  .plan-detail-title-row h2 { margin: 0; font-size: 1.6rem; }
-  .plan-detail-objective { font-size: 1rem; color: var(--text-secondary, #555); margin: 0 0 1rem; line-height: 1.5; }
-  .plan-detail-meta { display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted, #888); margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color, #dee2e6); }
-  .plan-phases h3 { margin: 0 0 1rem; font-size: 1.2rem; }
-  .plan-phase-card { border: 1px solid var(--border-color, #dee2e6); border-left: 4px solid #6b7280; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; background: var(--bg-primary, white); }
-  .plan-phase-card.phase-status-in_progress { border-left-color: #3b82f6; }
-  .plan-phase-card.phase-status-completed { border-left-color: #10b981; }
-  .phase-card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; }
-  .phase-number { background: var(--bg-secondary, #e9ecef); width: 1.75rem; height: 1.75rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
-  .phase-card-header h4 { margin: 0; font-size: 1rem; flex: 1; }
-  .phase-badge { font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 10px; }
-  .phase-badge.phase-status-pending { background: #f3f4f6; color: #6b7280; }
-  .phase-badge.phase-status-in_progress { background: #dbeafe; color: #2563eb; }
-  .phase-badge.phase-status-completed { background: #d1fae5; color: #059669; }
-  .phase-description-text { margin: 0.25rem 0 0.5rem 2.5rem; font-size: 0.9rem; color: var(--text-secondary, #555); }
-  .phase-refs { margin-left: 2.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--text-muted, #888); }
-  .plan-link { color: var(--brand-primary, #007bff); text-decoration: none; }
-  .plan-link:hover { text-decoration: underline; }
-  .plan-form-container { max-width: 720px; }
-  .plan-form-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-  .plan-form-header h2 { margin: 0; }
-  .plan-form-field { margin-bottom: 1rem; }
-  .plan-form-field label { display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.9rem; }
-  .plan-form-field input, .plan-form-field textarea, .plan-form-field select { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-default, #ced4da); border-radius: 6px; font-size: 0.95rem; background: var(--input-bg, var(--bg-primary, white)); color: var(--text-primary, #333); box-sizing: border-box; }
-  .plan-form-section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color, #dee2e6); }
-  .plan-form-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-  .plan-form-section-header h3 { margin: 0; }
-  .plan-form-actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; }
-  .phase-row { margin-bottom: 0.75rem; padding: 0.75rem; border: 1px solid var(--border-color, #dee2e6); border-radius: 6px; background: var(--bg-secondary, #f8f9fa); }
-  .phase-row-header { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
-  .phase-row-number { background: var(--bg-primary, white); border: 1px solid var(--border-color, #dee2e6); width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
-  .phase-row-fields { flex: 1; display: grid; grid-template-columns: 1fr 2fr; gap: 0.4rem; }
-  .phase-row-fields input { padding: 0.4rem 0.6rem; border: 1px solid var(--border-default, #ced4da); border-radius: 4px; font-size: 0.85rem; background: var(--input-bg, var(--bg-primary, white)); color: var(--text-primary, #333); }
-  .phase-remove-btn { background: none; border: none; color: #dc3545; font-size: 1.1rem; cursor: pointer; padding: 0.3rem; line-height: 1; flex-shrink: 0; }
-  .phase-tasks-editable { margin-left: 2rem; padding-top: 0.25rem; }
-  .phase-tasks-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted, #888); display: block; margin-bottom: 0.35rem; }
-  .phase-task-item { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr auto; gap: 0.35rem; margin-bottom: 0.35rem; align-items: center; }
-  .phase-task-item input { padding: 0.3rem 0.5rem; border: 1px solid var(--border-default, #ced4da); border-radius: 4px; font-size: 0.8rem; background: var(--input-bg, var(--bg-primary, white)); color: var(--text-primary, #333); }
-  .phase-task-remove { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 0.9rem; padding: 0.15rem 0.3rem; opacity: 0.6; transition: opacity 0.15s; }
-  .phase-task-remove:hover { opacity: 1; }
-  .phase-add-task-btn { margin-top: 0.25rem; font-size: 0.8rem !important; padding: 0.2rem 0.6rem !important; }
-  .plan-creator-hint { color: var(--text-secondary, #555); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem; }
-  .plan-ai-notice { background: #dbeafe; color: #1e40af; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 1rem; border-left: 4px solid #3b82f6; }
-  .plan-ai-error { background: #fee2e2; color: #991b1b; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 0.75rem; border-left: 4px solid #dc3545; }
-  .phase-tasks-preview { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; padding: 0.3rem 0; }
-  .phase-task-chip { background: #e0e7ff; color: #3730a3; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 10px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
-  .plans-btn-generate { background: #7c3aed; color: white; padding: 0.5rem 1.25rem; font-size: 0.95rem; }
-  .plan-generate-btn { font-size: 0.9rem !important; }
-  .plan-generated-done { color: #059669 !important; font-weight: 600; }
-  .plan-generating { color: var(--brand-primary, #007bff); font-weight: 500; font-size: 0.9rem; }
-  .phase-ai-tasks { margin-left: 2.5rem; margin-top: 0.5rem; }
-  .phase-ai-tasks-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted, #888); display: block; margin-bottom: 0.25rem; }
+  /* ── Development Plans (global: content is dynamically generated) ── */
+  :global(.plans-empty) { text-align: center; padding: 3rem; color: var(--text-muted, #888); font-size: 1.1rem; }
+  :global(.plans-table) { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+  :global(.plans-table th) { text-align: left; padding: 0.6rem 0.75rem; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted, #888); border-bottom: 2px solid var(--border-color, #dee2e6); }
+  :global(.plans-table td) { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--border-color, #dee2e6); font-size: 0.9rem; vertical-align: middle; }
+  :global(.plans-table tbody tr) { cursor: pointer; transition: background 0.15s; }
+  :global(.plans-table tbody tr:hover) { background: var(--bg-hover, #f8f9fa); }
+  :global(.plan-title-cell) { font-weight: 500; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :global(.plan-center-cell) { text-align: center; color: var(--text-secondary, #555); }
+  :global(.plan-date-cell) { color: var(--text-muted, #888); font-size: 0.85rem; white-space: nowrap; }
+  :global(.plan-actions-cell) { white-space: nowrap; text-align: right; }
+  :global(.plan-action-btn) { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0.2rem 0.35rem; border-radius: 4px; opacity: 0.7; transition: opacity 0.15s, background 0.15s; }
+  :global(.plan-action-btn:hover) { opacity: 1; background: var(--bg-secondary, #e9ecef); }
+  :global(.plan-status-badge) { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+  :global(.plan-status-draft) { background: var(--text-muted, #6b7280); color: var(--bg-primary, white); }
+  :global(.plan-status-accepted) { background: var(--brand-primary, #3b82f6); color: white; }
+  :global(.plan-status-rejected) { background: var(--color-error, #dc3545); color: white; }
+  :global(.plans-btn) { border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: opacity 0.2s; }
+  :global(.plans-btn:hover) { opacity: 0.85; }
+  :global(.plans-btn-primary) { background: var(--brand-primary, #007bff); color: white; padding: 0.5rem 1.25rem; font-size: 0.95rem; }
+  :global(.plans-btn-secondary) { background: var(--bg-secondary, #e9ecef); color: var(--text-primary, #333); padding: 0.5rem 1rem; font-size: 0.9rem; }
+  :global(.plans-btn-small) { background: var(--bg-secondary, #e9ecef); color: var(--text-primary, #333); padding: 0.3rem 0.75rem; font-size: 0.85rem; }
+  :global(.plans-btn-danger) { background: var(--color-error, #dc3545); color: white; padding: 0.5rem 1.25rem; font-size: 0.95rem; }
+  :global(.plans-btn-accept) { background: var(--color-success, #4caf50); color: white; padding: 0.5rem 1.25rem; font-size: 0.95rem; }
+  :global(.plan-detail-header) { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+  :global(.plan-detail-actions) { display: flex; gap: 0.5rem; }
+  :global(.plan-detail-title-row) { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
+  :global(.plan-detail-title-row h2) { margin: 0; font-size: 1.6rem; background: transparent; color: var(--text-primary, #333); text-align: left; padding-bottom: 0; }
+  :global(.plan-detail-objective) { font-size: 1rem; color: var(--text-secondary, #555); margin: 0 0 1rem; line-height: 1.5; }
+  :global(.plan-detail-meta) { display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted, #888); margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color, #dee2e6); }
+  :global(.plan-phases h3) { margin: 0 0 1rem; font-size: 1.2rem; }
+  :global(.plan-phase-card) { border: 1px solid var(--border-color, #dee2e6); border-left: 4px solid var(--text-muted, #6b7280); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; background: var(--bg-primary, white); }
+  :global(.plan-phase-card.phase-status-in_progress) { border-left-color: var(--brand-primary, #3b82f6); }
+  :global(.plan-phase-card.phase-status-completed) { border-left-color: var(--color-success, #4caf50); }
+  :global(.phase-card-header) { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; }
+  :global(.phase-number) { background: var(--bg-secondary, #e9ecef); width: 1.75rem; height: 1.75rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+  :global(.phase-card-header h4) { margin: 0; font-size: 1rem; flex: 1; }
+  :global(.phase-badge) { font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 10px; }
+  :global(.phase-badge.phase-status-pending) { background: var(--bg-secondary, #f3f4f6); color: var(--text-muted, #6b7280); }
+  :global(.phase-badge.phase-status-in_progress) { background: var(--status-in-progress, #cce500); color: var(--text-primary, #333); }
+  :global(.phase-badge.phase-status-completed) { background: var(--color-success, #4caf50); color: white; }
+  :global(.phase-description-text) { margin: 0.25rem 0 0.5rem 2.5rem; font-size: 0.9rem; color: var(--text-secondary, #555); }
+  :global(.phase-refs) { margin-left: 2.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--text-muted, #888); }
+  :global(.plan-link) { color: var(--brand-primary, #007bff); text-decoration: none; }
+  :global(.plan-link:hover) { text-decoration: underline; }
+  :global(.plan-form-container) { max-width: 720px; }
+  :global(.plan-form-header) { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  :global(.plan-form-header h2) { margin: 0; background: transparent; color: var(--text-primary, #333); text-align: left; padding-bottom: 0; width: auto; }
+  :global(.plan-form-field) { margin-bottom: 1rem; }
+  :global(.plan-form-field label) { display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.9rem; color: var(--text-primary, #333); }
+  :global(.plan-form-field input),
+  :global(.plan-form-field textarea),
+  :global(.plan-form-field select) { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-default, #ced4da); border-radius: 6px; font-size: 0.95rem; background: var(--input-bg, var(--bg-primary, white)); color: var(--text-primary, #333); box-sizing: border-box; font-family: inherit; }
+  :global(.plan-form-section) { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color, #dee2e6); }
+  :global(.plan-form-section-header) { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+  :global(.plan-form-section-header h3) { margin: 0; }
+  :global(.plan-form-actions) { margin-top: 1.5rem; display: flex; gap: 0.75rem; }
+  :global(.phase-row) { margin-bottom: 0.75rem; padding: 0.75rem; border: 1px solid var(--border-color, #dee2e6); border-radius: 6px; background: var(--bg-secondary, #f8f9fa); }
+  :global(.phase-row-header) { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+  :global(.phase-row-number) { background: var(--bg-primary, white); border: 1px solid var(--border-color, #dee2e6); width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  :global(.phase-row-fields) { flex: 1; display: grid; grid-template-columns: 1fr 2fr; gap: 0.4rem; }
+  :global(.phase-row-fields input) { padding: 0.4rem 0.6rem; border: 1px solid var(--border-default, #ced4da); border-radius: 4px; font-size: 0.85rem; background: var(--input-bg, var(--bg-primary, white)); color: var(--text-primary, #333); }
+  :global(.phase-remove-btn) { background: none; border: none; color: var(--color-error, #dc3545); font-size: 1.1rem; cursor: pointer; padding: 0.3rem; line-height: 1; flex-shrink: 0; }
+  :global(.phase-tasks-editable) { margin-left: 2rem; padding-top: 0.25rem; }
+  :global(.phase-tasks-label) { font-size: 0.8rem; font-weight: 600; color: var(--text-muted, #888); display: block; margin-bottom: 0.35rem; }
+  :global(.phase-task-item) { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr auto; gap: 0.35rem; margin-bottom: 0.35rem; align-items: center; }
+  :global(.phase-task-item input) { padding: 0.3rem 0.5rem; border: 1px solid var(--border-default, #ced4da); border-radius: 4px; font-size: 0.8rem; background: var(--input-bg, var(--bg-primary, white)); color: var(--text-primary, #333); }
+  :global(.phase-task-remove) { background: none; border: none; color: var(--color-error, #dc3545); cursor: pointer; font-size: 0.9rem; padding: 0.15rem 0.3rem; opacity: 0.6; transition: opacity 0.15s; }
+  :global(.phase-task-remove:hover) { opacity: 1; }
+  :global(.phase-add-task-btn) { margin-top: 0.25rem; font-size: 0.8rem !important; padding: 0.2rem 0.6rem !important; }
+  :global(.plan-creator-hint) { color: var(--text-secondary, #555); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem; }
+  :global(.plan-ai-notice) { background: var(--bg-secondary, #f8f9fa); color: var(--brand-primary, #4a9eff); padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 1rem; border-left: 4px solid var(--brand-primary, #3b82f6); }
+  :global(.plan-ai-error) { background: var(--bg-secondary, #f8f9fa); color: var(--color-error, #dc3545); padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 0.75rem; border-left: 4px solid var(--color-error, #dc3545); }
+  :global(.phase-tasks-preview) { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; padding: 0.3rem 0; }
+  :global(.phase-task-chip) { background: var(--bg-secondary, #e9ecef); color: var(--text-secondary, #555); font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 10px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+  :global(.plans-btn-generate) { background: var(--brand-secondary, #ec3e95); color: white; padding: 0.5rem 1.25rem; font-size: 0.95rem; }
+  :global(.plan-generate-btn) { font-size: 0.9rem !important; }
+  :global(.plan-generated-done) { color: var(--color-success, #4caf50) !important; font-weight: 600; }
+  :global(.plan-generating) { color: var(--brand-primary, #007bff); font-weight: 500; font-size: 0.9rem; }
+  :global(.phase-ai-tasks) { margin-left: 2.5rem; margin-top: 0.5rem; }
+  :global(.phase-ai-tasks-label) { font-size: 0.8rem; font-weight: 600; color: var(--text-muted, #888); display: block; margin-bottom: 0.25rem; }
 </style>
