@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { getDatabase, getFirestore } from '../firebase-adapter.js';
 import { SECTION_MAP, CARD_TYPE_MAP, GROUP_MAP, getAbbrId, buildSectionPath } from '../../shared/utils.js';
 import { getMcpUser } from '../user.js';
-import { calculatePriority } from '../../shared/priority.js';
+import { generatePriorityMap, calculatePriority, PRIORITY_MAP_1_5, PRIORITY_MAP_FIBONACCI } from '../../shared/priority.js';
 import {
   VALID_BUG_STATUSES,
   VALID_BUG_PRIORITIES,
@@ -11,7 +11,9 @@ import {
   VALID_ID_PREFIXES,
   REQUIRED_FIELDS_TO_LEAVE_TODO,
   REQUIRED_FIELDS_FOR_TO_VALIDATE,
+  REQUIRED_FIELDS_TO_CLOSE_BUG,
   MCP_RESTRICTED_STATUSES,
+  VALIDATOR_ONLY_STATUSES,
   FRIENDLY_FIELD_NAMES,
   TYPE_DEFAULTS,
   VALID_RELATION_TYPES,
@@ -39,7 +41,7 @@ import {
 } from '../../shared/validation.js';
 import { getListTexts, getListPairs, resolveValue } from '../services/list-service.js';
 
-// Re-export for use by register-tools.js
+// Re-export for use by register-tools.js and tests
 export {
   VALID_BUG_STATUSES,
   VALID_BUG_PRIORITIES,
@@ -48,7 +50,20 @@ export {
   VALID_RELATION_TYPES,
   TASK_TRANSITION_RULES,
   REQUIRED_FIELDS_TO_LEAVE_TODO,
-  REQUIRED_FIELDS_FOR_TO_VALIDATE
+  REQUIRED_FIELDS_FOR_TO_VALIDATE,
+  REQUIRED_FIELDS_TO_CLOSE_BUG,
+  MCP_RESTRICTED_STATUSES,
+  VALIDATOR_ONLY_STATUSES,
+  generatePriorityMap,
+  calculatePriority,
+  PRIORITY_MAP_1_5,
+  PRIORITY_MAP_FIBONACCI,
+  validateEntityId,
+  validateEntityIds,
+  hasValidValue,
+  validateBugFields,
+  validateTaskFields,
+  validateBugStatusTransition
 };
 
 // ──────────────────────────────────────────────
