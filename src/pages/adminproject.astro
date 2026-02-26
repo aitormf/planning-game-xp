@@ -1684,20 +1684,37 @@ isYearReadOnly = yearReadOnly;
     const isAiGenerated = !!aiPlan && !isEdit;
     let phaseCounter = (plan.phases || []).length;
 
+    function escapeAttr(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
     function phaseRow(index, phase = {}) {
-      const tasksPreview = (phase.tasks || []).map(t => t.title).filter(Boolean);
-      const tasksHtml = tasksPreview.length > 0
-        ? `<div class="phase-tasks-preview">${tasksPreview.map(t => `<span class="phase-task-chip">${t}</span>`).join('')}</div>`
-        : '';
-      return `<div class="phase-row" data-idx="${index}">
-        <div class="phase-row-fields">
-          <input type="text" class="phase-name" placeholder="Phase name" value="${phase.name || ''}" />
-          <input type="text" class="phase-description" placeholder="Description" value="${phase.description || ''}" />
-          <input type="text" class="phase-epics" placeholder="Epic IDs (comma-sep)" value="${(phase.epicIds || []).join(', ')}" />
-          <input type="text" class="phase-tasks-ids" placeholder="Task IDs (comma-sep)" value="${(phase.taskIds || []).join(', ')}" />
+      const tasks = phase.tasks || [];
+      const tasksDataAttr = escapeAttr(JSON.stringify(tasks));
+      let tasksHtml = '<div class="phase-tasks-editable">';
+      tasksHtml += '<span class="phase-tasks-label">Proposed tasks:</span>';
+      tasks.forEach((t, ti) => {
+        tasksHtml += `<div class="phase-task-item" data-task-idx="${ti}">
+          <input type="text" class="phase-task-title" placeholder="Task title" value="${escapeAttr(t.title)}" />
+          <input type="text" class="phase-task-como" placeholder="As a..." value="${escapeAttr(t.como)}" />
+          <input type="text" class="phase-task-quiero" placeholder="I want..." value="${escapeAttr(t.quiero)}" />
+          <input type="text" class="phase-task-para" placeholder="So that..." value="${escapeAttr(t.para)}" />
+          <button type="button" class="phase-task-remove" title="Remove task">✕</button>
+        </div>`;
+      });
+      tasksHtml += `<button type="button" class="plans-btn plans-btn-small phase-add-task-btn">+ Task</button>`;
+      tasksHtml += '</div>';
+
+      return `<div class="phase-row" data-idx="${index}" data-tasks="${tasksDataAttr}">
+        <div class="phase-row-header">
+          <span class="phase-row-number">${index + 1}</span>
+          <div class="phase-row-fields">
+            <input type="text" class="phase-name" placeholder="Phase name" value="${escapeAttr(phase.name)}" />
+            <input type="text" class="phase-description" placeholder="Description" value="${escapeAttr(phase.description)}" />
+          </div>
+          <button type="button" class="phase-remove-btn" title="Remove phase">✕</button>
         </div>
         ${tasksHtml}
-        <button type="button" class="phase-remove-btn" onclick="this.closest('.phase-row').remove()">✕</button>
       </div>`;
     }
 
@@ -1739,7 +1756,38 @@ isYearReadOnly = yearReadOnly;
       else renderPlansList(container, projectId);
     });
     container.querySelector('#addPhaseBtn').addEventListener('click', () => {
-      document.getElementById('phasesContainer').insertAdjacentHTML('beforeend', phaseRow(phaseCounter++, {}));
+      const phasesEl = document.getElementById('phasesContainer');
+      phasesEl.insertAdjacentHTML('beforeend', phaseRow(phaseCounter++, {}));
+    });
+
+    // Event delegation for phase tasks (add/remove task, remove phase)
+    const phasesContainer = document.getElementById('phasesContainer');
+    phasesContainer.addEventListener('click', (e) => {
+      const removePhaseBtn = e.target.closest('.phase-remove-btn');
+      if (removePhaseBtn) {
+        removePhaseBtn.closest('.phase-row').remove();
+        return;
+      }
+      const removeTaskBtn = e.target.closest('.phase-task-remove');
+      if (removeTaskBtn) {
+        removeTaskBtn.closest('.phase-task-item').remove();
+        return;
+      }
+      const addTaskBtn = e.target.closest('.phase-add-task-btn');
+      if (addTaskBtn) {
+        const phaseRow = addTaskBtn.closest('.phase-row');
+        const taskItems = phaseRow.querySelectorAll('.phase-task-item');
+        const newIdx = taskItems.length;
+        const taskHtml = `<div class="phase-task-item" data-task-idx="${newIdx}">
+          <input type="text" class="phase-task-title" placeholder="Task title" value="" />
+          <input type="text" class="phase-task-como" placeholder="As a..." value="" />
+          <input type="text" class="phase-task-quiero" placeholder="I want..." value="" />
+          <input type="text" class="phase-task-para" placeholder="So that..." value="" />
+          <button type="button" class="phase-task-remove" title="Remove task">✕</button>
+        </div>`;
+        addTaskBtn.insertAdjacentHTML('beforebegin', taskHtml);
+        return;
+      }
     });
 
     // Regenerate with AI
@@ -1808,6 +1856,21 @@ isYearReadOnly = yearReadOnly;
           planData.createdAt = existing?.createdAt || now;
           planData.createdBy = existing?.createdBy || '';
           planData.status = existing?.status || 'draft';
+          // Preserve generated task references from existing plan
+          if (existing?.generatedTasks) {
+            planData.generatedTasks = existing.generatedTasks;
+          }
+          // Preserve epicIds and taskIds from existing phases
+          if (existing?.phases) {
+            planData.phases = planData.phases.map((phase, i) => {
+              const existingPhase = existing.phases[i];
+              if (existingPhase) {
+                phase.epicIds = existingPhase.epicIds || [];
+                phase.taskIds = existingPhase.taskIds || [];
+              }
+              return phase;
+            });
+          }
           await set(ref(database, `plans/${projectId}/${plan._id}`), planData);
         } else {
           planData.createdAt = now;
@@ -1841,11 +1904,26 @@ isYearReadOnly = yearReadOnly;
     container.querySelectorAll('.phase-row').forEach(row => {
       const name = row.querySelector('.phase-name').value.trim();
       if (!name) return;
+
+      // Collect tasks from editable task items
+      const tasks = [];
+      row.querySelectorAll('.phase-task-item').forEach(taskEl => {
+        const taskTitle = taskEl.querySelector('.phase-task-title').value.trim();
+        if (!taskTitle) return;
+        tasks.push({
+          title: taskTitle,
+          como: taskEl.querySelector('.phase-task-como').value.trim(),
+          quiero: taskEl.querySelector('.phase-task-quiero').value.trim(),
+          para: taskEl.querySelector('.phase-task-para').value.trim()
+        });
+      });
+
       phases.push({
         name,
         description: row.querySelector('.phase-description').value.trim(),
-        epicIds: row.querySelector('.phase-epics').value.split(',').map(s => s.trim()).filter(Boolean),
-        taskIds: row.querySelector('.phase-tasks-ids').value.split(',').map(s => s.trim()).filter(Boolean),
+        epicIds: [],
+        taskIds: [],
+        tasks,
         status: 'pending'
       });
     });
@@ -3287,10 +3365,19 @@ document.addEventListener('DOMContentLoaded', () => {
   .plan-form-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
   .plan-form-section-header h3 { margin: 0; }
   .plan-form-actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; }
-  .phase-row { display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 0.5rem; padding: 0.75rem; border: 1px solid var(--border-color, #dee2e6); border-radius: 6px; background: var(--bg-secondary, #f8f9fa); }
-  .phase-row-fields { flex: 1; display: grid; grid-template-columns: 1fr 1.5fr; gap: 0.4rem; }
-  .phase-row-fields input, .phase-row-fields select { padding: 0.4rem 0.6rem; border: 1px solid var(--border-default, #ced4da); border-radius: 4px; font-size: 0.85rem; background: var(--input-bg, var(--bg-primary, white)); color: var(--text-primary, #333); }
-  .phase-remove-btn { background: none; border: none; color: #dc3545; font-size: 1.1rem; cursor: pointer; padding: 0.3rem; line-height: 1; }
+  .phase-row { margin-bottom: 0.75rem; padding: 0.75rem; border: 1px solid var(--border-color, #dee2e6); border-radius: 6px; background: var(--bg-secondary, #f8f9fa); }
+  .phase-row-header { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+  .phase-row-number { background: var(--bg-primary, white); border: 1px solid var(--border-color, #dee2e6); width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  .phase-row-fields { flex: 1; display: grid; grid-template-columns: 1fr 2fr; gap: 0.4rem; }
+  .phase-row-fields input { padding: 0.4rem 0.6rem; border: 1px solid var(--border-default, #ced4da); border-radius: 4px; font-size: 0.85rem; background: var(--input-bg, var(--bg-primary, white)); color: var(--text-primary, #333); }
+  .phase-remove-btn { background: none; border: none; color: #dc3545; font-size: 1.1rem; cursor: pointer; padding: 0.3rem; line-height: 1; flex-shrink: 0; }
+  .phase-tasks-editable { margin-left: 2rem; padding-top: 0.25rem; }
+  .phase-tasks-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted, #888); display: block; margin-bottom: 0.35rem; }
+  .phase-task-item { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr auto; gap: 0.35rem; margin-bottom: 0.35rem; align-items: center; }
+  .phase-task-item input { padding: 0.3rem 0.5rem; border: 1px solid var(--border-default, #ced4da); border-radius: 4px; font-size: 0.8rem; background: var(--input-bg, var(--bg-primary, white)); color: var(--text-primary, #333); }
+  .phase-task-remove { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 0.9rem; padding: 0.15rem 0.3rem; opacity: 0.6; transition: opacity 0.15s; }
+  .phase-task-remove:hover { opacity: 1; }
+  .phase-add-task-btn { margin-top: 0.25rem; font-size: 0.8rem !important; padding: 0.2rem 0.6rem !important; }
   .plan-creator-hint { color: var(--text-secondary, #555); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem; }
   .plan-ai-notice { background: #dbeafe; color: #1e40af; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 1rem; border-left: 4px solid #3b82f6; }
   .plan-ai-error { background: #fee2e2; color: #991b1b; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 0.75rem; border-left: 4px solid #dc3545; }
