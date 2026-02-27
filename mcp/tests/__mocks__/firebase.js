@@ -134,6 +134,10 @@ class MockRef {
     mockRtdbData[this.path] = data;
   }
 
+  async remove() {
+    setNestedValue(mockRtdbData, this.path, null);
+  }
+
   async update(data) {
     // Get current data at path
     let current = mockRtdbData[this.path];
