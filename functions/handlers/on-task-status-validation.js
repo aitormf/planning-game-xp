@@ -31,7 +31,7 @@ const {
   REQUIRED_FIELDS_TO_LEAVE_TODO,
   VALIDATOR_ONLY_STATUSES,
   hasValidValue
-} = require('../../shared/index.cjs');
+} = require('../shared/index.cjs');
 
 /**
  * Check if email matches a stakeholder ID
@@ -172,6 +172,15 @@ function validateStatusDateTransition(beforeData, afterData, afterStatus) {
       return {
         type: 'missing-start-date',
         message: 'Cannot change to "In Progress": startDate is required.'
+      };
+    }
+  }
+
+  if (afterStatus === 'Pausado') {
+    if (!hasValidValue(afterData, 'startDate')) {
+      return {
+        type: 'missing-start-date-for-pause',
+        message: 'Cannot change to "Pausado": startDate must exist (task must have been In Progress).'
       };
     }
   }

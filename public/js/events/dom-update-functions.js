@@ -109,6 +109,7 @@ function getStatusColor(status, type = 'task') {
     'ready': '#20c997',
     'in progress': '#0d6efd',
     'doing': '#0d6efd',
+    'pausado': '#ff9800',
     'blocked': '#d63384',
     'qa': '#6f42c1',
     'review': '#6f42c1',

@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Fixed
+
+- Use Node 20 and add ESM package.json for shared modules
+
+## [1.143.0] - 2026-02-25
+
+### Added
+
+- Add Pausado status with time tracking for tasks
+- Generate task cards from accepted development plans
+
+### Changed
+
+- Use Title Case for bug priorities aligned with Firebase RTDB
+
+### Fixed
+
+- Resolve shared module import path for Cloud Functions deploy
+
 ## [1.142.0] - 2026-02-25
 
 ### Added

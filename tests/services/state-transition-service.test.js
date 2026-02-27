@@ -403,6 +403,21 @@ describe('StateTransitionService', () => {
       // Average of 1 hour and 2 hours = 1.5 hours = 5400000ms
       expect(result.averageValidationTime).toBe(5400000);
     });
+
+    it('should calculate totalPausedTime from Pausado status', () => {
+      const transitions = [
+        { timestamp: '2026-01-10T10:00:00Z', fromStatus: 'To Do', toStatus: 'In Progress', durationInPrevious: 86400000 },
+        { timestamp: '2026-01-11T10:00:00Z', fromStatus: 'In Progress', toStatus: 'Pausado', durationInPrevious: 28800000 },
+        { timestamp: '2026-01-12T10:00:00Z', fromStatus: 'Pausado', toStatus: 'In Progress', durationInPrevious: 7200000 }, // 2 hours paused
+        { timestamp: '2026-01-13T10:00:00Z', fromStatus: 'In Progress', toStatus: 'To Validate', durationInPrevious: 14400000 }
+      ];
+
+      const result = service.calculateTimeMetrics(transitions);
+
+      expect(result.totalPausedTime).toBe(7200000); // 2 hours
+      expect(result.totalDevelopmentTime).toBe(28800000 + 14400000); // In Progress time
+      expect(result.effectiveWorkTime).toBe(28800000 + 14400000 - 7200000); // development - paused
+    });
   });
 
   describe('formatDuration', () => {

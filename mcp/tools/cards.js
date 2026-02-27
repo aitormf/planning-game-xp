@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { getDatabase, getFirestore } from '../firebase-adapter.js';
 import { SECTION_MAP, CARD_TYPE_MAP, GROUP_MAP, getAbbrId, buildSectionPath } from '../../shared/utils.js';
 import { getMcpUser } from '../user.js';
-import { calculatePriority } from '../../shared/priority.js';
+import { generatePriorityMap, calculatePriority, PRIORITY_MAP_1_5, PRIORITY_MAP_FIBONACCI } from '../../shared/priority.js';
 import {
   VALID_BUG_STATUSES,
   VALID_BUG_PRIORITIES,
@@ -11,7 +11,9 @@ import {
   VALID_ID_PREFIXES,
   REQUIRED_FIELDS_TO_LEAVE_TODO,
   REQUIRED_FIELDS_FOR_TO_VALIDATE,
+  REQUIRED_FIELDS_TO_CLOSE_BUG,
   MCP_RESTRICTED_STATUSES,
+  VALIDATOR_ONLY_STATUSES,
   FRIENDLY_FIELD_NAMES,
   TYPE_DEFAULTS,
   VALID_RELATION_TYPES,
@@ -37,8 +39,9 @@ import {
   migrateImplementationPlan,
   validateImplementationPlan
 } from '../../shared/validation.js';
+import { getListTexts, getListPairs, resolveValue } from '../services/list-service.js';
 
-// Re-export for use by register-tools.js
+// Re-export for use by register-tools.js and tests
 export {
   VALID_BUG_STATUSES,
   VALID_BUG_PRIORITIES,
@@ -47,8 +50,43 @@ export {
   VALID_RELATION_TYPES,
   TASK_TRANSITION_RULES,
   REQUIRED_FIELDS_TO_LEAVE_TODO,
-  REQUIRED_FIELDS_FOR_TO_VALIDATE
+  REQUIRED_FIELDS_FOR_TO_VALIDATE,
+  REQUIRED_FIELDS_TO_CLOSE_BUG,
+  MCP_RESTRICTED_STATUSES,
+  VALIDATOR_ONLY_STATUSES,
+  generatePriorityMap,
+  calculatePriority,
+  PRIORITY_MAP_1_5,
+  PRIORITY_MAP_FIBONACCI,
+  validateEntityId,
+  validateEntityIds,
+  hasValidValue,
+  validateBugFields,
+  validateTaskFields,
+  validateBugStatusTransition
 };
+
+// ──────────────────────────────────────────────
+// Plan-first workflow tracking (session-based)
+// ──────────────────────────────────────────────
+
+// Tracks tasks created without planId per project in this MCP session
+// Key: projectId, Value: count of tasks without planId
+const _sessionTasksWithoutPlan = new Map();
+
+const PLAN_FIRST_THRESHOLD = 2;
+
+export function getSessionTasksWithoutPlan(projectId) {
+  return _sessionTasksWithoutPlan.get(projectId) || 0;
+}
+
+export function resetSessionTaskCounter(projectId) {
+  if (projectId) {
+    _sessionTasksWithoutPlan.delete(projectId);
+  } else {
+    _sessionTasksWithoutPlan.clear();
+  }
+}
 
 // ──────────────────────────────────────────────
 // Sprint helpers
@@ -149,6 +187,7 @@ export const listCardsSchema = z.object({
   status: z.string().optional().describe('Filter by status (e.g., "To Do", "In Progress", "Done&Validated")'),
   sprint: z.string().optional().describe('Filter by sprint name'),
   developer: z.string().optional().describe('Filter by developer name'),
+  planId: z.string().optional().describe('Filter tasks by plan ID (Firebase key)'),
   year: z.number().optional().describe('Filter by year')
 });
 
@@ -208,6 +247,7 @@ export const createCardSchema = z.object({
   sprint: z.string().optional().describe('Sprint ID (e.g., "PRJ-SPR-0001"). Must reference an existing sprint in the project.'),
   devPoints: z.number().optional().describe('Development points (1-5 or fibonacci). Used to calculate task priority.'),
   businessPoints: z.number().optional().describe('Business points (1-5 or fibonacci). Used to calculate task priority.'),
+  planId: z.string().optional().describe('Plan ID (Firebase key) to link this task to a development plan. Only for tasks.'),
   year: z.number().optional().describe('Year (default: current year)')
 });
 
@@ -231,7 +271,7 @@ export const relateCardsSchema = z.object({
 // Tool handlers
 // ──────────────────────────────────────────────
 
-export async function listCards({ projectId, type, status, sprint, developer, year }) {
+export async function listCards({ projectId, type, status, sprint, developer, planId, year }) {
   const db = getDatabase();
   const sectionPath = buildSectionPath(projectId, type);
   const snapshot = await db.ref(sectionPath).once('value');
@@ -254,6 +294,9 @@ export async function listCards({ projectId, type, status, sprint, developer, ye
   }
   if (developer) {
     cards = cards.filter(c => c.developer === developer);
+  }
+  if (planId) {
+    cards = cards.filter(c => c.planId === planId);
   }
   if (year) {
     cards = cards.filter(c => c.year === year);
@@ -413,7 +456,7 @@ async function resolveValidator(db, projectId, validator, developer) {
   );
 }
 
-export async function createCard({ projectId, type, title, description, descriptionStructured, acceptanceCriteria, acceptanceCriteriaStructured, epic, implementationPlan, status, priority, developer, codeveloper, validator, sprint, devPoints, businessPoints, year }) {
+export async function createCard({ projectId, type, title, description, descriptionStructured, acceptanceCriteria, acceptanceCriteriaStructured, epic, implementationPlan, status, priority, developer, codeveloper, validator, sprint, devPoints, businessPoints, planId, year }) {
   const db = getDatabase();
   const firestore = getFirestore();
 
@@ -434,6 +477,14 @@ export async function createCard({ projectId, type, title, description, descript
       const errorMessages = planValidation.errors.map(e => e.message).join('; ');
       throw new Error(`Invalid implementationPlan: ${errorMessages}`);
     }
+  }
+
+  // Resolve values dynamically from Firebase RTDB (case-insensitive)
+  if (type === 'bug') {
+    if (status) status = await resolveValue('bugStatus', status);
+    if (priority) priority = await resolveValue('bugPriority', priority);
+  } else if (type === 'task') {
+    if (status) status = await resolveValue('taskStatus', status);
   }
 
   const initialData = { status, priority };
@@ -644,6 +695,7 @@ export async function createCard({ projectId, type, title, description, descript
   if (codeveloper) cardData.codeveloper = codeveloper;
   if (validator) cardData.validator = validator;
   if (sprint) cardData.sprint = sprint;
+  if (type === 'task' && planId) cardData.planId = planId;
 
   if (devPoints !== undefined) cardData.devPoints = devPoints;
   if (businessPoints !== undefined) cardData.businessPoints = businessPoints;
@@ -668,8 +720,16 @@ export async function createCard({ projectId, type, title, description, descript
     type
   };
 
-  // For tasks: include plan-related instructions for the AI
+  // For tasks: track plan-first workflow and include instructions for the AI
   if (type === 'task') {
+    // Track tasks created without a planId for plan-first enforcement
+    if (!planId) {
+      const currentCount = _sessionTasksWithoutPlan.get(projectId) || 0;
+      _sessionTasksWithoutPlan.set(projectId, currentCount + 1);
+    }
+
+    const tasksWithoutPlanCount = _sessionTasksWithoutPlan.get(projectId) || 0;
+
     if (implementationPlan) {
       response.planAction = {
         action: 'SHOW_PLAN_FOR_VALIDATION',
@@ -680,6 +740,19 @@ export async function createCard({ projectId, type, title, description, descript
       response.planAction = {
         action: 'CREATE_PLAN',
         message: 'This task was created without an implementation plan. Create a plan (with approach and steps) and present it to the user for validation before starting implementation. Use update_card to add the implementationPlan with planStatus "proposed", then show it to the user for approval.'
+      };
+    }
+
+    // Plan-first warning: when creating 2+ tasks without a plan in the same session
+    if (!planId && tasksWithoutPlanCount >= PLAN_FIRST_THRESHOLD) {
+      response.planFirstWarning = {
+        level: 'warning',
+        tasksWithoutPlan: tasksWithoutPlanCount,
+        message: `You have created ${tasksWithoutPlanCount} tasks without a development plan in project "${projectId}" during this session. ` +
+          'When creating multiple related tasks, you SHOULD first create a plan (create_plan) to group them, then reference the planId when creating tasks. ' +
+          'This ensures traceability and documentation of multi-task developments. ' +
+          'Consider creating a plan now and linking these tasks to it via update_card.',
+        recommendation: 'CREATE_PLAN_FIRST'
       };
     }
   }
@@ -797,6 +870,14 @@ export async function updateCard({ projectId, type, firebaseId, updates, validat
   }
 
   validateEntityIds(updates);
+
+  // Resolve values dynamically from Firebase RTDB (case-insensitive)
+  if (type === 'bug') {
+    if (updates.status) updates.status = await resolveValue('bugStatus', updates.status);
+    if (updates.priority) updates.priority = await resolveValue('bugPriority', updates.priority);
+  } else if (type === 'task') {
+    if (updates.status) updates.status = await resolveValue('taskStatus', updates.status);
+  }
 
   if (type === 'bug') {
     validateBugFields(updates, true);

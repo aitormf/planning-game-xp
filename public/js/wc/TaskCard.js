@@ -103,7 +103,12 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
       // Warning when projectId doesn't match URL
       _projectIdMismatch: { type: Boolean, state: true },
       // Converting legacy description to user story
-      _isConvertingDescription: { type: Boolean, state: true }
+      _isConvertingDescription: { type: Boolean, state: true },
+      // Time tracking for Pausado status
+      timeLog: { type: Array },
+      totalElapsedTime: { type: Number },
+      effectiveWorkTime: { type: Number },
+      totalPausedTime: { type: Number }
     };
   }
 
@@ -2349,7 +2354,7 @@ this.isSuperAdmin = false;
 
   // Método para ordenar los estados en el orden lógico
   sortStatusList(statusArray) {
-    const order = ['To Do', 'In Progress', 'To Validate', 'Done&Validated', 'Blocked', 'Reopened'];
+    const order = ['To Do', 'In Progress', 'Pausado', 'To Validate', 'Done&Validated', 'Blocked', 'Reopened'];
 
     // Ensure Reopened is available if Done&Validated exists (task workflow)
     let extendedArray = [...statusArray];
@@ -2890,7 +2895,7 @@ this.isSuperAdmin = false;
         ` : ''}
         <div class="form-field inline">
           <label class="${this._getLabelClass('startDate')}">Start</label>
-          <input type="datetime-local" class="${this._getFieldClass('startDate')}" .value=${extractDateTimeLocal(this.startDate, 'start')} @change=${this._handleStartDateChange} ?disabled=${!this.canEdit}>
+          <input type="datetime-local" class="${this._getFieldClass('startDate')}" .value=${extractDateTimeLocal(this.startDate, 'start')} @change=${this._handleStartDateChange} ?disabled=${!this.canEdit || !!this.startDate}>
         </div>
         <div class="form-field inline">
           <label class="${this._getLabelClass('endDate')}">End</label>
@@ -2902,6 +2907,7 @@ this.isSuperAdmin = false;
           <input type="datetime-local" .value=${extractDateTimeLocal(this.validatedAt)} disabled>
         </div>
         ` : ''}
+        ${this._renderTimeMetrics()}
       </div>
       ${this.reopenCount > 0 ? html`
       <div class="reopen-info">
@@ -3924,6 +3930,19 @@ this.repositoryLabel = newLabel;
       this.validatedAt = '';
     }
 
+    // TimeLog tracking for Pausado status
+    if (normalizedNewStatus === 'pausado' && normalizedPrevStatus === 'in progress') {
+      const timeLog = Array.isArray(this.timeLog) ? [...this.timeLog] : [];
+      timeLog.push({ event: 'paused', timestamp: new Date().toISOString(), by: this._getCurrentUserEmail() });
+      this.timeLog = timeLog;
+    }
+    if (normalizedNewStatus === 'in progress' && normalizedPrevStatus === 'pausado') {
+      const timeLog = Array.isArray(this.timeLog) ? [...this.timeLog] : [];
+      timeLog.push({ event: 'resumed', timestamp: new Date().toISOString(), by: this._getCurrentUserEmail() });
+      this.timeLog = timeLog;
+      this._calculateTimeMetrics();
+    }
+
     // NOTE: "Blocked" validation moved to _handleSave()
     // Selecting "Blocked" shows the blocked fields section, validation happens on save
 
@@ -3983,6 +4002,86 @@ this.repositoryLabel = newLabel;
     modal.cardId = this.cardId;
     modal.cardTitle = this.title;
     document.body.appendChild(modal);
+  }
+
+  /**
+   * Calculate time metrics from timeLog (pause/resume events)
+   */
+  _calculateTimeMetrics() {
+    const timeLog = Array.isArray(this.timeLog) ? this.timeLog : [];
+    if (timeLog.length === 0) return;
+
+    let totalPaused = 0;
+    let lastPausedAt = null;
+
+    for (const entry of timeLog) {
+      if (entry.event === 'paused') {
+        lastPausedAt = new Date(entry.timestamp).getTime();
+      } else if (entry.event === 'resumed' && lastPausedAt) {
+        totalPaused += new Date(entry.timestamp).getTime() - lastPausedAt;
+        lastPausedAt = null;
+      }
+    }
+
+    // If currently paused (no matching resume), count time until now
+    if (lastPausedAt) {
+      totalPaused += Date.now() - lastPausedAt;
+    }
+
+    this.totalPausedTime = totalPaused;
+
+    // Calculate total elapsed time from startDate to now (or endDate)
+    if (this.startDate) {
+      const start = new Date(this.startDate).getTime();
+      const end = this.endDate ? new Date(this.endDate).getTime() : Date.now();
+      this.totalElapsedTime = end - start;
+      this.effectiveWorkTime = this.totalElapsedTime > 0 ? this.totalElapsedTime - totalPaused : 0;
+    }
+  }
+
+  /**
+   * Format milliseconds to human-readable duration
+   * @param {number} ms - Duration in milliseconds
+   * @returns {string} Formatted duration
+   */
+  _formatDuration(ms) {
+    if (!ms || ms <= 0) return '-';
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours % 24 > 0) parts.push(`${hours % 24}h`);
+    if (minutes % 60 > 0) parts.push(`${minutes % 60}m`);
+
+    return parts.length > 0 ? parts.join(' ') : '< 1m';
+  }
+
+  /**
+   * Render time metrics (paused time, effective work time) if timeLog exists
+   */
+  _renderTimeMetrics() {
+    const timeLog = Array.isArray(this.timeLog) ? this.timeLog : [];
+    if (timeLog.length === 0) return '';
+
+    this._calculateTimeMetrics();
+
+    return html`
+      <div class="form-field inline" style="gap: 0.5rem; flex-wrap: wrap;">
+        ${this.totalPausedTime > 0 ? html`
+          <span style="font-size: 0.85em; color: #ff9800;" title="Tiempo total en pausa">
+            ⏸ Pausado: ${this._formatDuration(this.totalPausedTime)}
+          </span>
+        ` : ''}
+        ${this.effectiveWorkTime > 0 ? html`
+          <span style="font-size: 0.85em; color: #4caf50;" title="Tiempo efectivo de trabajo">
+            ⏱ Efectivo: ${this._formatDuration(this.effectiveWorkTime)}
+          </span>
+        ` : ''}
+      </div>
+    `;
   }
 
   _emitStatusUpdated(previousStatus, newStatus) {

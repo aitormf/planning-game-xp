@@ -1,0 +1,32 @@
+services:
+  # Planning Game MCP - Geniova instance
+  planning-game-pro:
+    build:
+      context: ..
+      dockerfile: mcp/Dockerfile
+    container_name: planning-game-pro
+    stdin_open: true
+    volumes:
+      - ../planning-game-instances/geniova/serviceAccountKey.json:/app/serviceAccountKey.json:ro
+      - ../planning-game-instances/geniova/mcp.user.json:/app/mcp.user.json
+    environment:
+      - MCP_SERVER_NAME=planning-game-pro
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/serviceAccountKey.json
+      - FIREBASE_DATABASE_URL=https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app
+      - MCP_INSTANCE_DIR=/app
+
+  # Planning Game MCP - Personal instance
+  planning-game-personal:
+    build:
+      context: ..
+      dockerfile: mcp/Dockerfile
+    container_name: planning-game-personal
+    stdin_open: true
+    volumes:
+      - ../planning-game-instances/personal/serviceAccountKey.json:/app/serviceAccountKey.json:ro
+      - ../planning-game-instances/personal/mcp.user.json:/app/mcp.user.json
+    environment:
+      - MCP_SERVER_NAME=planning-game-personal
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/serviceAccountKey.json
+      - FIREBASE_DATABASE_URL=https://planning-game-xp-default-rtdb.europe-west1.firebasedatabase.app
+      - MCP_INSTANCE_DIR=/app
