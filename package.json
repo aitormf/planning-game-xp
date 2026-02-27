@@ -88,7 +88,7 @@
     "vitest": "^3.2.4"
   },
   "overrides": {
-    "fast-xml-parser": "5.3.6",
-    "minimatch": "10.2.2"
+    "fast-xml-parser": "5.4.1",
+    "minimatch": "10.2.4"
   }
 }
