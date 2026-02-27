@@ -421,7 +421,7 @@ export class ProjectForm extends LitElement {
               rows="10"></textarea>`
         }
         <div class="helper-text">
-          Contexto de alto nivel del proyecto. Usado por herramientas de IA (Claude Code, MCP).
+          Contexto de alto nivel del proyecto. Usado por herramientas de IA y agentes MCP.
           Formato: Markdown.
         </div>
       </div>
