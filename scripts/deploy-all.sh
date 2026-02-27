@@ -93,7 +93,7 @@ for INSTANCE in $INSTANCES; do
   echo "  [$CURRENT/$TOTAL] Deploying: $INSTANCE → $PROJECT_ID"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-  # 1. Activate instance (for .firebaserc, serviceAccountKey, etc.)
+  # 1. Activate instance (symlinks .firebaserc, switches Firebase CLI account, etc.)
   log "Activating instance..."
   node "$ROOT_DIR/scripts/instance-manager.cjs" use "$INSTANCE" >> "$LOGFILE" 2>&1
   log "Instance activated"
@@ -127,7 +127,7 @@ done
 # Remove dist symlink
 rm -f "$ROOT_DIR/dist"
 
-# Restore original instance
+# Restore original instance (instance-manager also restores Firebase CLI account)
 if [ -n "$ORIGINAL_INSTANCE" ]; then
   log "Restoring instance: $ORIGINAL_INSTANCE"
   node "$ROOT_DIR/scripts/instance-manager.cjs" use "$ORIGINAL_INSTANCE" > /dev/null 2>&1 || true

@@ -62,6 +62,7 @@ const INSTANCE_FILES = [
   { src: 'theme-config.json', dest: 'public/theme-config.json', required: false, desc: 'Theme configuration (colors, branding)' },
   { src: 'manifest.json', dest: 'public/manifest.json', required: false, desc: 'PWA manifest' },
   { src: 'developer-directory.js', dest: 'public/js/config/developer-directory.js', required: false, desc: 'Developer name/alias directory' },
+  { src: '.firebase-account', dest: null, required: false, desc: 'Firebase CLI account email for deploy (not symlinked)' },
 ];
 
 const EMULATOR_DATA = { src: 'emulator-data', dest: 'emulator-data' };
@@ -232,6 +233,11 @@ function activateInstance(name, { verbose = true } = {}) {
   let skipped = 0;
 
   for (const entry of INSTANCE_FILES) {
+    // Skip files that are instance-only (not symlinked to root)
+    if (!entry.dest) {
+      continue;
+    }
+
     const srcPath = path.join(instanceDir, entry.src);
     const destPath = path.join(ROOT_DIR, entry.dest);
 
@@ -280,13 +286,27 @@ function activateInstance(name, { verbose = true } = {}) {
     skipped++;
   }
 
-  // Sync Firebase CLI
+  // Sync Firebase CLI: switch project and account
   const projectId = getProjectIdFromFirebaserc(instanceDir);
   if (projectId) {
     try {
       execSync('firebase use default', { cwd: ROOT_DIR, stdio: 'pipe' });
     } catch {
       // Firebase CLI not logged in or not installed, not critical
+    }
+
+    // Switch Firebase CLI account if .firebase-account exists
+    const accountFile = path.join(instanceDir, '.firebase-account');
+    if (fs.existsSync(accountFile)) {
+      const account = fs.readFileSync(accountFile, 'utf8').trim();
+      if (account) {
+        try {
+          execSync(`firebase login:use ${account}`, { cwd: ROOT_DIR, stdio: 'pipe' });
+          if (verbose) console.log(`  Firebase account: ${account}`);
+        } catch {
+          if (verbose) console.warn(`  Warning: could not switch to Firebase account ${account}`);
+        }
+      }
     }
   }
 
@@ -349,6 +369,17 @@ function verifyInstance(name) {
     if (!prodDbUrl) {
       issues.push('.env.prod: PUBLIC_FIREBASE_DATABASE_URL missing or placeholder');
     }
+  }
+
+  // Check .firebase-account has a real email
+  const accountPath = path.join(instanceDir, '.firebase-account');
+  if (fs.existsSync(accountPath)) {
+    const account = fs.readFileSync(accountPath, 'utf8').trim();
+    if (!account || account.includes('YOUR_') || !account.includes('@')) {
+      warnings.push('.firebase-account: missing or has placeholder value (deploy may fail)');
+    }
+  } else {
+    warnings.push('.firebase-account: not found (deploy will use current CLI account)');
   }
 
   // Check emulator-data has content
@@ -588,12 +619,20 @@ function cmdCreate(name) {
     }
   }
 
+  // Generate .firebase-account template
+  fs.writeFileSync(
+    path.join(instanceDir, '.firebase-account'),
+    'YOUR_FIREBASE_CLI_EMAIL@example.com\n'
+  );
+  console.log(`  Created: .firebase-account`);
+
   console.log(`\nInstance "${name}" created at: planning-game-instances/${name}/`);
   console.log('\nNext steps:');
   console.log(`  1. Edit .firebaserc with your Firebase project ID`);
   console.log(`  2. Edit .env.dev and .env.prod with your Firebase config`);
   console.log(`  3. Edit database.rules.json and storage.rules for your domain`);
-  console.log(`  4. Run: npm run instance:verify`);
+  console.log(`  4. Edit .firebase-account with your Firebase CLI email (firebase login:list)`);
+  console.log(`  5. Run: npm run instance:verify`);
   console.log('');
 }
 
