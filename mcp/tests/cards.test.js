@@ -38,7 +38,9 @@ const {
   REQUIRED_FIELDS_TO_LEAVE_TODO,
   REQUIRED_FIELDS_TO_CLOSE_BUG,
   VALIDATOR_ONLY_STATUSES,
-  validateBugStatusTransition
+  validateBugStatusTransition,
+  getSessionTasksWithoutPlan,
+  resetSessionTaskCounter
 } = await import('../tools/cards.js');
 
 const { invalidateCache } = await import('../services/list-service.js');
@@ -1337,6 +1339,120 @@ describe('cards.js', () => {
 
       expect(cards).toHaveLength(2);
       expect(cards.every(c => c.cardId === 'TP-TSK-0001' || c.cardId === 'TP-TSK-0003')).toBe(true);
+    });
+  });
+
+  describe('plan-first workflow enforcement', () => {
+    beforeEach(() => {
+      setupMockLists();
+      resetSessionTaskCounter();
+      setMockRtdbData('/projects/TestProject', { name: 'Test', abbreviation: 'TP', scoringSystem: '1-5' });
+      setMockFirestoreData('projectCounters', 'TP-TSK', { lastId: 200 });
+      setMockRtdbData('/cards/TestProject/EPICS_TestProject', {
+        'epic1': { cardId: 'TP-EPC-0001', title: 'Test Epic' }
+      });
+      setMockRtdbData('/data/stakeholders', {
+        'stk_001': { name: 'Dev User', email: 'dev@test.com', active: true },
+        'stk_002': { name: 'Mánu Fosela', email: 'mfosela@geniova.com', active: true }
+      });
+      setMockRtdbData('/projects/TestProject/stakeholders', ['stk_001', 'stk_002']);
+    });
+
+    const baseTaskParams = {
+      projectId: 'TestProject',
+      type: 'task',
+      descriptionStructured: [{ role: 'developer', goal: 'test plan-first', benefit: 'enforcement' }],
+      acceptanceCriteria: 'Plan-first is enforced',
+      epic: 'TP-EPC-0001'
+    };
+
+    it('should NOT include planFirstWarning for the first task without planId', async () => {
+      const result = await createCard({ ...baseTaskParams, title: 'First task no plan' });
+      const response = JSON.parse(result.content[0].text);
+
+      expect(response.planFirstWarning).toBeUndefined();
+      expect(getSessionTasksWithoutPlan('TestProject')).toBe(1);
+    });
+
+    it('should include planFirstWarning for the second task without planId', async () => {
+      await createCard({ ...baseTaskParams, title: 'Task 1 no plan' });
+      const result = await createCard({ ...baseTaskParams, title: 'Task 2 no plan' });
+      const response = JSON.parse(result.content[0].text);
+
+      expect(response.planFirstWarning).toBeDefined();
+      expect(response.planFirstWarning.level).toBe('warning');
+      expect(response.planFirstWarning.tasksWithoutPlan).toBe(2);
+      expect(response.planFirstWarning.recommendation).toBe('CREATE_PLAN_FIRST');
+    });
+
+    it('should NOT count tasks that have a planId', async () => {
+      await createCard({ ...baseTaskParams, title: 'Task with plan', planId: '-plan1' });
+      const result = await createCard({ ...baseTaskParams, title: 'Task without plan' });
+      const response = JSON.parse(result.content[0].text);
+
+      expect(response.planFirstWarning).toBeUndefined();
+      expect(getSessionTasksWithoutPlan('TestProject')).toBe(1);
+    });
+
+    it('should track counts independently per project', async () => {
+      // Create a task in TestProject
+      await createCard({ ...baseTaskParams, title: 'TestProject task 1' });
+
+      // Setup a second project
+      setMockRtdbData('/projects/OtherProject', { name: 'Other', abbreviation: 'OT', scoringSystem: '1-5' });
+      setMockFirestoreData('projectCounters', 'OT-TSK', { lastId: 0 });
+      setMockRtdbData('/cards/OtherProject/EPICS_OtherProject', {
+        'epic1': { cardId: 'OT-EPC-0001', title: 'Other Epic' }
+      });
+      setMockRtdbData('/projects/OtherProject/stakeholders', ['stk_001', 'stk_002']);
+
+      const result = await createCard({
+        ...baseTaskParams,
+        projectId: 'OtherProject',
+        title: 'OtherProject task 1',
+        epic: 'OT-EPC-0001'
+      });
+      const response = JSON.parse(result.content[0].text);
+
+      expect(response.planFirstWarning).toBeUndefined();
+      expect(getSessionTasksWithoutPlan('TestProject')).toBe(1);
+      expect(getSessionTasksWithoutPlan('OtherProject')).toBe(1);
+    });
+
+    it('should increment warning count for 3+ tasks without plan', async () => {
+      await createCard({ ...baseTaskParams, title: 'Task 1' });
+      await createCard({ ...baseTaskParams, title: 'Task 2' });
+      const result = await createCard({ ...baseTaskParams, title: 'Task 3' });
+      const response = JSON.parse(result.content[0].text);
+
+      expect(response.planFirstWarning).toBeDefined();
+      expect(response.planFirstWarning.tasksWithoutPlan).toBe(3);
+    });
+
+    it('should NOT warn for non-task card types', async () => {
+      setMockFirestoreData('projectCounters', 'TP-BUG', { lastId: 0 });
+      // Create multiple bugs - should never trigger plan-first warning
+      await createCard({ projectId: 'TestProject', type: 'bug', title: 'Bug 1' });
+      const result = await createCard({ projectId: 'TestProject', type: 'bug', title: 'Bug 2' });
+      const response = JSON.parse(result.content[0].text);
+
+      expect(response.planFirstWarning).toBeUndefined();
+    });
+
+    it('should reset counter for a specific project', async () => {
+      await createCard({ ...baseTaskParams, title: 'Task 1' });
+      expect(getSessionTasksWithoutPlan('TestProject')).toBe(1);
+
+      resetSessionTaskCounter('TestProject');
+      expect(getSessionTasksWithoutPlan('TestProject')).toBe(0);
+    });
+
+    it('should reset all counters when no projectId given', async () => {
+      await createCard({ ...baseTaskParams, title: 'Task 1' });
+      expect(getSessionTasksWithoutPlan('TestProject')).toBe(1);
+
+      resetSessionTaskCounter();
+      expect(getSessionTasksWithoutPlan('TestProject')).toBe(0);
     });
   });
 });
