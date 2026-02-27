@@ -22,9 +22,11 @@ const path = require("node:path");
 
 const { handleCardToValidate } = require("./handlers/on-card-to-validate");
 const { handleBugFixed } = require("./handlers/on-bug-fixed");
+const { handleHourlyDigest } = require("./handlers/hourly-validation-digest");
 const { handleTaskStatusValidation } = require("./handlers/on-task-status-validation");
 const { handleSyncCardViews } = require("./handlers/sync-card-views");
 const { handlePortalBugResolved } = require("./handlers/on-portal-bug-resolved");
+const { extractKeywords, findBestEpicMatch } = require("./helpers/epic-inference");
 
 const normalizeEmail = (email) => (email || '').toString().trim().toLowerCase();
 
@@ -1201,6 +1203,51 @@ exports.testWeeklyTaskSummary = onRequest({
   }
 });
 
+/**
+ * Scheduled function - runs every hour to send consolidated digest emails
+ * Replaces immediate per-card emails with hourly batched summaries.
+ */
+exports.hourlyValidationDigest = onSchedule({
+  schedule: "0 * * * *", // Every hour at minute 0
+  timeZone: "Europe/Madrid",
+  region: "europe-west1",
+  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
+}, async (event) => {
+  const db = getDatabase();
+  return handleHourlyDigest({
+    db,
+    getAccessToken: getGraphAccessToken,
+    sendEmail,
+    logger
+  });
+});
+
+/**
+ * HTTP trigger for manual testing of the hourly digest
+ * Supports optional ?email=user@example.com parameter to filter and only send to that email
+ */
+exports.testHourlyDigest = onRequest({
+  region: "europe-west1",
+  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
+}, async (req, res) => {
+  try {
+    const filterEmail = req.query.email || null;
+    if (filterEmail) {
+      logger.info(`Hourly digest test triggered with email filter: ${filterEmail}`);
+    }
+    const db = getDatabase();
+    const result = await handleHourlyDigest({
+      db,
+      getAccessToken: getGraphAccessToken,
+      sendEmail,
+      logger
+    }, filterEmail);
+    res.json(result);
+  } catch (error) {
+    logger.error('Error in hourly digest test function:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * Firebase Cloud Function for Push Notifications
@@ -2579,6 +2626,460 @@ exports.createCard = onRequest({
 });
 
 // ============================================================================
+// CREATE TASKS FROM PLAN - Generate task cards from an accepted development plan
+// ============================================================================
+
+/**
+ * Creates task cards in Firebase from an accepted development plan.
+ * Each phase's tasks become real task cards linked back to the plan.
+ *
+ * @param {string} projectId - The project ID
+ * @param {string} planId - The Firebase plan ID
+ * @returns {Object} - { createdTasks: [{cardId, firebaseId, title, phaseIndex}], totalCreated }
+ */
+
+/**
+ * Infer which epic to assign to each phase.
+ * Strategy:
+ * - If phase already has epicIds assigned, use the first one
+ * - If there are few phases (<=3) and the plan is cohesive, use/create a single epic for the whole plan
+ * - For each phase, try to match its name against existing epic titles using keyword overlap
+ * - If no match found, create a new epic based on the plan title
+ *
+ * @param {Object} db - Firebase database reference
+ * @param {string} projectId - Project ID
+ * @param {Array} phases - Plan phases
+ * @param {Array} existingEpics - Existing epics [{firebaseId, cardId, title}]
+ * @param {string} planTitle - The plan title (used for new epic naming)
+ * @param {string} createdBy - Creator email
+ * @param {string} now - ISO timestamp
+ * @returns {Object} Map of phaseIndex -> epicCardId
+ */
+async function inferEpicsForPhases(db, projectId, phases, existingEpics, planTitle, createdBy, now) {
+  const phaseEpicMap = {};
+
+  // Check if any phase already has epicIds manually assigned
+  const allHaveEpics = phases.every(p => p.epicIds && p.epicIds.length > 0);
+  if (allHaveEpics) {
+    phases.forEach((p, i) => { phaseEpicMap[i] = p.epicIds[0]; });
+    return phaseEpicMap;
+  }
+
+  // Try to find a matching epic for the plan title
+  const planKeywords = extractKeywords(planTitle);
+  let bestMatch = findBestEpicMatch(planKeywords, existingEpics);
+
+  // For cohesive plans (<=3 phases), use a single epic
+  if (phases.length <= 3) {
+    if (!bestMatch) {
+      bestMatch = await createEpicForPlan(db, projectId, planTitle, createdBy, now);
+    }
+    phases.forEach((p, i) => {
+      phaseEpicMap[i] = (p.epicIds && p.epicIds.length > 0) ? p.epicIds[0] : bestMatch;
+    });
+    return phaseEpicMap;
+  }
+
+  // For larger plans, try to match each phase individually
+  const createdEpics = {};
+  for (let i = 0; i < phases.length; i++) {
+    const phase = phases[i];
+    if (phase.epicIds && phase.epicIds.length > 0) {
+      phaseEpicMap[i] = phase.epicIds[0];
+      continue;
+    }
+
+    const phaseKeywords = extractKeywords(phase.name);
+    const match = findBestEpicMatch(phaseKeywords, existingEpics);
+    if (match) {
+      phaseEpicMap[i] = match;
+    } else {
+      // Use the plan-level epic (create once, reuse)
+      if (!createdEpics.plan) {
+        createdEpics.plan = bestMatch || await createEpicForPlan(db, projectId, planTitle, createdBy, now);
+      }
+      phaseEpicMap[i] = createdEpics.plan;
+    }
+  }
+
+  return phaseEpicMap;
+}
+
+/**
+ * Create a new epic card for a plan.
+ */
+async function createEpicForPlan(db, projectId, planTitle, createdBy, now) {
+  const epicCardId = await generateCardId(projectId, 'epics');
+  const epicSectionPath = `EPICS_${projectId}`;
+  const epicPath = `/cards/${projectId}/${epicSectionPath}`;
+  const newEpicRef = db.ref(epicPath).push();
+  const firebaseId = newEpicRef.key;
+
+  const epicData = {
+    cardId: epicCardId,
+    id: firebaseId,
+    firebaseId,
+    cardType: 'epic-card',
+    group: 'epics',
+    section: 'epics',
+    projectId,
+    title: planTitle,
+    status: 'To Do',
+    description: `Epic auto-created from development plan: ${planTitle}`,
+    createdBy,
+    year: new Date().getFullYear(),
+    createdAt: now,
+    updatedAt: now
+  };
+
+  await newEpicRef.set(epicData);
+  logger.info('inferEpicsForPhases: Epic created for plan', { epicCardId, planTitle, projectId });
+
+  return epicCardId;
+}
+
+exports.createTasksFromPlan = onCall({
+  region: "europe-west1",
+  memory: "256MiB",
+  timeoutSeconds: 60
+}, async (request) => {
+  const { projectId, planId } = request.data || {};
+
+  if (!projectId || typeof projectId !== 'string') {
+    throw new HttpsError('invalid-argument', 'projectId is required');
+  }
+  if (!planId || typeof planId !== 'string') {
+    throw new HttpsError('invalid-argument', 'planId is required');
+  }
+
+  const db = getDatabase();
+
+  // Load the plan
+  const planSnap = await db.ref(`/plans/${projectId}/${planId}`).once('value');
+  if (!planSnap.exists()) {
+    throw new HttpsError('not-found', `Plan "${planId}" not found in project "${projectId}"`);
+  }
+  const plan = planSnap.val();
+
+  // Only accepted plans can generate tasks
+  if (plan.status !== 'accepted') {
+    throw new HttpsError('failed-precondition', 'Only accepted plans can generate tasks. Accept the plan first.');
+  }
+
+  // Check if tasks were already generated
+  if (plan.generatedTasks && plan.generatedTasks.length > 0) {
+    throw new HttpsError('already-exists', `This plan already has ${plan.generatedTasks.length} generated tasks. Use regenerate if you want to update them.`);
+  }
+
+  const phases = plan.phases || [];
+  if (phases.length === 0) {
+    throw new HttpsError('failed-precondition', 'Plan has no phases to generate tasks from.');
+  }
+
+  const createdTasks = [];
+  const sectionPath = `TASKS_${projectId}`;
+  const cardPath = `/cards/${projectId}/${sectionPath}`;
+  const now = new Date().toISOString();
+  const createdBy = request.auth?.token?.email || 'system';
+
+  // Load existing epics for inference
+  const epicsPath = `/cards/${projectId}/EPICS_${projectId}`;
+  const epicsSnap = await db.ref(epicsPath).once('value');
+  const epicsData = epicsSnap.val() || {};
+  const existingEpics = Object.entries(epicsData)
+    .filter(([, epic]) => !epic.deletedAt)
+    .map(([fbId, epic]) => ({
+      firebaseId: fbId,
+      cardId: epic.cardId || fbId,
+      title: (epic.title || '').toLowerCase()
+    }));
+
+  // Infer or create epic for each phase
+  const phaseEpicMap = await inferEpicsForPhases(db, projectId, phases, existingEpics, plan.title, createdBy, now);
+
+  for (let phaseIndex = 0; phaseIndex < phases.length; phaseIndex++) {
+    const phase = phases[phaseIndex];
+    const phaseTasks = phase.tasks || [];
+    const epicId = phaseEpicMap[phaseIndex] || '';
+
+    for (const task of phaseTasks) {
+      if (!task.title) continue;
+
+      // Generate unique card ID
+      const cardId = await generateCardId(projectId, 'tasks');
+
+      // Generate Firebase push key
+      const newCardRef = db.ref(cardPath).push();
+      const firebaseId = newCardRef.key;
+
+      // Build description structured from AI task data
+      const descriptionStructured = {
+        role: task.como || '',
+        goal: task.quiero || '',
+        benefit: task.para || ''
+      };
+
+      // Build card data
+      const cardData = {
+        cardId,
+        id: firebaseId,
+        firebaseId,
+        cardType: 'task-card',
+        group: 'tasks',
+        section: 'tasks',
+        projectId,
+        title: task.title.trim(),
+        createdBy,
+        status: 'To Do',
+        description: '',
+        descriptionStructured,
+        notes: '',
+        sprint: '',
+        epic: epicId,
+        developer: '',
+        validator: '',
+        businessPoints: 0,
+        devPoints: 0,
+        startDate: '',
+        endDate: '',
+        desiredDate: '',
+        year: new Date().getFullYear(),
+        expedited: false,
+        blockedByBusiness: false,
+        blockedByDevelopment: false,
+        acceptanceCriteria: '',
+        acceptanceCriteriaStructured: [],
+        repositoryLabel: '',
+        coDeveloper: '',
+        planId,
+        planPhase: phase.name || `Phase ${phaseIndex + 1}`,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      await newCardRef.set(cardData);
+
+      createdTasks.push({
+        cardId,
+        firebaseId,
+        title: task.title.trim(),
+        phaseIndex,
+        epic: epicId
+      });
+
+      logger.info('createTasksFromPlan: Task created', { cardId, planId, phaseIndex, epic: epicId });
+    }
+  }
+
+  // Update plan with generated task references
+  const generatedTasksData = createdTasks.map(t => ({
+    cardId: t.cardId,
+    firebaseId: t.firebaseId,
+    phaseIndex: t.phaseIndex
+  }));
+
+  // Also update each phase with its taskIds and inferred epicIds
+  const updatedPhases = phases.map((phase, i) => {
+    const phaseTaskIds = createdTasks
+      .filter(t => t.phaseIndex === i)
+      .map(t => t.cardId);
+    const inferredEpic = phaseEpicMap[i];
+    const epicIds = inferredEpic
+      ? [...new Set([...(phase.epicIds || []), inferredEpic])]
+      : (phase.epicIds || []);
+    return {
+      ...phase,
+      taskIds: [...(phase.taskIds || []), ...phaseTaskIds],
+      epicIds
+    };
+  });
+
+  await db.ref(`/plans/${projectId}/${planId}`).update({
+    generatedTasks: generatedTasksData,
+    phases: updatedPhases,
+    updatedAt: now
+  });
+
+  logger.info('createTasksFromPlan: All tasks created', {
+    planId,
+    projectId,
+    totalCreated: createdTasks.length
+  });
+
+  return {
+    createdTasks,
+    totalCreated: createdTasks.length
+  };
+});
+
+/**
+ * Regenerate tasks from a plan that was modified.
+ * Deletes previously generated tasks (only if still in "To Do") and creates new ones.
+ */
+exports.regenerateTasksFromPlan = onCall({
+  region: "europe-west1",
+  memory: "256MiB",
+  timeoutSeconds: 60
+}, async (request) => {
+  const { projectId, planId } = request.data || {};
+
+  if (!projectId || typeof projectId !== 'string') {
+    throw new HttpsError('invalid-argument', 'projectId is required');
+  }
+  if (!planId || typeof planId !== 'string') {
+    throw new HttpsError('invalid-argument', 'planId is required');
+  }
+
+  const db = getDatabase();
+
+  // Load the plan
+  const planSnap = await db.ref(`/plans/${projectId}/${planId}`).once('value');
+  if (!planSnap.exists()) {
+    throw new HttpsError('not-found', `Plan "${planId}" not found`);
+  }
+  const plan = planSnap.val();
+
+  if (plan.status !== 'accepted') {
+    throw new HttpsError('failed-precondition', 'Only accepted plans can regenerate tasks.');
+  }
+
+  const previousTasks = plan.generatedTasks || [];
+  const sectionPath = `TASKS_${projectId}`;
+  const cardPath = `/cards/${projectId}/${sectionPath}`;
+  const skippedTasks = [];
+
+  // Delete previous tasks that are still in "To Do"
+  for (const prev of previousTasks) {
+    const taskSnap = await db.ref(`${cardPath}/${prev.firebaseId}`).once('value');
+    if (!taskSnap.exists()) continue;
+
+    const taskData = taskSnap.val();
+    if (taskData.status === 'To Do') {
+      await db.ref(`${cardPath}/${prev.firebaseId}`).remove();
+      logger.info('regenerateTasksFromPlan: Deleted To Do task', { cardId: prev.cardId });
+    } else {
+      skippedTasks.push({
+        cardId: prev.cardId,
+        status: taskData.status,
+        reason: 'Task already started, cannot delete'
+      });
+    }
+  }
+
+  // Clear generatedTasks and phase taskIds for regeneration
+  const cleanedPhases = (plan.phases || []).map(phase => {
+    const prevTaskIds = previousTasks
+      .filter(t => !skippedTasks.find(s => s.cardId === t.cardId))
+      .map(t => t.cardId);
+    return {
+      ...phase,
+      taskIds: (phase.taskIds || []).filter(id => !prevTaskIds.includes(id))
+    };
+  });
+
+  await db.ref(`/plans/${projectId}/${planId}`).update({
+    generatedTasks: null,
+    phases: cleanedPhases
+  });
+
+  // Now create new tasks using the existing function logic
+  const createFn = exports.createTasksFromPlan;
+  // Instead of calling itself, inline the creation
+  const phases = cleanedPhases;
+  const createdTasks = [];
+  const now = new Date().toISOString();
+  const createdBy = request.auth?.token?.email || 'system';
+
+  for (let phaseIndex = 0; phaseIndex < phases.length; phaseIndex++) {
+    const phase = phases[phaseIndex];
+    const phaseTasks = phase.tasks || [];
+
+    for (const task of phaseTasks) {
+      if (!task.title) continue;
+
+      const cardId = await generateCardId(projectId, 'tasks');
+      const newCardRef = db.ref(cardPath).push();
+      const firebaseId = newCardRef.key;
+
+      const descriptionStructured = {
+        role: task.como || '',
+        goal: task.quiero || '',
+        benefit: task.para || ''
+      };
+
+      const cardData = {
+        cardId,
+        id: firebaseId,
+        firebaseId,
+        cardType: 'task-card',
+        group: 'tasks',
+        section: 'tasks',
+        projectId,
+        title: task.title.trim(),
+        createdBy,
+        status: 'To Do',
+        description: '',
+        descriptionStructured,
+        notes: '',
+        sprint: '',
+        epic: (phase.epicIds && phase.epicIds.length > 0) ? phase.epicIds[0] : '',
+        developer: '',
+        validator: '',
+        businessPoints: 0,
+        devPoints: 0,
+        startDate: '',
+        endDate: '',
+        desiredDate: '',
+        year: new Date().getFullYear(),
+        expedited: false,
+        blockedByBusiness: false,
+        blockedByDevelopment: false,
+        acceptanceCriteria: '',
+        acceptanceCriteriaStructured: [],
+        repositoryLabel: '',
+        coDeveloper: '',
+        planId,
+        planPhase: phase.name || `Phase ${phaseIndex + 1}`,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      await newCardRef.set(cardData);
+      createdTasks.push({ cardId, firebaseId, title: task.title.trim(), phaseIndex });
+    }
+  }
+
+  // Update plan with new generated tasks
+  const generatedTasksData = createdTasks.map(t => ({
+    cardId: t.cardId,
+    firebaseId: t.firebaseId,
+    phaseIndex: t.phaseIndex
+  }));
+
+  const updatedPhases = phases.map((phase, i) => {
+    const phaseTaskIds = createdTasks
+      .filter(t => t.phaseIndex === i)
+      .map(t => t.cardId);
+    return {
+      ...phase,
+      taskIds: [...(phase.taskIds || []), ...phaseTaskIds]
+    };
+  });
+
+  await db.ref(`/plans/${projectId}/${planId}`).update({
+    generatedTasks: generatedTasksData,
+    phases: updatedPhases,
+    updatedAt: now
+  });
+
+  return {
+    createdTasks,
+    totalCreated: createdTasks.length,
+    skippedTasks
+  };
+});
+
+// ============================================================================
 // PARSE DOCUMENT FOR CARDS - Generate tasks/bugs from text documents
 // ============================================================================
 
@@ -2863,6 +3364,210 @@ exports.parseDocumentForCards = onCall({
 });
 
 // ============================================================================
+// GENERATE DEV PLAN - Generate a structured development plan from a description
+// ============================================================================
+
+async function callOpenAIForPlanGeneration(apiKey, context, existingEpics, projectName, existingPlanJson) {
+  const epicsList = existingEpics.length > 0
+    ? existingEpics.map(e => `- "${e.title}" (${e.cardId})`).join('\n')
+    : 'No hay épicas existentes en el proyecto.';
+
+  const refinementBlock = existingPlanJson
+    ? [
+      '',
+      'PLAN ANTERIOR (el usuario quiere refinarlo/mejorarlo con el nuevo contexto):',
+      existingPlanJson,
+      '',
+      'Mejora el plan anterior incorporando el nuevo contexto. Mantén lo que siga siendo válido.',
+    ].join('\n')
+    : '';
+
+  const systemPrompt = [
+    'Eres un arquitecto de software y project manager experto que crea planes de desarrollo estructurados.',
+    'Tu tarea es analizar el contexto proporcionado y generar un plan de desarrollo con fases y tareas.',
+    '',
+    'IMPORTANTE: Devuelve SOLO JSON válido con esta estructura:',
+    '{',
+    '  "title": "Título conciso del plan",',
+    '  "objective": "Objetivo general del plan en 1-2 frases",',
+    '  "phases": [',
+    '    {',
+    '      "name": "Nombre de la fase",',
+    '      "description": "Descripción de lo que se hace en esta fase",',
+    '      "tasks": [',
+    '        {',
+    '          "title": "Título de la tarea (máx 100 chars)",',
+    '          "como": "rol del usuario",',
+    '          "quiero": "acción deseada",',
+    '          "para": "beneficio esperado"',
+    '        }',
+    '      ]',
+    '    }',
+    '  ]',
+    '}',
+    '',
+    'Reglas:',
+    '- Genera entre 2 y 6 fases lógicas que representen etapas del desarrollo',
+    '- Cada fase debe tener entre 1 y 8 tareas concretas',
+    '- Las fases deben estar ordenadas por dependencia (lo primero primero)',
+    '- Cada tarea debe ser atómica y realizable en 1-3 días máximo',
+    '- El título del plan debe ser descriptivo pero conciso (máx 80 chars)',
+    '- Las tareas usan formato historia de usuario (como/quiero/para)',
+    '- Si el contexto es insuficiente, genera lo que puedas y pon tareas genéricas marcando claramente qué necesita más detalle',
+    '',
+    `Proyecto: ${projectName}`,
+    '',
+    'Épicas existentes en el proyecto:',
+    epicsList,
+    '',
+    'El contenido debe estar en español.',
+    refinementBlock
+  ].join('\n');
+
+  const userPrompt = [
+    'Genera un plan de desarrollo estructurado a partir del siguiente contexto:',
+    '',
+    '---CONTEXTO---',
+    context,
+    '---FIN CONTEXTO---'
+  ].join('\n');
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      temperature: 0.4,
+      max_tokens: 4000,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]
+    })
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    logger.error('Error generating dev plan with OpenAI', { status: response.status, errorBody });
+    throw new HttpsError('internal', 'No se pudo generar el plan con IA.');
+  }
+
+  return response.json();
+}
+
+exports.generateDevPlan = onCall({
+  region: "europe-west1",
+  secrets: [IA_API_KEY, IA_GLOBAL_ENABLE]
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes iniciar sesión para usar esta función.');
+  }
+
+  const globalIaEnabled = (IA_GLOBAL_ENABLE.value() || '').toString().trim().toLowerCase() !== 'false';
+  if (!globalIaEnabled) {
+    throw new HttpsError('failed-precondition', 'La IA no está habilitada globalmente.');
+  }
+
+  const data = request.data || {};
+  const { projectId, context, existingPlanJson } = data;
+
+  if (!projectId || typeof projectId !== 'string') {
+    throw new HttpsError('invalid-argument', 'projectId es requerido.');
+  }
+  if (!context || typeof context !== 'string' || context.trim().length < 10) {
+    throw new HttpsError('invalid-argument', 'Se necesita un contexto con al menos 10 caracteres.');
+  }
+  if (context.length > 50000) {
+    throw new HttpsError('invalid-argument', 'El contexto es demasiado largo. Máximo 50.000 caracteres.');
+  }
+
+  const apiKey = getIaApiKey();
+  const db = primaryDb;
+
+  const projectSnap = await db.ref(`/projects/${projectId}`).once('value');
+  if (!projectSnap.exists()) {
+    throw new HttpsError('not-found', 'Proyecto no encontrado.');
+  }
+  const project = projectSnap.val() || {};
+  const projectName = project.name || projectId;
+
+  const epicsPath = `/cards/${projectId}/EPICS_${projectId}`;
+  const epicsSnap = await db.ref(epicsPath).once('value');
+  const epicsData = epicsSnap.val() || {};
+  const existingEpics = Object.entries(epicsData)
+    .filter(([, epic]) => !epic.deletedAt)
+    .map(([firebaseId, epic]) => ({
+      cardId: epic.cardId || firebaseId,
+      title: epic.title || ''
+    }))
+    .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+
+  logger.info('generateDevPlan: Starting plan generation', {
+    projectId,
+    contextLength: context.length,
+    hasExistingPlan: !!existingPlanJson,
+    existingEpicsCount: existingEpics.length
+  });
+
+  const aiData = await callOpenAIForPlanGeneration(apiKey, context, existingEpics, projectName, existingPlanJson || null);
+  const content = aiData?.choices?.[0]?.message?.content || '';
+
+  if (!content) {
+    throw new HttpsError('internal', 'La IA no devolvió contenido.');
+  }
+
+  let plan;
+  try {
+    plan = JSON.parse(content);
+  } catch (err) {
+    logger.error('generateDevPlan: Invalid JSON from OpenAI', { content });
+    throw new HttpsError('internal', 'La IA devolvió un formato inválido.');
+  }
+
+  if (!plan.title || !plan.phases || !Array.isArray(plan.phases)) {
+    throw new HttpsError('internal', 'El plan generado no tiene la estructura esperada.');
+  }
+
+  plan.phases = plan.phases
+    .filter(phase => phase.name && Array.isArray(phase.tasks))
+    .map(phase => ({
+      name: (phase.name || '').slice(0, 150),
+      description: (phase.description || '').slice(0, 500),
+      tasks: (phase.tasks || [])
+        .filter(t => t.title)
+        .map(t => ({
+          title: (t.title || '').slice(0, 150),
+          como: (t.como || '').slice(0, 300),
+          quiero: (t.quiero || '').slice(0, 500),
+          para: (t.para || '').slice(0, 300)
+        }))
+    }));
+
+  const totalTasks = plan.phases.reduce((sum, p) => sum + p.tasks.length, 0);
+
+  logger.info('generateDevPlan: Plan generated', {
+    projectId,
+    title: plan.title,
+    phases: plan.phases.length,
+    totalTasks
+  });
+
+  return {
+    status: 'ok',
+    plan: {
+      title: (plan.title || '').slice(0, 150),
+      objective: (plan.objective || '').slice(0, 500),
+      phases: plan.phases
+    },
+    existingEpics: existingEpics.map(e => ({ cardId: e.cardId, title: e.title }))
+  };
+});
+
+// ============================================================================
 // CONVERT DESCRIPTION TO USER STORY - Transform legacy descriptions to como/quiero/para
 // ============================================================================
 
@@ -3115,13 +3820,12 @@ exports.getProjectEpics = onRequest({
 
 /**
  * Cloud Function: onCardToValidate
- * Triggers when a card is updated and sends notifications + email
- * when a task transitions to "To Validate" status.
+ * Triggers when a card is updated, creates push notifications
+ * and queues email for hourly digest when a task transitions to "To Validate".
  */
 exports.onCardToValidate = onValueUpdated({
   ref: "/cards/{projectId}/{section}/{cardId}",
-  region: "europe-west1",
-  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
+  region: "europe-west1"
 }, async (event) => {
   const { projectId, section, cardId } = event.params;
   const beforeData = event.data.before.val();
@@ -3135,8 +3839,6 @@ exports.onCardToValidate = onValueUpdated({
     afterData,
     {
       db,
-      getAccessToken: getGraphAccessToken,
-      sendEmail,
       logger
     }
   );
@@ -3144,14 +3846,13 @@ exports.onCardToValidate = onValueUpdated({
 
 /**
  * Cloud Function: onBugFixed
- * Triggers when a bug is updated and sends notifications + email
- * when a bug transitions to "Fixed" status.
+ * Triggers when a bug is updated, creates push notifications
+ * and queues email for hourly digest when a bug transitions to "Fixed".
  * Notifies the bug creator so they can verify the fix.
  */
 exports.onBugFixed = onValueUpdated({
   ref: "/cards/{projectId}/{section}/{cardId}",
-  region: "europe-west1",
-  secrets: [msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail]
+  region: "europe-west1"
 }, async (event) => {
   const { projectId, section, cardId } = event.params;
   const beforeData = event.data.before.val();
@@ -3165,8 +3866,6 @@ exports.onBugFixed = onValueUpdated({
     afterData,
     {
       db,
-      getAccessToken: getGraphAccessToken,
-      sendEmail,
       logger
     }
   );
@@ -3253,6 +3952,76 @@ exports.syncCardViews = onValueWritten({
     afterData,
     { db, logger }
   );
+});
+
+/**
+ * Cloud Function: resyncAllViews
+ * Callable function that re-generates all /views entries from /cards data.
+ * Useful when view extraction logic changes (e.g., new fields like notesCount).
+ * Requires authenticated user with appAdmin or superAdmin claim.
+ */
+exports.resyncAllViews = onCall({
+  region: "europe-west1",
+  timeoutSeconds: 120
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+
+  const callerClaims = request.auth.token;
+  const superAdminEmail = process.env.PUBLIC_SUPER_ADMIN_EMAIL || '';
+  const isSuperAdmin = request.auth.token.email === superAdminEmail;
+  const isAppAdmin = callerClaims.isAppAdmin === true;
+
+  if (!isSuperAdmin && !isAppAdmin) {
+    throw new HttpsError('permission-denied', 'Only admins can resync views.');
+  }
+
+  const db = getDatabase();
+  const cardsSnap = await db.ref('/cards').once('value');
+  if (!cardsSnap.exists()) {
+    return { success: true, message: 'No cards found', stats: {} };
+  }
+
+  const cardsData = cardsSnap.val();
+  const stats = { tasks: 0, bugs: 0, proposals: 0, projects: 0 };
+  const updates = {};
+
+  for (const [projectId, projectData] of Object.entries(cardsData)) {
+    if (!projectData || typeof projectData !== 'object') continue;
+    stats.projects++;
+
+    for (const [sectionName, sectionData] of Object.entries(projectData)) {
+      if (!sectionData || typeof sectionData !== 'object') continue;
+
+      const sectionLower = sectionName.toLowerCase();
+      let viewType = null;
+      if (sectionLower.startsWith('tasks_')) viewType = 'task-list';
+      else if (sectionLower.startsWith('bugs_')) viewType = 'bug-list';
+      else if (sectionLower.startsWith('proposals_')) viewType = 'proposal-list';
+      else continue;
+
+      for (const [cardId, cardData] of Object.entries(sectionData)) {
+        if (!cardData || typeof cardData !== 'object') continue;
+        if (cardData.deletedAt) continue;
+
+        // Use the same handler to build view data
+        await handleSyncCardViews(
+          { projectId, section: sectionName, cardId },
+          null,
+          cardData,
+          { db, logger }
+        );
+
+        if (viewType === 'task-list') stats.tasks++;
+        else if (viewType === 'bug-list') stats.bugs++;
+        else if (viewType === 'proposals') stats.proposals++;
+      }
+    }
+  }
+
+  logger.info('resyncAllViews completed', stats);
+  return { success: true, stats };
 });
 
 /**
@@ -3578,3 +4347,9 @@ exports.syncAppAdminClaim = onValueWritten({
     throw error;
   }
 });
+
+// Export internal functions for testing
+exports._test = {
+  inferEpicsForPhases,
+  createEpicForPlan
+};

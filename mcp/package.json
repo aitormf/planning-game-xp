@@ -1,0 +1,23 @@
+{
+  "name": "planning-game-mcp",
+  "version": "1.12.0",
+  "description": "Integrated MCP Server for Planning GameXP",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "author": "Geniova",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "firebase-admin": "^12.6.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18"
+  }
+}

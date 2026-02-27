@@ -1,19 +1,16 @@
-import { LitElement, html, css, unsafeCSS } from 'lit';
-import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
+import { LitElement, html, css } from 'lit';
 import { ThemeManagerService } from '../services/theme-manager-service.js';
+import './avatar-eyes.js';
 
 /**
  * ThemeToggle component
  *
  * A button that toggles between light and dark themes.
- * Shows sun icon for light mode, moon icon for dark mode.
- * SVGs are inlined in the DOM to support SMIL animations.
+ * Uses the <avatar-eyes> component with mouse-tracking pupils.
  */
 class ThemeToggle extends LitElement {
   static properties = {
-    isDark: { type: Boolean, state: true },
-    _lightSvg: { type: String, state: true },
-    _darkSvg: { type: String, state: true }
+    isDark: { type: Boolean, state: true }
   };
 
   static styles = css`
@@ -31,13 +28,13 @@ class ThemeToggle extends LitElement {
       padding: 0;
       border: none;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.15);
+      background: transparent;
       cursor: pointer;
-      transition: background-color 0.2s ease, transform 0.2s ease;
+      transition: transform 0.2s ease;
+      overflow: hidden;
     }
 
     .toggle-button:hover {
-      background: rgba(255, 255, 255, 0.25);
       transform: scale(1.05);
     }
 
@@ -49,28 +46,11 @@ class ThemeToggle extends LitElement {
       outline: 2px solid white;
       outline-offset: 2px;
     }
-
-    .icon {
-      width: 30px;
-      height: 30px;
-      pointer-events: none;
-    }
-
-    .icon svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .toggle-button:hover .icon {
-      transform: scale(1.15);
-    }
   `;
 
   constructor() {
     super();
     this.isDark = false;
-    this._lightSvg = '';
-    this._darkSvg = '';
     this._handleThemeChange = this._handleThemeChange.bind(this);
   }
 
@@ -78,21 +58,11 @@ class ThemeToggle extends LitElement {
     super.connectedCallback();
     this.isDark = ThemeManagerService.isDarkMode();
     document.addEventListener('theme-change', this._handleThemeChange);
-    this._loadSvgs();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener('theme-change', this._handleThemeChange);
-  }
-
-  async _loadSvgs() {
-    const [lightRes, darkRes] = await Promise.all([
-      fetch('/images/light-mode.svg'),
-      fetch('/images/dark-mode.svg')
-    ]);
-    this._lightSvg = await lightRes.text();
-    this._darkSvg = await darkRes.text();
   }
 
   _handleThemeChange(event) {
@@ -105,7 +75,7 @@ class ThemeToggle extends LitElement {
 
   render() {
     const title = this.isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro';
-    const svgContent = this.isDark ? this._lightSvg : this._darkSvg;
+    const mode = this.isDark ? 'light' : 'dark';
 
     return html`
       <button
@@ -114,7 +84,7 @@ class ThemeToggle extends LitElement {
         title="${title}"
         aria-label="${title}"
       >
-        <span class="icon">${svgContent ? unsafeSVG(svgContent) : ''}</span>
+        <avatar-eyes mode="${mode}" size="45px"></avatar-eyes>
       </button>
     `;
   }

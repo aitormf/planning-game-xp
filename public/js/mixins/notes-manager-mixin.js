@@ -155,36 +155,36 @@ const isNewNote = this.editingNoteIndex === null;
     const modalContentHTML = `
       <div style="display: flex; flex-direction: column; gap: 1rem; padding: 0; box-sizing: border-box;">
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-          <label style="font-weight: 500; color: #495057; font-size: 0.9rem;">Contenido:</label>
-          <textarea 
+          <label style="font-weight: 500; color: var(--text-secondary, #495057); font-size: 0.9rem;">Contenido:</label>
+          <textarea
             id="note-textarea"
             placeholder="Escribir nota..."
             rows="5"
-            style="width: 100%; padding: 0.5rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-family: inherit; font-size: 0.9rem; resize: vertical; min-height: 100px; box-sizing: border-box;"
+            style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-default, #ced4da); border-radius: 0.25rem; font-family: inherit; font-size: 0.9rem; resize: vertical; min-height: 100px; box-sizing: border-box; background: var(--input-bg, #fff); color: var(--text-primary, #212529);"
           >${this.newNoteText}</textarea>
         </div>
-        
+
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-          <label style="font-weight: 500; color: #495057; font-size: 0.9rem;">Fecha:</label>
-          <input 
-            type="text" 
+          <label style="font-weight: 500; color: var(--text-secondary, #495057); font-size: 0.9rem;">Fecha:</label>
+          <input
+            type="text"
             value="${isNewNote ? this._formatNoteDate(new Date().toISOString()) : this._formatNoteDate(this.editingNote.timestamp)}"
             disabled
-            style="width: 100%; padding: 0.5rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-size: 0.9rem; background-color: #e9ecef; color: #495057; box-sizing: border-box;"
+            style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-default, #ced4da); border-radius: 0.25rem; font-size: 0.9rem; background-color: var(--bg-muted, #e9ecef); color: var(--text-secondary, #495057); box-sizing: border-box;"
           />
         </div>
-        
+
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-          <label style="font-weight: 500; color: #495057; font-size: 0.9rem;">Usuario:</label>
-          <input 
-            type="text" 
+          <label style="font-weight: 500; color: var(--text-secondary, #495057); font-size: 0.9rem;">Usuario:</label>
+          <input
+            type="text"
             value="${isNewNote ? this._getDisplayNameForEmail(document.body.dataset.userEmail || this.userEmail) : this._getDisplayNameForEmail(this.editingNote.author)}"
             disabled
-            style="width: 100%; padding: 0.5rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-size: 0.9rem; background-color: #e9ecef; color: #495057; box-sizing: border-box;"
+            style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-default, #ced4da); border-radius: 0.25rem; font-size: 0.9rem; background-color: var(--bg-muted, #e9ecef); color: var(--text-secondary, #495057); box-sizing: border-box;"
           />
         </div>
       </div>
-      
+
       <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
         <button id="save-note-btn" style="padding: 0.5rem 1rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.9rem; background: #28a745; color: white;">
           Guardar

@@ -32,7 +32,7 @@ npm run deploy       # Deploy to this instance's Firebase project
 
 ## Instance Structure
 
-Each instance directory contains:
+Each instance directory contains **only instance-specific files** (credentials, domain rules, env config). Shared files (emulator rules, indexes, templates) live in the project root.
 
 ```
 planning-game-instances/<name>/
@@ -42,13 +42,10 @@ planning-game-instances/<name>/
   .env.e2e                    # Config for E2E tests (optional)
   .env.test                   # Config for unit tests (optional)
   .firebaserc                 # Firebase project ID and targets
-  database.rules.json         # Realtime Database rules (production)
+  database.rules.json         # Realtime Database rules (domain-specific emails)
   database.test.rules.json    # Realtime Database rules for tests (optional)
-  database.emulator.rules     # Realtime Database rules for emulator (optional)
   firestore.rules             # Firestore security rules (optional)
-  firestore.rules.dev         # Firestore rules for development (optional)
-  storage.rules               # Firebase Storage security rules
-  storage.emulator.rules      # Storage rules for emulator (optional)
+  storage.rules               # Firebase Storage security rules (domain-specific)
   serviceAccountKey.json      # Service account key (optional, NEVER commit)
   sonar-project.properties    # SonarQube config override (optional)
   theme-config.json           # Theme configuration - colors, branding (optional)
@@ -57,6 +54,19 @@ planning-game-instances/<name>/
     .env                      # Cloud Functions environment variables
   emulator-data/
     *.json                    # Exported emulator data for local development
+```
+
+Shared files in project root (same for all instances, NOT symlinked):
+
+```
+database.emulator.rules       # RTDB emulator rules (allow all)
+firestore.emulator.rules      # Firestore emulator rules (allow all)
+firestore.rules.dev           # Firestore dev rules (allow all)
+storage.emulator.rules        # Storage emulator rules (allow all)
+firestore.indexes.json        # Firestore indexes
+database.rules.example.json   # Template for new instances
+storage.rules.example         # Template for new instances
+.env.example                  # Template for env files
 ```
 
 ## How It Works

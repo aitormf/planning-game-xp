@@ -2,7 +2,21 @@
  * Version Check Service - Monitors Firebase RTDB for version changes
  * When a new version is deployed, notifies users in real-time to refresh
  */
-import { database, ref, onValue, get } from '../../firebase-config.js';
+import { database, ref, onValue, get, set } from '../../firebase-config.js';
+
+/**
+ * Compare two semver strings. Returns:
+ *  1 if a > b, -1 if a < b, 0 if equal.
+ */
+function compareSemver(a, b) {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] || 0) > (pb[i] || 0)) return 1;
+    if ((pa[i] || 0) < (pb[i] || 0)) return -1;
+  }
+  return 0;
+}
 
 class VersionCheckService {
   constructor() {
@@ -34,15 +48,24 @@ class VersionCheckService {
     get(versionRef).then((snapshot) => {
       const serverVersion = snapshot.val();
 
-      // If server version doesn't exist yet, ignore
+      // If server version doesn't exist yet, set it from client
       if (!serverVersion) {
-        console.warn('[VersionCheckService] No server version found in /appConfig/currentVersion');
+        console.warn('[VersionCheckService] No server version found, setting from client:', this._currentVersion);
+        this._updateServerVersion(versionRef, this._currentVersion);
         return;
       }
 
-      // If server version is different from current, user has an outdated version
+      // Auto-heal: if client is NEWER than server, update RTDB
+      // This handles the case where deploy scripts fail to update the version
+      if (compareSemver(this._currentVersion, serverVersion) > 0) {
+        console.log(`[VersionCheckService] Client version (${this._currentVersion}) is newer than server (${serverVersion}). Updating RTDB.`);
+        this._updateServerVersion(versionRef, this._currentVersion);
+        return;
+      }
+
+      // If server version is newer, user has an outdated version
       // Show the update modal immediately
-      if (serverVersion !== this._currentVersion) {
+      if (compareSemver(serverVersion, this._currentVersion) > 0) {
         console.log(`[VersionCheckService] Version mismatch on load: local=${this._currentVersion}, server=${serverVersion}`);
         this._notifyNewVersion(serverVersion);
       }
@@ -62,6 +85,17 @@ class VersionCheckService {
     }).catch((error) => {
       console.error('[VersionCheckService] Error getting initial version:', error);
     });
+  }
+
+  /**
+   * Update the server version in RTDB (auto-heal mechanism).
+   * When a client detects it has a newer version than the server,
+   * it updates RTDB so other clients get notified.
+   */
+  _updateServerVersion(versionRef, version) {
+    set(versionRef, version)
+      .then(() => console.log(`[VersionCheckService] RTDB version updated to ${version}`))
+      .catch((error) => console.warn('[VersionCheckService] Could not update server version:', error.message));
   }
 
   /**

@@ -13,7 +13,7 @@
 // Base fields shared by all card types
 export const BASE_PERSISTENT_FIELDS = [
   'firebaseId', 'cardId', 'title', 'description', 'notes',
-  'startDate', 'endDate', 'createdBy', 'projectId', 'cardType'
+  'startDate', 'endDate', 'createdBy', 'updatedBy', 'projectId', 'cardType'
 ];
 
 export const TASK_SCHEMA = {
@@ -27,14 +27,18 @@ export const TASK_SCHEMA = {
     'group', 'developerHistory', 'blockedHistory',
     'attachment', 'relatedTasks', 'repositoryLabel', 'year',
     'commits', 'validatedAt', 'reopenCycles', 'reopenCount',
-    'implementationPlan', 'implementationNotes'
+    'implementationPlan', 'implementationNotes',
+    'aiUsage', 'pipelineStatus',
+    'timeLog', 'totalElapsedTime', 'effectiveWorkTime', 'totalPausedTime'
   ],
   VIEW_FIELDS: [
     'firebaseId', 'cardId', 'title', 'status',
     'businessPoints', 'devPoints', 'sprint',
     'developer', 'coDeveloper', 'validator', 'coValidator',
     'epic', 'startDate', 'endDate', 'spike', 'expedited',
-    'blockedByBusiness', 'blockedByDevelopment', 'year', 'relatedTasks'
+    'blockedByBusiness', 'blockedByDevelopment', 'year', 'relatedTasks',
+    'notesCount', 'planStatus',
+    'commitsCount', 'pipelineStatus'
   ]
 };
 
@@ -46,12 +50,14 @@ export const BUG_SCHEMA = {
     'bugType', 'attachment', 'repositoryLabel', 'year', 'group',
     'epic', 'sprint', 'commits',
     'cinemaFile', 'exportedFile', 'importedFile',
-    'plugin', 'pluginVersion', 'treatmentType'
+    'plugin', 'pluginVersion', 'treatmentType',
+    'aiUsage', 'pipelineStatus'
   ],
   VIEW_FIELDS: [
     'firebaseId', 'cardId', 'title', 'status', 'priority',
     'developer', 'coDeveloper', 'createdBy',
-    'registerDate', 'startDate', 'endDate', 'year'
+    'registerDate', 'startDate', 'endDate', 'year',
+    'commitsCount', 'pipelineStatus'
   ]
 };
 

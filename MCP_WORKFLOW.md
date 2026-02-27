@@ -144,6 +144,17 @@ update_card(projectId, "task", firebaseId, {
 │ })                                                                     │
 │                                                                        │
 │ Verificar: La respuesta muestra que el estado cambió correctamente     │
+│                                                                        │
+│ PASO 5: Crear rama desde main                                          │
+│ ────────────────────────────────────────────────────────────────────── │
+│ git checkout main && git pull origin main                              │
+│ git checkout -b feat/{CARD-ID}-descripcion-corta                       │
+│                                                                        │
+│ Ejemplo: feat/PLN-TSK-0206-pipeline-instructions                       │
+│ Para bugs: fix/{CARD-ID}-descripcion-corta                             │
+│                                                                        │
+│ ⚠️ NUNCA hacer commit directo a main                                   │
+│ ⚠️ NUNCA hacer push directo a main                                     │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -192,20 +203,51 @@ update_card(projectId, "task", firebaseId, {
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Fase 4: Finalizar Trabajo
+### Fase 4: Pipeline de Entrega (commit → PR → To Validate)
 
 **⚠️ CRÍTICO: Esta fase es OBLIGATORIA. NO LA SALTES.**
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│ PASO 9: Actualizar tarjeta a "To Validate"                             │
+│ PASO 9: Hacer commit con conventional commits                          │
+│ ────────────────────────────────────────────────────────────────────── │
+│ git add <ficheros> && git commit -m "feat: descripción"                │
+│                                                                        │
+│ Prefijos válidos: feat:, fix:, refactor:, docs:, test:, chore:         │
+│ ⚠️ NUNCA referenciar Claude o IA en mensajes de commit                 │
+│                                                                        │
+│ PASO 10: Push de la rama y crear Pull Request                          │
+│ ────────────────────────────────────────────────────────────────────── │
+│ git push -u origin feat/{CARD-ID}-descripcion                          │
+│ gh pr create --title "..." --body "..."                                │
+│                                                                        │
+│ Anotar: URL del PR y número del PR                                     │
+│                                                                        │
+│ PASO 11: Actualizar tarjeta a "To Validate" con pipeline              │
 │ ────────────────────────────────────────────────────────────────────── │
 │ Llamada MCP: update_card(projectId, "task", firebaseId, {              │
 │   "status": "To Validate",                                             │
-│   "endDate": "2026-01-25"        // fecha de hoy YYYY-MM-DD            │
+│   "endDate": "2026-02-22",                                             │
+│   "commits": [{                                                        │
+│     "hash": "abc1234",                                                 │
+│     "message": "feat: descripción del commit",                         │
+│     "date": "2026-02-22T10:00:00Z",                                    │
+│     "author": "dev"                                                    │
+│   }],                                                                  │
+│   "pipelineStatus": {                                                  │
+│     "prCreated": {                                                     │
+│       "date": "2026-02-22T10:30:00Z",                                  │
+│       "prUrl": "https://github.com/org/repo/pull/42",                  │
+│       "prNumber": 42                                                   │
+│     }                                                                  │
+│   },                                                                   │
+│   "aiUsage": [{ ... }]   // OBLIGATORIO si developer es BecarIA        │
 │ })                                                                     │
 │                                                                        │
-│ PASO 10: Verificar que la actualización fue exitosa                    │
+│ ⚠️ pipelineStatus.prCreated es OBLIGATORIO (validado por el MCP)       │
+│ ⚠️ aiUsage es OBLIGATORIO si developer = dev_016 (BecarIA)             │
+│                                                                        │
+│ PASO 12: Verificar que la actualización fue exitosa                    │
 │ ────────────────────────────────────────────────────────────────────── │
 │ Verificar: La respuesta muestra status = "To Validate"                 │
 │                                                                        │
@@ -213,8 +255,23 @@ update_card(projectId, "task", firebaseId, {
 │    - "Done"                                                            │
 │    - "Done&Validated"                                                  │
 │    Estos SOLO los establece el validador (stakeholder), nunca el MCP   │
+│                                                                        │
+│ ⛔ NUNCA hacer push directo a main - siempre ramas + PRs               │
 └────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Pipeline de Entrega: Eventos Rastreados
+
+| Evento | Cuándo | Campos Requeridos |
+|--------|--------|-------------------|
+| `committed` | Después del commit | `date`, `commitHash`, `branch` |
+| `prCreated` | Después de crear PR | `date`, `prUrl`, `prNumber` |
+| `merged` | Después de mergear PR | `date`, `mergedBy` |
+| `deployed` | Después del despliegue | `date`, `environment` |
+
+**Validaciones del MCP:**
+- `pipelineStatus.prCreated` (con `prUrl` y `prNumber`) es **obligatorio** para "To Validate" (tasks) y "Fixed" (bugs)
+- `aiUsage` es **obligatorio** cuando el developer es BecarIA (`dev_016`)
 
 ## Flujo de Trabajo de Bugs
 
@@ -575,6 +632,17 @@ update_card(projectId, "task", firebaseId, {
 │ })                                                                     │
 │                                                                        │
 │ Verify: Response shows status changed successfully                     │
+│                                                                        │
+│ STEP 5: Create branch from main                                        │
+│ ────────────────────────────────────────────────────────────────────── │
+│ git checkout main && git pull origin main                              │
+│ git checkout -b feat/{CARD-ID}-short-description                       │
+│                                                                        │
+│ Example: feat/PLN-TSK-0206-pipeline-instructions                       │
+│ For bugs: fix/{CARD-ID}-short-description                              │
+│                                                                        │
+│ ⚠️ NEVER commit directly to main                                      │
+│ ⚠️ NEVER push directly to main                                        │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -623,20 +691,51 @@ update_card(projectId, "task", firebaseId, {
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Phase 4: Finish Work
+### Phase 4: Delivery Pipeline (commit → PR → To Validate)
 
 **⚠️ CRITICAL: This phase is MANDATORY. DO NOT SKIP.**
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│ STEP 9: Update card to "To Validate"                                   │
+│ STEP 9: Commit with conventional commits                               │
+│ ────────────────────────────────────────────────────────────────────── │
+│ git add <files> && git commit -m "feat: description"                   │
+│                                                                        │
+│ Valid prefixes: feat:, fix:, refactor:, docs:, test:, chore:           │
+│ ⚠️ NEVER reference Claude or AI in commit messages                    │
+│                                                                        │
+│ STEP 10: Push branch and create Pull Request                           │
+│ ────────────────────────────────────────────────────────────────────── │
+│ git push -u origin feat/{CARD-ID}-description                          │
+│ gh pr create --title "..." --body "..."                                │
+│                                                                        │
+│ Note: PR URL and PR number for the card update                         │
+│                                                                        │
+│ STEP 11: Update card to "To Validate" with pipeline info              │
 │ ────────────────────────────────────────────────────────────────────── │
 │ MCP Call: update_card(projectId, "task", firebaseId, {                 │
 │   "status": "To Validate",                                             │
-│   "endDate": "2026-01-25"        // today's date YYYY-MM-DD            │
+│   "endDate": "2026-02-22",                                             │
+│   "commits": [{                                                        │
+│     "hash": "abc1234",                                                 │
+│     "message": "feat: commit description",                             │
+│     "date": "2026-02-22T10:00:00Z",                                    │
+│     "author": "dev"                                                    │
+│   }],                                                                  │
+│   "pipelineStatus": {                                                  │
+│     "prCreated": {                                                     │
+│       "date": "2026-02-22T10:30:00Z",                                  │
+│       "prUrl": "https://github.com/org/repo/pull/42",                  │
+│       "prNumber": 42                                                   │
+│     }                                                                  │
+│   },                                                                   │
+│   "aiUsage": [{ ... }]   // REQUIRED if developer is BecarIA           │
 │ })                                                                     │
 │                                                                        │
-│ STEP 10: Verify update succeeded                                       │
+│ ⚠️ pipelineStatus.prCreated is REQUIRED (enforced by MCP server)      │
+│ ⚠️ aiUsage is REQUIRED if developer = dev_016 (BecarIA)               │
+│                                                                        │
+│ STEP 12: Verify update succeeded                                       │
 │ ────────────────────────────────────────────────────────────────────── │
 │ Check: Response shows status = "To Validate"                           │
 │                                                                        │
@@ -644,8 +743,23 @@ update_card(projectId, "task", firebaseId, {
 │    - "Done"                                                            │
 │    - "Done&Validated"                                                  │
 │    These are ONLY set by the validator (stakeholder), never by MCP     │
+│                                                                        │
+│ ⛔ NEVER push directly to main - always use branches + PRs            │
 └────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Delivery Pipeline: Tracked Events
+
+| Event | When | Required Fields |
+|-------|------|-----------------|
+| `committed` | After git commit | `date`, `commitHash`, `branch` |
+| `prCreated` | After creating PR | `date`, `prUrl`, `prNumber` |
+| `merged` | After PR is merged | `date`, `mergedBy` |
+| `deployed` | After deployment | `date`, `environment` |
+
+**MCP Validations:**
+- `pipelineStatus.prCreated` (with `prUrl` and `prNumber`) is **required** for "To Validate" (tasks) and "Fixed" (bugs)
+- `aiUsage` is **required** when developer is BecarIA (`dev_016`)
 
 ## Bug Workflow
 

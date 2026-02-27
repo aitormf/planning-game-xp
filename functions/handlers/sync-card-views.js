@@ -51,7 +51,9 @@ function extractTaskViewFields(taskData, firebaseId) {
     expedited: taskData.expedited,
     blockedByBusiness: taskData.blockedByBusiness,
     blockedByDevelopment: taskData.blockedByDevelopment,
-    notesCount: Array.isArray(taskData.notes) ? taskData.notes.length : 0,
+    notesCount: Array.isArray(taskData.notes)
+      ? taskData.notes.length
+      : (taskData.notes && typeof taskData.notes === 'object' ? Object.keys(taskData.notes).length : 0),
     year: taskData.year,
     relatedTasks: Array.isArray(taskData.relatedTasks)
       ? taskData.relatedTasks.map(rt => ({
@@ -61,7 +63,9 @@ function extractTaskViewFields(taskData, firebaseId) {
         projectId: rt.projectId
       }))
       : undefined,
-    planStatus: taskData.implementationPlan?.planStatus || undefined
+    planStatus: taskData.implementationPlan?.planStatus || undefined,
+    commitsCount: Array.isArray(taskData.commits) ? taskData.commits.length : 0,
+    pipelineStatus: taskData.pipelineStatus || undefined
   };
 }
 
@@ -84,7 +88,9 @@ function extractBugViewFields(bugData, firebaseId) {
     registerDate: bugData.registerDate,
     startDate: bugData.startDate,
     endDate: bugData.endDate,
-    year: bugData.year
+    year: bugData.year,
+    commitsCount: Array.isArray(bugData.commits) ? bugData.commits.length : 0,
+    pipelineStatus: bugData.pipelineStatus || undefined
   };
 }
 

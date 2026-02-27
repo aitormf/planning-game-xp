@@ -3,7 +3,9 @@
  * Validates task status transitions and reverts invalid changes.
  *
  * Validations:
- * 1. To "To Validate": requires validator, title, developer, startDate
+ * 1. Leaving "To Do": requires mandatory task fields
+ * 2. To "In Progress": requires startDate to be updated in the same transition
+ * 3. To "To Validate": requires endDate to be updated in the same transition
  * 2. To "Done" or "Done&Validated": only validator/coValidator can change
  */
 
@@ -24,25 +26,12 @@ function sanitizeEmailForKey(email) {
   return email.replace(/[.#$[\]/]/g, '_');
 }
 
-/**
- * Required fields before transitioning OUT of "To Do" to any other status.
- * A task cannot leave "To Do" without ALL these fields populated.
- */
-const REQUIRED_FIELDS_TO_LEAVE_TODO = [
-  'title',
-  'developer',
-  'validator',
-  'epic',
-  'sprint',
-  'devPoints',
-  'businessPoints',
-  'acceptanceCriteria'  // Can also be acceptanceCriteriaStructured
-];
-
-/**
- * Status values that require validator permission
- */
-const VALIDATOR_ONLY_STATUSES = ['Done', 'Done&Validated'];
+// Import shared constants and validation (single source of truth)
+const {
+  REQUIRED_FIELDS_TO_LEAVE_TODO,
+  VALIDATOR_ONLY_STATUSES,
+  hasValidValue
+} = require('../shared/index.cjs');
 
 /**
  * Check if email matches a stakeholder ID
@@ -56,50 +45,6 @@ function isEmailMatchingStakeholder(email, stakeholderId, stakeholdersData) {
   const stakeholder = stakeholdersData[stakeholderId];
   if (!stakeholder || !stakeholder.email) return false;
   return email.toLowerCase().trim() === stakeholder.email.toLowerCase().trim();
-}
-
-/**
- * Check if a field has a valid value (not empty, not null, not undefined)
- * @param {Object} data - Card data
- * @param {string} field - Field name to check
- * @returns {boolean} - True if field has a valid value
- */
-function hasValidValue(data, field) {
-  // Special case: acceptanceCriteria can be in either field
-  if (field === 'acceptanceCriteria') {
-    const ac = data.acceptanceCriteria;
-    const acs = data.acceptanceCriteriaStructured;
-
-    // Check acceptanceCriteria string
-    if (ac && typeof ac === 'string' && ac.trim() !== '') {
-      return true;
-    }
-
-    // Check acceptanceCriteriaStructured array
-    if (Array.isArray(acs) && acs.length > 0) {
-      // Ensure at least one scenario has content
-      return acs.some(scenario =>
-        (scenario.given && scenario.given.trim()) ||
-        (scenario.when && scenario.when.trim()) ||
-        (scenario.then && scenario.then.trim()) ||
-        (scenario.raw && scenario.raw.trim())
-      );
-    }
-
-    return false;
-  }
-
-  // Special case: numeric fields (devPoints, businessPoints)
-  if (field === 'devPoints' || field === 'businessPoints') {
-    const value = data[field];
-    return value !== null && value !== undefined && value !== '' && Number(value) > 0;
-  }
-
-  // Standard string/value check
-  const value = data[field];
-  if (value === null || value === undefined) return false;
-  if (typeof value === 'string') return value.trim() !== '';
-  return true;
 }
 
 /**
@@ -209,6 +154,52 @@ function validateDoneTransitionPermission(afterData, stakeholdersData) {
 }
 
 /**
+ * Validate status-date coupling rules.
+ * - Any transition to "In Progress" must have a valid startDate
+ *   (startDate is immutable once set, so we only require it exists — not that it changed)
+ * - Any transition to "To Validate" must update endDate
+ * @param {Object} beforeData - Card data before change
+ * @param {Object} afterData - Card data after change
+ * @param {string} afterStatus - Target status
+ * @returns {Object|null}
+ */
+function validateStatusDateTransition(beforeData, afterData, afterStatus) {
+  if (afterStatus === 'In Progress') {
+    // startDate is immutable: once set, it should never change.
+    // We only require that a valid startDate EXISTS after the transition,
+    // not that it was updated in this specific write.
+    if (!hasValidValue(afterData, 'startDate')) {
+      return {
+        type: 'missing-start-date',
+        message: 'Cannot change to "In Progress": startDate is required.'
+      };
+    }
+  }
+
+  if (afterStatus === 'Pausado') {
+    if (!hasValidValue(afterData, 'startDate')) {
+      return {
+        type: 'missing-start-date-for-pause',
+        message: 'Cannot change to "Pausado": startDate must exist (task must have been In Progress).'
+      };
+    }
+  }
+
+  if (afterStatus === 'To Validate') {
+    const beforeEnd = beforeData?.endDate || null;
+    const afterEnd = afterData?.endDate || null;
+    if (!hasValidValue(afterData, 'endDate') || beforeEnd === afterEnd) {
+      return {
+        type: 'missing-end-date-update',
+        message: 'Cannot change to "To Validate": endDate must be updated in the same status change.'
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
  * Main handler for task status validation
  * @param {Object} params - { projectId, section, cardId }
  * @param {Object} beforeData - Card data before the change
@@ -255,7 +246,12 @@ async function handleTaskStatusValidation(params, beforeData, afterData, deps) {
     validationError = validateBlockedTransition(afterData);
   }
 
-  // Validation 3: Transition to "Done"/"Done&Validated" requires validator permission
+  // Validation 3: Coupled status-date transitions (In Progress/startDate, To Validate/endDate)
+  if (!validationError) {
+    validationError = validateStatusDateTransition(beforeData, afterData, afterStatus);
+  }
+
+  // Validation 4: Transition to "Done"/"Done&Validated" requires validator permission
   if (VALIDATOR_ONLY_STATUSES.includes(afterStatus) && !validationError) {
     const updatedBy = afterData.updatedBy;
     // Skip DB call for system users (optimization)

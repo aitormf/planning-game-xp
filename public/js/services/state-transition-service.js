@@ -351,11 +351,15 @@ export class StateTransitionService {
       ? validationTimes.reduce((a, b) => a + b, 0) / validationTimes.length
       : 0;
 
+    const totalPausedTime = timeByStatus['pausado'] || 0;
+
     return {
       totalDevelopmentTime,
       timeByStatus,
       averageValidationTime,
-      timesRejected
+      timesRejected,
+      totalPausedTime,
+      effectiveWorkTime: totalDevelopmentTime > 0 ? totalDevelopmentTime - totalPausedTime : 0,
     };
   }
 

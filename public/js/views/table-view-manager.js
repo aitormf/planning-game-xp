@@ -663,10 +663,16 @@ export class TableViewManager {
     }
 
     // Computed fields for tasks
+    // Only compute from source data if not already present (avoids overwriting
+    // pre-computed values from /views with 0 when notes/implementationPlan are absent)
     if (section === 'tasks') {
-      result.notesCount = Array.isArray(fullCard.notes) ? fullCard.notes.length : 0;
+      if (result.notesCount === undefined) {
+        result.notesCount = Array.isArray(fullCard.notes)
+          ? fullCard.notes.length
+          : (fullCard.notes && typeof fullCard.notes === 'object' ? Object.keys(fullCard.notes).length : 0);
+      }
       if (!result.relatedTasks) result.relatedTasks = undefined;
-      if (fullCard.implementationPlan?.planStatus) {
+      if (result.planStatus === undefined && fullCard.implementationPlan?.planStatus) {
         result.planStatus = fullCard.implementationPlan.planStatus;
       }
     }

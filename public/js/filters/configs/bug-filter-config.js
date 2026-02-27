@@ -171,6 +171,6 @@ export const bugFilterConfig = {
 
   // Default filter values (applied on first load)
   defaultValues: {
-    status: ['Created', 'Triaged', 'Assigned', 'In Progress', 'In Testing']
+    status: ['Created', 'Assigned']
   }
 };

@@ -14,6 +14,204 @@ Auto-generated from git commits on each build.
 ### Fixed
 
 - Move ThemeEditor from adminproject to admin page
+- Use Node 20 and add ESM package.json for shared modules
+
+## [1.143.0] - 2026-02-25
+
+### Added
+
+- Add Pausado status with time tracking for tasks
+- Generate task cards from accepted development plans
+
+### Changed
+
+- Use Title Case for bug priorities aligned with Firebase RTDB
+
+### Fixed
+
+- Resolve shared module import path for Cloud Functions deploy
+
+## [1.142.0] - 2026-02-25
+
+### Added
+
+- Add generateDevPlan Cloud Function for AI plan creation
+- AI-powered plan generation from text/context
+
+## [1.141.0] - 2026-02-25
+
+### Added
+
+- Replace card grid with table view and fix tasksGenerator tab regression
+
+## [1.140.2] - 2026-02-25
+
+### Fixed
+
+- Replace hardcoded colors with theme tokens for dark mode consistency
+
+## [1.140.1] - 2026-02-25
+
+### Fixed
+
+- Resolve broken remove import and move Dev Plans to adminproject
+
+## [1.140.0] - 2026-02-25
+
+### Added
+
+- Add Development Plans tab with CRUD management
+
+### Fixed
+
+- Force build in deploy-all to prevent skip on second instance
+
+## [1.139.0] - 2026-02-25
+
+### Fixed
+
+- Correct broken titleWrapper reference in table badge layout
+- Move badges to second line in task table to preserve title visibility
+
+## [1.133.1] - 2026-02-24
+
+### Fixed
+
+- Prevent build loop caused by update-version committing build artifacts
+
+## [1.133.0] - 2026-02-24
+
+### Added
+
+- Add pipeline badges (C/PR/M/D) to table view for tasks and bugs
+
+## [1.132.2] - 2026-02-24
+
+### Added
+
+- Integrate MCP server as local module with stdio transport
+- Add shared/ module as single source of truth for constants and validation
+
+### Changed
+
+- Align bug statuses to 5 and unify imports from shared/
+
+### Fixed
+
+- Enable status select for validators on tasks in "To Validate"
+- Derive databaseURL from serviceAccountKey when env var is missing
+- Remove references to eliminated bug statuses in UI components
+
+### Documentation
+
+- Add MCP integration status and next steps checklist
+
+## [1.132.1] - 2026-02-22
+
+### Fixed
+
+- Swap avatar-eyes mode to match visual theme
+
+## [1.132.0] - 2026-02-22
+
+### Added
+
+- Replace dark/light SVGs with avatar-eyes web component
+
+### Fixed
+
+- Add commits/pipelineStatus to VIEW_FIELDS and CF sync
+
+## [1.131.0] - 2026-02-22
+
+### Added
+
+- Add pipeline status badges (C/PR/M/D) to card components
+- Add Claude Code PostToolUse pipeline reminders
+- Add pre-push PR check and post-merge pipeline reminder
+- Add delivery pipeline instructions to all AI config files
+
+### Changed
+
+- Move shared emulator rules to project root
+
+## [1.130.0] - 2026-02-22
+
+### Added
+
+- Add restore card functionality from trash
+
+### Fixed
+
+- Require date updates on status transitions
+
+### Documentation
+
+- Require deploy-before-version-notify
+
+## [1.129.1] - 2026-02-22
+
+### Fixed
+
+- Resolve epic title without full reload
+
+## [1.129.0] - 2026-02-21
+
+### Added
+
+- Add AI usage tracking and optimistic locking for AI agents
+
+## [1.128.6] - 2026-02-21
+
+### Fixed
+
+- Use UIUtils.formatDateFriendly instead of non-existent import
+
+## [1.128.5] - 2026-02-21
+
+### Fixed
+
+- Align updateTableRow styles with table-renderer rendering
+
+## [1.128.3] - 2026-02-21
+
+### Fixed
+
+- Resolve table view bugs and add notes tooltip
+
+## [1.128.2] - 2026-02-21
+
+### Fixed
+
+- Use update() instead of set() for existing cards to prevent data loss
+
+## [1.128.1] - 2026-02-21
+
+### Fixed
+
+- Resolve notes badge, dark mode textarea, and date input issues
+
+## [1.128.0] - 2026-02-21
+
+### Added
+
+- Add auto-heal mechanism to version-check-service
+
+### Fixed
+
+- Use git history for version bump detection and notify on deploy:hosting
+
+## [1.126.0] - 2026-02-21
+
+### Added
+
+- Format startDate/endDate in table view with friendly Spanish locale
+- Add hourly validation digest scheduled function
+- Add email queue module for RTDB-based notification batching
+
+### Changed
+
+- Replace immediate emails with queue-based hourly digest
 
 ## [1.125.5] - 2026-02-20
 

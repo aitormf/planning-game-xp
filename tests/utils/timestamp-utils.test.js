@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   generateTimestamp,
   extractDatePart,
+  extractDateTimeLocal,
   isToday,
   formatDateOnly
 } from '@/utils/timestamp-utils.js';
@@ -85,6 +86,59 @@ describe('timestamp-utils', () => {
       const result = generateTimestamp(now, 'start');
 
       expect(result).toBe('2026-02-09T08:05:03');
+    });
+
+    it('should preserve explicit time from datetime-local input (YYYY-MM-DDTHH:mm)', () => {
+      vi.setSystemTime(new Date(2026, 1, 9));
+
+      const result = generateTimestamp('2026-02-07T14:30', 'start');
+
+      expect(result).toBe('2026-02-07T14:30:00');
+    });
+
+    it('should preserve explicit time even for today from datetime-local', () => {
+      vi.setSystemTime(new Date(2026, 1, 9, 10, 0, 0));
+
+      const result = generateTimestamp('2026-02-09T08:15', 'start');
+
+      expect(result).toBe('2026-02-09T08:15:00');
+    });
+
+    it('should handle datetime-local with seconds already present', () => {
+      const result = generateTimestamp('2026-02-07T14:30:45', 'start');
+
+      expect(result).toBe('2026-02-07T14:30:45');
+    });
+  });
+
+  describe('extractDateTimeLocal', () => {
+    it('should extract YYYY-MM-DDTHH:mm from full timestamp', () => {
+      expect(extractDateTimeLocal('2026-02-09T14:30:45')).toBe('2026-02-09T14:30');
+    });
+
+    it('should add default start time for date-only values', () => {
+      expect(extractDateTimeLocal('2026-02-09', 'start')).toBe('2026-02-09T09:00');
+    });
+
+    it('should add default end time for date-only values', () => {
+      expect(extractDateTimeLocal('2026-02-09', 'end')).toBe('2026-02-09T17:00');
+    });
+
+    it('should default to start context', () => {
+      expect(extractDateTimeLocal('2026-02-09')).toBe('2026-02-09T09:00');
+    });
+
+    it('should handle empty string', () => {
+      expect(extractDateTimeLocal('')).toBe('');
+    });
+
+    it('should handle null/undefined', () => {
+      expect(extractDateTimeLocal(null)).toBe('');
+      expect(extractDateTimeLocal(undefined)).toBe('');
+    });
+
+    it('should handle ISO string with timezone', () => {
+      expect(extractDateTimeLocal('2026-02-09T14:30:45.000Z')).toBe('2026-02-09T14:30');
     });
   });
 

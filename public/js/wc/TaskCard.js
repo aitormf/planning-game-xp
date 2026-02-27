@@ -2,10 +2,12 @@ import { html, css, unsafeCSS } from 'https://cdn.jsdelivr.net/npm/lit@3.0.2/+es
 import { BaseCard } from './base-card.js';
 import { NotesManagerMixin } from '../mixins/notes-manager-mixin.js';
 import { CommitsDisplayMixin } from '../mixins/commits-display-mixin.js';
+import { AiUsageDisplayMixin } from '../mixins/ai-usage-display-mixin.js';
 import { format, parse, isValid } from 'https://cdn.jsdelivr.net/npm/date-fns@3.6.0/+esm';
 import { TaskCardStyles } from './task-card-styles.js';
 import { NotesStyles } from '../ui/styles/notes-styles.js';
 import { CommitsListStyles } from './commits-list-styles.js';
+import { AiUsageStyles } from './ai-usage-styles.js';
 import { ref, onValue, get, set as dbSet, database, auth, firebaseConfig, functions, httpsCallable } from '../../firebase-config.js';
 import { KANBAN_STATUS_COLORS_CSS } from '../config/theme-config.js';
 import { permissionService } from '../services/permission-service.js';
@@ -18,11 +20,11 @@ import { openScenarioModal } from '../utils/scenario-modal.js';
 import { getPriorityDisplay } from '../utils/priority-utils.js';
 import { stateTransitionService } from '../services/state-transition-service.js';
 import { TASK_SCHEMA } from '../schemas/card-field-schemas.js';
-import { generateTimestamp, extractDatePart } from '../utils/timestamp-utils.js';
+import { generateTimestamp, extractDateTimeLocal } from '../utils/timestamp-utils.js';
 import './FirebaseStorageUploader.js';
 import 'https://cdn.jsdelivr.net/npm/@manufosela/loading-layer@2.0.1/+esm';
 
-export class TaskCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
+export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManagerMixin(BaseCard))) {
   static PLAN_STATUS_CONFIG = {
     pending:     { label: 'Plan',       color: '#6b7280', textColor: '#fff' },
     proposed:    { label: 'Plan: Prop', color: '#3b82f6', textColor: '#fff' },
@@ -101,7 +103,12 @@ export class TaskCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
       // Warning when projectId doesn't match URL
       _projectIdMismatch: { type: Boolean, state: true },
       // Converting legacy description to user story
-      _isConvertingDescription: { type: Boolean, state: true }
+      _isConvertingDescription: { type: Boolean, state: true },
+      // Time tracking for Pausado status
+      timeLog: { type: Array },
+      totalElapsedTime: { type: Number },
+      effectiveWorkTime: { type: Number },
+      totalPausedTime: { type: Number }
     };
   }
 
@@ -110,6 +117,7 @@ export class TaskCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
       TaskCardStyles,
       NotesStyles,
       CommitsListStyles,
+      AiUsageStyles,
       css`${unsafeCSS(KANBAN_STATUS_COLORS_CSS)}`,
       css`
         .copy-link-button {
@@ -1516,8 +1524,8 @@ if (this.projectRepositories.length < 2) return '';
   }
 
   get canSave() {
-    // Permitimos guardar siempre que haya título y permisos de edición; las validaciones se manejan al cambiar estado.
-    return this.canEdit && this.title.trim();
+    // Permitimos guardar siempre que haya título y permisos de edición o sea validator en "To Validate".
+    return (this.canEdit || this.canEditStatus) && this.title.trim();
   }
 
   async _handleSave() {
@@ -2142,6 +2150,18 @@ this.isSuperAdmin = false;
   }
 
   /**
+   * Determina si el select de status debe estar habilitado.
+   * Además de canEdit (admin en modo gestión), se habilita para
+   * validators/covalidators cuando la tarea está en "To Validate".
+   */
+  get canEditStatus() {
+    if (this.canEdit) return true;
+    const normalized = (this.status || '').toLowerCase().replace(/&/g, '').replace(/\s+/g, '');
+    if (normalized === 'tovalidate' && this.canSetDoneValidated) return true;
+    return false;
+  }
+
+  /**
    * Determina si el usuario actual puede establecer el estado "Done&Validated"
    * Solo pueden: SuperAdmin, Validator asignado, o CoValidator asignado
    */
@@ -2334,7 +2354,7 @@ this.isSuperAdmin = false;
 
   // Método para ordenar los estados en el orden lógico
   sortStatusList(statusArray) {
-    const order = ['To Do', 'In Progress', 'To Validate', 'Done&Validated', 'Blocked', 'Reopened'];
+    const order = ['To Do', 'In Progress', 'Pausado', 'To Validate', 'Done&Validated', 'Blocked', 'Reopened'];
 
     // Ensure Reopened is available if Done&Validated exists (task workflow)
     let extendedArray = [...statusArray];
@@ -2583,7 +2603,7 @@ this.isSuperAdmin = false;
           ${this._renderPlanBadge()}
         </div>
         <div class="card-id-row">
-          <div class="cardid" title="Click para copiar ID" style="cursor:pointer" @click=${this._copyCardId}>${this.cardId || ''}${this._renderRepoBadge()}</div>
+          <div class="cardid" title="Click para copiar ID" style="cursor:pointer" @click=${this._copyCardId}>${this.cardId || ''}${this._renderRepoBadge()}${this._renderPipelineBadges()}</div>
           <div class="card-actions">
             ${this.attachment ? html`<span class="attachment-indicator" title="Tiene archivo adjunto">📎</span>` : ''}
             <button class="copy-link-button" title="Copiar enlace" @click=${this.copyCardUrl}>🔗</button>
@@ -2615,6 +2635,7 @@ this.isSuperAdmin = false;
           />
           <span class="cardid-badge" title="Click para copiar ID" style="cursor:pointer" @click=${this._copyCardId}>${this.cardId || ''}</span>
           ${this._renderPlanBadge()}
+          ${this._renderPipelineBadges()}
         </section>
       </div>
     `;
@@ -2704,7 +2725,7 @@ this.isSuperAdmin = false;
     return html`
       <div class="card-container ultra-compact ${this.selected ? 'selected' : ''} ${this.expedited ? 'expedited' : ''} ${this.spike ? 'spike' : ''}" @click=${this._handleClick}>
         <div class="uc-row-top">
-          <span class="uc-cardid">${this.cardId || ''}</span>
+          <span class="uc-cardid">${this.cardId || ''}${this._renderPipelineBadges()}</span>
           <span class="uc-priority ${priorityInfo.hasPriority ? '' : 'no-priority'}" style="${priorityInfo.hasPriority ? `background-color: ${priorityInfo.backgroundColor}` : ''}" title="${priorityInfo.hasPriority ? `${priorityInfo.label} (${this.businessPoints}/${this.devPoints} = ${priorityInfo.value})` : priorityInfo.label}">${priorityInfo.shortLabel}</span>
         </div>
         <div class="uc-title" title="${this.title || ''}">${truncatedTitle || ''}</div>
@@ -2754,7 +2775,7 @@ this.isSuperAdmin = false;
       <div class="form-row compact-row">
         <div class="form-field inline">
           <label>Status</label>
-          <select class="status-select ${this._getFieldClass('status')}" .value=${this.status} @change=${this._handleStatusChange} ?disabled=${!this.canEdit}>
+          <select class="status-select ${this._getFieldClass('status')}" .value=${this.status} @change=${this._handleStatusChange} ?disabled=${!this.canEditStatus}>
             ${this.statusListArray.map(status => html`
               <option
                 value="${status}"
@@ -2874,18 +2895,19 @@ this.isSuperAdmin = false;
         ` : ''}
         <div class="form-field inline">
           <label class="${this._getLabelClass('startDate')}">Start</label>
-          <input type="date" class="${this._getFieldClass('startDate')}" .value=${extractDatePart(this.startDate)} @change=${this._handleStartDateChange} ?disabled=${!this.canEdit}>
+          <input type="datetime-local" class="${this._getFieldClass('startDate')}" .value=${extractDateTimeLocal(this.startDate, 'start')} @change=${this._handleStartDateChange} ?disabled=${!this.canEdit || !!this.startDate}>
         </div>
         <div class="form-field inline">
           <label class="${this._getLabelClass('endDate')}">End</label>
-          <input type="date" class="${this._getFieldClass('endDate')}" .value=${extractDatePart(this.endDate)} @change=${this._handleEndDateChange} ?disabled=${!this.canEdit}>
+          <input type="datetime-local" class="${this._getFieldClass('endDate')}" .value=${extractDateTimeLocal(this.endDate, 'end')} @change=${this._handleEndDateChange} ?disabled=${!this.canEdit}>
         </div>
         ${this.validatedAt ? html`
         <div class="form-field inline">
           <label>Validated</label>
-          <input type="date" .value=${extractDatePart(this.validatedAt)} disabled>
+          <input type="datetime-local" .value=${extractDateTimeLocal(this.validatedAt)} disabled>
         </div>
         ` : ''}
+        ${this._renderTimeMetrics()}
       </div>
       ${this.reopenCount > 0 ? html`
       <div class="reopen-info">
@@ -3108,6 +3130,11 @@ return html`<div class="no-related-tasks">No hay tareas relacionadas</div>`;
         <color-tab name="commits" label="${this._getCommitsTabLabel()}" color="#0ea5e9">
         ${this.renderCommitsPanel()}
         </color-tab>
+        ${this._getAiUsageArray().length > 0 ? html`
+        <color-tab name="aiUsage" label="${this._getAiUsageTabLabel()}" color="#8b5cf6">
+        ${this.renderAiUsagePanel()}
+        </color-tab>
+        ` : ''}
         <color-tab name="history" label="Histórico" color="var(--color-orange-800)">
         <div class="history-panel">
           <card-history-viewer
@@ -3353,6 +3380,7 @@ return html`<div class="no-related-tasks">No hay tareas relacionadas</div>`;
     props.reopenCycles = this.reopenCycles || [];
     props.reopenCount = this.reopenCount || 0;
     props.implementationNotes = this.implementationNotes || '';
+    if (this.pipelineStatus) props.pipelineStatus = this.pipelineStatus;
 
     // Validate status
     if (!props.status || props.status.trim() === '') {
@@ -3851,10 +3879,10 @@ this.repositoryLabel = newLabel;
         this._clearInvalidClasses();
       }
 
-      // Auto-rellenar endDate cuando pasa a "To Validate" (fin de desarrollo)
-      if (!this.endDate) {
-        this.endDate = generateTimestamp(new Date(), 'end');
-      }
+      // Always update endDate when transitioning to "To Validate" (marks end of development).
+      // This must change on every transition because the Cloud Function validates
+      // that endDate was updated in the same write.
+      this.endDate = generateTimestamp(new Date(), 'end');
     }
 
     // Handle "Reopened" status - task needs rework after validation
@@ -3900,6 +3928,19 @@ this.repositoryLabel = newLabel;
       // Clear endDate and validatedAt for the new development cycle
       this.endDate = '';
       this.validatedAt = '';
+    }
+
+    // TimeLog tracking for Pausado status
+    if (normalizedNewStatus === 'pausado' && normalizedPrevStatus === 'in progress') {
+      const timeLog = Array.isArray(this.timeLog) ? [...this.timeLog] : [];
+      timeLog.push({ event: 'paused', timestamp: new Date().toISOString(), by: this._getCurrentUserEmail() });
+      this.timeLog = timeLog;
+    }
+    if (normalizedNewStatus === 'in progress' && normalizedPrevStatus === 'pausado') {
+      const timeLog = Array.isArray(this.timeLog) ? [...this.timeLog] : [];
+      timeLog.push({ event: 'resumed', timestamp: new Date().toISOString(), by: this._getCurrentUserEmail() });
+      this.timeLog = timeLog;
+      this._calculateTimeMetrics();
     }
 
     // NOTE: "Blocked" validation moved to _handleSave()
@@ -3961,6 +4002,86 @@ this.repositoryLabel = newLabel;
     modal.cardId = this.cardId;
     modal.cardTitle = this.title;
     document.body.appendChild(modal);
+  }
+
+  /**
+   * Calculate time metrics from timeLog (pause/resume events)
+   */
+  _calculateTimeMetrics() {
+    const timeLog = Array.isArray(this.timeLog) ? this.timeLog : [];
+    if (timeLog.length === 0) return;
+
+    let totalPaused = 0;
+    let lastPausedAt = null;
+
+    for (const entry of timeLog) {
+      if (entry.event === 'paused') {
+        lastPausedAt = new Date(entry.timestamp).getTime();
+      } else if (entry.event === 'resumed' && lastPausedAt) {
+        totalPaused += new Date(entry.timestamp).getTime() - lastPausedAt;
+        lastPausedAt = null;
+      }
+    }
+
+    // If currently paused (no matching resume), count time until now
+    if (lastPausedAt) {
+      totalPaused += Date.now() - lastPausedAt;
+    }
+
+    this.totalPausedTime = totalPaused;
+
+    // Calculate total elapsed time from startDate to now (or endDate)
+    if (this.startDate) {
+      const start = new Date(this.startDate).getTime();
+      const end = this.endDate ? new Date(this.endDate).getTime() : Date.now();
+      this.totalElapsedTime = end - start;
+      this.effectiveWorkTime = this.totalElapsedTime > 0 ? this.totalElapsedTime - totalPaused : 0;
+    }
+  }
+
+  /**
+   * Format milliseconds to human-readable duration
+   * @param {number} ms - Duration in milliseconds
+   * @returns {string} Formatted duration
+   */
+  _formatDuration(ms) {
+    if (!ms || ms <= 0) return '-';
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours % 24 > 0) parts.push(`${hours % 24}h`);
+    if (minutes % 60 > 0) parts.push(`${minutes % 60}m`);
+
+    return parts.length > 0 ? parts.join(' ') : '< 1m';
+  }
+
+  /**
+   * Render time metrics (paused time, effective work time) if timeLog exists
+   */
+  _renderTimeMetrics() {
+    const timeLog = Array.isArray(this.timeLog) ? this.timeLog : [];
+    if (timeLog.length === 0) return '';
+
+    this._calculateTimeMetrics();
+
+    return html`
+      <div class="form-field inline" style="gap: 0.5rem; flex-wrap: wrap;">
+        ${this.totalPausedTime > 0 ? html`
+          <span style="font-size: 0.85em; color: #ff9800;" title="Tiempo total en pausa">
+            ⏸ Pausado: ${this._formatDuration(this.totalPausedTime)}
+          </span>
+        ` : ''}
+        ${this.effectiveWorkTime > 0 ? html`
+          <span style="font-size: 0.85em; color: #4caf50;" title="Tiempo efectivo de trabajo">
+            ⏱ Efectivo: ${this._formatDuration(this.effectiveWorkTime)}
+          </span>
+        ` : ''}
+      </div>
+    `;
   }
 
   _emitStatusUpdated(previousStatus, newStatus) {

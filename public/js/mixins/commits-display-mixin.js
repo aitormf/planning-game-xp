@@ -100,18 +100,26 @@ export const CommitsDisplayMixin = (superClass) => class extends superClass {
 
     return html`
       <div class="commits-panel">
-        <ul class="commits-list">
-          ${sortedCommits.map(commit => html`
-            <li class="commit-item">
-              <div class="commit-header">
-                <span class="commit-hash" title="${commit.hash}">${this._truncateHash(commit.hash)}</span>
-                <span class="commit-date">${this._formatCommitDate(commit.date)}</span>
-              </div>
-              <div class="commit-message">${commit.message}</div>
-              <div class="commit-author">👤 ${commit.author}</div>
-            </li>
-          `)}
-        </ul>
+        <table class="commits-table">
+          <thead>
+            <tr>
+              <th>Hash</th>
+              <th>Mensaje</th>
+              <th>Autor</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sortedCommits.map(commit => html`
+              <tr class="commit-row">
+                <td><span class="commit-hash" title="${commit.hash}">${this._truncateHash(commit.hash)}</span></td>
+                <td class="commit-message">${commit.message}</td>
+                <td class="commit-author">${commit.author}</td>
+                <td class="commit-date">${this._formatCommitDate(commit.date)}</td>
+              </tr>
+            `)}
+          </tbody>
+        </table>
       </div>
     `;
   }

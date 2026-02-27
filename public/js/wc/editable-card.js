@@ -161,7 +161,7 @@ export class EditableCard extends BaseCard {
         ${tabs.map(tab => html`
           <button 
             class="tab-button ${this.activeTab === tab.key ? 'active' : ''} ${tab.key}"
-            style="background-color: ${this.activeTab === tab.key ? tab.color : '#f1f1f1'}"
+            style="background-color: ${this.activeTab === tab.key ? tab.color : 'var(--bg-tertiary)'}"
             @click=${() => this._setActiveTab(tab.key)}>
             ${tab.label}
           </button>

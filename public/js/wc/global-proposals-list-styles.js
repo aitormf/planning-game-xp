@@ -23,13 +23,13 @@ export const GlobalProposalsListStyles = css`
     align-items: center;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid var(--border-color, #e0e0e0);
+    border-bottom: 2px solid var(--border-default);
   }
 
   .header h2 {
     margin: 0;
     font-size: 1.5rem;
-    color: var(--text-primary, #333);
+    color: var(--text-primary);
   }
 
   .mode-indicator {
@@ -40,13 +40,13 @@ export const GlobalProposalsListStyles = css`
   }
 
   .mode-indicator.edit {
-    background: #e8f5e9;
-    color: #2e7d32;
+    background: var(--status-success-bg);
+    color: var(--status-success-text);
   }
 
   .mode-indicator.view {
-    background: var(--bg-secondary, #f5f5f5);
-    color: var(--text-muted, #757575);
+    background: var(--bg-secondary);
+    color: var(--text-muted);
   }
 
   .loading {
@@ -54,19 +54,19 @@ export const GlobalProposalsListStyles = css`
     justify-content: center;
     align-items: center;
     padding: 3rem;
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
   }
 
   .empty-state {
     text-align: center;
     padding: 3rem;
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
   }
 
   .proposals-table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--bg-primary, white);
+    background: var(--bg-primary);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: var(--card-shadow, 0 2px 4px rgba(0,0,0,0.1));
@@ -77,10 +77,10 @@ export const GlobalProposalsListStyles = css`
     grid-template-columns: 50px 1fr 150px 150px 80px 120px 150px 40px;
     gap: 0.5rem;
     padding: 1rem;
-    background: var(--bg-secondary, #f5f5f5);
+    background: var(--bg-secondary);
     font-weight: 600;
-    color: var(--text-primary, #333);
-    border-bottom: 2px solid var(--border-color, #e0e0e0);
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-default);
   }
 
   .table-header.no-handle {
@@ -97,7 +97,7 @@ export const GlobalProposalsListStyles = css`
     grid-template-columns: 50px 1fr 150px 150px 80px 120px 150px 40px;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border-color, #eee);
+    border-bottom: 1px solid var(--border-subtle);
     align-items: center;
     transition: background-color 0.15s ease;
   }
@@ -107,7 +107,7 @@ export const GlobalProposalsListStyles = css`
   }
 
   .proposal-row:hover {
-    background: var(--bg-secondary, #fafafa);
+    background: var(--bg-secondary);
   }
 
   .proposal-row.dragging {
@@ -122,13 +122,13 @@ export const GlobalProposalsListStyles = css`
 
   .col-order {
     font-weight: 600;
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
     text-align: center;
   }
 
   .col-title {
     font-weight: 500;
-    color: var(--text-primary, #333);
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -140,17 +140,17 @@ export const GlobalProposalsListStyles = css`
   }
 
   .col-title.clickable:hover {
-    color: #1976d2;
+    color: var(--brand-primary);
     text-decoration: underline;
   }
 
   .col-project {
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
     font-size: 0.875rem;
   }
 
   .col-epic {
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
     font-size: 0.875rem;
     white-space: nowrap;
     overflow: hidden;
@@ -160,7 +160,7 @@ export const GlobalProposalsListStyles = css`
   .col-points {
     text-align: center;
     font-weight: 600;
-    color: #1976d2;
+    color: var(--brand-primary);
   }
 
   .col-status {
@@ -171,16 +171,16 @@ export const GlobalProposalsListStyles = css`
     white-space: nowrap;
   }
 
-  .col-status.propuesta { background: #fff3e0; color: #e65100; }
-  .col-status.en-revision { background: #e3f2fd; color: #1565c0; }
-  .col-status.aprobada { background: #e8f5e9; color: #2e7d32; }
-  .col-status.rechazada { background: #ffebee; color: #c62828; }
-  .col-status.en-desarrollo { background: #f3e5f5; color: #7b1fa2; }
-  .col-status.implementada { background: #e0f2f1; color: #00695c; }
-  .col-status.descartada { background: #eceff1; color: #546e7a; }
+  .col-status.propuesta { background: var(--status-warning-bg); color: var(--status-warning-text); }
+  .col-status.en-revision { background: var(--status-info-bg); color: var(--status-info-text); }
+  .col-status.aprobada { background: var(--status-success-bg); color: var(--status-success-text); }
+  .col-status.rechazada { background: var(--status-error-bg); color: var(--status-error-text); }
+  .col-status.en-desarrollo { background: rgba(156, 39, 176, 0.15); color: #ce93d8; }
+  .col-status.implementada { background: var(--status-success-bg); color: var(--status-success-text); }
+  .col-status.descartada { background: var(--bg-muted); color: var(--text-muted); }
 
   .col-creator {
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
     font-size: 0.875rem;
     white-space: nowrap;
     overflow: hidden;
@@ -195,14 +195,14 @@ export const GlobalProposalsListStyles = css`
 
   .drag-handle {
     cursor: grab;
-    color: var(--text-disabled, #999);
+    color: var(--text-disabled);
     font-size: 1.25rem;
     padding: 0.25rem;
     user-select: none;
   }
 
   .drag-handle:hover {
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
   }
 
   .drag-handle:active {
@@ -212,10 +212,10 @@ export const GlobalProposalsListStyles = css`
   .last-updated {
     margin-top: 1rem;
     padding: 0.5rem 1rem;
-    background: var(--bg-secondary, #f5f5f5);
+    background: var(--bg-secondary);
     border-radius: 4px;
     font-size: 0.75rem;
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
     text-align: right;
   }
 
@@ -229,8 +229,8 @@ export const GlobalProposalsListStyles = css`
   .tab {
     padding: 0.75rem 1.5rem;
     border: none;
-    background: var(--bg-secondary, #f5f5f5);
-    color: var(--text-muted, #666);
+    background: var(--bg-secondary);
+    color: var(--text-muted);
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
@@ -239,12 +239,12 @@ export const GlobalProposalsListStyles = css`
   }
 
   .tab:hover {
-    background: var(--bg-tertiary, #e0e0e0);
+    background: var(--bg-tertiary);
   }
 
   .tab.active {
-    background: #1976d2;
-    color: white;
+    background: var(--brand-primary);
+    color: var(--text-inverse);
   }
 
   /* Project view */
@@ -255,7 +255,7 @@ export const GlobalProposalsListStyles = css`
   }
 
   .project-section {
-    background: var(--bg-primary, white);
+    background: var(--bg-primary);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: var(--card-shadow, 0 2px 4px rgba(0,0,0,0.1));
@@ -266,32 +266,32 @@ export const GlobalProposalsListStyles = css`
     align-items: center;
     gap: 0.75rem;
     padding: 1rem;
-    background: var(--bg-secondary, #f5f5f5);
+    background: var(--bg-secondary);
     cursor: pointer;
     user-select: none;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    border-bottom: 1px solid var(--border-default);
     transition: background 0.2s ease;
   }
 
   .project-header:hover {
-    background: var(--bg-tertiary, #e8e8e8);
+    background: var(--bg-tertiary);
   }
 
   .collapse-icon {
     font-size: 0.75rem;
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
     width: 1rem;
     text-align: center;
   }
 
   .project-name {
     font-weight: 600;
-    color: var(--text-primary, #333);
+    color: var(--text-primary);
     font-size: 1rem;
   }
 
   .project-count {
-    color: var(--text-muted, #666);
+    color: var(--text-muted);
     font-size: 0.875rem;
   }
 
@@ -307,7 +307,7 @@ export const GlobalProposalsListStyles = css`
   }
 
   .team-section {
-    background: var(--bg-primary, white);
+    background: var(--bg-primary);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: var(--card-shadow, 0 2px 4px rgba(0,0,0,0.1));
@@ -318,25 +318,25 @@ export const GlobalProposalsListStyles = css`
     align-items: center;
     gap: 0.75rem;
     padding: 1rem;
-    background: #e8f5e9;
+    background: var(--status-success-bg);
     cursor: pointer;
     user-select: none;
-    border-bottom: 1px solid #c8e6c9;
+    border-bottom: 1px solid var(--status-success-border);
     transition: background 0.2s ease;
   }
 
   .team-header:hover {
-    background: #c8e6c9;
+    background: var(--active-overlay);
   }
 
   .team-name {
     font-weight: 600;
-    color: #2e7d32;
+    color: var(--status-success-text);
     font-size: 1rem;
   }
 
   .team-count {
-    color: #558b2f;
+    color: var(--status-success-text);
     font-size: 0.875rem;
   }
 

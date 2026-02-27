@@ -4,6 +4,8 @@
  */
 import { entityDirectoryService } from '../services/entity-directory-service.js';
 import { APP_CONSTANTS } from '../constants/app-constants.js';
+import { getPriorityDisplay } from '../utils/priority-utils.js';
+import { UIUtils } from '../utils/ui-utils.js';
 
 // Column indices from centralized constants
 const TASK_COLS = APP_CONSTANTS.TABLE_COLUMNS.TASKS;
@@ -57,6 +59,13 @@ function _createRepoBadgeElement(cardData, projectId) {
   return badge;
 }
 
+function _resolveEpicDisplayName(epicValue) {
+  if (!epicValue) return '';
+  const epicList = Array.isArray(window.globalEpicList) ? window.globalEpicList : [];
+  const epic = epicList.find((e) => e && (e.id === epicValue || e.name === epicValue || e.title === epicValue));
+  return epic ? (epic.name || epic.title || epicValue) : epicValue;
+}
+
 /**
  * Devuelve los colores de fondo y texto para un status
  * @param {string} status - El status de la tarea
@@ -66,28 +75,33 @@ function _createRepoBadgeElement(cardData, projectId) {
 function getStatusColor(status, type = 'task') {
   const value = (status || '').toString();
   const lower = value.toLowerCase();
+  const upper = value.toUpperCase();
 
   if (type === 'bug') {
+    // Bug statuses use kanban colors (mixed case keys)
+    const kanbanColors = APP_CONSTANTS?.KANBAN_COLORS || {};
+    const kanbanBg = kanbanColors[value] || kanbanColors[upper];
+    if (kanbanBg) {
+      return { bg: kanbanBg, fg: '#fff' };
+    }
     const palette = {
       'created': '#6c757d',
-      'triaged': '#6c757d',
       'assigned': '#0d6efd',
-      'in progress': '#0d6efd',
-      'blocked': '#d63384',
       'fixed': '#2ab27b',
-      'in testing': '#6f42c1',
       'verified': '#198754',
-      'cerrado': '#6c757d',
-      'closed': '#6c757d',
-      'rechazado': '#343a40',
-      'rejected': '#343a40',
-      'reopened': '#fd7e14'
+      'closed': '#6c757d'
     };
     const bg = palette[lower] || '#adb5bd';
     return { bg, fg: '#fff' };
   }
 
-  // Task status palette
+  // Task status: try kanban gradient colors first (same as table-renderer)
+  const kanbanColors = APP_CONSTANTS?.KANBAN_COLORS || {};
+  const kanbanBg = kanbanColors[upper];
+  if (kanbanBg) {
+    return { bg: kanbanBg, fg: '#fff' };
+  }
+
   const palette = {
     'backlog': '#6c757d',
     'todo': '#6c757d',
@@ -95,6 +109,7 @@ function getStatusColor(status, type = 'task') {
     'ready': '#20c997',
     'in progress': '#0d6efd',
     'doing': '#0d6efd',
+    'pausado': '#ff9800',
     'blocked': '#d63384',
     'qa': '#6f42c1',
     'review': '#6f42c1',
@@ -294,17 +309,33 @@ export function updateTableRow(row, cardData) {
       `;
       cells[TASK_COLS.STATUS].appendChild(statusTag);
 
-      // Prioridad (calculada) - No mostrar para spikes
-      let priorityText = '';
-      if (cardData.isSpike) {
-        priorityText = '';
-      } else if (!cardData.businessPoints || !cardData.devPoints || cardData.businessPoints === 0 || cardData.devPoints === 0) {
-        priorityText = 'No evaluado';
+      // Prioridad (calculada) - Same rendering as table-renderer
+      cells[TASK_COLS.PRIORITY].innerHTML = '';
+      if (cardData.spike || cardData.isSpike) {
+        // No priority for spikes
       } else {
-        const priorityValue = (cardData.businessPoints / cardData.devPoints) * 100;
-        priorityText = isNaN(priorityValue) ? 'No evaluado' : Math.round(priorityValue).toString();
+        const priorityInfo = getPriorityDisplay(cardData.businessPoints, cardData.devPoints);
+        if (priorityInfo.hasPriority) {
+          const priorityTag = document.createElement('span');
+          priorityTag.style.cssText = `
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.85rem;
+            font-weight: 600; background: ${priorityInfo.backgroundColor};
+            color: ${priorityInfo.color}; white-space: nowrap;
+          `;
+          priorityTag.textContent = priorityInfo.label;
+          priorityTag.title = `${cardData.businessPoints}/${cardData.devPoints} = ${priorityInfo.value}`;
+          const badge = document.createElement('span');
+          badge.style.cssText = 'font-size:0.7rem;background:rgba(0,0,0,0.3);padding:0 4px;border-radius:4px;margin-left:4px';
+          badge.textContent = priorityInfo.badge;
+          priorityTag.appendChild(badge);
+          cells[TASK_COLS.PRIORITY].appendChild(priorityTag);
+        } else {
+          cells[TASK_COLS.PRIORITY].textContent = 'No evaluado';
+          cells[TASK_COLS.PRIORITY].style.color = 'var(--text-muted, #6c757d)';
+          cells[TASK_COLS.PRIORITY].style.fontStyle = 'italic';
+        }
       }
-      cells[TASK_COLS.PRIORITY].textContent = priorityText;
 
       // Sprint
       let sprintTitle = '';
@@ -354,16 +385,10 @@ export function updateTableRow(row, cardData) {
       cells[TASK_COLS.VALIDATOR].textContent = validatorDisplay;
 
       // Épica
-      let epicName = '';
-      if (cardData.epic) {
-        const epicList = window.globalEpicList || [];
-        const epic = epicList.find(e => e.id === cardData.epic || e.name === cardData.epic);
-        epicName = epic ? epic.name : cardData.epic;
-      }
-      cells[TASK_COLS.EPIC].textContent = epicName;
+      cells[TASK_COLS.EPIC].textContent = _resolveEpicDisplayName(cardData.epic);
 
-      cells[TASK_COLS.START_DATE].textContent = cardData.startDate || '';
-      cells[TASK_COLS.END_DATE].textContent = cardData.endDate || '';
+      cells[TASK_COLS.START_DATE].textContent = UIUtils.formatDateFriendly(cardData.startDate);
+      cells[TASK_COLS.END_DATE].textContent = UIUtils.formatDateFriendly(cardData.endDate);
       // ACTIONS column is not updated
     }
   } else if (isBugTable) {
@@ -423,9 +448,9 @@ export function updateTableRow(row, cardData) {
       }
       cells[4].textContent = developerDisplay;
       cells[5].textContent = cardData.createdBy || ''; // Creado por (email)
-      cells[6].textContent = cardData.registerDate || ''; // Fecha registro
-      cells[7].textContent = cardData.startDate || ''; // Fecha inicio
-      cells[8].textContent = cardData.endDate || ''; // Fecha fin
+      cells[6].textContent = UIUtils.formatDateFriendly(cardData.registerDate); // Fecha registro
+      cells[7].textContent = UIUtils.formatDateFriendly(cardData.startDate); // Fecha inicio
+      cells[8].textContent = UIUtils.formatDateFriendly(cardData.endDate); // Fecha fin
       // cells[9] es el botón detalle, no se actualiza
     }
   }

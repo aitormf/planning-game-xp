@@ -31,8 +31,19 @@ const INSTANCES_DIR = path.join(ROOT_DIR, 'planning-game-instances');
 const LAST_INSTANCE_FILE = path.join(ROOT_DIR, '.last-instance');
 
 /**
- * Files that get symlinked from the instance directory to the project root.
+ * Files symlinked from instance to project root.
  * 'required' files cause warnings during verify if missing.
+ *
+ * Shared files (emulator rules, indexes, examples) live directly in the
+ * project root and are NOT listed here — they are the same for every instance.
+ *   - database.emulator.rules
+ *   - firestore.emulator.rules
+ *   - firestore.rules.dev
+ *   - storage.emulator.rules
+ *   - firestore.indexes.json
+ *   - database.rules.example.json
+ *   - storage.rules.example
+ *   - .env.example
  */
 const INSTANCE_FILES = [
   { src: '.env.dev', dest: '.env.dev', required: true, desc: 'Dev environment variables' },
@@ -43,15 +54,14 @@ const INSTANCE_FILES = [
   { src: '.firebaserc', dest: '.firebaserc', required: true, desc: 'Firebase project config' },
   { src: 'database.rules.json', dest: 'database.rules.json', required: true, desc: 'RTDB rules (production)' },
   { src: 'database.test.rules.json', dest: 'database.test.rules.json', required: false, desc: 'RTDB rules (tests)' },
-  { src: 'database.emulator.rules', dest: 'database.emulator.rules', required: false, desc: 'RTDB rules (emulator)' },
   { src: 'firestore.rules', dest: 'firestore.rules', required: false, desc: 'Firestore rules' },
-  { src: 'firestore.rules.dev', dest: 'firestore.rules.dev', required: false, desc: 'Firestore rules (dev)' },
   { src: 'storage.rules', dest: 'storage.rules', required: true, desc: 'Storage rules' },
-  { src: 'storage.emulator.rules', dest: 'storage.emulator.rules', required: false, desc: 'Storage rules (emulator)' },
   { src: 'serviceAccountKey.json', dest: 'serviceAccountKey.json', required: false, desc: 'Service account key' },
   { src: 'sonar-project.properties', dest: 'sonar-project.properties', required: false, desc: 'SonarQube config' },
   { src: 'functions/.env', dest: 'functions/.env', required: false, desc: 'Cloud Functions env vars' },
   { src: 'theme-config.json', dest: 'public/theme-config.json', required: false, desc: 'Theme configuration (colors, branding)' },
+  { src: 'manifest.json', dest: 'public/manifest.json', required: false, desc: 'PWA manifest' },
+  { src: 'developer-directory.js', dest: 'public/js/config/developer-directory.js', required: false, desc: 'Developer name/alias directory' },
 ];
 
 const EMULATOR_DATA = { src: 'emulator-data', dest: 'emulator-data' };

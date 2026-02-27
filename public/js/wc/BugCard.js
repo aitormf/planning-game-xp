@@ -3,9 +3,11 @@ import { format, isValid, parse } from 'https://cdn.jsdelivr.net/npm/date-fns@3.
 import { BaseCard } from './base-card.js';
 import { NotesManagerMixin } from '../mixins/notes-manager-mixin.js';
 import { CommitsDisplayMixin } from '../mixins/commits-display-mixin.js';
+import { AiUsageDisplayMixin } from '../mixins/ai-usage-display-mixin.js';
 import { BugCardStyles } from './bug-card-styles.js';
 import { NotesStyles } from '../ui/styles/notes-styles.js';
 import { CommitsListStyles } from './commits-list-styles.js';
+import { AiUsageStyles } from './ai-usage-styles.js';
 import { KANBAN_STATUS_COLORS_CSS } from '../config/theme-config.js';
 import { APP_CONSTANTS } from '../constants/app-constants.js';
 import { permissionService } from '../services/permission-service.js';
@@ -15,10 +17,10 @@ import { developerDirectory } from '../config/developer-directory.js';
 import { entityDirectoryService } from '../services/entity-directory-service.js';
 import { openScenarioModal } from '../utils/scenario-modal.js';
 import { BUG_SCHEMA } from '../schemas/card-field-schemas.js';
-import { generateTimestamp, extractDatePart } from '../utils/timestamp-utils.js';
+import { generateTimestamp, extractDateTimeLocal } from '../utils/timestamp-utils.js';
 import './FirebaseStorageUploader.js';
 
-export class BugCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
+export class BugCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManagerMixin(BaseCard))) {
   // Static cache for project developers to avoid redundant Firebase calls
   static _developerCache = new Map();
   static _loadingPromises = new Map();
@@ -82,6 +84,7 @@ export class BugCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
       BugCardStyles,
       NotesStyles,
       CommitsListStyles,
+      AiUsageStyles,
       css`${unsafeCSS(KANBAN_STATUS_COLORS_CSS)}`
     ];
   }
@@ -106,7 +109,7 @@ export class BugCard extends CommitsDisplayMixin(NotesManagerMixin(BaseCard)) {
       this.priorityList = window.globalBugPriorityList;
       this.priority = this.priorityList[0];
     }
-    this.statusList = window.statusBugList ? this._getOrderedStatusList(window.statusBugList) : ['Created', 'Open', 'In Progress', 'Fixed', 'Closed'];
+    this.statusList = window.statusBugList ? this._getOrderedStatusList(window.statusBugList) : ['Created', 'Assigned', 'Fixed', 'Verified', 'Closed'];
     this.status = 'Created'; // Bug nuevo siempre empieza en Created
     this.registerDate = new Date().toISOString(); // Fecha de creación por defecto
     this.userAuthorizedEmails = [];
@@ -1030,7 +1033,7 @@ this.expanded = false;
       <div class="card-header">
         <div class="title" title="${this.title || ''}">${this.title || ''}</div>
         <div class="card-id-row">
-          <div class="cardid" title="Click para copiar ID" style="cursor:pointer" @click=${this._copyCardId}>${this.cardId || ''}${this._renderRepoBadge()}</div>
+          <div class="cardid" title="Click para copiar ID" style="cursor:pointer" @click=${this._copyCardId}>${this.cardId || ''}${this._renderRepoBadge()}${this._renderPipelineBadges()}</div>
           <div class="card-actions">
             ${this.attachment ? html`<span class="attachment-indicator" title="Tiene archivo adjunto">📎</span>` : ''}
             <button class="copy-link-button" title="Copiar enlace" @click=${this.copyCardUrl}>🔗</button>
@@ -1092,7 +1095,7 @@ this.expanded = false;
     return html`
       <div class="card-container ultra-compact" @click=${this._handleClick}>
         <div class="uc-row-top">
-          <span class="uc-cardid">${this.cardId || ''}</span>
+          <span class="uc-cardid">${this.cardId || ''}${this._renderPipelineBadges()}</span>
           <span class="uc-priority ${priorityClass}">${this.priority || 'Medium'}</span>
         </div>
         <div class="uc-title" title="${this.title || ''}">${truncatedTitle || ''}</div>
@@ -1200,20 +1203,20 @@ if (this.userAuthorizedEmails.includes(this.userEmail)) {
         <div class="field-group">
           <label>Start Date:</label>
           <input
-            type="date"
+            type="datetime-local"
             class="${this._getFieldClass('startDate')}"
-            .value=${extractDatePart(this.startDate)}
+            .value=${extractDateTimeLocal(this.startDate, 'start')}
             @input=${this._handleStartDateChange}
             ?disabled=${!this.isEditable}
           />
         </div>
-        
+
         <div class="field-group">
           <label>End Date:</label>
           <input
-            type="date"
+            type="datetime-local"
             class="${this._getFieldClass('endDate')}"
-            .value=${extractDatePart(this.endDate)}
+            .value=${extractDateTimeLocal(this.endDate, 'end')}
             @input=${this._handleEndDateChange}
             ?disabled=${!this.isEditable}
           />
@@ -1324,6 +1327,9 @@ if (this.userAuthorizedEmails.includes(this.userEmail)) {
         ${this._getCommitsArray().length > 0 ? html`
         <button class="commits tab-button ${this.activeTab === 'commits' ? 'active' : ''}" @click=${() => this._setActiveTab('commits')}>${this._getCommitsTabLabel()}</button>
         ` : ''}
+        ${this._getAiUsageArray().length > 0 ? html`
+        <button class="ai-usage tab-button ${this.activeTab === 'aiUsage' ? 'active' : ''}" @click=${() => this._setActiveTab('aiUsage')}>${this._getAiUsageTabLabel()}</button>
+        ` : ''}
       </div>
       <div class="tab-content">
         ${this.activeTab === 'description' ? html`
@@ -1394,6 +1400,7 @@ if (this.userAuthorizedEmails.includes(this.userEmail)) {
             ></firebase-storage-uploader>
           </div>` : ''}
         ${this.activeTab === 'commits' ? this.renderCommitsPanel() : ''}
+        ${this.activeTab === 'aiUsage' ? this.renderAiUsagePanel() : ''}
       </div>
       <div class="expanded-footer ia-footer">
         <div class="footer-left"></div>
@@ -1538,7 +1545,10 @@ if (this.userAuthorizedEmails.includes(this.userEmail)) {
       repositoryLabel: repoLabel,
 
       // IA Features - Acceptance Criteria structured
-      acceptanceCriteriaStructured: this._getAcceptanceCriteriaStructuredForSave()
+      acceptanceCriteriaStructured: this._getAcceptanceCriteriaStructuredForSave(),
+
+      // Pipeline tracking
+      ...(this.pipelineStatus ? { pipelineStatus: this.pipelineStatus } : {})
     };
 
     return cardData;
@@ -1637,7 +1647,7 @@ return;
   _handleStatusChange(e) {
     const previousStatus = this.status;
     const newStatus = e.target.value;
-    const finalStatuses = ['Fixed', 'Verified', 'Closed', 'Rejected'];
+    const finalStatuses = ['Fixed', 'Verified', 'Closed'];
 
     // Auto-rellenar endDate cuando se cambia a un estado final (si no tiene valor)
     if (finalStatuses.includes(newStatus) && !finalStatuses.includes(previousStatus)) {

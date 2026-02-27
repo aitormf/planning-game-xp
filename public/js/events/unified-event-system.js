@@ -408,6 +408,12 @@ export class UnifiedEventSystem {
 
     await FirebaseService.saveCard(cardData);
 
+    // Ensure epic titles are available in table/list renderers even when epics
+    // are created externally (e.g. via MCP) while the page is already open.
+    if (projectId && cardData.group === 'tasks' && cardData.epic) {
+      await this._ensureEpicListContains(cardData.epic, projectId);
+    }
+
     // IMPORTANTE: Para nuevas tarjetas, actualizar la tarjeta expandida con el nuevo ID
     // Esto evita que al guardar de nuevo se cree otra tarjeta
     if (isNewCard && expandedCard && cardData.id) {
@@ -455,6 +461,38 @@ export class UnifiedEventSystem {
           preserveFilters: true  // IMPORTANTE: Mantener filtros al recargar
         }
       }));
+    }
+  }
+
+  /**
+   * Ensure global epic list contains the provided epic id.
+   * Reloads epics from Firebase only when the epic is missing.
+   * @param {string} epicId
+   * @param {string} projectId
+   */
+  async _ensureEpicListContains(epicId, projectId) {
+    if (!epicId || !projectId) return;
+
+    const epicList = Array.isArray(window.globalEpicList) ? window.globalEpicList : [];
+    const hasEpic = epicList.some((epic) => {
+      if (!epic || typeof epic !== 'object') return false;
+      return epic.id === epicId || epic.name === epicId || epic.title === epicId;
+    });
+
+    if (hasEpic) return;
+
+    try {
+      const epicsData = await FirebaseService.getCards(projectId, 'epics');
+      if (!epicsData) return;
+
+      window.globalEpicList = Object.values(epicsData)
+        .filter((epic) => epic && !epic.deletedAt)
+        .map((epic) => ({
+          id: epic.cardId || epic.id,
+          name: epic.title || epic.name
+        }));
+    } catch (error) {
+      // Non-blocking: if this fails, UI will still fallback to epic id.
     }
   }
 

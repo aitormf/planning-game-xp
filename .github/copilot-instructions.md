@@ -1,0 +1,59 @@
+# GitHub Copilot Instructions - Planning Game XP
+
+## Delivery Pipeline (MANDATORY)
+
+Every task and bug MUST follow this delivery pipeline. The Planning Game MCP server enforces these rules automatically.
+
+### Workflow
+
+1. **Get card** from Planning Game MCP (`get_card`)
+2. **Mark "In Progress"** with `startDate`, `developer`, `validator`
+3. **Create branch** from main:
+   - Tasks: `feat/{CARD-ID}-short-description`
+   - Bugs: `fix/{CARD-ID}-short-description`
+4. **Implement** following TDD (tests first, then code)
+5. **Run tests**: `npm test` - all must pass
+6. **Commit** with conventional commits (`feat:`, `fix:`, `refactor:`, etc.)
+7. **Push branch** and **create Pull Request** toward main
+8. **Mark "To Validate"** (tasks) or **"Fixed"** (bugs) via MCP with:
+   - `endDate`: today
+   - `commits`: `[{hash, message, date, author}]`
+   - `pipelineStatus`: `{ prCreated: { date, prUrl, prNumber } }` (REQUIRED)
+   - `aiUsage`: `[{sessionId, timestamp, model, inputTokens, outputTokens, totalTokens, estimatedCostUSD}]` (REQUIRED if AI-assisted)
+
+### Rules
+
+- NEVER commit directly to main - always use branches + PRs
+- NEVER set status to "Done" or "Done&Validated" (validator's responsibility)
+- NEVER reference AI tools in commit messages
+- NEVER use `alert()`, `confirm()`, `prompt()` - use the app's modal system
+- NEVER use `setTimeout` for synchronization - use event-driven patterns
+- Follow conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`
+- Max ~300 lines changed per PR (ideal < 200)
+
+### Pipeline Events (pipelineStatus)
+
+| Event | When | Fields |
+|-------|------|--------|
+| `committed` | After commit | `date`, `commitHash`, `branch` |
+| `prCreated` | After PR creation | `date`, `prUrl`, `prNumber` |
+| `merged` | After PR merge | `date`, `mergedBy` |
+| `deployed` | After deployment | `date`, `environment` |
+
+### Tech Stack
+
+- Frontend: Astro + Lit web components
+- Backend: Firebase (RTDB, Firestore, Auth, Cloud Functions, Storage)
+- Testing: Vitest (unit), Playwright (E2E)
+- Code style: SOLID, DRY, KISS, YAGNI
+- Language: Code in English, user communication in Spanish
+
+### Key Commands
+
+```bash
+npm run dev              # Development server
+npm run emulator         # Firebase emulator with demo data
+npm test                 # Unit tests (Vitest)
+npm run test:e2e         # E2E tests (Playwright)
+npm run build-prod       # Production build
+```

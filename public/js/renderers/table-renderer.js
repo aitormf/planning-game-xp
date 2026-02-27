@@ -13,8 +13,8 @@ import { getPriorityDisplay } from '../utils/priority-utils.js';
 export class TableRenderer {
   constructor() {
     this.filters = {};
-    this.sortField = 'Prioridad';
-    this.sortDirection = 'asc';
+    this.sortField = 'ID';
+    this.sortDirection = 'desc';
     this.isLoading = true; // Estado de carga inicial
   }
 
@@ -190,6 +190,13 @@ export class TableRenderer {
     return '';
   }
 
+  _getEpicDisplay(epicValue) {
+    if (!epicValue) return '';
+    const epicList = Array.isArray(globalThis.globalEpicList) ? globalThis.globalEpicList : [];
+    const epic = epicList.find((e) => e && (e.id === epicValue || e.name === epicValue || e.title === epicValue));
+    return epic ? (epic.name || epic.title || epicValue) : epicValue;
+  }
+
   sortRows(rows) {
     const field = this.sortField;
     const dir = this.sortDirection === 'asc' ? 1 : -1;
@@ -210,13 +217,7 @@ export class TableRenderer {
           return '';
         case 'Developer': return this.getDeveloperDisplay(card.developer);
         case 'Validator': return this.getValidatorDisplay(card.validator);
-        case 'Épica':
-          if (card.epic) {
-            const epicList = globalThis.globalEpicList || [];
-            const epic = epicList.find(e => e.id === card.epic || e.name === card.epic);
-            return epic ? epic.name : card.epic;
-          }
-          return '';
+        case 'Épica': return this._getEpicDisplay(card.epic);
         case 'Fecha registro': return UIUtils.formatDate(card.registerDate);
         case 'Fecha inicio': return card.startDate || '';
         case 'Fecha fin': return card.endDate || '';
@@ -429,6 +430,87 @@ include = false;
       return [{ content: notes, author: 'legacy', timestamp: '' }];
     }
     return [];
+  }
+
+  /**
+   * Create a notes badge with custom CSS tooltip (not native title)
+   * Shows note contents on hover if available, otherwise just the count
+   */
+  _createNotesBadgeWithTooltip(notes, notesCount) {
+    const container = UIUtils.createElement('span', {
+      style: {
+        position: 'relative',
+        display: 'inline-flex',
+        flexShrink: '0'
+      }
+    });
+
+    const badge = UIUtils.createElement('span', {
+      style: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '2px',
+        background: '#6f42c1',
+        color: '#fff',
+        padding: '0 5px',
+        borderRadius: '10px',
+        fontSize: '0.7rem',
+        fontWeight: 'bold',
+        whiteSpace: 'nowrap',
+        lineHeight: '1.4',
+        cursor: 'default'
+      }
+    }, `📝${notesCount}`);
+    container.appendChild(badge);
+
+    // Build tooltip content
+    let tooltipHtml = '';
+    if (notes.length > 0) {
+      const maxNotes = 5;
+      const displayNotes = notes.slice(-maxNotes);
+      tooltipHtml = displayNotes.map(note => {
+        const content = (note.content || '').substring(0, 80);
+        const author = note.author ? note.author.split('@')[0] : '';
+        return `<div style="margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.15);">` +
+          `<div style="font-size:0.75rem;opacity:0.7;">${author}</div>` +
+          `<div>${content}${(note.content || '').length > 80 ? '...' : ''}</div>` +
+          `</div>`;
+      }).join('');
+      if (notes.length > maxNotes) {
+        tooltipHtml += `<div style="opacity:0.7;font-style:italic;">+${notes.length - maxNotes} más</div>`;
+      }
+    } else {
+      tooltipHtml = `${notesCount} nota${notesCount > 1 ? 's' : ''}`;
+    }
+
+    const tooltip = UIUtils.createElement('div');
+    tooltip.innerHTML = tooltipHtml;
+    Object.assign(tooltip.style, {
+      display: 'none',
+      position: 'absolute',
+      bottom: '100%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      marginBottom: '6px',
+      background: '#1a1a2e',
+      color: '#fff',
+      padding: '8px 10px',
+      borderRadius: '6px',
+      fontSize: '0.78rem',
+      lineHeight: '1.3',
+      maxWidth: '280px',
+      minWidth: '140px',
+      whiteSpace: 'normal',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+      zIndex: '9999',
+      pointerEvents: 'none'
+    });
+    container.appendChild(tooltip);
+
+    container.addEventListener('mouseenter', () => { tooltip.style.display = 'block'; });
+    container.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+    return container;
   }
 
   getDeveloperDisplay(value) {
@@ -718,6 +800,60 @@ include = false;
   }
 
   /**
+   * Creates pipeline badges (C/PR/M/D) for table view
+   * @param {Object} card - Card data with pipelineStatus and commits/commitsCount
+   * @returns {HTMLElement|null} Wrapper element with badges, or null if no pipeline data
+   */
+  _createPipelineBadges(card) {
+    const commitsLen = (Array.isArray(card.commits) && card.commits.length > 0) ? card.commits.length : (card.commitsCount || 0);
+    const hasCommits = commitsLen > 0;
+    const ps = card.pipelineStatus;
+    const hasPR = ps?.prCreated;
+    const hasMerged = ps?.merged;
+    const hasDeployed = ps?.deployed;
+
+    if (!hasCommits && !hasPR && !hasMerged && !hasDeployed) return null;
+
+    const badgeBase = {
+      padding: '0 5px',
+      borderRadius: '8px',
+      fontSize: '0.7rem',
+      fontWeight: 'bold',
+      color: '#fff',
+      whiteSpace: 'nowrap',
+      flexShrink: '0',
+      lineHeight: '1.4'
+    };
+
+    const wrapper = UIUtils.createElement('span', {
+      style: { display: 'inline-flex', gap: '2px', flexShrink: '0' }
+    });
+
+    if (hasCommits) {
+      const b = UIUtils.createElement('span', { style: { ...badgeBase, background: '#6366f1' } }, 'C');
+      b.title = `Commits: ${commitsLen}`;
+      wrapper.appendChild(b);
+    }
+    if (hasPR) {
+      const b = UIUtils.createElement('span', { style: { ...badgeBase, background: '#3b82f6' } }, 'PR');
+      b.title = `PR #${ps.prCreated.prNumber || ''}${ps.prCreated.date ? ' - ' + ps.prCreated.date : ''}`;
+      wrapper.appendChild(b);
+    }
+    if (hasMerged) {
+      const b = UIUtils.createElement('span', { style: { ...badgeBase, background: '#8b5cf6' } }, 'M');
+      b.title = `Merged${ps.merged.date ? ': ' + ps.merged.date : ''}${ps.merged.mergedBy ? ' por ' + ps.merged.mergedBy : ''}`;
+      wrapper.appendChild(b);
+    }
+    if (hasDeployed) {
+      const b = UIUtils.createElement('span', { style: { ...badgeBase, background: '#10b981' } }, 'D');
+      b.title = `Deployed${ps.deployed.date ? ': ' + ps.deployed.date : ''}${ps.deployed.environment ? ' (' + ps.deployed.environment + ')' : ''}${ps.deployed.version ? ' v' + ps.deployed.version : ''}`;
+      wrapper.appendChild(b);
+    }
+
+    return wrapper;
+  }
+
+  /**
    * Creates relation badges (blockedBy, blocks, related) with hover popover
    * @param {Array|undefined} relatedTasks - Array of related task objects
    * @param {Object} cardIdMap - Map of cardId -> card data for status lookup
@@ -982,19 +1118,10 @@ const style = {
     if (type === 'bug') {
       const palette = {
         'created': '#6c757d',
-        'open': '#0d6efd',
-        'triaged': '#6c757d',
         'assigned': '#0d6efd',
-        'in progress': '#0d6efd',
-        'blocked': '#d63384',
         'fixed': '#2ab27b',
-        'in testing': '#6f42c1',
         'verified': '#198754',
-        'cerrado': '#6c757d',
-        'closed': '#6c757d',
-        'rechazado': '#343a40',
-        'rejected': '#343a40',
-        'reopened': '#fd7e14'
+        'closed': '#6c757d'
       };
       const bg = palette[lower] || '#adb5bd';
       return { bg, fg: '#fff' };
@@ -1188,104 +1315,52 @@ const style = {
       if (relationBadges) idCell.appendChild(relationBadges);
       if (card.cardId) this._makeIdCellCopyable(idCell, card.cardId);
       row.appendChild(idCell);
-      // Título + notes badge + badges de bloqueo
-      const titleCell = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', maxWidth: '250px' } });
-      const titleWrapper = UIUtils.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden' } });
+      // Título (línea 1) + badges (línea 2)
+      const titleCell = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.3rem 0.5rem', maxWidth: '300px' } });
+
+      // Línea 1: Título con notes badge inline
+      const titleRow = UIUtils.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.3rem', overflow: 'hidden' } });
       const titleText = UIUtils.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '0' } }, card.title || '');
       titleText.title = card.title || '';
-      titleWrapper.appendChild(titleText);
+      titleRow.appendChild(titleText);
 
-      // Notes badge next to title
+      // Notes badge next to title (with custom tooltip)
       const notes = this._getNotesArray(card.notes);
       const notesCount = notes.length > 0 ? notes.length : (card.notesCount || 0);
       if (notesCount > 0) {
-        const notesBadge = UIUtils.createElement('span', {
-          style: {
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '2px',
-            background: '#6f42c1',
-            color: '#fff',
-            padding: '0 5px',
-            borderRadius: '10px',
-            fontSize: '0.7rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0',
-            lineHeight: '1.4'
-          }
-        }, `📝${notesCount}`);
-        notesBadge.title = `${notesCount} nota${notesCount > 1 ? 's' : ''}`;
-        titleWrapper.appendChild(notesBadge);
+        const notesContainer = this._createNotesBadgeWithTooltip(notes, notesCount);
+        titleRow.appendChild(notesContainer);
       }
+
+      titleCell.appendChild(titleRow);
+
+      // Línea 2: Badges (solo si hay alguno)
+      const badgeStyle = { padding: '0 5px', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 'bold', whiteSpace: 'nowrap', lineHeight: '1.4' };
+      const badges = [];
 
       // Badges de bloqueo (business/dev) - only show if status is "Blocked"
       const isBlockedStatus = (card.status || '').toLowerCase() === 'blocked';
       if (isBlockedStatus && card.blockedByBusiness) {
-        const badge = UIUtils.createElement('span', {
-          style: {
-            background: '#e74c3c',
-            color: '#fff',
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0'
-          }
-        }, 'BUS');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#e74c3c', color: '#fff' } }, 'BUS');
         badge.title = 'Bloqueada por negocio';
-        titleWrapper.appendChild(badge);
+        badges.push(badge);
       }
       if (isBlockedStatus && card.blockedByDevelopment) {
-        const badge = UIUtils.createElement('span', {
-          style: {
-            background: '#f39c12',
-            color: '#fff',
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0'
-          }
-        }, 'DEV');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#f39c12', color: '#fff' } }, 'DEV');
         badge.title = 'Bloqueada por desarrollo';
-        titleWrapper.appendChild(badge);
+        badges.push(badge);
       }
       // Badge de SPIKE
       if (card.spike) {
-        const badge = UIUtils.createElement('span', {
-          style: {
-            background: '#9c27b0',
-            color: '#fff',
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0'
-          }
-        }, 'SPIKE');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#9c27b0', color: '#fff' } }, 'SPIKE');
         badge.title = 'Spike - Investigación técnica';
-        titleWrapper.appendChild(badge);
+        badges.push(badge);
       }
       // Badge de EXPEDIT
       if (card.expedited) {
-        const badge = UIUtils.createElement('span', {
-          style: {
-            background: '#ffc107',
-            color: '#000',
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0'
-          }
-        }, 'EXPEDIT');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#ffc107', color: '#000' } }, 'EXPEDIT');
         badge.title = 'Tarea urgente';
-        titleWrapper.appendChild(badge);
+        badges.push(badge);
       }
       // Badge de PLAN
       if (card.planStatus) {
@@ -1297,23 +1372,19 @@ const style = {
           completed:   { label: 'Plan: OK',   bg: '#10b981', color: '#fff' }
         };
         const cfg = planConfig[card.planStatus] || planConfig.pending;
-        const planBadge = UIUtils.createElement('span', {
-          style: {
-            background: cfg.bg,
-            color: cfg.color,
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            flexShrink: '0'
-          }
-        }, cfg.label);
+        const planBadge = UIUtils.createElement('span', { style: { ...badgeStyle, background: cfg.bg, color: cfg.color } }, cfg.label);
         planBadge.title = `Plan de implementación: ${card.planStatus}`;
-        titleWrapper.appendChild(planBadge);
+        badges.push(planBadge);
       }
+      // Pipeline badges (C/PR/M/D)
+      const pipelineBadges = this._createPipelineBadges(card);
+      if (pipelineBadges) badges.push(pipelineBadges);
 
-      titleCell.appendChild(titleWrapper);
+      if (badges.length > 0) {
+        const badgeRow = UIUtils.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '0.2rem', marginTop: '0.15rem' } });
+        badges.forEach(b => badgeRow.appendChild(b));
+        titleCell.appendChild(badgeRow);
+      }
       row.appendChild(titleCell);
       // Estado
       this._appendStatusCell(row, card.status, 'task');
@@ -1395,18 +1466,12 @@ const style = {
       row.dataset.coValidatorValue = card.coValidator || '';
       row.appendChild(validatorCell);
       // Épica
-      let epicName = '';
-      if (card.epic) {
-        // Buscar la épica en la lista global o en globalThis.globalEpicList
-        const epicList = globalThis.globalEpicList || [];
-        const epic = epicList.find(e => e.id === card.epic || e.name === card.epic);
-        epicName = epic ? epic.name : card.epic;
-      }
+      const epicName = this._getEpicDisplay(card.epic);
       row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, epicName));
       // Fecha inicio
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, card.startDate || ''));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.startDate)));
       // Fecha fin
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, card.endDate || ''));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.endDate)));
       // Acciones: editar, eliminar, copiar, IA
       const actionsTd = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', textAlign: 'left', whiteSpace: 'nowrap' } });
       const firebaseId = card.id || id;
@@ -1593,9 +1658,20 @@ const style = {
       if (bugRepoBadge) bugIdCell.appendChild(bugRepoBadge);
       if (card.cardId) this._makeIdCellCopyable(bugIdCell, card.cardId);
       row.appendChild(bugIdCell);
-      // Título
-      const titleCellBug = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, card.title || '');
-      titleCellBug.title = card.title || '';
+      // Título (línea 1) + pipeline badges (línea 2)
+      const titleCellBug = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.3rem 0.5rem', maxWidth: '300px' } });
+      const bugTitleRow = UIUtils.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.3rem', overflow: 'hidden' } });
+      const bugTitleText = UIUtils.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '0' } }, card.title || '');
+      bugTitleText.title = card.title || '';
+      bugTitleRow.appendChild(bugTitleText);
+      titleCellBug.appendChild(bugTitleRow);
+      // Línea 2: Pipeline badges (solo si hay alguno)
+      const bugPipelineBadges = this._createPipelineBadges(card);
+      if (bugPipelineBadges) {
+        const bugBadgeRow = UIUtils.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '0.2rem', marginTop: '0.15rem' } });
+        bugBadgeRow.appendChild(bugPipelineBadges);
+        titleCellBug.appendChild(bugBadgeRow);
+      }
       row.appendChild(titleCellBug);
       // Estado
       this._appendStatusCell(row, card.status, 'bug');
@@ -1623,9 +1699,9 @@ const style = {
       // Fecha registro
       row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDate(card.registerDate)));
       // Fecha inicio
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, card.startDate || ''));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.startDate)));
       // Fecha fin
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, card.endDate || ''));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.endDate)));
       // Columna Acciones - iconos ver y borrar
       const actionsTd = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', textAlign: 'center', whiteSpace: 'nowrap' } });
 

@@ -101,7 +101,18 @@ return;
     if (snapshot.exists()) {
       const cardData = snapshot.val();
       this.latestCardData.set(cardKey, cardData);
-      
+
+      // Detect Cloud Function validation reverts and notify the user
+      if (cardData._validationReverted) {
+        const errorMessage = cardData._validationError || 'Status change was reverted by validation';
+        document.dispatchEvent(new CustomEvent('show-slide-notification', {
+          detail: { options: { message: errorMessage, type: 'error' } }
+        }));
+        // Clean up the transient flags so they don't trigger again
+        delete cardData._validationReverted;
+        delete cardData._validationError;
+      }
+
       // Actualizar todos los elementos suscritos
       subscribedElements.forEach(cardElement => {
         this.updateCardElement(cardElement, cardData);

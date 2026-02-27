@@ -359,14 +359,14 @@ export class FilterService {
           type: 'select',
           label: 'Status',
           multiple: true,
-          options: ['CREATED', 'TRIAGED', 'ASSIGNED', 'IN PROGRESS', 'FIXED', 'VERIFIED', 'CLOSED']
+          options: ['CREATED', 'ASSIGNED', 'FIXED', 'VERIFIED', 'CLOSED']
         },
         priority: {
           type: 'select',
           label: 'Priority',
           multiple: true,
-          options: ['APPLICATION BLOCKER', 'DEPARTMENT BLOCKER', 'INDIVIDUAL BLOCKER', 
-                   'USER EXPERIENCE ISSUE', 'WORKFLOW IMPROVEMENT', 'WORKAROUND AVAILABLE ISSUE']
+          options: ['Application Blocker', 'Department Blocker', 'Individual Blocker', 
+                   'User Experience Issue', 'Workflow Improvement', 'Workaround Available Issue']
         }
       },
       sortOptions: ['title', 'createdDate', 'status', 'priority'],

@@ -81,3 +81,15 @@ npm run test:coverage                           # 3. Verify coverage
 - Keep `.env.dev`, `.env.pre`, and `.env.pro` aligned; `npm run build` assumes production credentials.
 - Regenerate the service worker with `npm run generate-sw` whenever offline behavior changes.
 - Run `firebase use planning-gamexp` before emulating, and seed test data from `emulator-data/` when tests depend on fixtures.
+
+## Release Order (Mandatory)
+- To avoid infinite client reload loops, never publish/update the remote app version before hosting is live.
+- Always use `npm run deploy` (it deploys hosting first and updates Firebase version metadata after a successful release).
+- Do not run `scripts/update-firebase-version.cjs` manually before hosting deploy.
+- If you bump `package.json` version, deploy immediately in the same release cycle.
+
+## Concurrent Work (Mandatory)
+- Multiple humans/agents may commit in parallel.
+- Before pushing: run `git fetch origin` and `git rebase origin/main`.
+- Stage only explicit paths (`git add <file>`); never use `git add .` in this repo.
+- Verify commit contents before push with `git show --name-only -n 1`.
