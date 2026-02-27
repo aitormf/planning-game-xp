@@ -10,6 +10,7 @@ import './wc/card-history-viewer.js';
 import './wc/state-history-viewer.js';
 import './wc/AiDocumentUploader.js';
 import './wc/AdrList.js';
+import './wc/DevPlansSection.js';
 import './wc/VersionUpdateModal.js';
 
 // Importar controladores - AppController importa los demás componentes
