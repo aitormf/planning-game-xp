@@ -285,7 +285,6 @@ export class AppController {
 
       // OPTIMIZACIÓN: Estas no bloquean la carga de cards
       this.updateAppTabVisibility();
-      this.updateTasksGeneratorTabVisibility();
       await this.setUserViewMode();
     } catch (error) {
       console.error('[AppController] loadInitialData failed:', error);
@@ -1039,49 +1038,8 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
     }
   }
 
-  async updateTasksGeneratorTabVisibility() {
-    const generatorTab = document.getElementById('tasksGeneratorTab');
-    const generatorContent = document.getElementById('tasksGeneratorTabContent');
-    if (!generatorTab || !generatorContent) {
-      return;
-    }
-
-    // Tasks Generator tab is visible to superadmin, project admins, developers and stakeholders
-    const isSuperAdmin = await this._checkIsSuperAdmin();
-    const isResponsable = window.currentUserRole?.isResponsable || false;
-
-    // Check if user is developer or stakeholder
-    let isDeveloper = false;
-    let isStakeholder = false;
-    const userEmail = (document.body.dataset.userEmail || '').toLowerCase().trim();
-
-    if (userEmail) {
-      try {
-        await entityDirectoryService.init();
-        isDeveloper = !!entityDirectoryService.resolveDeveloperId(userEmail);
-        isStakeholder = !!entityDirectoryService.resolveStakeholderId(userEmail);
-      } catch (error) {
-        // Silently fail - user won't have developer/stakeholder access
-      }
-    }
-
-    const hasAccess = isSuperAdmin || isResponsable || isDeveloper || isStakeholder;
-
-    if (hasAccess) {
-      generatorTab.style.display = 'block';
-    } else {
-      const wasActive = generatorTab.classList.contains('active');
-      generatorTab.style.display = 'none';
-      generatorContent.style.display = 'none';
-      if (wasActive) {
-        this.tabController.switchToTab('tasks');
-      }
-    }
-  }
-
   setupAppAccessListener() {
     this.hasAppAccess = Boolean(window.isAppAdmin);
-    this.updateTasksGeneratorTabVisibility();
     this.updateTrashTabVisibility();
     document.addEventListener('app-admin-status-changed', this.handleAppAdminStatusChange);
   }
@@ -1099,7 +1057,6 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
     this.hasAppAccess = Boolean(event?.detail?.isAppAdmin);
     if (previous !== this.hasAppAccess) {
       this.updateAppTabVisibility();
-      this.updateTasksGeneratorTabVisibility();
     }
   }
 
@@ -1763,7 +1720,6 @@ try {
       }
 
       this.updateAppTabVisibility();
-      this.updateTasksGeneratorTabVisibility();
       this.setupSprintChartButton();
 } catch (error) {
 // Fallback to full page reload if partial reload fails
