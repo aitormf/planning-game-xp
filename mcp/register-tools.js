@@ -8,6 +8,7 @@ import { listDevelopersSchema, listDevelopers } from './tools/developers.js';
 import { listStakeholdersSchema, listStakeholders } from './tools/stakeholders.js';
 import { listAdrsSchema, listAdrs, getAdrSchema, getAdr, createAdrSchema, createAdr, updateAdrSchema, updateAdr, deleteAdrSchema, deleteAdr } from './tools/adrs.js';
 import { listPlansSchema, listPlans, getPlanSchema, getPlan, createPlanSchema, createPlan, updatePlanSchema, updatePlan, deletePlanSchema, deletePlan } from './tools/plans.js';
+import { listPlanProposalsSchema, listPlanProposals, getPlanProposalSchema, getPlanProposal, createPlanProposalSchema, createPlanProposal, updatePlanProposalSchema, updatePlanProposal, deletePlanProposalSchema, deletePlanProposal } from './tools/plan-proposals.js';
 import { listGlobalConfigSchema, listGlobalConfig, getGlobalConfigSchema, getGlobalConfig, createGlobalConfigSchema, createGlobalConfig, updateGlobalConfigSchema, updateGlobalConfig, deleteGlobalConfigSchema, deleteGlobalConfig } from './tools/global-config.js';
 import { setupMcpUserSchema, setupMcpUser } from './tools/setup-user.js';
 import { checkForUpdates, getUpdateNoticeOnce, getMcpStatus, getLocalVersion, updateMcp, resetNotificationFlag, setLatestVersionInFirebase } from './version-check.js';
@@ -190,6 +191,27 @@ export function createMcpServer(serverName) {
 
   server.tool('delete_plan', 'Delete a development plan (moves to trash)', deletePlanSchema.shape, wrapWithUpdateNotice(async (params) => {
     return await deletePlan(params);
+  }));
+
+  // ── Plan Proposal tools ──
+  server.tool('list_plan_proposals', 'List plan proposals for a project, optionally filtered by status (pending, planned, rejected)', listPlanProposalsSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await listPlanProposals(params);
+  }));
+
+  server.tool('get_plan_proposal', 'Get full details of a plan proposal including linked plan IDs', getPlanProposalSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await getPlanProposal(params);
+  }));
+
+  server.tool('create_plan_proposal', 'Create a new plan proposal (feature request that can later generate technical plans)', createPlanProposalSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await createPlanProposal(params);
+  }));
+
+  server.tool('update_plan_proposal', 'Update a plan proposal (title, description, status, tags, planIds)', updatePlanProposalSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await updatePlanProposal(params);
+  }));
+
+  server.tool('delete_plan_proposal', 'Delete a plan proposal (moves to trash)', deletePlanProposalSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await deletePlanProposal(params);
   }));
 
   // ── Global Config tools ──
