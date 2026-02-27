@@ -1026,10 +1026,21 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
       return;
     }
 
-    // Show App tab to ALL authenticated users if project allows executables
-    // AppManager component handles permission levels (admin/developer/readonly)
-    const currentProject = window.projects[this.projectId];
-    const allowExecutables = currentProject?.allowExecutables || false;
+    // Read allowExecutables directly from Firebase to avoid stale window.projects data
+    let allowExecutables = false;
+    try {
+      const { database, ref, get } = await import('../../firebase-config.js');
+      const projectSnap = await get(ref(database, `/projects/${this.projectId}/allowExecutables`));
+      allowExecutables = projectSnap.exists() ? projectSnap.val() === true : false;
+      // Update window.projects cache to keep it in sync
+      if (window.projects?.[this.projectId]) {
+        window.projects[this.projectId].allowExecutables = allowExecutables;
+      }
+    } catch (error) {
+      // Fall back to cached data if Firebase read fails
+      const currentProject = window.projects?.[this.projectId];
+      allowExecutables = currentProject?.allowExecutables || false;
+    }
 
     if (allowExecutables) {
       appTab.style.display = 'block';
