@@ -138,6 +138,40 @@ export async function updateProject({ projectId, updates }) {
     delete cleanUpdates.changes;
   }
 
+  // Ensure developers exist in /data/developers (global collection)
+  if (cleanUpdates.developers && Array.isArray(cleanUpdates.developers)) {
+    for (const dev of cleanUpdates.developers) {
+      if (dev && typeof dev === 'object' && dev.id && dev.id.startsWith('dev_')) {
+        const devRef = db.ref(`/data/developers/${dev.id}`);
+        const devSnapshot = await devRef.once('value');
+        if (!devSnapshot.exists()) {
+          await devRef.set({
+            name: dev.name || '',
+            email: dev.email || '',
+            active: true
+          });
+        }
+      }
+    }
+  }
+
+  // Ensure stakeholders exist in /data/stakeholders (global collection)
+  if (cleanUpdates.stakeholders && Array.isArray(cleanUpdates.stakeholders)) {
+    for (const stk of cleanUpdates.stakeholders) {
+      if (stk && typeof stk === 'object' && stk.id && stk.id.startsWith('stk_')) {
+        const stkRef = db.ref(`/data/stakeholders/${stk.id}`);
+        const stkSnapshot = await stkRef.once('value');
+        if (!stkSnapshot.exists()) {
+          await stkRef.set({
+            name: stk.name || '',
+            email: stk.email || '',
+            active: true
+          });
+        }
+      }
+    }
+  }
+
   cleanUpdates.updatedAt = new Date().toISOString();
   cleanUpdates.updatedBy = getMcpUserId();
 

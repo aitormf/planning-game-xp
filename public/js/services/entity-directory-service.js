@@ -548,6 +548,38 @@ class EntityDirectoryService {
   }
 
   /**
+   * Deletes a developer by ID
+   * @param {string} id - Developer ID (e.g., 'dev_001')
+   */
+  async deleteDeveloper(id) {
+    const developer = this._developers.get(id);
+    if (!developer) return;
+
+    await set(ref(database, `/data/developers/${id}`), null);
+
+    // Clean up inverse indices
+    if (developer.email) {
+      this._developersByEmail.delete(developer.email);
+    }
+    if (developer.emails) {
+      for (const altEmail of developer.emails) {
+        if (this._developersByEmail.get(altEmail) === id) {
+          this._developersByEmail.delete(altEmail);
+        }
+      }
+    }
+    if (developer.name) {
+      const normalizedName = developer.name.toLowerCase();
+      if (this._developersByName.get(normalizedName) === id) {
+        this._developersByName.delete(normalizedName);
+      }
+    }
+
+    this._developers.delete(id);
+    this._notifyListeners('developers');
+  }
+
+  /**
    * Crea un nuevo developer con ID auto-generado
    */
   async createDeveloper(email, name) {
@@ -747,6 +779,33 @@ class EntityDirectoryService {
     }
 
     return id;
+  }
+
+  /**
+   * Deletes a stakeholder by ID
+   * @param {string} id - Stakeholder ID (e.g., 'stk_001')
+   */
+  async deleteStakeholder(id) {
+    const stakeholder = this._stakeholders.get(id);
+    if (!stakeholder) return;
+
+    await set(ref(database, `/data/stakeholders/${id}`), null);
+
+    // Clean up inverse indices
+    if (stakeholder.email) {
+      if (this._stakeholdersByEmail.get(stakeholder.email) === id) {
+        this._stakeholdersByEmail.delete(stakeholder.email);
+      }
+    }
+    if (stakeholder.name) {
+      const normalizedName = stakeholder.name.toLowerCase();
+      if (this._stakeholdersByName.get(normalizedName) === id) {
+        this._stakeholdersByName.delete(normalizedName);
+      }
+    }
+
+    this._stakeholders.delete(id);
+    this._notifyListeners('stakeholders');
   }
 
   /**
