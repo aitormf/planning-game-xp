@@ -1378,6 +1378,47 @@ function encodeEmailForFirebase(email) {
 }
 
 /**
+ * Normalizes a Gmail address by removing dots from the local part.
+ * Gmail treats "jorge.casar@gmail.com" and "jorgecasar@gmail.com" as the same.
+ * For non-Gmail addresses, returns the email as-is (lowercased).
+ * @param {string} email The email to normalize.
+ * @return {string} The normalized email.
+ */
+function normalizeGmailEmail(email) {
+  if (!email) return '';
+  const lower = email.trim().toLowerCase();
+  const [localPart, domain] = lower.split('@');
+  if (!domain) return lower;
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    return localPart.replace(/\./g, '') + '@' + domain;
+  }
+  return lower;
+}
+
+/**
+ * Checks if an email is pre-authorized in /data/allowedUsers.
+ * Tries both the exact email and the Gmail-normalized variant.
+ * @param {string} email The email to check.
+ * @return {Promise<boolean>} Whether the email is allowed.
+ */
+async function isEmailPreAuthorized(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const encodedExact = encodeEmailForFirebase(normalizedEmail);
+
+  const exactSnap = await admin.database().ref(`/data/allowedUsers/${encodedExact}`).once('value');
+  if (exactSnap.val() === true) return true;
+
+  const gmailNormalized = normalizeGmailEmail(normalizedEmail);
+  if (gmailNormalized !== normalizedEmail) {
+    const encodedNormalized = encodeEmailForFirebase(gmailNormalized);
+    const normalizedSnap = await admin.database().ref(`/data/allowedUsers/${encodedNormalized}`).once('value');
+    if (normalizedSnap.val() === true) return true;
+  }
+
+  return false;
+}
+
+/**
  * Callable function to create a pending email/password account request.
  * It creates/updates a disabled Firebase Auth user and stores the request for approval.
  */
@@ -1508,31 +1549,52 @@ exports.requestEmailAccess = functions.region('europe-west1').https.onCall(async
 });
 
 /**
- * Sets a custom claim `encodedEmail` on new user creation.
- * This is used by security rules to check for permissions.
+ * Auto-provisions new users on Firebase Auth account creation.
+ * - Sets `encodedEmail` custom claim (for security rules)
+ * - Checks /data/allowedUsers and sets `allowed: true` if pre-authorized
+ * - Gmail normalization: treats jorge.casar@gmail.com = jorgecasar@gmail.com
  */
 exports.setEncodedEmailClaim = functions.region('europe-west1').auth.user().onCreate(async (user) => {
-  if (user.email) {
-    const encodedEmail = encodeEmailForFirebase(user.email);
-    try {
-      const existingUserRecord = await admin.auth().getUser(user.uid);
-      const currentClaims = existingUserRecord.customClaims || {};
-      await admin.auth().setCustomUserClaims(user.uid, {
-        ...currentClaims,
-        encodedEmail
-      });
-      logger.info(`Custom claim 'encodedEmail' set for user ${user.uid}`);
-      // Optional: Update a database log for successful claim setting
-      return admin.database().ref(`/userClaimsLog/${user.uid}`).set({
-        email: user.email,
-        encodedEmail: encodedEmail,
-        timestamp: Date.now(),
-      });
-    } catch (error) {
-      logger.error(`Failed to set custom claim for ${user.uid}`, error);
+  if (!user.email) return null;
+
+  const email = user.email.toLowerCase();
+  const encodedEmail = encodeEmailForFirebase(email);
+
+  try {
+    const existingUserRecord = await admin.auth().getUser(user.uid);
+    const currentClaims = existingUserRecord.customClaims || {};
+
+    // Check if user is pre-authorized in /data/allowedUsers
+    const isAllowed = await isEmailPreAuthorized(email);
+
+    const newClaims = {
+      ...currentClaims,
+      encodedEmail,
+    };
+
+    if (isAllowed) {
+      newClaims.allowed = true;
+      logger.info(`User ${email} is pre-authorized, setting allowed=true`, { uid: user.uid });
+    } else {
+      logger.info(`User ${email} is NOT pre-authorized`, { uid: user.uid });
     }
+
+    await admin.auth().setCustomUserClaims(user.uid, newClaims);
+    logger.info(`Custom claims set for user ${user.uid}`, { encodedEmail, allowed: isAllowed });
+
+    // Log the claim setting
+    await admin.database().ref(`/userClaimsLog/${user.uid}`).set({
+      email,
+      encodedEmail,
+      allowed: isAllowed,
+      timestamp: Date.now(),
+    });
+
+    return { success: true, email, allowed: isAllowed };
+  } catch (error) {
+    logger.error(`Failed to provision user ${user.uid}`, error);
+    return null;
   }
-  return null;
 });
 
 /**
