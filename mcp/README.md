@@ -12,21 +12,25 @@ Integrates with Claude Code, Cline, and any MCP-compatible AI client to manage s
 
 ## Quick Start
 
-### 1. Get the MCP server
+### 1. Install the MCP server
 
-**Option A: Standalone build (recommended)**
+**Option A: npm (recommended)**
 
 ```bash
-# From the Planning Game repo
-node scripts/build-mcp-standalone.js
-cd dist-mcp
-npm install
+npm install -g planning-game-mcp
 ```
 
-**Option B: From the repo directly**
+**Option B: npx (no install)**
 
 ```bash
-cd mcp
+# Use directly with npx — see step 3 below
+```
+
+**Option C: From source**
+
+```bash
+git clone https://github.com/AvilaManuel/planning-game-xp.git
+cd planning-game-xp/mcp
 npm install
 ```
 
@@ -40,11 +44,31 @@ You need a `serviceAccountKey.json` from your Firebase project:
 
 ### 3. Register in Claude Code
 
+**If installed via npm (Option A):**
+
 ```bash
 claude mcp add planning-game \
   -e GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/serviceAccountKey.json \
   -e FIREBASE_DATABASE_URL=https://your-project-default-rtdb.region.firebasedatabase.app \
-  -- node /absolute/path/to/index.js
+  -- planning-game-mcp
+```
+
+**If using npx (Option B):**
+
+```bash
+claude mcp add planning-game \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/serviceAccountKey.json \
+  -e FIREBASE_DATABASE_URL=https://your-project-default-rtdb.region.firebasedatabase.app \
+  -- npx planning-game-mcp
+```
+
+**If using from source (Option C):**
+
+```bash
+claude mcp add planning-game \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/serviceAccountKey.json \
+  -e FIREBASE_DATABASE_URL=https://your-project-default-rtdb.region.firebasedatabase.app \
+  -- node /absolute/path/to/mcp/index.js
 ```
 
 ### 4. First run — set up your identity
@@ -157,15 +181,19 @@ docker run -it \
   planning-game-mcp
 ```
 
-## Building Standalone Distribution
+## Publishing to npm
 
-From the main repo:
+For maintainers — to build and publish a new version:
 
 ```bash
+# 1. Bump version in mcp/package.json
+# 2. Build standalone package
 node scripts/build-mcp-standalone.js
+# 3. Install dependencies and publish
+cd dist-mcp && npm install && npm publish
 ```
 
-This generates `dist-mcp/` — a self-contained directory with all dependencies internalized. Distribute this folder to users who don't need the full Planning Game web app.
+The build script generates `dist-mcp/` — a self-contained directory with all dependencies internalized, ready for npm publishing.
 
 ## License
 

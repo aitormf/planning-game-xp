@@ -62,7 +62,9 @@
     "sonar": "~/.local/sonar-scanner/bin/sonar-scanner -Dsonar.token=$(cat ~/.sonar-token)",
     "sonar:npx": "npx sonar-scanner",
     "validate": "npm test && npm run sonar:npx",
-    "validate:full": "npm test && npm run test:e2e && npm run sonar:npx"
+    "validate:full": "npm test && npm run test:e2e && npm run sonar:npx",
+    "mcp:build": "node scripts/build-mcp-standalone.js",
+    "mcp:publish": "node scripts/build-mcp-standalone.js && cd dist-mcp && npm install && npm publish"
   },
   "dependencies": {
     "@manufosela/app-modal": "^2.2.0",
