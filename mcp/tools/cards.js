@@ -67,6 +67,28 @@ export {
 };
 
 // ──────────────────────────────────────────────
+// Plan-first workflow tracking (session-based)
+// ──────────────────────────────────────────────
+
+// Tracks tasks created without planId per project in this MCP session
+// Key: projectId, Value: count of tasks without planId
+const _sessionTasksWithoutPlan = new Map();
+
+const PLAN_FIRST_THRESHOLD = 2;
+
+export function getSessionTasksWithoutPlan(projectId) {
+  return _sessionTasksWithoutPlan.get(projectId) || 0;
+}
+
+export function resetSessionTaskCounter(projectId) {
+  if (projectId) {
+    _sessionTasksWithoutPlan.delete(projectId);
+  } else {
+    _sessionTasksWithoutPlan.clear();
+  }
+}
+
+// ──────────────────────────────────────────────
 // Sprint helpers
 // ──────────────────────────────────────────────
 
@@ -698,8 +720,16 @@ export async function createCard({ projectId, type, title, description, descript
     type
   };
 
-  // For tasks: include plan-related instructions for the AI
+  // For tasks: track plan-first workflow and include instructions for the AI
   if (type === 'task') {
+    // Track tasks created without a planId for plan-first enforcement
+    if (!planId) {
+      const currentCount = _sessionTasksWithoutPlan.get(projectId) || 0;
+      _sessionTasksWithoutPlan.set(projectId, currentCount + 1);
+    }
+
+    const tasksWithoutPlanCount = _sessionTasksWithoutPlan.get(projectId) || 0;
+
     if (implementationPlan) {
       response.planAction = {
         action: 'SHOW_PLAN_FOR_VALIDATION',
@@ -710,6 +740,19 @@ export async function createCard({ projectId, type, title, description, descript
       response.planAction = {
         action: 'CREATE_PLAN',
         message: 'This task was created without an implementation plan. Create a plan (with approach and steps) and present it to the user for validation before starting implementation. Use update_card to add the implementationPlan with planStatus "proposed", then show it to the user for approval.'
+      };
+    }
+
+    // Plan-first warning: when creating 2+ tasks without a plan in the same session
+    if (!planId && tasksWithoutPlanCount >= PLAN_FIRST_THRESHOLD) {
+      response.planFirstWarning = {
+        level: 'warning',
+        tasksWithoutPlan: tasksWithoutPlanCount,
+        message: `You have created ${tasksWithoutPlanCount} tasks without a development plan in project "${projectId}" during this session. ` +
+          'When creating multiple related tasks, you SHOULD first create a plan (create_plan) to group them, then reference the planId when creating tasks. ' +
+          'This ensures traceability and documentation of multi-task developments. ' +
+          'Consider creating a plan now and linking these tasks to it via update_card.',
+        recommendation: 'CREATE_PLAN_FIRST'
       };
     }
   }
