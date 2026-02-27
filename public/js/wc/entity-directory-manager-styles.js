@@ -129,9 +129,20 @@ export const EntityDirectoryManagerStyles = css`
     color: var(--text-tertiary, #9ca3af);
   }
 
+  .badge-pending {
+    background: var(--color-warning-bg, #fef3c7);
+    color: var(--color-warning, #d97706);
+  }
+
   .badge-count {
     background: var(--brand-primary-bg, #dbeafe);
     color: var(--brand-primary, #3b82f6);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
   }
 
   /* Inline form */

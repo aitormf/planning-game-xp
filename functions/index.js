@@ -4348,6 +4348,139 @@ exports.syncAppAdminClaim = onValueWritten({
   }
 });
 
+/**
+ * Cloud Function: syncAllowedClaim
+ * Syncs the 'allowed' custom claim when /data/allowedUsers changes.
+ *
+ * When a user is added to allowedUsers (value = true), sets allowed claim to true.
+ * When a user is removed from allowedUsers, sets allowed claim to false.
+ */
+exports.syncAllowedClaim = onValueWritten({
+  ref: "/data/allowedUsers/{encodedEmail}",
+  region: "europe-west1"
+}, async (event) => {
+  const { encodedEmail } = event.params;
+  const beforeValue = event.data.before?.val();
+  const afterValue = event.data.after?.val();
+
+  const email = decodeEmailFromFirebase(encodedEmail);
+  if (!email) {
+    logger.error('Could not decode email from Firebase key', { encodedEmail });
+    return null;
+  }
+
+  const shouldBeAllowed = afterValue === true;
+  const wasAllowed = beforeValue === true;
+
+  if (shouldBeAllowed === wasAllowed) {
+    return null;
+  }
+
+  try {
+    const userRecord = await admin.auth().getUserByEmail(email);
+    const currentClaims = userRecord.customClaims || {};
+    const newClaims = {
+      ...currentClaims,
+      allowed: shouldBeAllowed
+    };
+
+    await admin.auth().setCustomUserClaims(userRecord.uid, newClaims);
+
+    logger.info(`Updated allowed claim for ${email}`, {
+      uid: userRecord.uid,
+      allowed: shouldBeAllowed
+    });
+
+    return { success: true, email, allowed: shouldBeAllowed };
+  } catch (error) {
+    if (error.code === 'auth/user-not-found') {
+      logger.warn(`User not found for allowed sync: ${email}. Claim will be set when user registers.`);
+      return null;
+    }
+    logger.error(`Failed to sync allowed claim for ${email}`, error);
+    throw error;
+  }
+});
+
+/**
+ * Cloud Function: listAllowedUsers
+ * Callable function to list all allowed users with their Auth status.
+ * Returns the list from /data/allowedUsers enriched with Auth info.
+ * Only appAdmins can call this.
+ */
+exports.listAllowedUsers = onCall({
+  region: "europe-west1"
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be authenticated');
+  }
+
+  const callerClaims = request.auth.token || {};
+  if (!callerClaims.isAppAdmin) {
+    throw new HttpsError('permission-denied', 'Only appAdmins can list allowed users');
+  }
+
+  const snapshot = await admin.database().ref('/data/allowedUsers').once('value');
+  const allowedUsersData = snapshot.val() || {};
+
+  const users = [];
+  for (const [encodedEmail, value] of Object.entries(allowedUsersData)) {
+    if (value !== true) continue;
+    const email = decodeEmailFromFirebase(encodedEmail);
+    let authStatus = 'not_registered';
+    let displayName = null;
+    try {
+      const userRecord = await admin.auth().getUserByEmail(email);
+      authStatus = userRecord.disabled ? 'disabled' : 'active';
+      displayName = userRecord.displayName || null;
+    } catch (error) {
+      if (error.code !== 'auth/user-not-found') {
+        logger.warn(`Error checking auth for ${email}`, error);
+      }
+    }
+    users.push({ email, encodedEmail, authStatus, displayName });
+  }
+
+  return { users };
+});
+
+/**
+ * Cloud Function: setAllowedUser
+ * Callable function to add or remove a user from allowedUsers.
+ * Writes to /data/allowedUsers/{encodedEmail} which triggers syncAllowedClaim.
+ * Only appAdmins can call this.
+ */
+exports.setAllowedUser = onCall({
+  region: "europe-west1"
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be authenticated');
+  }
+
+  const callerClaims = request.auth.token || {};
+  if (!callerClaims.isAppAdmin) {
+    throw new HttpsError('permission-denied', 'Only appAdmins can manage allowed users');
+  }
+
+  const { email, allowed } = request.data || {};
+  if (!email || typeof email !== 'string') {
+    throw new HttpsError('invalid-argument', 'Email is required');
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const encodedEmail = encodeEmailForFirebase(normalizedEmail);
+
+  if (allowed === false) {
+    await admin.database().ref(`/data/allowedUsers/${encodedEmail}`).remove();
+    logger.info(`Removed allowed user: ${normalizedEmail}`, { removedBy: request.auth.token.email });
+    return { success: true, email: normalizedEmail, allowed: false };
+  }
+
+  await admin.database().ref(`/data/allowedUsers/${encodedEmail}`).set(true);
+  logger.info(`Added allowed user: ${normalizedEmail}`, { addedBy: request.auth.token.email });
+  return { success: true, email: normalizedEmail, allowed: true };
+});
+
 // Export internal functions for testing
 exports._test = {
   inferEpicsForPhases,

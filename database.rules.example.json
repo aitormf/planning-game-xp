@@ -52,6 +52,10 @@
         ".read": "auth != null",
         ".write": "auth != null && auth.token.isAppAdmin === true"
       },
+      "allowedUsers": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.token.isAppAdmin === true"
+      },
       "wip": {
         ".read": "auth != null",
         ".write": "auth != null",
