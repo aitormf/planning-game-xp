@@ -132,24 +132,115 @@ Estos MCPs solo funcionan en el proyecto donde se configuran.
 
 ### Planning Game MCP
 
-Permite gestionar tarjetas (tareas, bugs, epics) del Planning Game.
+Permite gestionar tarjetas (tareas, bugs, epics, proposals), sprints, ADRs, planes de desarrollo y configuración global del Planning Game.
 
-> **Nota:** El servidor MCP está ubicado globalmente en `~/mcp-servers/planning-game/` y es compartido entre todos los proyectos.
+#### Paso 1: Instalar el servidor MCP
 
 ```bash
-# 1. Obtener credenciales de Firebase
-#    Archivo: serviceAccountKey.json
-#    Ubicación: Ask your admin for the serviceAccountKey.json location
-
-# 2. Extraer el archivo en ~/mcp-servers/planning-game/
-unzip -P <password> serviceAccountKey.zip -d ~/mcp-servers/planning-game/
-
-# 3. Instalar el MCP (global, funciona desde cualquier proyecto)
-claude mcp add planning-game --scope user \
-  -e GOOGLE_APPLICATION_CREDENTIALS=$HOME/mcp-servers/planning-game/serviceAccountKey.json \
-  -e FIREBASE_DATABASE_URL=https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app \
-  -- node $HOME/mcp-servers/planning-game/index.js
+npm install -g planning-game-mcp
 ```
+
+#### Paso 2: Obtener credenciales de Firebase
+
+Necesitas un `serviceAccountKey.json` de tu proyecto Firebase:
+
+1. Ir a [Firebase Console](https://console.firebase.google.com) > Project Settings > Service Accounts
+2. Click "Generate new private key"
+3. Guardar el archivo en un lugar seguro (nunca commitear a git)
+
+```bash
+# Ejemplo: guardar en ~/.config/planning-game/
+mkdir -p ~/.config/planning-game
+mv ~/Downloads/serviceAccountKey.json ~/.config/planning-game/
+```
+
+#### Paso 3: Registrar en Claude Code
+
+**Opción A: Con npm install global (recomendado)**
+
+```bash
+claude mcp add planning-game --scope user \
+  -e GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/planning-game/serviceAccountKey.json \
+  -e FIREBASE_DATABASE_URL=https://tu-proyecto-default-rtdb.europe-west1.firebasedatabase.app \
+  -- planning-game-mcp
+```
+
+**Opción B: Con npx (sin instalar)**
+
+```bash
+claude mcp add planning-game --scope user \
+  -e GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/planning-game/serviceAccountKey.json \
+  -e FIREBASE_DATABASE_URL=https://tu-proyecto-default-rtdb.europe-west1.firebasedatabase.app \
+  -- npx planning-game-mcp
+```
+
+**Opción C: Desde el código fuente**
+
+```bash
+git clone https://github.com/AvilaManuel/planning-game-xp.git
+cd planning-game-xp/mcp && npm install
+
+claude mcp add planning-game --scope user \
+  -e GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/planning-game/serviceAccountKey.json \
+  -e FIREBASE_DATABASE_URL=https://tu-proyecto-default-rtdb.europe-west1.firebasedatabase.app \
+  -- node /ruta/absoluta/planning-game-xp/mcp/index.js
+```
+
+#### Paso 4: Configurar identidad (primera vez)
+
+Al arrancar Claude Code con el MCP conectado:
+
+```
+> Use setup_mcp_user to configure my identity
+```
+
+Esto crea un `mcp.user.json` con tu ID de developer, usado para tracking de quién crea/actualiza cards.
+
+#### Multi-instancia
+
+Para conectar a múltiples proyectos Firebase simultáneamente:
+
+```bash
+# Instancia 1
+claude mcp add planning-game-teamA --scope user \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/ruta/teamA/serviceAccountKey.json \
+  -e FIREBASE_DATABASE_URL=https://team-a-default-rtdb.firebasedatabase.app \
+  -e MCP_INSTANCE_DIR=/ruta/teamA/config \
+  -- planning-game-mcp
+
+# Instancia 2
+claude mcp add planning-game-teamB --scope user \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/ruta/teamB/serviceAccountKey.json \
+  -e FIREBASE_DATABASE_URL=https://team-b-default-rtdb.firebasedatabase.app \
+  -e MCP_INSTANCE_DIR=/ruta/teamB/config \
+  -- planning-game-mcp
+```
+
+Cada instancia mantiene su propio `mcp.user.json` en su `MCP_INSTANCE_DIR`.
+
+#### Variables de entorno
+
+| Variable | Requerida | Descripción |
+|----------|-----------|-------------|
+| `GOOGLE_APPLICATION_CREDENTIALS` | Sí* | Ruta absoluta al `serviceAccountKey.json` |
+| `FIREBASE_DATABASE_URL` | No | URL de RTDB (se auto-deriva del service account si no se indica) |
+| `MCP_INSTANCE_DIR` | No | Directorio para config por instancia (multi-instancia) |
+
+\* O bien esta variable, o un `serviceAccountKey.json` en el directorio del MCP.
+
+#### Herramientas disponibles (34)
+
+| Categoría | Herramientas |
+|-----------|-------------|
+| Proyectos | `list_projects`, `get_project`, `update_project`, `create_project` |
+| Cards | `list_cards`, `get_card`, `create_card`, `update_card`, `relate_cards`, `get_transition_rules` |
+| Sprints | `list_sprints`, `get_sprint`, `create_sprint`, `update_sprint` |
+| Equipo | `list_developers`, `list_stakeholders` |
+| ADRs | `list_adrs`, `get_adr`, `create_adr`, `update_adr`, `delete_adr` |
+| Planes | `list_plans`, `get_plan`, `create_plan`, `update_plan`, `delete_plan` |
+| Proposals | `list_plan_proposals`, `get_plan_proposal`, `create_plan_proposal`, `update_plan_proposal`, `delete_plan_proposal` |
+| Config Global | `list_global_config`, `get_global_config`, `create_global_config`, `update_global_config`, `delete_global_config` |
+| Sistema | `setup_mcp_user`, `get_mcp_status`, `update_mcp` |
 
 **Uso**: Claude puede leer/crear/actualizar tarjetas del proyecto desde cualquier directorio.
 
@@ -192,17 +283,14 @@ Los MCPs se configuran en archivos JSON:
 
 ### Configuración de Proyecto (.mcp.json)
 
-> **Nota:** El Planning Game MCP ahora usa rutas absolutas ya que está en una ubicación global.
-
 ```json
 {
   "mcpServers": {
     "planning-game": {
-      "command": "node",
-      "args": ["/home/usuario/mcp-servers/planning-game/index.js"],
+      "command": "planning-game-mcp",
       "env": {
-        "GOOGLE_APPLICATION_CREDENTIALS": "/home/usuario/mcp-servers/planning-game/serviceAccountKey.json",
-        "FIREBASE_DATABASE_URL": "https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app"
+        "GOOGLE_APPLICATION_CREDENTIALS": "/home/usuario/.config/planning-game/serviceAccountKey.json",
+        "FIREBASE_DATABASE_URL": "https://tu-proyecto-default-rtdb.europe-west1.firebasedatabase.app"
       }
     }
   }
@@ -261,7 +349,7 @@ ls -la serviceAccountKey.json
 Los MCPs escriben logs en stderr. Para ver errores:
 ```bash
 # Ejecutar el comando del MCP directamente
-node ~/mcp-servers/planning-game/index.js 2>&1
+GOOGLE_APPLICATION_CREDENTIALS=/ruta/serviceAccountKey.json planning-game-mcp 2>&1
 
 # O para Docker-based
 docker run -i --rm ghcr.io/github/github-mcp-server 2>&1
