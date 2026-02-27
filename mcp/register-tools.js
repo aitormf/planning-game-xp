@@ -290,7 +290,7 @@ export function createMcpServer(serverName) {
   });
 
   // ── User Setup tool ──
-  server.tool('setup_mcp_user', 'Configure MCP user identity. Without params: lists developers. With developerId: creates mcp.user.json with user info and matching stakeholder.', setupMcpUserSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('setup_mcp_user', 'Configure MCP user identity. Accepts name, email, or developerId to auto-match. Without params: lists developers and asks the user to identify themselves. Auto-matches stakeholder by email.', setupMcpUserSchema.shape, wrapWithUpdateNotice(async (params) => {
     return await setupMcpUser(params);
   }));
 
