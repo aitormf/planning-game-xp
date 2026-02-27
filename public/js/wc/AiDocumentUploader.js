@@ -1293,6 +1293,8 @@ export class AiDocumentUploader extends LitElement {
         this.success = message;
         this.generatedItems = [];
         this.fileName = '';
+        this.textInput = '';
+        this._clearDraft();
 
         // Show slide notification
         this._showNotification(message, 'success');
