@@ -618,6 +618,8 @@ this.canEditPermission = permissions.canEdit || false;
 
     const cardProps = this.getWCProps();
     cardProps.expanded = false;
+    // Stamp the current user so Cloud Functions know who made the change
+    cardProps.updatedBy = document.body?.dataset?.userEmail || '';
 
     document.dispatchEvent(new CustomEvent('save-card', {
       detail: {

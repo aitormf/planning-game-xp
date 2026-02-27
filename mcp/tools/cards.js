@@ -996,12 +996,19 @@ export async function updateCard({ projectId, type, firebaseId, updates, validat
   }
 
   // Auto-set startDate when moving task to "In Progress"
+  // startDate is IMMUTABLE: set once on first "In Progress", never changed
   if (type === 'task' && updates.status === 'In Progress') {
     const hasStartDate = updates.startDate || currentCard.startDate;
     if (!hasStartDate) {
       const today = new Date().toISOString().split('T')[0];
       updates.startDate = today;
     }
+  }
+
+  // Auto-set endDate when moving task to "To Validate"
+  // endDate is always updated on each transition to "To Validate" (reset on reopen)
+  if (type === 'task' && updates.status === 'To Validate') {
+    updates.endDate = new Date().toISOString().split('T')[0];
   }
 
   // Auto-calculate priority for tasks when devPoints or businessPoints are updated
