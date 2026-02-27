@@ -74,6 +74,8 @@ export class CardFactory {
     const newCard = this.createBaseCard('proposal-card', config);
 
     await this.setupModal(modal, newCard);
+
+    newCard.status = 'Proposed';
   }
 
   static async createSprintCard(modal, config) {
