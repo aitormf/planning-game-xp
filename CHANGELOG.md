@@ -7,13 +7,35 @@ Auto-generated from git commits on each build.
 
 ### Added
 
-- Integrate ThemeEditor in admin page as new Theme tab
-- Add ThemeEditor component with color pickers and live preview
-- Add RTDB persistence and real-time sync to ThemeLoaderService
+- Extract Dev Plans UI to Lit web components (PLN-TSK-0213 to 0216)
+- Enforce plan-first workflow for multi-task creation
+- Add proposalId to plans and planId to tasks
+- Add PlanProposal entity with CRUD MCP tools
+- Add PlanProposal entity with CRUD MCP tools
+- Add multi-instance build/deploy pipeline
+- Consolidate MCP codebase with tests from separate repo
+- Add MCP tools for development plan management
+- Add intelligent epic inference when generating tasks from plans
+- Make plan tasks editable and fix data loss in collectFormData
 
 ### Fixed
 
-- Move ThemeEditor from adminproject to admin page
+- Load env vars in build:core for multi-instance pipeline
+- Resolve Dev Plans UI issues - dark mode support and button conflict
+
+### Documentation
+
+- Add MCP multi-Firebase architecture proposal
+
+### Other
+
+- Resolve version conflicts with main for PLN-TSK-0182
+- Resolve conflicts with main for PLN-BUG-0084
+
+## [1.143.1] - 2026-02-25
+
+### Fixed
+
 - Use Node 20 and add ESM package.json for shared modules
 
 ## [1.143.0] - 2026-02-25
@@ -30,6 +52,8 @@ Auto-generated from git commits on each build.
 ### Fixed
 
 - Resolve shared module import path for Cloud Functions deploy
+- Auto-set endDate when task transitions to To Validate
+- Resolve task status changes not persisting due to Cloud Function revert
 
 ## [1.142.0] - 2026-02-25
 
@@ -89,11 +113,13 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Add instance-aware Firebase init helper for scripts
 - Integrate MCP server as local module with stdio transport
 - Add shared/ module as single source of truth for constants and validation
 
 ### Changed
 
+- Migrate 5 scripts from hardcoded Firebase to instance-aware init
 - Align bug statuses to 5 and unify imports from shared/
 
 ### Fixed
@@ -212,6 +238,18 @@ Auto-generated from git commits on each build.
 ### Changed
 
 - Replace immediate emails with queue-based hourly digest
+
+## [1.126.0] - 2026-02-20
+
+### Added
+
+- Integrate ThemeEditor in admin page as new Theme tab
+- Add ThemeEditor component with color pickers and live preview
+- Add RTDB persistence and real-time sync to ThemeLoaderService
+
+### Fixed
+
+- Move ThemeEditor from adminproject to admin page
 
 ## [1.125.5] - 2026-02-20
 
