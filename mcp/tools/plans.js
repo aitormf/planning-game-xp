@@ -20,6 +20,7 @@ export const createPlanSchema = z.object({
   projectId: z.string().describe('Project ID'),
   title: z.string().describe('Plan title (max 150 chars)'),
   objective: z.string().optional().describe('Plan objective (max 500 chars)'),
+  proposalId: z.string().optional().describe('Plan Proposal ID to link this plan to (auto-updates the proposal planIds)'),
   phases: z.array(z.object({
     name: z.string().describe('Phase name (max 150 chars)'),
     description: z.string().optional().describe('Phase description (max 500 chars)'),
@@ -108,7 +109,7 @@ export async function getPlan({ projectId, planId }) {
   return { content: [{ type: 'text', text: JSON.stringify(plan, null, 2) }] };
 }
 
-export async function createPlan({ projectId, title, objective, phases }) {
+export async function createPlan({ projectId, title, objective, proposalId, phases }) {
   if (!title || title.trim().length === 0) {
     throw new Error('title is required and must be a non-empty string');
   }
@@ -123,6 +124,14 @@ export async function createPlan({ projectId, title, objective, phases }) {
 
   const now = new Date().toISOString();
   const createdBy = getMcpUserId();
+
+  // Validate proposalId if provided
+  if (proposalId) {
+    const proposalSnap = await db.ref(`planProposals/${projectId}/${proposalId}`).once('value');
+    if (!proposalSnap.exists()) {
+      throw new Error(`Plan proposal "${proposalId}" not found in project "${projectId}"`);
+    }
+  }
 
   const planData = {
     title: title.trim().slice(0, 150),
@@ -146,8 +155,27 @@ export async function createPlan({ projectId, title, objective, phases }) {
     createdBy
   };
 
+  if (proposalId) {
+    planData.proposalId = proposalId;
+  }
+
   const newRef = db.ref(`plans/${projectId}`).push();
   await newRef.set(planData);
+
+  // Auto-add planId to proposal's planIds array
+  if (proposalId) {
+    const proposalRef = db.ref(`planProposals/${projectId}/${proposalId}`);
+    const proposalSnap = await proposalRef.once('value');
+    const proposal = proposalSnap.val();
+    const currentPlanIds = proposal.planIds || [];
+    if (!currentPlanIds.includes(newRef.key)) {
+      await proposalRef.update({
+        planIds: [...currentPlanIds, newRef.key],
+        updatedAt: now,
+        updatedBy: createdBy
+      });
+    }
+  }
 
   const totalTasks = planData.phases.reduce((sum, p) => sum + p.tasks.length, 0);
 
@@ -160,7 +188,8 @@ export async function createPlan({ projectId, title, objective, phases }) {
         title: planData.title,
         status: 'draft',
         phases: planData.phases.length,
-        totalTasks
+        totalTasks,
+        proposalId: proposalId || null
       }, null, 2)
     }]
   };
