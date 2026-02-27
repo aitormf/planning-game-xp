@@ -224,6 +224,12 @@ import Layout from '../layouts/Layout.astro';
           </div>
         </div>
       </div>
+
+      <div class="admin-section" style="margin-top: 2rem;">
+        <h2>Theme Configuration</h2>
+        <p class="section-description">Personaliza colores de marca, colores de estado, branding y features de esta instancia.</p>
+        <theme-editor id="themeEditor"></theme-editor>
+      </div>
     </div>
 
     <!-- Trash Section -->
@@ -1426,6 +1432,7 @@ import Layout from '../layouts/Layout.astro';
   import { getDatabase, ref, set, update, get } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
   import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
   import { app, superAdminEmail } from '/firebase-config.js';
+  import '/js/wc/ThemeEditor.js';
   import { holidays, HOURS_PER_WORKDAY } from '/js/config/holidays-config.js';
 
   const auth = getAuth(app);

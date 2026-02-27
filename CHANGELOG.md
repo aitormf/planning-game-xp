@@ -5,8 +5,15 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Integrate ThemeEditor in admin page as new Theme tab
+- Add ThemeEditor component with color pickers and live preview
+- Add RTDB persistence and real-time sync to ThemeLoaderService
+
 ### Fixed
 
+- Move ThemeEditor from adminproject to admin page
 - Use Node 20 and add ESM package.json for shared modules
 
 ## [1.143.0] - 2026-02-25
