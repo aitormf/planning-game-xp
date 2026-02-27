@@ -101,18 +101,43 @@ npx playwright install chromium
 
 Permite gestionar PRs, issues, branches, buscar código.
 
-```bash
-# 1. Primero, crear un Personal Access Token en:
-#    https://github.com/settings/tokens
-#    Scopes necesarios: repo, read:org, read:user
+#### Paso 1: Crear un Personal Access Token
 
-# 2. Guardar el token en tu shell config (~/.bashrc o ~/.zshrc):
+Ir a [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens).
+
+**Opción A: Fine-grained token (recomendado)**
+
+Más seguro — permite limitar a repos específicos.
+
+| Permiso | Acceso | Para qué |
+|---------|--------|----------|
+| **Metadata** | Read-only | Info básica del repo (obligatorio) |
+| **Contents** | Read & Write | Leer/escribir código, branches |
+| **Pull requests** | Read & Write | Crear/gestionar PRs |
+| **Issues** | Read & Write | Crear/gestionar issues |
+| **Actions** | Read-only | Ver estado de CI/CD workflows (opcional) |
+| **Commit statuses** | Read-only | Ver checks de commits (opcional) |
+
+**Opción B: Classic token**
+
+Más simple pero con acceso más amplio.
+
+| Scope | Para qué |
+|-------|----------|
+| **repo** (completo) | Acceso a repos privados, PRs, issues, código |
+| **read:org** | Leer info de la organización |
+| **read:user** | Leer perfil del usuario |
+
+#### Paso 2: Configurar y registrar
+
+```bash
+# 1. Guardar el token en tu shell config (~/.bashrc o ~/.zshrc):
 export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_xxxxxxxxxxxx"
 
-# 3. Recargar shell
+# 2. Recargar shell
 source ~/.bashrc  # o ~/.zshrc
 
-# 4. Instalar el MCP (requiere Docker)
+# 3. Instalar el MCP (requiere Docker)
 docker pull ghcr.io/github/github-mcp-server
 
 claude mcp add github --scope user \
