@@ -7,26 +7,11 @@
  *   node scripts/seed-adrs.js [projectId]
  */
 
-import admin from 'firebase-admin';
-import { readFileSync } from 'fs';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { initFirebase } = require('./lib/instance-firebase-init.cjs');
 
-// Initialize Firebase Admin
-const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS ||
-  '/home/manu/mcp-servers/planning-game/serviceAccountKey.json';
-
-try {
-  const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: process.env.FIREBASE_DATABASE_URL ||
-      'https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app'
-  });
-} catch (e) {
-  console.error('Failed to initialize Firebase:', e.message);
-  process.exit(1);
-}
-
-const db = admin.database();
+const { db } = await initFirebase();
 const now = new Date().toISOString();
 const createdBy = 'seed-script';
 
