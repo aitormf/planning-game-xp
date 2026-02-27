@@ -119,6 +119,17 @@ function fixVersionCheck() {
   writeFileSync(vcPath, content);
 }
 
+function addShebang() {
+  const indexPath = join(DIST, 'index.js');
+  if (!existsSync(indexPath)) return;
+
+  let content = readFileSync(indexPath, 'utf-8');
+  if (!content.startsWith('#!')) {
+    content = '#!/usr/bin/env node\n' + content;
+    writeFileSync(indexPath, content);
+  }
+}
+
 function generatePackageJson() {
   const original = JSON.parse(readFileSync(join(MCP_SRC, 'package.json'), 'utf-8'));
 
@@ -134,8 +145,19 @@ function generatePackageJson() {
     scripts: {
       start: 'node index.js'
     },
+    keywords: [
+      'mcp', 'model-context-protocol', 'planning', 'agile', 'xp',
+      'extreme-programming', 'project-management', 'firebase',
+      'claude', 'ai', 'sprint', 'kanban', 'scrum'
+    ],
     author: original.author || 'Geniova',
     license: original.license || 'MIT',
+    repository: {
+      type: 'git',
+      url: 'https://github.com/AvilaManuel/planning-game-xp',
+      directory: 'mcp'
+    },
+    homepage: 'https://github.com/AvilaManuel/planning-game-xp/tree/main/mcp#readme',
     dependencies: original.dependencies,
     engines: {
       node: '>=20.0.0'
@@ -143,6 +165,19 @@ function generatePackageJson() {
   };
 
   writeFileSync(join(DIST, 'package.json'), JSON.stringify(standalone, null, 2) + '\n');
+}
+
+function generateNpmIgnore() {
+  const npmignore = `Dockerfile
+docker-compose.yml
+*.test.js
+tests/
+.env*
+serviceAccountKey.json
+mcp.user.json
+.mcp-user.json
+`;
+  writeFileSync(join(DIST, '.npmignore'), npmignore);
 }
 
 function generateDockerfile() {
@@ -177,33 +212,42 @@ console.log(`  Output: ${DIST}`);
 console.log();
 
 clean();
-console.log('  [1/7] Copying MCP source...');
+console.log('  [1/9] Copying MCP source...');
 copyMcpSource();
 
-console.log('  [2/7] Copying shared/ to lib/shared/...');
+console.log('  [2/9] Copying shared/ to lib/shared/...');
 copyShared();
 
-console.log('  [3/7] Rewriting imports...');
+console.log('  [3/9] Rewriting imports...');
 rewriteImports(DIST);
 
-console.log('  [4/7] Fixing version-check paths...');
+console.log('  [4/9] Fixing version-check paths...');
 fixVersionCheck();
 
-console.log('  [5/7] Generating standalone package.json...');
+console.log('  [5/9] Adding shebang to index.js...');
+addShebang();
+
+console.log('  [6/9] Generating standalone package.json...');
 generatePackageJson();
 
-console.log('  [6/7] Generating Dockerfile...');
+console.log('  [7/9] Generating .npmignore...');
+generateNpmIgnore();
+
+console.log('  [8/9] Generating Dockerfile...');
 generateDockerfile();
 
-console.log('  [7/7] Copying README...');
+console.log('  [9/9] Copying README...');
 copyReadme();
 
 // Summary
 const fileCount = readdirSync(DIST, { recursive: true }).length;
+const pkg = JSON.parse(readFileSync(join(DIST, 'package.json'), 'utf-8'));
 console.log();
 console.log(`Done! ${fileCount} files written to dist-mcp/`);
+console.log(`  Package: ${pkg.name}@${pkg.version}`);
 console.log();
-console.log('To use:');
-console.log('  cd dist-mcp');
-console.log('  npm install');
-console.log('  GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json node index.js');
+console.log('To publish:');
+console.log('  cd dist-mcp && npm install && npm publish');
+console.log();
+console.log('To install globally:');
+console.log('  npm install -g planning-game-mcp');
