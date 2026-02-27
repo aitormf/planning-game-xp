@@ -165,6 +165,7 @@ export const listCardsSchema = z.object({
   status: z.string().optional().describe('Filter by status (e.g., "To Do", "In Progress", "Done&Validated")'),
   sprint: z.string().optional().describe('Filter by sprint name'),
   developer: z.string().optional().describe('Filter by developer name'),
+  planId: z.string().optional().describe('Filter tasks by plan ID (Firebase key)'),
   year: z.number().optional().describe('Filter by year')
 });
 
@@ -224,6 +225,7 @@ export const createCardSchema = z.object({
   sprint: z.string().optional().describe('Sprint ID (e.g., "PRJ-SPR-0001"). Must reference an existing sprint in the project.'),
   devPoints: z.number().optional().describe('Development points (1-5 or fibonacci). Used to calculate task priority.'),
   businessPoints: z.number().optional().describe('Business points (1-5 or fibonacci). Used to calculate task priority.'),
+  planId: z.string().optional().describe('Plan ID (Firebase key) to link this task to a development plan. Only for tasks.'),
   year: z.number().optional().describe('Year (default: current year)')
 });
 
@@ -247,7 +249,7 @@ export const relateCardsSchema = z.object({
 // Tool handlers
 // ──────────────────────────────────────────────
 
-export async function listCards({ projectId, type, status, sprint, developer, year }) {
+export async function listCards({ projectId, type, status, sprint, developer, planId, year }) {
   const db = getDatabase();
   const sectionPath = buildSectionPath(projectId, type);
   const snapshot = await db.ref(sectionPath).once('value');
@@ -270,6 +272,9 @@ export async function listCards({ projectId, type, status, sprint, developer, ye
   }
   if (developer) {
     cards = cards.filter(c => c.developer === developer);
+  }
+  if (planId) {
+    cards = cards.filter(c => c.planId === planId);
   }
   if (year) {
     cards = cards.filter(c => c.year === year);
@@ -429,7 +434,7 @@ async function resolveValidator(db, projectId, validator, developer) {
   );
 }
 
-export async function createCard({ projectId, type, title, description, descriptionStructured, acceptanceCriteria, acceptanceCriteriaStructured, epic, implementationPlan, status, priority, developer, codeveloper, validator, sprint, devPoints, businessPoints, year }) {
+export async function createCard({ projectId, type, title, description, descriptionStructured, acceptanceCriteria, acceptanceCriteriaStructured, epic, implementationPlan, status, priority, developer, codeveloper, validator, sprint, devPoints, businessPoints, planId, year }) {
   const db = getDatabase();
   const firestore = getFirestore();
 
@@ -668,6 +673,7 @@ export async function createCard({ projectId, type, title, description, descript
   if (codeveloper) cardData.codeveloper = codeveloper;
   if (validator) cardData.validator = validator;
   if (sprint) cardData.sprint = sprint;
+  if (type === 'task' && planId) cardData.planId = planId;
 
   if (devPoints !== undefined) cardData.devPoints = devPoints;
   if (businessPoints !== undefined) cardData.businessPoints = businessPoints;

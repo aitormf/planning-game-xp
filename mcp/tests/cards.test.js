@@ -23,6 +23,7 @@ const {
   validateTaskFields,
   hasValidValue,
   getActiveSprint,
+  listCards,
   createCard,
   updateCard,
   validateSprintExists,
@@ -1277,6 +1278,65 @@ describe('cards.js', () => {
       expect(response.card.businessPoints).toBe(5);
       expect(response.card.priority).toBeDefined();
       expect(typeof response.card.priority).toBe('number');
+    });
+  });
+
+  describe('planId field for tasks', () => {
+    beforeEach(() => {
+      setupMockLists();
+      setMockRtdbData('/projects/TestProject', { name: 'Test', abbreviation: 'TP', scoringSystem: '1-5' });
+      setMockFirestoreData('projectCounters', 'TP-TSK', { lastId: 100 });
+      setMockRtdbData('/cards/TestProject/EPICS_TestProject', {
+        'epic1': { cardId: 'TP-EPC-0001', title: 'Test Epic' }
+      });
+      setMockRtdbData('/data/stakeholders', {
+        'stk_001': { name: 'Dev User', email: 'dev@test.com', active: true },
+        'stk_002': { name: 'Mánu Fosela', email: 'mfosela@geniova.com', active: true }
+      });
+      setMockRtdbData('/projects/TestProject/stakeholders', ['stk_001', 'stk_002']);
+    });
+
+    it('should save planId when creating a task with planId', async () => {
+      const result = await createCard({
+        projectId: 'TestProject',
+        type: 'task',
+        title: 'Task linked to plan',
+        descriptionStructured: [{ role: 'developer', goal: 'link task to plan', benefit: 'traceability' }],
+        acceptanceCriteria: 'Task is linked to a plan',
+        epic: 'TP-EPC-0001',
+        planId: '-plan123'
+      });
+
+      const response = JSON.parse(result.content[0].text);
+      expect(response.cardId).toMatch(/^TP-TSK-/);
+    });
+
+    it('should NOT save planId for non-task types', async () => {
+      setMockFirestoreData('projectCounters', 'TP-BUG', { lastId: 0 });
+      const result = await createCard({
+        projectId: 'TestProject',
+        type: 'bug',
+        title: 'Bug without planId',
+        planId: '-plan123'
+      });
+
+      const response = JSON.parse(result.content[0].text);
+      expect(response.cardId).toMatch(/^TP-BUG-/);
+    });
+
+    it('should filter tasks by planId in listCards', async () => {
+      const sectionPath = 'cards/TestProject/TASKS_TestProject';
+      setMockRtdbData(`/${sectionPath}`, {
+        'task1': { cardId: 'TP-TSK-0001', title: 'Task A', planId: '-planX', status: 'To Do' },
+        'task2': { cardId: 'TP-TSK-0002', title: 'Task B', planId: '-planY', status: 'To Do' },
+        'task3': { cardId: 'TP-TSK-0003', title: 'Task C', planId: '-planX', status: 'To Do' }
+      });
+
+      const result = await listCards({ projectId: 'TestProject', type: 'task', planId: '-planX' });
+      const cards = JSON.parse(result.content[0].text);
+
+      expect(cards).toHaveLength(2);
+      expect(cards.every(c => c.cardId === 'TP-TSK-0001' || c.cardId === 'TP-TSK-0003')).toBe(true);
     });
   });
 });
