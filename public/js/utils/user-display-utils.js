@@ -175,12 +175,9 @@ export class UserDisplayUtils {
   
 }
 
-// Auto-run cuando se inicializa
-document.addEventListener('DOMContentLoaded', () => {
-  // Actualizar displays existentes después de que se carguen los mappings
-  setTimeout(() => {
-    UserDisplayUtils.updateAllCardDisplays();
-  }, 1000);
+// Auto-run on every page load (View Transitions compatible)
+document.addEventListener('astro:page-load', () => {
+  UserDisplayUtils.updateAllCardDisplays();
 });
 
 window.UserDisplayUtils = UserDisplayUtils;

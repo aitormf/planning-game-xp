@@ -219,12 +219,7 @@ export class ServiceCommunicator {
   }
 }
 
-// Auto-inicialización
+// Auto-initialize on every page load (View Transitions compatible)
 if (typeof window !== 'undefined') {
-  // Inicializar cuando el DOM esté listo
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => ServiceCommunicator.init());
-  } else {
-    ServiceCommunicator.init();
-  }
+  document.addEventListener('astro:page-load', () => ServiceCommunicator.init());
 }

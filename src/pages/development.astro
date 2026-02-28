@@ -941,7 +941,7 @@ window.location.href = '/dashboard/';
     }
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
+  document.addEventListener('astro:page-load', async () => {
     // Wait for user authentication using auth.currentUser or onAuthStateChanged
     const waitForUser = () => new Promise((resolve) => {
       if (auth.currentUser) {

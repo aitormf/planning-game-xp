@@ -301,7 +301,7 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
   // Show "select project" message when DOM is ready
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('astro:page-load', () => {
     if (!window.currentProjectId) {
       const noProjectMsg = document.getElementById('noProjectMessage');
       if (noProjectMsg) {
@@ -1169,7 +1169,7 @@ return;
   };
 
   // Inicializar cuando el DOM esté listo
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('astro:page-load', function() {
 // Inicializar gestor de modales
     window.modalStateManager = new ModalStateManager();
 
@@ -1255,7 +1255,7 @@ isYearReadOnly = yearReadOnly;
   window.modalService = modalService;
 
   // Restore section from URL hash on page load
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('astro:page-load', () => {
     const urlState = URLStateManager.getState();
 
     // Restore section (tab) from hash
@@ -1646,8 +1646,8 @@ document.addEventListener('card-restored', () => {
   trashLoaded = false;
 });
 
-// Initialize on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize on page load
+document.addEventListener('astro:page-load', () => {
   initEditProjectButton();
 });
 </script>
@@ -1831,7 +1831,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Add event listener when DOM is ready
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('astro:page-load', () => {
     const guideBtn = document.getElementById('taskGuideBtn');
     if (guideBtn) {
       guideBtn.addEventListener('click', (e) => {
