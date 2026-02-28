@@ -29,7 +29,7 @@ npm install -g planning-game-mcp
 **Option C: From source**
 
 ```bash
-git clone https://github.com/AvilaManuel/planning-game-xp.git
+git clone https://github.com/manufosela/planning-game-xp.git
 cd planning-game-xp/mcp
 npm install
 ```

@@ -202,7 +202,7 @@ claude mcp add planning-game --scope user \
 **Opción C: Desde el código fuente**
 
 ```bash
-git clone https://github.com/AvilaManuel/planning-game-xp.git
+git clone https://github.com/manufosela/planning-game-xp.git
 cd planning-game-xp/mcp && npm install
 
 claude mcp add planning-game --scope user \

@@ -154,10 +154,10 @@ function generatePackageJson() {
     license: original.license || 'MIT',
     repository: {
       type: 'git',
-      url: 'https://github.com/AvilaManuel/planning-game-xp',
+      url: 'https://github.com/manufosela/planning-game-xp',
       directory: 'mcp'
     },
-    homepage: 'https://github.com/AvilaManuel/planning-game-xp/tree/main/mcp#readme',
+    homepage: 'https://github.com/manufosela/planning-game-xp/tree/main/mcp#readme',
     dependencies: original.dependencies,
     engines: {
       node: '>=20.0.0'
