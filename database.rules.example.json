@@ -123,6 +123,18 @@
       "$sectionId": {
         ".validate": "newData.hasChildren(['name', 'slug', 'order'])"
       }
+    },
+    "users": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.isAppAdmin === true",
+      "$encodedEmail": {
+        ".validate": "newData.hasChildren(['name', 'email'])",
+        "projects": {
+          "$projectId": {
+            ".validate": "newData.hasChildren(['developer', 'stakeholder'])"
+          }
+        }
+      }
     }
   }
 }
