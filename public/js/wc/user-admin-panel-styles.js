@@ -231,9 +231,10 @@ export const UserAdminPanelStyles = css`
     padding: 0.15rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.72rem;
-    font-weight: 500;
-    background: var(--brand-primary-bg, #dbeafe);
-    color: var(--brand-primary, #3b82f6);
+    font-weight: 600;
+    background: var(--bg-tertiary, #e5e7eb);
+    color: var(--text-primary, #333);
+    border: 1px solid var(--border-color, #d1d5db);
     line-height: 1.3;
   }
 
@@ -241,12 +242,12 @@ export const UserAdminPanelStyles = css`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border: none;
     background: transparent;
-    color: var(--brand-primary, #3b82f6);
-    font-size: 0.7rem;
+    color: var(--color-error, #ef4444);
+    font-size: 0.75rem;
     cursor: pointer;
     padding: 0;
     border-radius: 50%;
@@ -368,46 +369,9 @@ export const UserAdminPanelStyles = css`
     grid-column: 1 / -1;
   }
 
-  .project-checkboxes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-
-  .project-check {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    font-size: 0.82rem;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-    user-select: none;
-  }
-
-  .project-check:hover {
-    background: var(--bg-hover, #f3f4f6);
-  }
-
-  .project-check:has(input:checked) {
-    background: var(--brand-primary-bg, #dbeafe);
-    border-color: var(--brand-primary, #3b82f6);
-  }
-
-  .project-check.already-assigned {
-    opacity: 0.6;
-  }
-
-  .project-check input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
-    cursor: pointer;
-  }
-
-  .assigned-hint {
-    font-size: 0.72rem;
+  .assigned-projects-hint {
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
     color: var(--text-tertiary, #9ca3af);
     font-style: italic;
   }
@@ -522,23 +486,23 @@ export const UserAdminPanelStyles = css`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
     border: none;
     background: transparent;
-    color: var(--brand-primary, #3b82f6);
-    font-size: 0.65rem;
+    color: var(--text-primary, #333);
+    font-size: 0.8rem;
     cursor: pointer;
     padding: 0;
     border-radius: 50%;
     line-height: 1;
-    opacity: 0.6;
+    opacity: 0.7;
     transition: opacity 0.15s, background 0.15s;
   }
 
   .project-badge .perms-project:hover {
     opacity: 1;
-    background: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.12);
   }
 
   /* Modal overlay */

@@ -428,9 +428,18 @@ class UserAdminPanel extends LitElement {
   _getAuthStatusLabel(status) {
     switch (status) {
       case 'active': return 'Active';
-      case 'not_registered': return 'Not Registered';
+      case 'not_registered': return 'Pending';
       case 'disabled': return 'Disabled';
       default: return status || 'Unknown';
+    }
+  }
+
+  _getAuthStatusTitle(status) {
+    switch (status) {
+      case 'active': return 'User has logged in and is active';
+      case 'not_registered': return 'User has not logged in yet';
+      case 'disabled': return 'User account is disabled';
+      default: return '';
     }
   }
 
@@ -523,23 +532,21 @@ class UserAdminPanel extends LitElement {
           </div>
           <div class="form-group form-group-full">
             <label>Projects * (select one or more)</label>
-            <div class="project-checkboxes">
-              ${this.projects.map((p) => {
-                const alreadyAssigned = existingProjectIds.includes(p);
-                return html`
-                  <label class="project-check ${alreadyAssigned ? 'already-assigned' : ''}">
-                    <input
-                      type="checkbox"
-                      .checked=${this._formProjectIds.includes(p) || alreadyAssigned}
-                      ?disabled=${alreadyAssigned || this._onboardingActive}
-                      @change=${() => this._toggleProject(p)}
-                    />
-                    <span>${p}</span>
-                    ${alreadyAssigned ? html`<span class="assigned-hint">(assigned)</span>` : nothing}
-                  </label>
-                `;
-              })}
-            </div>
+            <multi-select
+              .options=${this.projects
+                .filter((p) => !existingProjectIds.includes(p))
+                .sort((a, b) => a.localeCompare(b))
+                .map((p) => ({ value: p, label: p }))}
+              .selectedValues=${this._formProjectIds}
+              placeholder="Select projects..."
+              ?disabled=${this._onboardingActive}
+              @change=${(e) => { this._formProjectIds = [...e.detail.selectedValues]; }}
+            ></multi-select>
+            ${existingProjectIds.length > 0 ? html`
+              <div class="assigned-projects-hint">
+                Already assigned: ${existingProjectIds.sort().join(', ')}
+              </div>
+            ` : nothing}
           </div>
           <div class="form-row-checkboxes">
             <div class="form-checkbox">
@@ -669,7 +676,10 @@ class UserAdminPanel extends LitElement {
             : html`<span class="no-projects">No projects</span>`}
         </td>
         <td>
-          <span class="badge ${this._getAuthStatusBadgeClass(authStatus)}">
+          <span
+            class="badge ${this._getAuthStatusBadgeClass(authStatus)}"
+            title="${this._getAuthStatusTitle(authStatus)}"
+          >
             ${this._getAuthStatusLabel(authStatus)}
           </span>
         </td>
