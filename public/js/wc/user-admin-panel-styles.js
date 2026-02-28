@@ -161,7 +161,7 @@ export const UserAdminPanelStyles = css`
   }
 
   .entity-table tr:hover {
-    background: var(--bg-hover, #f3f4f6);
+    background: var(--bg-tertiary, #f3f4f6);
   }
 
   .entity-table .col-id {
