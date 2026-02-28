@@ -13,6 +13,7 @@ import Layout from '../layouts/Layout.astro';
       <button id="reportsTab" data-section="reports" class="admin-tablink">📊 Informes</button>
       <button id="isoTab" data-section="iso" class="admin-tablink">📋 Informes ISO</button>
       <button id="configTab" data-section="config" class="admin-tablink">⚙️ Configuración</button>
+      <button id="usersTab" data-section="users" class="admin-tablink">👥 Usuarios</button>
       <button id="trashTab" data-section="trash" class="admin-tablink">🗑️ Papelera</button>
     </div>
 
@@ -229,6 +230,15 @@ import Layout from '../layouts/Layout.astro';
         <h2>Theme Configuration</h2>
         <p class="section-description">Personaliza colores de marca, colores de estado, branding y features de esta instancia.</p>
         <theme-editor id="themeEditor"></theme-editor>
+      </div>
+    </div>
+
+    <!-- Users Section -->
+    <div id="usersTabContent" class="admin-tabcontent">
+      <div class="admin-section">
+        <h2>Gestión de Usuarios</h2>
+        <p class="section-description">Gestiona los usuarios de la aplicación. Crea usuarios, asigna roles (developer/stakeholder) y proyectos.</p>
+        <user-admin-panel></user-admin-panel>
       </div>
     </div>
 
@@ -1433,6 +1443,7 @@ import Layout from '../layouts/Layout.astro';
   import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
   import { app, superAdminEmail } from '/firebase-config.js';
   import '/js/wc/ThemeEditor.js';
+  import '/js/wc/UserAdminPanel.js';
   import { holidays, HOURS_PER_WORKDAY } from '/js/config/holidays-config.js';
 
   const auth = getAuth(app);

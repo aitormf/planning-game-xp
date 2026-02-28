@@ -8,7 +8,6 @@
 import { LitElement, html, nothing } from 'https://cdn.jsdelivr.net/npm/lit@3.0.2/+esm';
 import { EntityDirectoryManagerStyles } from './entity-directory-manager-styles.js';
 import { entityDirectoryService } from '../services/entity-directory-service.js';
-import { functions, httpsCallable } from '../../firebase-config.js';
 
 class EntityDirectoryManager extends LitElement {
   static get properties() {
@@ -30,11 +29,6 @@ class EntityDirectoryManager extends LitElement {
       _stkEmail: { type: String, state: true },
       _stkTeamId: { type: String, state: true },
       _stkActive: { type: Boolean, state: true },
-      // Allowed Users state
-      allowedUsers: { type: Array, state: true },
-      _showAllowedUserForm: { type: Boolean, state: true },
-      _allowedUserEmail: { type: String, state: true },
-      _allowedUsersLoading: { type: Boolean, state: true },
     };
   }
 
@@ -55,10 +49,6 @@ class EntityDirectoryManager extends LitElement {
     this._resetDevForm();
     this._resetStkForm();
     this._removeChangeListener = null;
-    this.allowedUsers = [];
-    this._showAllowedUserForm = false;
-    this._allowedUserEmail = '';
-    this._allowedUsersLoading = false;
   }
 
   connectedCallback() {
@@ -84,7 +74,6 @@ class EntityDirectoryManager extends LitElement {
     try {
       await entityDirectoryService.waitForInit();
       this._refreshData();
-      this._loadAllowedUsers();
     } catch (error) {
       console.error('Error loading entity directory data:', error);
     } finally {
@@ -240,64 +229,6 @@ class EntityDirectoryManager extends LitElement {
     }
   }
 
-  // ==================== ALLOWED USERS CRUD ====================
-
-  async _loadAllowedUsers() {
-    this._allowedUsersLoading = true;
-    try {
-      const listAllowedUsersFn = httpsCallable(functions, 'listAllowedUsers');
-      const result = await listAllowedUsersFn();
-      this.allowedUsers = (result.data.users || [])
-        .sort((a, b) => a.email.localeCompare(b.email));
-    } catch (error) {
-      console.error('Error loading allowed users:', error);
-      this.allowedUsers = [];
-    } finally {
-      this._allowedUsersLoading = false;
-    }
-  }
-
-  _openNewAllowedUserForm() {
-    this._allowedUserEmail = '';
-    this._showAllowedUserForm = true;
-  }
-
-  _cancelAllowedUserForm() {
-    this._showAllowedUserForm = false;
-    this._allowedUserEmail = '';
-  }
-
-  async _saveAllowedUser() {
-    const email = this._allowedUserEmail.trim().toLowerCase();
-    if (!email) return;
-
-    try {
-      const setAllowedUserFn = httpsCallable(functions, 'setAllowedUser');
-      await setAllowedUserFn({ email, allowed: true });
-      this._showAllowedUserForm = false;
-      this._allowedUserEmail = '';
-      await this._loadAllowedUsers();
-    } catch (error) {
-      console.error('Error adding allowed user:', error);
-    }
-  }
-
-  async _removeAllowedUser(user) {
-    const confirmed = await window.modalService.confirm(
-      `Remove access for "${user.email}"?`,
-      'The user will lose access to the application. This can be reversed by adding them again.'
-    );
-    if (!confirmed) return;
-
-    try {
-      const setAllowedUserFn = httpsCallable(functions, 'setAllowedUser');
-      await setAllowedUserFn({ email: user.email, allowed: false });
-      await this._loadAllowedUsers();
-    } catch (error) {
-      console.error('Error removing allowed user:', error);
-    }
-  }
-
   // ==================== RENDER ====================
 
   render() {
@@ -313,9 +244,6 @@ class EntityDirectoryManager extends LitElement {
           </color-tab>
           <color-tab name="stakeholders" label="Stakeholders (${this.stakeholders.length})" color="var(--brand-secondary, #ec3e95)">
             ${this._renderStakeholdersSection()}
-          </color-tab>
-          <color-tab name="allowed-users" label="Allowed Users (${this.allowedUsers.length})" color="var(--color-success, #16a34a)">
-            ${this._renderAllowedUsersSection()}
           </color-tab>
         </color-tabs>
       </div>
@@ -517,89 +445,6 @@ class EntityDirectoryManager extends LitElement {
   }
   // ==================== ALLOWED USERS RENDER ====================
 
-  _renderAllowedUsersSection() {
-    if (this._allowedUsersLoading) {
-      return html`<div class="loading-message">Loading allowed users...</div>`;
-    }
-
-    return html`
-      <div class="entity-section-header">
-        <span class="entity-count">${this.allowedUsers.length} allowed users</span>
-        <div class="header-actions">
-          <button class="btn btn-secondary btn-sm" @click=${() => this._loadAllowedUsers()} title="Refresh">&#x21bb; Refresh</button>
-          <button class="btn btn-primary btn-sm" @click=${this._openNewAllowedUserForm}>+ Add User</button>
-        </div>
-      </div>
-
-      ${this._showAllowedUserForm ? this._renderAllowedUserForm() : nothing}
-
-      ${this.allowedUsers.length === 0
-        ? html`<div class="empty-message">No allowed users configured. Add users to grant them access to the application.</div>`
-        : html`
-          <table class="entity-table">
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Display Name</th>
-                <th>Auth Status</th>
-                <th class="col-actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${this.allowedUsers.map(user => this._renderAllowedUserRow(user))}
-            </tbody>
-          </table>
-        `}
-    `;
-  }
-
-  _renderAllowedUserRow(user) {
-    const statusBadge = {
-      active: { class: 'badge-active', label: 'Active' },
-      disabled: { class: 'badge-inactive', label: 'Disabled' },
-      not_registered: { class: 'badge-pending', label: 'Not registered' },
-    };
-    const badge = statusBadge[user.authStatus] || statusBadge.not_registered;
-
-    return html`
-      <tr>
-        <td>${user.email}</td>
-        <td>${user.displayName || html`<span style="color: var(--text-tertiary, #9ca3af);">—</span>`}</td>
-        <td>
-          <span class="badge ${badge.class}">${badge.label}</span>
-        </td>
-        <td class="col-actions">
-          <div class="actions-cell">
-            <button class="btn btn-danger btn-sm" @click=${() => this._removeAllowedUser(user)} title="Remove access">🗑️</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }
-
-  _renderAllowedUserForm() {
-    return html`
-      <div class="entity-form">
-        <h4 class="form-title">Add Allowed User</h4>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Email *</label>
-            <input type="email" .value=${this._allowedUserEmail}
-              @input=${(e) => { this._allowedUserEmail = e.target.value; }}
-              @keydown=${(e) => { if (e.key === 'Enter') this._saveAllowedUser(); }}
-              placeholder="user@example.com" required>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn btn-secondary" @click=${this._cancelAllowedUserForm}>Cancel</button>
-          <button class="btn btn-primary" @click=${this._saveAllowedUser}
-            ?disabled=${!this._allowedUserEmail.trim()}>
-            Grant Access
-          </button>
-        </div>
-      </div>
-    `;
-  }
 }
 
 customElements.define('entity-directory-manager', EntityDirectoryManager);
