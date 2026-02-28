@@ -52,6 +52,7 @@ class UserAdminPanel extends LitElement {
     this._permissionsUser = null;
     this._permissionsProject = '';
     this._permissionsData = { view: false, download: false, upload: false, edit: false, approve: false };
+    this._projectsWithApps = new Set();
     this._resetForm();
   }
 
@@ -89,8 +90,14 @@ class UserAdminPanel extends LitElement {
     if (snapshot.exists()) {
       const projectsData = snapshot.val();
       this.projects = Object.keys(projectsData).sort();
+      this._projectsWithApps = new Set(
+        Object.entries(projectsData)
+          .filter(([, data]) => data.allowExecutables === true)
+          .map(([name]) => name)
+      );
     } else {
       this.projects = [];
+      this._projectsWithApps = new Set();
     }
   }
 
@@ -667,11 +674,13 @@ class UserAdminPanel extends LitElement {
                 ${projectIds.map((pid) => html`
                   <span class="project-badge">
                     ${pid}
-                    <button
-                      class="perms-project"
-                      title="App permissions for ${pid}"
-                      @click=${() => this._openAppPermissions(user, pid)}
-                    >&#9881;</button>
+                    ${this._projectsWithApps.has(pid) ? html`
+                      <button
+                        class="perms-project"
+                        title="App permissions for ${pid}"
+                        @click=${() => this._openAppPermissions(user, pid)}
+                      >&#9881;</button>
+                    ` : nothing}
                     <button
                       class="remove-project"
                       title="Remove ${pid}"
