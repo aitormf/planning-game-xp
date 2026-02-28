@@ -42,6 +42,21 @@ Auto-generated from git commits on each build.
 
 - Bump MCP version to 1.13.0
 
+## [1.152.0] - 2026-03-01
+
+### Fixed
+
+- Fix dark mode not persisting across View Transition navigations (class `dark` → `dark-theme` in blocking script)
+- Fix duplicate listener/subscription accumulation on View Transition navigations (guard `_layoutInitialized` in Layout.astro)
+- Fix Cards View showing empty content (CSS `.cards-container > *` was constraining `.cards-list-container` to 300px)
+- Fix Kanban View column ordering: Done&Validated now appears to the right of To Validate
+
+### Changed
+
+- Reuse existing AppController on View Transition navigations instead of creating new instances
+- Add `onPageNavigated()` method to AppController for lightweight re-initialization after navigation
+- Order Kanban task columns using `TASK_STATUS_ORDER` constant (same pattern as bugs)
+
 ## [1.145.0] - 2026-02-27
 
 ### Added

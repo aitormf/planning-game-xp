@@ -1990,10 +1990,15 @@ document.addEventListener('astro:page-load', () => {
     flex-direction: row !important;
   }
 
-  .cards-container > * {
+  .cards-container > *:not(.cards-list-container) {
     width:300px;
     max-width: 300px;
     box-sizing: border-box;
+  }
+
+  .cards-container > .cards-list-container {
+    width: 100%;
+    max-width: 100%;
   }
 
   .subheader {

@@ -330,7 +330,11 @@ export class ViewFactory {
 
     if (section === 'tasks') {
       container = document.getElementById('tasksKanbanView');
-      statusList = Array.isArray(config.statusTasksList) ? config.statusTasksList : Object.keys(config.statusTasksList || {});
+      const rawList = Array.isArray(config.statusTasksList) ? config.statusTasksList : Object.keys(config.statusTasksList || {});
+      // Order columns according to TASK_STATUS_ORDER (same pattern as bugs kanban)
+      statusList = APP_CONSTANTS.TASK_STATUS_ORDER.filter(status => rawList.includes(status));
+      const remaining = rawList.filter(status => !APP_CONSTANTS.TASK_STATUS_ORDER.includes(status));
+      statusList = [...statusList, ...remaining];
     } else if (section === 'bugs') {
       container = document.getElementById('bugsStatusKanbanView');
       statusList = Array.isArray(config.statusBugList) ? config.statusBugList : Object.keys(config.statusBugList || {});

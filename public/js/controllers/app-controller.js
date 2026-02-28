@@ -129,6 +129,28 @@ export class AppController {
   }
 
   /**
+   * Lightweight re-initialization for View Transition navigations.
+   * Reuses existing services and subscriptions, only updates project/section context.
+   */
+  async onPageNavigated() {
+    const newProjectId = URLUtils.getProjectIdFromUrl();
+    const newSection = URLUtils.getSectionFromUrl();
+
+    if (newProjectId !== this.projectId) {
+      this.projectId = newProjectId;
+      this.section = newSection;
+      this.sectionsLoaded = {};
+      await this.loadInitialData();
+      await this.initializeProjectSelector();
+    } else {
+      this.section = newSection;
+    }
+
+    this.tabController.openInitialTab();
+    this._restoreViewStateFromUrl();
+  }
+
+  /**
    * Restore view state from URL on page load
    * Note: View is already restored by applyInitialView() which reads URL state
    * This method only handles sections not covered by applyInitialView and filters

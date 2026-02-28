@@ -52,7 +52,7 @@ let user = null;
           }
           // Apply dark/light mode from cache
           var theme = localStorage.getItem('pgxp-theme');
-          if (theme === 'dark') root.classList.add('dark');
+          if (theme === 'dark') root.classList.add('dark-theme');
         } catch(e) {}
       })();
     </script>
@@ -234,6 +234,8 @@ let user = null;
       let projectSelected = '';
       let theUser;
       let DOMisLoaded = false;
+      let _layoutInitialized = false;
+      let _authUnsubscribe = null;
       let requestAccessCallable = null;
 
       // Make Firebase modules available globally for debugging
@@ -732,46 +734,61 @@ let user = null;
         getDomElements();
         applyOrganizationBranding();
         pagePath = window.location.pathname;
-        if (oauthLoginButton) {
-          const providerLabels = { google: 'Google', microsoft: 'Microsoft', github: 'GitHub', gitlab: 'GitLab' };
-          oauthLoginButton.textContent = `Sign in with ${providerLabels[authProviderName] || 'OAuth'}`;
-          oauthLoginButton.addEventListener('click', authenticateWithOAuth);
-        }
-        if (emailLoginToggle) {
-          emailLoginToggle.addEventListener('click', showEmailLoginForm);
-        }
-        if (emailLoginForm) {
-          emailLoginForm.addEventListener('submit', authenticateWithEmail);
-        }
-        if (emailLoginCancel) {
-          emailLoginCancel.addEventListener('click', () => hideEmailLoginForm({ resetForm: true }));
-        }
-        if (emailRegisterForm) {
-          emailRegisterForm.addEventListener('submit', submitEmailRegistration);
-        }
-        if (emailRegisterCancel) {
-          emailRegisterCancel.addEventListener('click', () => hideEmailRegisterForm({ resetForm: true }));
-        }
-        if (emailRegisterLink) {
-          emailRegisterLink.addEventListener('click', showEmailRegisterForm);
-        }
-        if (emailRegisterToLogin) {
-          emailRegisterToLogin.addEventListener('click', () => {
-            hideEmailRegisterForm({ resetForm: false, showLoginToggle: false });
-            showEmailLoginForm();
+
+        if (!_layoutInitialized) {
+          if (oauthLoginButton) {
+            const providerLabels = { google: 'Google', microsoft: 'Microsoft', github: 'GitHub', gitlab: 'GitLab' };
+            oauthLoginButton.textContent = `Sign in with ${providerLabels[authProviderName] || 'OAuth'}`;
+            oauthLoginButton.addEventListener('click', authenticateWithOAuth);
+          }
+          if (emailLoginToggle) {
+            emailLoginToggle.addEventListener('click', showEmailLoginForm);
+          }
+          if (emailLoginForm) {
+            emailLoginForm.addEventListener('submit', authenticateWithEmail);
+          }
+          if (emailLoginCancel) {
+            emailLoginCancel.addEventListener('click', () => hideEmailLoginForm({ resetForm: true }));
+          }
+          if (emailRegisterForm) {
+            emailRegisterForm.addEventListener('submit', submitEmailRegistration);
+          }
+          if (emailRegisterCancel) {
+            emailRegisterCancel.addEventListener('click', () => hideEmailRegisterForm({ resetForm: true }));
+          }
+          if (emailRegisterLink) {
+            emailRegisterLink.addEventListener('click', showEmailRegisterForm);
+          }
+          if (emailRegisterToLogin) {
+            emailRegisterToLogin.addEventListener('click', () => {
+              hideEmailRegisterForm({ resetForm: false, showLoginToggle: false });
+              showEmailLoginForm();
+            });
+          }
+          if (logoutButton) {
+            logoutButton.addEventListener('click', () => signOut(auth));
+          }
+
+          // Subscribe to auth state changes (only once)
+          _authUnsubscribe = auth.onAuthStateChanged((user) => {
+            if (user) {
+              signedIn(user);
+            } else {
+              notSignedIn();
+            }
           });
+
+          _layoutInitialized = true;
         }
-        if (logoutButton) {
-          logoutButton.addEventListener('click', () => signOut(auth));
-        }
+
         await getProjectIdFromURLparamProjectId();
-        
+
         // Set welcome messages from constants
         const welcomeTitle = document.querySelector('.welcome-title');
         const welcomeSubtitle = document.querySelector('.welcome-subtitle');
         if (welcomeTitle) welcomeTitle.textContent = APP_CONSTANTS.WELCOME_MESSAGES.TITLE;
         if (welcomeSubtitle) welcomeSubtitle.textContent = APP_CONSTANTS.WELCOME_MESSAGES.SUBTITLE;
-        
+
         // Wait for MenuNav SSR to initialize
         if (window.menuNavSSR) {
           window.menuNavSSR.updateNavLinks();
@@ -785,21 +802,12 @@ let user = null;
             }
           }, 100);
         }
-        
+
         // Load page-specific components with lazy loading
         const currentPage = pagePath.split('/')[1] || 'index';
         LazyLoader.loadPageComponents(currentPage);
-        
+
         DOMisLoaded = true;
-        
-        // Set initial state and listen for changes
-        auth.onAuthStateChanged((user) => {
-          if (user) {
-            signedIn(user);
-          } else {
-            notSignedIn();
-          }
-        });
       }
 
       function getProjectIdFromURLparamProjectId() {

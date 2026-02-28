@@ -58,7 +58,11 @@ async function initializeServices() {
 async function initializeApplication() {
   try {
     await initializeServices();
-    window.appController = await AppController.create();
+    if (!window.appController) {
+      window.appController = await AppController.create();
+    } else {
+      window.appController.onPageNavigated();
+    }
   } catch (error) {
     console.error('Error initializing application:', error);
     const notification = document.createElement('slide-notification');
