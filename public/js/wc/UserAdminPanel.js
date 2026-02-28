@@ -116,7 +116,7 @@ class UserAdminPanel extends LitElement {
     this._editingEmail = user.email;
     this._formName = user.name || '';
     this._formEmail = user.email || '';
-    this._formProjectIds = [];
+    this._formProjectIds = Object.keys(user.projects || {});
     this._formDeveloper = true;
     this._formStakeholder = false;
     this._showForm = true;
@@ -183,22 +183,35 @@ class UserAdminPanel extends LitElement {
   async _saveUser() {
     const name = this._formName.trim();
     const email = this._formEmail.trim();
-    const projectIds = this._formProjectIds;
+    const allSelected = this._formProjectIds;
 
     if (!name || !email) return;
-    if (projectIds.length === 0) {
+    if (allSelected.length === 0) {
       this._notify('Please select at least one project', 'warning');
       return;
     }
 
-    this._onboardingSteps = this._buildOnboardingSteps(projectIds);
+    // Only process projects not yet assigned
+    const existing = this._checkExistingUser();
+    const existingProjectIds = existing ? Object.keys(existing.projects || {}) : [];
+    const projectIds = allSelected.filter((p) => !existingProjectIds.includes(p));
+
+    if (projectIds.length === 0 && existing) {
+      this._notify('No new projects selected', 'info');
+      return;
+    }
+
+    // If no new projects but user doesn't exist, use allSelected
+    const projectsToProcess = projectIds.length > 0 ? projectIds : allSelected;
+
+    this._onboardingSteps = this._buildOnboardingSteps(projectsToProcess);
     this._onboardingActive = true;
 
     const createOrUpdateUserFn = httpsCallable(functions, 'createOrUpdateUser');
     let hasError = false;
 
     // First call creates/updates user + assigns first project (also generates dev/stk IDs)
-    const firstProject = projectIds[0];
+    const firstProject = projectsToProcess[0];
     this._updateStep('user', 'running');
     if (this._formDeveloper) this._updateStep('dev', 'running');
     if (this._formStakeholder) this._updateStep('stk', 'running');
@@ -226,8 +239,8 @@ class UserAdminPanel extends LitElement {
     }
 
     // Remaining projects (if any) — one call per project
-    for (let i = 1; i < projectIds.length; i++) {
-      const pid = projectIds[i];
+    for (let i = 1; i < projectsToProcess.length; i++) {
+      const pid = projectsToProcess[i];
       this._updateStep(`proj-${pid}`, 'running');
       try {
         await createOrUpdateUserFn({
@@ -535,7 +548,6 @@ class UserAdminPanel extends LitElement {
             <label>Projects * (select one or more)</label>
             <multi-select
               .options=${this.projects
-                .filter((p) => !existingProjectIds.includes(p))
                 .sort((a, b) => a.localeCompare(b))
                 .map((p) => ({ value: p, label: p }))}
               .selectedValues=${this._formProjectIds}
@@ -543,11 +555,6 @@ class UserAdminPanel extends LitElement {
               ?disabled=${this._onboardingActive}
               @change=${(e) => { this._formProjectIds = [...e.detail.selectedValues]; }}
             ></multi-select>
-            ${existingProjectIds.length > 0 ? html`
-              <div class="assigned-projects-hint">
-                Already assigned: ${existingProjectIds.sort().join(', ')}
-              </div>
-            ` : nothing}
           </div>
           <div class="form-row-checkboxes">
             <div class="form-checkbox">
