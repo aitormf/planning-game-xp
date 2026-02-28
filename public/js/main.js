@@ -32,37 +32,35 @@ import { ThemeManagerService } from './services/theme-manager-service.js';
 // Importar versión actual
 import { version as APP_VERSION } from './version.js';
 
+let servicesInitialized = false;
+
+async function initializeServices() {
+  if (servicesInitialized) return;
+  servicesInitialized = true;
+
+  // Load theme from RTDB (blocking script in <head> already applied cached tokens)
+  await ThemeLoaderService.loadAndApply();
+  ThemeManagerService.init();
+
+  // Initialize core services (once)
+  FirebaseService.init();
+  historyService.init();
+  stateTransitionService.init();
+  dataBus.init();
+  await entityDirectoryService.init();
+
+  versionCheckService.init(APP_VERSION);
+  if (!document.querySelector('version-update-modal')) {
+    document.body.appendChild(document.createElement('version-update-modal'));
+  }
+}
+
 async function initializeApplication() {
   try {
-    // Cargar configuración de tema externa (si existe)
-    await ThemeLoaderService.loadAndApply();
-
-    // Inicializar gestor de temas (aplica tema guardado o detecta preferencia del sistema)
-    ThemeManagerService.init();
-
-    // Inicializar servicios con comunicación via eventos
-    FirebaseService.init();
-    historyService.init();
-    stateTransitionService.init();
-    dataBus.init();
-
-    // Inicializar servicio de directorio de entidades (developers/stakeholders)
-    await entityDirectoryService.init();
-
-    // Inicializar servicio de verificación de versión (detecta nuevas versiones en tiempo real)
-    versionCheckService.init(APP_VERSION);
-
-    // Añadir modal de actualización de versión al body
-    if (!document.querySelector('version-update-modal')) {
-      const versionModal = document.createElement('version-update-modal');
-      document.body.appendChild(versionModal);
-    }
-
+    await initializeServices();
     window.appController = await AppController.create();
   } catch (error) {
     console.error('Error initializing application:', error);
-
-    // Mostrar mensaje de error al usuario
     const notification = document.createElement('slide-notification');
     notification.message = 'Error al inicializar la aplicación. Por favor, recarga la página.';
     notification.type = 'error';
@@ -70,5 +68,5 @@ async function initializeApplication() {
   }
 }
 
-// Inicializar la aplicación
-document.addEventListener('DOMContentLoaded', initializeApplication);
+// astro:page-load fires on every navigation (initial + View Transitions)
+document.addEventListener('astro:page-load', initializeApplication);

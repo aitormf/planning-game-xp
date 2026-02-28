@@ -32,7 +32,7 @@ function isActiveLink(href: string, currentPath: string): boolean {
 }
 ---
 
-<nav class="menu-nav" id="menunav">
+<nav class="menu-nav" id="menunav" transition:animate="none">
   {navItems.map(item => (
     <a
       href={item.href}
@@ -281,10 +281,10 @@ function isActiveLink(href: string, currentPath: string): boolean {
     }
   }
 
-  // Initialize when DOM is ready
-  document.addEventListener('DOMContentLoaded', () => {
+  // Initialize on every page load (View Transitions compatible)
+  document.addEventListener('astro:page-load', () => {
     window.menuNavSSR = new MenuNavSSR();
-    
+
     // Make methods available globally for backward compatibility
     const menunav = document.getElementById('menunav');
     if (menunav) {

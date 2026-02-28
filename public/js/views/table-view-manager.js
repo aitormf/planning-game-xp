@@ -121,12 +121,8 @@ export class TableViewManager {
       }
     };
 
-    // Try immediately if DOM is ready, otherwise wait for DOMContentLoaded
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', setupButton);
-    } else {
-      setupButton();
-    }
+    document.addEventListener('astro:page-load', setupButton);
+    setupButton();
   }
 
   /**
@@ -281,12 +277,8 @@ export class TableViewManager {
       }
     };
 
-    // Try immediately if DOM is ready, otherwise wait for DOMContentLoaded
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', setupButton);
-    } else {
-      setupButton();
-    }
+    document.addEventListener('astro:page-load', setupButton);
+    setupButton();
   }
 
   /**
@@ -431,12 +423,8 @@ export class TableViewManager {
       }
     };
 
-    // Try immediately if DOM is ready, otherwise wait for DOMContentLoaded
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', setupButton);
-    } else {
-      setupButton();
-    }
+    document.addEventListener('astro:page-load', setupButton);
+    setupButton();
   }
 
   /**

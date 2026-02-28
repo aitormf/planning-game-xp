@@ -42,6 +42,7 @@ import { database, ref, get, set, onValue } from '../../firebase-config.js';
 
 const CONFIG_PATH = '/theme-config.json';
 const RTDB_PATH = '/config/theme';
+const LS_THEME_CONFIG_KEY = 'pgxp-theme-config';
 
 class ThemeLoader {
   constructor() {
@@ -70,6 +71,7 @@ class ThemeLoader {
     try {
       this.config = await this.loading;
       this.configLoadedAt = Date.now();
+      this._cacheToLocalStorage(this.config);
       return this.config;
     } finally {
       this.loading = null;
@@ -113,6 +115,7 @@ class ThemeLoader {
     await set(ref(database, RTDB_PATH), config);
     this.config = config;
     this.configLoadedAt = Date.now();
+    this._cacheToLocalStorage(config);
   }
 
   /**
@@ -128,6 +131,7 @@ class ThemeLoader {
       if (snapshot.exists()) {
         this.config = snapshot.val();
         this.configLoadedAt = Date.now();
+        this._cacheToLocalStorage(this.config);
         this.applyConfig(this.config);
       }
     });
@@ -354,6 +358,20 @@ class ThemeLoader {
   clearCache() {
     this.config = null;
     this.configLoadedAt = null;
+    try { localStorage.removeItem(LS_THEME_CONFIG_KEY); } catch { /* ignore */ }
+  }
+
+  /**
+   * Cache config to localStorage for instant theme application on next page load.
+   * This prevents FOUC (Flash of Unstyled Content) by allowing a blocking script
+   * to apply tokens before any rendering occurs.
+   * @param {Object} config - Configuration to cache
+   */
+  _cacheToLocalStorage(config) {
+    if (!config) return;
+    try {
+      localStorage.setItem(LS_THEME_CONFIG_KEY, JSON.stringify(config));
+    } catch { /* localStorage full or unavailable */ }
   }
 }
 

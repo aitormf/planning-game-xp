@@ -12,12 +12,10 @@ export class TabController {
       this.handleTabChange();
     });
 
-    // Listen for DOM content loaded
-    document.addEventListener('DOMContentLoaded', () => {
+    // Setup tab buttons on every page load (View Transitions compatible)
+    document.addEventListener('astro:page-load', () => {
       this.setupTabButtons();
     });
-
-    // Also try to setup immediately in case DOM is already loaded
     this.setupTabButtons();
   }
 

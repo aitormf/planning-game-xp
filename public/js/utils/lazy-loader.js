@@ -263,11 +263,7 @@ return true;
 }
 }
 
-// Auto-initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => LazyLoader.init());
-} else {
-  LazyLoader.init();
-}
+// Auto-initialize on every page load (View Transitions compatible)
+document.addEventListener('astro:page-load', () => LazyLoader.init());
 
 window.LazyLoader = LazyLoader;

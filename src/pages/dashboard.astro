@@ -2310,7 +2310,7 @@ const emptyMessage = document.getElementById('developerSprintChartEmpty');
   }
 
   // Initialize dashboard when DOM is ready
-  document.addEventListener('DOMContentLoaded', async () => {
+  document.addEventListener('astro:page-load', async () => {
     
     // Initialize dashboard controller immediately
     // The MultiProjectSelector will handle auth state internally
