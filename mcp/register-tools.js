@@ -12,6 +12,7 @@ import { listPlanProposalsSchema, listPlanProposals, getPlanProposalSchema, getP
 import { listGlobalConfigSchema, listGlobalConfig, getGlobalConfigSchema, getGlobalConfig, createGlobalConfigSchema, createGlobalConfig, updateGlobalConfigSchema, updateGlobalConfig, deleteGlobalConfigSchema, deleteGlobalConfig } from './tools/global-config.js';
 import { setupMcpUserSchema, setupMcpUser } from './tools/setup-user.js';
 import { provisionUserSchema, provisionUser } from './tools/provision-user.js';
+import { deleteUserSchema, deleteUser } from './tools/delete-user.js';
 import { checkForUpdates, getUpdateNoticeOnce, getMcpStatus, getLocalVersion, updateMcp, resetNotificationFlag, setLatestVersionInFirebase } from './version-check.js';
 import { USAGE_RULES_CONTENT } from './usage-rules.js';
 import { isMcpUserConfigured } from './user.js';
@@ -298,6 +299,11 @@ export function createMcpServer(serverName) {
   // ── User Provisioning tool ──
   server.tool('provision_user', 'Provision a new user or update an existing one in /users/. Creates user record, auto-generates developer/stakeholder IDs, and assigns projects. Idempotent: safe to re-run.', provisionUserSchema.shape, wrapWithUpdateNotice(async (params) => {
     return await provisionUser(params);
+  }));
+
+  // ── User Deletion tool ──
+  server.tool('delete_user', 'Delete a user from /users/ and clean up legacy permission paths (/data/appAdmins, appUploaders, betaUsers). Does NOT delete Firebase Auth account.', deleteUserSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await deleteUser(params);
   }));
 
   // ── Usage Rules resource ──
