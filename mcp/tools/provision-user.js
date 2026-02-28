@@ -48,7 +48,14 @@ export const provisionUserSchema = z.object({
   projects: z.array(z.object({
     projectId: z.string().describe('Project ID to assign (e.g., "PLN", "NTR")'),
     developer: z.boolean().optional().default(true).describe('Assign as developer in this project'),
-    stakeholder: z.boolean().optional().default(false).describe('Assign as stakeholder in this project')
+    stakeholder: z.boolean().optional().default(false).describe('Assign as stakeholder in this project'),
+    appPermissions: z.object({
+      view: z.boolean().optional().default(false),
+      download: z.boolean().optional().default(false),
+      upload: z.boolean().optional().default(false),
+      edit: z.boolean().optional().default(false),
+      approve: z.boolean().optional().default(false),
+    }).optional().describe('App permissions for this project (view, download, upload, edit, approve)')
   })).min(1).describe('Array of project assignments. At least one project is required.'),
   developer: z.boolean().optional().default(true).describe('Generate a developer ID if the user does not have one yet'),
   stakeholder: z.boolean().optional().default(false).describe('Generate a stakeholder ID if the user does not have one yet')
@@ -112,7 +119,7 @@ export async function provisionUser({ email, name, projects, developer, stakehol
   result.projectAssignments = [];
 
   for (const proj of projects) {
-    const { projectId, developer: isDev, stakeholder: isStk } = proj;
+    const { projectId, developer: isDev, stakeholder: isStk, appPermissions } = proj;
     const existing = existingProjects[projectId];
 
     updates[`${basePath}/projects/${projectId}/developer`] = isDev;
@@ -122,15 +129,24 @@ export async function provisionUser({ email, name, projects, developer, stakehol
       updates[`${basePath}/projects/${projectId}/addedAt`] = now;
     }
 
+    // Write appPermissions if provided
+    if (appPermissions && typeof appPermissions === 'object') {
+      const permKeys = ['view', 'download', 'upload', 'edit', 'approve'];
+      for (const key of permKeys) {
+        updates[`${basePath}/projects/${projectId}/appPermissions/${key}`] = appPermissions[key] === true;
+      }
+    }
+
     result.projectAssignments.push({
       projectId,
       developer: isDev,
       stakeholder: isStk,
+      appPermissions: appPermissions || null,
       status: existing ? 'updated' : 'added'
     });
     result.steps.push({
       action: existing ? 'updated' : 'added',
-      detail: `Project: ${projectId} (dev=${isDev}, stk=${isStk})`
+      detail: `Project: ${projectId} (dev=${isDev}, stk=${isStk}${appPermissions ? ', perms=' + JSON.stringify(appPermissions) : ''})`
     });
   }
 

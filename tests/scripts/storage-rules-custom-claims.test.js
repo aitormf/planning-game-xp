@@ -78,16 +78,19 @@ describe('storage.rules - Custom Claims migration', () => {
         expect(rules).not.toContain('YOUR_DOMAIN');
       });
 
-      it('should NOT contain email-based domain matching', () => {
+      it('should NOT contain email-based domain matching (except appPerms pattern)', () => {
         if (!rules) return;
-        expect(rules).not.toContain('.matches(');
+        // Remove the appPerms pattern check before asserting
+        const rulesWithoutAppPerms = rules.replace(/\.matches\('\.?\*u\.\*'\)/g, '');
+        expect(rulesWithoutAppPerms).not.toContain('.matches(');
       });
 
-      it('should still use canUploadApps() for /apps/ path', () => {
+      it('should still use canUploadApps/canUploadAppsForProject for /apps/ path', () => {
         if (!rules) return;
         const section = extractMatchBlock(rules, 'apps');
         expect(section).not.toBeNull();
-        expect(section).toContain('canUploadApps()');
+        const usesUploadCheck = section.includes('canUploadApps()') || section.includes('canUploadAppsForProject(');
+        expect(usesUploadCheck).toBe(true);
       });
     });
   }

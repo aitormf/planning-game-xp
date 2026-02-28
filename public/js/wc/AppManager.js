@@ -408,6 +408,16 @@ this.showMessage('Error al descargar el archivo', 'error');
 
     try {
       const encodedEmail = encodeEmailForFirebase(this.userEmail.toLowerCase().trim());
+
+      // Check new /users/ path first
+      const usersPermRef = ref(database, `/users/${encodedEmail}/projects/${this.projectId}/appPermissions/upload`);
+      const usersSnap = await get(usersPermRef);
+      if (usersSnap.exists() && usersSnap.val() === true) {
+        this.isAppUploader = true;
+        return;
+      }
+
+      // Fallback to legacy path
       const uploaderRef = ref(database, `/data/appUploaders/${this.projectId}/${encodedEmail}`);
       const snapshot = await get(uploaderRef);
       this.isAppUploader = snapshot.exists() && snapshot.val() === true;
@@ -486,6 +496,16 @@ this.showMessage('Error al descargar el archivo', 'error');
 
     try {
       const encodedEmail = encodeEmailForFirebase(this.userEmail.toLowerCase().trim());
+
+      // Check new /users/ path first
+      const usersPermRef = ref(database, `/users/${encodedEmail}/projects/${this.projectId}/appPermissions/view`);
+      const usersSnap = await get(usersPermRef);
+      if (usersSnap.exists() && usersSnap.val() === true) {
+        this.canSeeBeta = true;
+        return;
+      }
+
+      // Fallback to legacy path
       const betaUserRef = ref(database, `/data/betaUsers/${this.projectId}/${encodedEmail}`);
       const snapshot = await get(betaUserRef);
       this.canSeeBeta = snapshot.exists() && snapshot.val() === true;

@@ -517,6 +517,71 @@ export const UserAdminPanelStyles = css`
     80%, 100% { content: '...'; }
   }
 
+  /* Permissions gear button in project badges */
+  .project-badge .perms-project {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border: none;
+    background: transparent;
+    color: var(--brand-primary, #3b82f6);
+    font-size: 0.65rem;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 50%;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.15s, background 0.15s;
+  }
+
+  .project-badge .perms-project:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: var(--bg-primary, white);
+    border-radius: 8px;
+    padding: 1.5rem;
+    width: 380px;
+    max-width: 90vw;
+    box-shadow: var(--shadow-lg, 0 20px 25px -5px rgba(0, 0, 0, 0.15));
+  }
+
+  .modal-title {
+    margin: 0 0 1rem 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary, #333);
+  }
+
+  .permissions-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .permissions-checkboxes .form-checkbox span {
+    font-size: 0.85rem;
+  }
+
   /* Responsive */
   @media (max-width: 768px) {
     .user-admin-header {

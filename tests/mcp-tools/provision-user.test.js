@@ -314,4 +314,59 @@ describe('MCP provision_user tool', () => {
       expect(parsed.developerId).toBe('dev_011');
     });
   });
+
+  describe('appPermissions support', () => {
+    it('should write appPermissions when provided', async () => {
+      setupMockRef({
+        '/users/perms|test!com': null,
+        '/users': {}
+      });
+
+      const result = await provisionUser({
+        email: 'perms@test.com',
+        name: 'Perms User',
+        projects: [{
+          projectId: 'Cinema4D',
+          developer: true,
+          stakeholder: false,
+          appPermissions: { view: true, download: true, upload: true, edit: false, approve: false }
+        }],
+        developer: true,
+        stakeholder: false
+      });
+
+      const parsed = JSON.parse(result.content[0].text);
+      expect(parsed.projectAssignments[0].appPermissions).toEqual({
+        view: true, download: true, upload: true, edit: false, approve: false
+      });
+
+      const updates = mockUpdate.mock.calls[0][0];
+      expect(updates['/users/perms|test!com/projects/Cinema4D/appPermissions/view']).toBe(true);
+      expect(updates['/users/perms|test!com/projects/Cinema4D/appPermissions/download']).toBe(true);
+      expect(updates['/users/perms|test!com/projects/Cinema4D/appPermissions/upload']).toBe(true);
+      expect(updates['/users/perms|test!com/projects/Cinema4D/appPermissions/edit']).toBe(false);
+      expect(updates['/users/perms|test!com/projects/Cinema4D/appPermissions/approve']).toBe(false);
+    });
+
+    it('should skip appPermissions when not provided', async () => {
+      setupMockRef({
+        '/users/noperms|test!com': null,
+        '/users': {}
+      });
+
+      const result = await provisionUser({
+        email: 'noperms@test.com',
+        name: 'No Perms User',
+        projects: [{ projectId: 'PLN', developer: true, stakeholder: false }],
+        developer: true,
+        stakeholder: false
+      });
+
+      const parsed = JSON.parse(result.content[0].text);
+      expect(parsed.projectAssignments[0].appPermissions).toBeNull();
+
+      const updates = mockUpdate.mock.calls[0][0];
+      expect(updates['/users/noperms|test!com/projects/PLN/appPermissions/view']).toBeUndefined();
+    });
+  });
 });

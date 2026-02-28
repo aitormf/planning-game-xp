@@ -26,6 +26,10 @@ class UserAdminPanel extends LitElement {
       _searchQuery: { type: String, state: true },
       _onboardingSteps: { type: Array, state: true },
       _onboardingActive: { type: Boolean, state: true },
+      _showPermissionsModal: { type: Boolean, state: true },
+      _permissionsUser: { type: Object, state: true },
+      _permissionsProject: { type: String, state: true },
+      _permissionsData: { type: Object, state: true },
     };
   }
 
@@ -43,6 +47,10 @@ class UserAdminPanel extends LitElement {
     this._searchQuery = '';
     this._onboardingSteps = [];
     this._onboardingActive = false;
+    this._showPermissionsModal = false;
+    this._permissionsUser = null;
+    this._permissionsProject = '';
+    this._permissionsData = { view: false, download: false, upload: false, edit: false, approve: false };
     this._resetForm();
   }
 
@@ -253,6 +261,110 @@ class UserAdminPanel extends LitElement {
     }
   }
 
+  // ==================== APP PERMISSIONS ====================
+
+  _openAppPermissions(user, projectId) {
+    const projectData = user.projects?.[projectId] || {};
+    const currentPerms = projectData.appPermissions || {};
+    this._permissionsUser = user;
+    this._permissionsProject = projectId;
+    this._permissionsData = {
+      view: currentPerms.view === true,
+      download: currentPerms.download === true,
+      upload: currentPerms.upload === true,
+      edit: currentPerms.edit === true,
+      approve: currentPerms.approve === true,
+    };
+    this._showPermissionsModal = true;
+  }
+
+  _closePermissionsModal() {
+    this._showPermissionsModal = false;
+    this._permissionsUser = null;
+    this._permissionsProject = '';
+  }
+
+  async _saveAppPermissions() {
+    if (!this._permissionsUser || !this._permissionsProject) return;
+
+    try {
+      const updatePermsFn = httpsCallable(functions, 'updateAppPermissions');
+      await updatePermsFn({
+        email: this._permissionsUser.email,
+        projectId: this._permissionsProject,
+        permissions: this._permissionsData,
+      });
+
+      this._closePermissionsModal();
+      await this._loadUsers();
+      this._notify('App permissions updated', 'success');
+    } catch (error) {
+      console.error('Error updating app permissions:', error);
+      this._notify(`Error updating permissions: ${error.message}`, 'error');
+    }
+  }
+
+  _renderAppPermissionsModal() {
+    if (!this._showPermissionsModal || !this._permissionsUser) return nothing;
+
+    const permLabels = [
+      { key: 'view', label: 'View' },
+      { key: 'download', label: 'Download' },
+      { key: 'upload', label: 'Upload' },
+      { key: 'edit', label: 'Edit' },
+      { key: 'approve', label: 'Approve' },
+    ];
+
+    return html`
+      <div class="modal-overlay" @click=${this._closePermissionsModal}>
+        <div class="modal-content" @click=${(e) => e.stopPropagation()}>
+          <h4 class="modal-title">
+            App Permissions: ${this._permissionsUser.name} — ${this._permissionsProject}
+          </h4>
+          <div class="permissions-checkboxes">
+            ${permLabels.map(({ key, label }) => html`
+              <label class="form-checkbox">
+                <input
+                  type="checkbox"
+                  .checked=${this._permissionsData[key]}
+                  @change=${(e) => {
+                    this._permissionsData = { ...this._permissionsData, [key]: e.target.checked };
+                  }}
+                />
+                <span>${label}</span>
+              </label>
+            `)}
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-secondary" @click=${this._closePermissionsModal}>Cancel</button>
+            <button class="btn btn-primary" @click=${this._saveAppPermissions}>Save</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ==================== USER OPERATIONS ====================
+
+  async _deleteUser(user) {
+    const confirmed = await window.modalService.confirm(
+      'Delete user',
+      `Are you sure you want to delete "${user.name}" (${user.email})? This will remove all project assignments and revoke permissions.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const deleteUserFn = httpsCallable(functions, 'deleteUser');
+      await deleteUserFn({ email: user.email });
+
+      await this._loadUsers();
+      this._notify(`User "${user.name}" deleted successfully`, 'success');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      this._notify(`Error deleting user: ${error.message}`, 'error');
+    }
+  }
+
   async _removeProject(user, projectId) {
     const confirmed = await window.modalService.confirm(
       'Remove project assignment',
@@ -336,6 +448,7 @@ class UserAdminPanel extends LitElement {
         ${this._renderHeader(filteredUsers)}
         ${this._showForm ? this._renderForm() : nothing}
         ${this._renderTable(filteredUsers)}
+        ${this._renderAppPermissionsModal()}
       </div>
     `;
   }
@@ -540,6 +653,11 @@ class UserAdminPanel extends LitElement {
                   <span class="project-badge">
                     ${pid}
                     <button
+                      class="perms-project"
+                      title="App permissions for ${pid}"
+                      @click=${() => this._openAppPermissions(user, pid)}
+                    >&#9881;</button>
+                    <button
                       class="remove-project"
                       title="Remove ${pid}"
                       @click=${() => this._removeProject(user, pid)}
@@ -562,6 +680,11 @@ class UserAdminPanel extends LitElement {
               @click=${() => this._openEditForm(user)}
               title="Add project assignment"
             >+</button>
+            <button
+              class="btn btn-danger btn-icon btn-sm"
+              @click=${() => this._deleteUser(user)}
+              title="Delete user"
+            >&times;</button>
           </div>
         </td>
       </tr>

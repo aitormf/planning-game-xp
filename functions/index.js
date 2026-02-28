@@ -4324,7 +4324,12 @@ exports.addAppUploader = onCall({
   const encodedEmail = encodeEmailForFirebase(normalizedEmail);
 
   const db = getDatabase();
-  await db.ref(`/data/appUploaders/${projectId}/${encodedEmail}`).set(true);
+
+  // Dual-write: legacy path + new /users/ path
+  const updates = {};
+  updates[`/data/appUploaders/${projectId}/${encodedEmail}`] = true;
+  updates[`/users/${encodedEmail}/projects/${projectId}/appPermissions/upload`] = true;
+  await db.ref().update(updates);
 
   logger.info(`AppUploader added: ${normalizedEmail} for project ${projectId}`);
 
@@ -4367,7 +4372,12 @@ exports.removeAppUploader = onCall({
   const encodedEmail = encodeEmailForFirebase(normalizedEmail);
 
   const db = getDatabase();
-  await db.ref(`/data/appUploaders/${projectId}/${encodedEmail}`).remove();
+
+  // Dual-write: remove from legacy path + new /users/ path
+  const updates = {};
+  updates[`/data/appUploaders/${projectId}/${encodedEmail}`] = null;
+  updates[`/users/${encodedEmail}/projects/${projectId}/appPermissions/upload`] = false;
+  await db.ref().update(updates);
 
   logger.info(`AppUploader removed: ${normalizedEmail} from project ${projectId}`);
 
@@ -4520,6 +4530,8 @@ exports.listUsers = onCall({
         logger.warn(`Error checking auth for ${userData.email}`, error);
       }
     }
+    // Include appPermissions nested inside each project
+    const projects = userData.projects || {};
     users.push({
       encodedEmail,
       email: userData.email,
@@ -4527,7 +4539,7 @@ exports.listUsers = onCall({
       developerId: userData.developerId || null,
       stakeholderId: userData.stakeholderId || null,
       active: userData.active !== false,
-      projects: userData.projects || {},
+      projects,
       authStatus
     });
   }
@@ -4689,6 +4701,228 @@ exports.removeUserFromProject = onCall({
   }
 
   return { success: true, email: normalizedEmail, projectId };
+});
+
+/**
+ * Cloud Function: deleteUser
+ * Deletes a user from /users/ and cleans up legacy paths.
+ * Revokes custom claims but does NOT delete the Firebase Auth account.
+ * Only appAdmins can call this.
+ */
+exports.deleteUser = onCall({
+  region: "europe-west1"
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be authenticated');
+  }
+
+  const callerClaims = request.auth.token || {};
+  if (!callerClaims.isAppAdmin) {
+    throw new HttpsError('permission-denied', 'Only appAdmins can delete users');
+  }
+
+  const { email } = request.data || {};
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    throw new HttpsError('invalid-argument', 'A valid email is required');
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const callerEmail = request.auth.token.email || 'unknown';
+
+  // Cannot delete yourself
+  if (normalizedEmail === callerEmail.toLowerCase()) {
+    throw new HttpsError('failed-precondition', 'Cannot delete your own account');
+  }
+
+  const encodedEmail = encodeEmailForFirebase(normalizedEmail);
+  const db = getDatabase();
+
+  // Read user data to get project list
+  const userSnap = await db.ref(`/users/${encodedEmail}`).once('value');
+  if (!userSnap.exists()) {
+    throw new HttpsError('not-found', `User ${normalizedEmail} not found`);
+  }
+
+  const userData = userSnap.val();
+  const projectIds = userData.projects ? Object.keys(userData.projects) : [];
+
+  // Build multi-path delete
+  const deletePaths = {};
+  deletePaths[`/users/${encodedEmail}`] = null;
+  deletePaths[`/data/appAdmins/${encodedEmail}`] = null;
+
+  for (const pid of projectIds) {
+    deletePaths[`/data/appUploaders/${pid}/${encodedEmail}`] = null;
+    deletePaths[`/data/betaUsers/${pid}/${encodedEmail}`] = null;
+  }
+
+  await db.ref().update(deletePaths);
+
+  logger.info(`User deleted: ${normalizedEmail}`, {
+    deletedBy: callerEmail,
+    projectsCleared: projectIds
+  });
+
+  // Revoke claims if user exists in Auth (do NOT delete the Auth account)
+  try {
+    const userRecord = await admin.auth().getUserByEmail(normalizedEmail);
+    const currentClaims = userRecord.customClaims || {};
+    await admin.auth().setCustomUserClaims(userRecord.uid, {
+      ...currentClaims,
+      allowed: false,
+      isAppAdmin: false,
+      appPerms: {}
+    });
+    logger.info(`Claims revoked for ${normalizedEmail}`);
+  } catch (error) {
+    if (error.code !== 'auth/user-not-found') {
+      logger.warn(`Could not revoke claims for ${normalizedEmail}`, error);
+    }
+  }
+
+  return {
+    success: true,
+    email: normalizedEmail,
+    deletedBy: callerEmail,
+    projectsCleared: projectIds
+  };
+});
+
+/**
+ * Cloud Function: updateAppPermissions
+ * Updates app permissions for a user in a specific project.
+ * Writes to /users/{encodedEmail}/projects/{projectId}/appPermissions
+ * and dual-writes to legacy paths for backward compatibility.
+ * Only appAdmins can call this.
+ */
+exports.updateAppPermissions = onCall({
+  region: "europe-west1"
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be authenticated');
+  }
+
+  const callerClaims = request.auth.token || {};
+  if (!callerClaims.isAppAdmin) {
+    throw new HttpsError('permission-denied', 'Only appAdmins can update app permissions');
+  }
+
+  const { email, projectId, permissions } = request.data || {};
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    throw new HttpsError('invalid-argument', 'A valid email is required');
+  }
+  if (!projectId || typeof projectId !== 'string') {
+    throw new HttpsError('invalid-argument', 'projectId is required');
+  }
+  if (!permissions || typeof permissions !== 'object') {
+    throw new HttpsError('invalid-argument', 'permissions object is required');
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const encodedEmail = encodeEmailForFirebase(normalizedEmail);
+  const db = getDatabase();
+
+  // Verify user exists
+  const userSnap = await db.ref(`/users/${encodedEmail}`).once('value');
+  if (!userSnap.exists()) {
+    throw new HttpsError('not-found', `User ${normalizedEmail} not found`);
+  }
+
+  const validPerms = ['view', 'download', 'upload', 'edit', 'approve'];
+  const sanitized = {};
+  for (const perm of validPerms) {
+    sanitized[perm] = permissions[perm] === true;
+  }
+
+  // Multi-path update
+  const updates = {};
+  const basePath = `/users/${encodedEmail}/projects/${projectId}/appPermissions`;
+  for (const [perm, value] of Object.entries(sanitized)) {
+    updates[`${basePath}/${perm}`] = value;
+  }
+
+  // Dual-write to legacy paths
+  if (sanitized.upload) {
+    updates[`/data/appUploaders/${projectId}/${encodedEmail}`] = true;
+  } else {
+    updates[`/data/appUploaders/${projectId}/${encodedEmail}`] = null;
+  }
+  if (sanitized.view) {
+    updates[`/data/betaUsers/${projectId}/${encodedEmail}`] = true;
+  } else {
+    updates[`/data/betaUsers/${projectId}/${encodedEmail}`] = null;
+  }
+
+  await db.ref().update(updates);
+
+  logger.info(`App permissions updated for ${normalizedEmail} in ${projectId}`, {
+    updatedBy: request.auth.token.email,
+    permissions: sanitized
+  });
+
+  return {
+    success: true,
+    email: normalizedEmail,
+    projectId,
+    permissions: sanitized
+  };
+});
+
+/**
+ * Cloud Function: syncAppPermissionsClaim
+ * Trigger on /users/{encodedEmail}/projects write.
+ * Rebuilds the compact appPerms claim from all project appPermissions.
+ * Flags: v=view, d=download, u=upload, e=edit, a=approve
+ */
+exports.syncAppPermissionsClaim = onValueWritten({
+  ref: "/users/{encodedEmail}/projects",
+  region: "europe-west1"
+}, async (event) => {
+  const { encodedEmail } = event.params;
+  const projectsData = event.data.after?.val();
+
+  const email = decodeEmailFromFirebase(encodedEmail);
+  if (!email) {
+    logger.error('Could not decode email for appPerms sync', { encodedEmail });
+    return null;
+  }
+
+  // Build compact appPerms map
+  const flagMap = { view: 'v', download: 'd', upload: 'u', edit: 'e', approve: 'a' };
+  const appPerms = {};
+
+  if (projectsData && typeof projectsData === 'object') {
+    for (const [pid, projData] of Object.entries(projectsData)) {
+      const perms = projData?.appPermissions;
+      if (!perms || typeof perms !== 'object') continue;
+
+      let flags = '';
+      for (const [perm, flag] of Object.entries(flagMap)) {
+        if (perms[perm] === true) flags += flag;
+      }
+      if (flags) {
+        appPerms[pid] = flags;
+      }
+    }
+  }
+
+  // Update custom claims
+  try {
+    const userRecord = await admin.auth().getUserByEmail(email);
+    const currentClaims = userRecord.customClaims || {};
+    const newClaims = { ...currentClaims, appPerms };
+
+    await admin.auth().setCustomUserClaims(userRecord.uid, newClaims);
+    logger.info(`appPerms claim synced for ${email}`, { appPerms });
+    return { success: true, email, appPerms };
+  } catch (error) {
+    if (error.code === 'auth/user-not-found') {
+      logger.warn(`User not found for appPerms sync: ${email}. Claim will be set when user registers.`);
+      return null;
+    }
+    logger.error(`Failed to sync appPerms claim for ${email}`, error);
+    throw error;
+  }
 });
 
 // Export internal functions for testing
