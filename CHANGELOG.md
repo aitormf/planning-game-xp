@@ -7,6 +7,45 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Auto-provision users on first login with Gmail normalization
+- Add Allowed Users management tab in EntityDirectoryManager
+- Add Cloud Functions deploy support to deploy-all.sh
+- Auto-install mcp/ dependencies via postinstall script
+- Clear textarea and draft after accepting AI-generated tasks
+- Replace email whitelist with Custom Claims in RTDB rules
+- Improve setup_mcp_user with name/email auto-matching
+- Publish MCP server as npm package planning-game-mcp
+- Publish MCP server as npm package planning-game-mcp
+- Merge PMC-TSK-0068 MCP standalone packaging
+- Add standalone MCP build script and README
+- Merge PLN-TSK-0217 admin entity directory manager
+- Add admin UI for managing global developers and stakeholders
+- Add commit-msg hook to block AI attribution in commits
+
+### Changed
+
+- Centralize Firebase CLI account switching in instance-manager
+
+### Fixed
+
+- Set default status for proposals and add save-time fallback
+- Read allowExecutables from Firebase to prevent stale App tab visibility
+- Migrate storage rules from email whitelists to custom claims
+- Ensure developers and stakeholders are created in global collections on project update
+
+### Documentation
+
+- Add GitHub token permission details to MCP installation guide
+- Update MCP installation guide with npm package instructions
+
+### Other
+
+- Bump MCP version to 1.13.0
+
+## [1.145.0] - 2026-02-27
+
+### Added
+
 - Extract Dev Plans UI to Lit web components (PLN-TSK-0213 to 0216)
 - Enforce plan-first workflow for multi-task creation
 - Add proposalId to plans and planId to tasks
