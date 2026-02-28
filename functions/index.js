@@ -1396,7 +1396,8 @@ function normalizeGmailEmail(email) {
 }
 
 /**
- * Checks if an email is pre-authorized in /data/allowedUsers.
+ * Checks if an email is pre-authorized in /users/.
+ * A user is authorized if they exist in /users/ and have at least one project assigned.
  * Tries both the exact email and the Gmail-normalized variant.
  * @param {string} email The email to check.
  * @return {Promise<boolean>} Whether the email is allowed.
@@ -1405,17 +1406,45 @@ async function isEmailPreAuthorized(email) {
   const normalizedEmail = email.trim().toLowerCase();
   const encodedExact = encodeEmailForFirebase(normalizedEmail);
 
-  const exactSnap = await admin.database().ref(`/data/allowedUsers/${encodedExact}`).once('value');
-  if (exactSnap.val() === true) return true;
+  const exactSnap = await admin.database().ref(`/users/${encodedExact}/projects`).once('value');
+  if (hasActiveProject(exactSnap.val())) return true;
 
   const gmailNormalized = normalizeGmailEmail(normalizedEmail);
   if (gmailNormalized !== normalizedEmail) {
     const encodedNormalized = encodeEmailForFirebase(gmailNormalized);
-    const normalizedSnap = await admin.database().ref(`/data/allowedUsers/${encodedNormalized}`).once('value');
-    if (normalizedSnap.val() === true) return true;
+    const normalizedSnap = await admin.database().ref(`/users/${encodedNormalized}/projects`).once('value');
+    if (hasActiveProject(normalizedSnap.val())) return true;
   }
 
   return false;
+}
+
+/**
+ * Checks if a projects object has at least one project with developer or stakeholder = true.
+ */
+function hasActiveProject(projects) {
+  if (!projects || typeof projects !== 'object') return false;
+  return Object.values(projects).some(p => p.developer === true || p.stakeholder === true);
+}
+
+/**
+ * Auto-generates the next available developer or stakeholder ID.
+ * @param {string} prefix "dev_" or "stk_"
+ * @param {string} field "developerId" or "stakeholderId"
+ * @return {Promise<string>} The next ID (e.g., "dev_020")
+ */
+async function generateNextId(prefix, field) {
+  const usersSnap = await admin.database().ref('/users').once('value');
+  const users = usersSnap.val() || {};
+  let maxNum = 0;
+  for (const userData of Object.values(users)) {
+    const id = userData[field];
+    if (id && id.startsWith(prefix)) {
+      const num = parseInt(id.replace(prefix, ''), 10);
+      if (num > maxNum) maxNum = num;
+    }
+  }
+  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
 }
 
 /**
@@ -4411,19 +4440,16 @@ exports.syncAppAdminClaim = onValueWritten({
 });
 
 /**
- * Cloud Function: syncAllowedClaim
- * Syncs the 'allowed' custom claim when /data/allowedUsers changes.
- *
- * When a user is added to allowedUsers (value = true), sets allowed claim to true.
- * When a user is removed from allowedUsers, sets allowed claim to false.
+ * Cloud Function: syncUserAllowedClaim
+ * Syncs the 'allowed' custom claim when /users/{encodedEmail}/projects changes.
+ * If user has at least one project with developer or stakeholder = true → allowed: true.
+ * Otherwise → allowed: false.
  */
-exports.syncAllowedClaim = onValueWritten({
-  ref: "/data/allowedUsers/{encodedEmail}",
+exports.syncUserAllowedClaim = onValueWritten({
+  ref: "/users/{encodedEmail}/projects/{projectId}",
   region: "europe-west1"
 }, async (event) => {
   const { encodedEmail } = event.params;
-  const beforeValue = event.data.before?.val();
-  const afterValue = event.data.after?.val();
 
   const email = decodeEmailFromFirebase(encodedEmail);
   if (!email) {
@@ -4431,21 +4457,19 @@ exports.syncAllowedClaim = onValueWritten({
     return null;
   }
 
-  const shouldBeAllowed = afterValue === true;
-  const wasAllowed = beforeValue === true;
-
-  if (shouldBeAllowed === wasAllowed) {
-    return null;
-  }
-
   try {
+    // Read all projects for this user to determine allowed status
+    const projectsSnap = await admin.database().ref(`/users/${encodedEmail}/projects`).once('value');
+    const shouldBeAllowed = hasActiveProject(projectsSnap.val());
+
     const userRecord = await admin.auth().getUserByEmail(email);
     const currentClaims = userRecord.customClaims || {};
-    const newClaims = {
-      ...currentClaims,
-      allowed: shouldBeAllowed
-    };
 
+    if (currentClaims.allowed === shouldBeAllowed) {
+      return null; // No change needed
+    }
+
+    const newClaims = { ...currentClaims, allowed: shouldBeAllowed };
     await admin.auth().setCustomUserClaims(userRecord.uid, newClaims);
 
     logger.info(`Updated allowed claim for ${email}`, {
@@ -4465,12 +4489,11 @@ exports.syncAllowedClaim = onValueWritten({
 });
 
 /**
- * Cloud Function: listAllowedUsers
- * Callable function to list all allowed users with their Auth status.
- * Returns the list from /data/allowedUsers enriched with Auth info.
+ * Cloud Function: listUsers
+ * Returns all users from /users/ enriched with Auth status.
  * Only appAdmins can call this.
  */
-exports.listAllowedUsers = onCall({
+exports.listUsers = onCall({
   region: "europe-west1"
 }, async (request) => {
   if (!request.auth) {
@@ -4479,40 +4502,47 @@ exports.listAllowedUsers = onCall({
 
   const callerClaims = request.auth.token || {};
   if (!callerClaims.isAppAdmin) {
-    throw new HttpsError('permission-denied', 'Only appAdmins can list allowed users');
+    throw new HttpsError('permission-denied', 'Only appAdmins can list users');
   }
 
-  const snapshot = await admin.database().ref('/data/allowedUsers').once('value');
-  const allowedUsersData = snapshot.val() || {};
+  const snapshot = await admin.database().ref('/users').once('value');
+  const usersData = snapshot.val() || {};
 
   const users = [];
-  for (const [encodedEmail, value] of Object.entries(allowedUsersData)) {
-    if (value !== true) continue;
-    const email = decodeEmailFromFirebase(encodedEmail);
+  for (const [encodedEmail, userData] of Object.entries(usersData)) {
+    if (!userData.email) continue;
     let authStatus = 'not_registered';
-    let displayName = null;
     try {
-      const userRecord = await admin.auth().getUserByEmail(email);
+      const userRecord = await admin.auth().getUserByEmail(userData.email);
       authStatus = userRecord.disabled ? 'disabled' : 'active';
-      displayName = userRecord.displayName || null;
     } catch (error) {
       if (error.code !== 'auth/user-not-found') {
-        logger.warn(`Error checking auth for ${email}`, error);
+        logger.warn(`Error checking auth for ${userData.email}`, error);
       }
     }
-    users.push({ email, encodedEmail, authStatus, displayName });
+    users.push({
+      encodedEmail,
+      email: userData.email,
+      name: userData.name || '',
+      developerId: userData.developerId || null,
+      stakeholderId: userData.stakeholderId || null,
+      active: userData.active !== false,
+      projects: userData.projects || {},
+      authStatus
+    });
   }
 
   return { users };
 });
 
 /**
- * Cloud Function: setAllowedUser
- * Callable function to add or remove a user from allowedUsers.
- * Writes to /data/allowedUsers/{encodedEmail} which triggers syncAllowedClaim.
+ * Cloud Function: createOrUpdateUser
+ * Creates or updates a user in /users/{encodedEmail}.
+ * Auto-generates developerId/stakeholderId when assigning roles.
+ * Syncs allowed claim if user exists in Auth.
  * Only appAdmins can call this.
  */
-exports.setAllowedUser = onCall({
+exports.createOrUpdateUser = onCall({
   region: "europe-west1"
 }, async (request) => {
   if (!request.auth) {
@@ -4521,26 +4551,144 @@ exports.setAllowedUser = onCall({
 
   const callerClaims = request.auth.token || {};
   if (!callerClaims.isAppAdmin) {
-    throw new HttpsError('permission-denied', 'Only appAdmins can manage allowed users');
+    throw new HttpsError('permission-denied', 'Only appAdmins can manage users');
   }
 
-  const { email, allowed } = request.data || {};
+  const { email, name, projectId, developer, stakeholder } = request.data || {};
   if (!email || typeof email !== 'string') {
     throw new HttpsError('invalid-argument', 'Email is required');
+  }
+  if (!name || typeof name !== 'string') {
+    throw new HttpsError('invalid-argument', 'Name is required');
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const encodedEmail = encodeEmailForFirebase(normalizedEmail);
+  const now = new Date().toISOString();
+  const callerEmail = request.auth.token.email || 'unknown';
+
+  // Read existing user data
+  const existingSnap = await admin.database().ref(`/users/${encodedEmail}`).once('value');
+  const existingData = existingSnap.val() || {};
+
+  const updates = {};
+  updates[`/users/${encodedEmail}/name`] = name.trim();
+  updates[`/users/${encodedEmail}/email`] = normalizedEmail;
+  updates[`/users/${encodedEmail}/active`] = true;
+
+  if (!existingData.createdAt) {
+    updates[`/users/${encodedEmail}/createdAt`] = now;
+    updates[`/users/${encodedEmail}/createdBy`] = callerEmail;
+  }
+
+  // Handle developer ID
+  const isDeveloper = developer === true;
+  if (isDeveloper && !existingData.developerId) {
+    const newDevId = await generateNextId('dev_', 'developerId');
+    updates[`/users/${encodedEmail}/developerId`] = newDevId;
+  }
+
+  // Handle stakeholder ID
+  const isStakeholder = stakeholder === true;
+  if (isStakeholder && !existingData.stakeholderId) {
+    const newStkId = await generateNextId('stk_', 'stakeholderId');
+    updates[`/users/${encodedEmail}/stakeholderId`] = newStkId;
+  }
+
+  // Handle project assignment
+  if (projectId && typeof projectId === 'string') {
+    updates[`/users/${encodedEmail}/projects/${projectId}/developer`] = isDeveloper;
+    updates[`/users/${encodedEmail}/projects/${projectId}/stakeholder`] = isStakeholder;
+    if (!existingData.projects?.[projectId]?.addedAt) {
+      updates[`/users/${encodedEmail}/projects/${projectId}/addedAt`] = now;
+    }
+  }
+
+  await admin.database().ref().update(updates);
+
+  logger.info(`User created/updated: ${normalizedEmail}`, {
+    changedBy: callerEmail,
+    projectId,
+    developer: isDeveloper,
+    stakeholder: isStakeholder
+  });
+
+  // Sync allowed claim if user exists in Auth
+  try {
+    const userRecord = await admin.auth().getUserByEmail(normalizedEmail);
+    const currentClaims = userRecord.customClaims || {};
+    const projectsSnap = await admin.database().ref(`/users/${encodedEmail}/projects`).once('value');
+    const shouldBeAllowed = hasActiveProject(projectsSnap.val());
+
+    if (currentClaims.allowed !== shouldBeAllowed) {
+      await admin.auth().setCustomUserClaims(userRecord.uid, {
+        ...currentClaims,
+        allowed: shouldBeAllowed
+      });
+    }
+  } catch (error) {
+    if (error.code !== 'auth/user-not-found') {
+      logger.warn(`Could not sync claims for ${normalizedEmail}`, error);
+    }
+  }
+
+  return { success: true, email: normalizedEmail, encodedEmail };
+});
+
+/**
+ * Cloud Function: removeUserFromProject
+ * Removes a user's assignment from a specific project.
+ * If no projects remain, revokes allowed claim.
+ * Only appAdmins can call this.
+ */
+exports.removeUserFromProject = onCall({
+  region: "europe-west1"
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be authenticated');
+  }
+
+  const callerClaims = request.auth.token || {};
+  if (!callerClaims.isAppAdmin) {
+    throw new HttpsError('permission-denied', 'Only appAdmins can manage users');
+  }
+
+  const { email, projectId } = request.data || {};
+  if (!email || !projectId) {
+    throw new HttpsError('invalid-argument', 'Email and projectId are required');
   }
 
   const normalizedEmail = email.trim().toLowerCase();
   const encodedEmail = encodeEmailForFirebase(normalizedEmail);
 
-  if (allowed === false) {
-    await admin.database().ref(`/data/allowedUsers/${encodedEmail}`).remove();
-    logger.info(`Removed allowed user: ${normalizedEmail}`, { removedBy: request.auth.token.email });
-    return { success: true, email: normalizedEmail, allowed: false };
+  // Remove project assignment
+  await admin.database().ref(`/users/${encodedEmail}/projects/${projectId}`).remove();
+
+  logger.info(`Removed ${normalizedEmail} from project ${projectId}`, {
+    removedBy: request.auth.token.email
+  });
+
+  // Check remaining projects and sync allowed claim
+  try {
+    const userRecord = await admin.auth().getUserByEmail(normalizedEmail);
+    const projectsSnap = await admin.database().ref(`/users/${encodedEmail}/projects`).once('value');
+    const shouldBeAllowed = hasActiveProject(projectsSnap.val());
+
+    const currentClaims = userRecord.customClaims || {};
+    if (currentClaims.allowed !== shouldBeAllowed) {
+      await admin.auth().setCustomUserClaims(userRecord.uid, {
+        ...currentClaims,
+        allowed: shouldBeAllowed
+      });
+      logger.info(`Revoked allowed claim for ${normalizedEmail} (no projects remaining)`);
+    }
+  } catch (error) {
+    if (error.code !== 'auth/user-not-found') {
+      logger.warn(`Could not sync claims for ${normalizedEmail}`, error);
+    }
   }
 
-  await admin.database().ref(`/data/allowedUsers/${encodedEmail}`).set(true);
-  logger.info(`Added allowed user: ${normalizedEmail}`, { addedBy: request.auth.token.email });
-  return { success: true, email: normalizedEmail, allowed: true };
+  return { success: true, email: normalizedEmail, projectId };
 });
 
 // Export internal functions for testing

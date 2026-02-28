@@ -8,42 +8,33 @@ export const listStakeholdersSchema = z.object({
 export async function listStakeholders({ projectId } = {}) {
   const db = getDatabase();
 
-  const snapshot = await db.ref('/data/stakeholders').once('value');
-  const stakeholdersData = snapshot.val();
+  const snapshot = await db.ref('/users').once('value');
+  const usersData = snapshot.val();
 
-  if (!stakeholdersData) {
+  if (!usersData) {
     return { content: [{ type: 'text', text: 'No stakeholders found.' }] };
   }
 
   let stakeholders = [];
 
-  for (const [key, value] of Object.entries(stakeholdersData)) {
-    if (!value) continue;
+  for (const [, userData] of Object.entries(usersData)) {
+    if (!userData || typeof userData !== 'object') continue;
+    if (!userData.stakeholderId) continue;
+    if (userData.active === false) continue;
 
-    if (key.startsWith('stk_') && typeof value === 'object') {
-      if (value.active === false) continue;
-      stakeholders.push({
-        id: key,
-        name: value.name || '',
-        email: value.email || '',
-        teamId: value.teamId || null
-      });
-    } else if (typeof value === 'string') {
-      stakeholders.push({
-        id: key,
-        name: key,
-        email: value
-      });
-    }
+    // If projectId filter, check user has stakeholder role in that project
+    if (projectId && userData.projects?.[projectId]?.stakeholder !== true) continue;
+
+    stakeholders.push({
+      id: userData.stakeholderId,
+      name: userData.name || '',
+      email: userData.email || '',
+      teamId: userData.teamId || null
+    });
   }
 
-  if (projectId) {
-    const projectSnapshot = await db.ref(`/projects/${projectId}/stakeholders`).once('value');
-    const projectStakeholders = projectSnapshot.val();
-
-    if (projectStakeholders && Array.isArray(projectStakeholders)) {
-      stakeholders = stakeholders.filter(s => projectStakeholders.includes(s.id));
-    }
+  if (stakeholders.length === 0) {
+    return { content: [{ type: 'text', text: 'No stakeholders found.' }] };
   }
 
   stakeholders.sort((a, b) => a.name.localeCompare(b.name));

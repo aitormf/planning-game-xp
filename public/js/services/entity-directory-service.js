@@ -4,31 +4,23 @@
  * Servicio central para gestionar developers, stakeholders y teams con IDs estables.
  * Proporciona resolucion bidireccional: ID ↔ email ↔ name
  *
- * Firebase Structure:
- * /data/developers/{developerId} = { email, name, active }
- * /data/stakeholders/{stakeholderId} = { email, name, active, teamId }
+ * Firebase Structure (centralized user model):
+ * /users/{encodedEmail} = { name, email, developerId, stakeholderId, active, createdAt, createdBy,
+ *                           projects: { projectId: { developer: bool, stakeholder: bool, addedAt } } }
  * /data/teams/{teamId} = { name }
- * /projects/{projectId}/developers = [developerId, ...]
- * /projects/{projectId}/stakeholders = [stakeholderId, ...]
  */
 
 import { database, ref, get, set, onValue } from '../../firebase-config.js';
-import { normalizeProjectPeople } from '../utils/project-people-utils.js';
 
 const normalizeEmail = (email) => (email || '').toString().trim().toLowerCase();
 const normalizeName = (name) => (name || '').toString().trim();
 
 /**
- * Normalizes email arrays for an entity
- * @param {Object} info - Raw entity info from Firebase
- * @returns {{primaryEmail: string, emailsArray: string[]}}
+ * Encodes email for Firebase RTDB keys: @ → |, . → !, # → -
  */
-function normalizeEntityEmails(info) {
-  const primaryEmail = normalizeEmail(info.email);
-  const emailsArray = Array.isArray(info.emails)
-    ? info.emails.map(e => normalizeEmail(e)).filter(Boolean)
-    : [];
-  return { primaryEmail, emailsArray };
+function encodeEmailForFirebase(email) {
+  if (!email) return '';
+  return email.replace(/@/g, '|').replace(/\./g, '!').replace(/#/g, '-');
 }
 
 /**
@@ -48,17 +40,17 @@ function updateNextIdCounter(id, prefix, currentNext) {
 
 class EntityDirectoryService {
   constructor() {
-    // Cache de entidades
-    this._developers = new Map(); // id -> { email, name, active }
-    this._stakeholders = new Map(); // id -> { email, name, active, teamId }
+    // Cache de entidades (derived from /users/)
+    this._developers = new Map(); // devId -> { id, email, name, active, emails }
+    this._stakeholders = new Map(); // stkId -> { id, email, name, active, teamId }
     this._teams = new Map(); // teamId -> { name }
-    this._projects = new Map(); // projectId -> { developers: [id], stakeholders: [id] }
+    this._users = new Map(); // encodedEmail -> full user object from /users/
 
     // Indices inversos para busqueda rapida
-    this._developersByEmail = new Map(); // email -> id
-    this._developersByName = new Map(); // normalizedName -> id
-    this._stakeholdersByEmail = new Map(); // email -> id
-    this._stakeholdersByName = new Map(); // normalizedName -> id
+    this._developersByEmail = new Map(); // email -> devId
+    this._developersByName = new Map(); // normalizedName -> devId
+    this._stakeholdersByEmail = new Map(); // email -> stkId
+    this._stakeholdersByName = new Map(); // normalizedName -> stkId
 
     // Estado de carga
     this._initialized = false;
@@ -85,11 +77,9 @@ class EntityDirectoryService {
 
   async _loadFromFirebase() {
     try {
-      const [developersSnap, stakeholdersSnap, teamsSnap, projectsSnap] = await Promise.all([
-        get(ref(database, '/data/developers')),
-        get(ref(database, '/data/stakeholders')),
-        get(ref(database, '/data/teams')),
-        get(ref(database, '/projects'))
+      const [usersSnap, teamsSnap] = await Promise.all([
+        get(ref(database, '/users')),
+        get(ref(database, '/data/teams'))
       ]);
 
       // Teams must be processed first so stakeholders can reference them
@@ -97,16 +87,8 @@ class EntityDirectoryService {
         this._processTeams(teamsSnap.val());
       }
 
-      if (developersSnap.exists()) {
-        this._processDevelopers(developersSnap.val());
-      }
-
-      if (stakeholdersSnap.exists()) {
-        this._processStakeholders(stakeholdersSnap.val());
-      }
-
-      if (projectsSnap.exists()) {
-        this._processProjects(projectsSnap.val());
+      if (usersSnap.exists()) {
+        this._processUsers(usersSnap.val());
       }
     } catch (error) {
       // Silently ignore initialization errors
@@ -130,145 +112,67 @@ class EntityDirectoryService {
     }
   }
 
-  _processDevelopers(data) {
+  /**
+   * Processes the centralized /users/ data and builds developer/stakeholder caches
+   */
+  _processUsers(data) {
+    this._users.clear();
     this._developers.clear();
     this._developersByEmail.clear();
     this._developersByName.clear();
-    this._nextDeveloperId = 1;
-
-    if (!data) return;
-
-    for (const [id, info] of Object.entries(data)) {
-      if (!info || typeof info !== 'object') continue;
-
-      const entity = this._createDeveloperEntity(id, info);
-      this._developers.set(id, entity);
-      this._indexDeveloperEmails(entity, id);
-      this._indexEntityName(entity, id, this._developersByName);
-      this._nextDeveloperId = updateNextIdCounter(id, 'dev_', this._nextDeveloperId);
-    }
-  }
-
-  _createDeveloperEntity(id, info) {
-    const { primaryEmail, emailsArray } = normalizeEntityEmails(info);
-    return {
-      id,
-      email: primaryEmail,
-      emails: emailsArray.length > 0 ? emailsArray : (primaryEmail ? [primaryEmail] : []),
-      name: normalizeName(info.name),
-      active: info.active !== false
-    };
-  }
-
-  _indexDeveloperEmails(entity, id) {
-    if (entity.email) {
-      this._developersByEmail.set(entity.email, id);
-    }
-    for (const altEmail of entity.emails) {
-      if (altEmail && !this._developersByEmail.has(altEmail)) {
-        this._developersByEmail.set(altEmail, id);
-      }
-    }
-  }
-
-  _indexEntityName(entity, id, indexMap) {
-    if (entity.name) {
-      indexMap.set(entity.name.toLowerCase(), id);
-    }
-  }
-
-  _processStakeholders(data) {
     this._stakeholders.clear();
     this._stakeholdersByEmail.clear();
     this._stakeholdersByName.clear();
+    this._nextDeveloperId = 1;
     this._nextStakeholderId = 1;
 
     if (!data) return;
 
-    for (const [id, info] of Object.entries(data)) {
-      if (!info || typeof info !== 'object') continue;
+    for (const [encodedEmail, userInfo] of Object.entries(data)) {
+      if (!userInfo || typeof userInfo !== 'object') continue;
 
-      const entity = this._createStakeholderEntity(id, info);
-      this._stakeholders.set(id, entity);
-      this._indexStakeholderEmail(entity, id);
-      this._indexEntityName(entity, id, this._stakeholdersByName);
-      this._nextStakeholderId = updateNextIdCounter(id, 'stk_', this._nextStakeholderId);
-    }
-  }
+      const email = normalizeEmail(userInfo.email);
+      const name = normalizeName(userInfo.name);
+      const active = userInfo.active !== false;
 
-  _createStakeholderEntity(id, info) {
-    return {
-      id,
-      email: normalizeEmail(info.email),
-      name: normalizeName(info.name),
-      active: info.active !== false,
-      teamId: info.teamId || null
-    };
-  }
+      this._users.set(encodedEmail, { ...userInfo, _encodedEmail: encodedEmail });
 
-  _indexStakeholderEmail(entity, id) {
-    if (entity.email) {
-      this._stakeholdersByEmail.set(entity.email, id);
-    }
-  }
-
-  _processProjects(projectsData) {
-    this._projects.clear();
-
-    if (!projectsData) return;
-
-    Object.entries(projectsData).forEach(([projectId, projectData]) => {
-      const developers = this._extractProjectIds(projectData?.developers, {
-        type: 'developer'
-      });
-      const stakeholders = this._extractProjectIds(projectData?.stakeholders, {
-        type: 'stakeholder'
-      });
-
-      this._projects.set(projectId, { developers, stakeholders });
-    });
-  }
-
-  _extractProjectIds(rawData, { type } = {}) {
-    if (!rawData) return [];
-    const prefix = type === 'developer' ? 'dev_' : 'stk_';
-    const entries = normalizeProjectPeople(rawData, { type });
-    const ids = [];
-
-    const pushUnique = (value) => {
-      if (!value) return;
-      const key = value.toString().trim();
-      if (!key) return;
-      ids.push(key);
-    };
-
-    entries.forEach((entry) => {
-      if (!entry) return;
-      const candidate = (entry.id || entry.email || entry.name || '').toString().trim();
-      if (!candidate) return;
-
-      if (candidate.startsWith(prefix)) {
-        pushUnique(candidate);
-        return;
+      // Build developer entry if user has a developerId
+      if (userInfo.developerId) {
+        const devId = userInfo.developerId;
+        const entity = {
+          id: devId,
+          email,
+          emails: [email],
+          name,
+          active
+        };
+        this._developers.set(devId, entity);
+        if (email) this._developersByEmail.set(email, devId);
+        if (name) this._developersByName.set(name.toLowerCase(), devId);
+        this._nextDeveloperId = updateNextIdCounter(devId, 'dev_', this._nextDeveloperId);
       }
 
-      const resolved = type === 'developer'
-        ? this.resolveDeveloperId(candidate)
-        : this.resolveStakeholderId(candidate);
-
-      if (resolved) {
-        pushUnique(resolved);
-        return;
+      // Build stakeholder entry if user has a stakeholderId
+      if (userInfo.stakeholderId) {
+        const stkId = userInfo.stakeholderId;
+        const entity = {
+          id: stkId,
+          email,
+          name,
+          active,
+          teamId: userInfo.teamId || null
+        };
+        this._stakeholders.set(stkId, entity);
+        if (email) this._stakeholdersByEmail.set(email, stkId);
+        if (name) this._stakeholdersByName.set(name.toLowerCase(), stkId);
+        this._nextStakeholderId = updateNextIdCounter(stkId, 'stk_', this._nextStakeholderId);
       }
-
-      pushUnique(candidate);
-    });
-
-    return Array.from(new Set(ids));
+    }
   }
 
   _setupRealtimeListeners() {
-    // Listener para teams (must be first to resolve references)
+    // Listener para teams
     const teamsRef = ref(database, '/data/teams');
     onValue(teamsRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -277,29 +181,13 @@ class EntityDirectoryService {
       }
     });
 
-    // Listener para developers
-    const developersRef = ref(database, '/data/developers');
-    onValue(developersRef, (snapshot) => {
+    // Listener para /users/ (centralized model — replaces /data/developers + /data/stakeholders + /projects listeners)
+    const usersRef = ref(database, '/users');
+    onValue(usersRef, (snapshot) => {
       if (snapshot.exists()) {
-        this._processDevelopers(snapshot.val());
+        this._processUsers(snapshot.val());
         this._notifyListeners('developers');
-      }
-    });
-
-    // Listener para stakeholders
-    const stakeholdersRef = ref(database, '/data/stakeholders');
-    onValue(stakeholdersRef, (snapshot) => {
-      if (snapshot.exists()) {
-        this._processStakeholders(snapshot.val());
         this._notifyListeners('stakeholders');
-      }
-    });
-
-    // Listener para proyectos (listas de IDs)
-    const projectsRef = ref(database, '/projects');
-    onValue(projectsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        this._processProjects(snapshot.val());
         this._notifyListeners('projects');
       }
     });
@@ -421,141 +309,83 @@ class EntityDirectoryService {
   }
 
   /**
-   * Crea o actualiza un developer
+   * Finds the /users/ entry for a developer by their devId
+   * @returns {string|null} encodedEmail key or null
+   */
+  _findUserByDevId(devId) {
+    for (const [encodedEmail, user] of this._users) {
+      if (user.developerId === devId) return encodedEmail;
+    }
+    return null;
+  }
+
+  /**
+   * Finds the /users/ entry for a stakeholder by their stkId
+   * @returns {string|null} encodedEmail key or null
+   */
+  _findUserByStkId(stkId) {
+    for (const [encodedEmail, user] of this._users) {
+      if (user.stakeholderId === stkId) return encodedEmail;
+    }
+    return null;
+  }
+
+  /**
+   * Crea o actualiza un developer en /users/
    */
   async saveDeveloper(id, data) {
-    const primaryEmail = normalizeEmail(data.email);
-    const emailsArray = Array.isArray(data.emails)
-      ? data.emails.map(e => normalizeEmail(e)).filter(Boolean)
-      : [];
+    const email = normalizeEmail(data.email);
+    const name = normalizeName(data.name);
+    const active = data.active !== false;
 
-    const entity = {
-      email: primaryEmail,
-      name: normalizeName(data.name),
-      active: data.active !== false
+    // Find existing user by devId or by email
+    let encodedEmail = this._findUserByDevId(id);
+    if (!encodedEmail && email) {
+      encodedEmail = encodeEmailForFirebase(email);
+    }
+    if (!encodedEmail) throw new Error('Cannot save developer without email');
+
+    const userRef = ref(database, `/users/${encodedEmail}`);
+    const existingSnap = await get(userRef);
+    const existing = existingSnap.exists() ? existingSnap.val() : {};
+
+    const updated = {
+      ...existing,
+      name,
+      email,
+      active,
+      developerId: id
     };
 
-    // Only include emails array if it has values beyond primary email
-    if (emailsArray.length > 0) {
-      entity.emails = emailsArray;
-    }
+    await set(userRef, updated);
 
-    await set(ref(database, `/data/developers/${id}`), entity);
+    // Update local cache
+    const entity = { id, email, emails: [email], name, active };
+    this._developers.set(id, entity);
+    if (email) this._developersByEmail.set(email, id);
+    if (name) this._developersByName.set(name.toLowerCase(), id);
 
-    // Actualizar cache local
-    const cachedEntity = {
-      id,
-      ...entity,
-      emails: emailsArray.length > 0 ? emailsArray : (primaryEmail ? [primaryEmail] : [])
-    };
-    this._developers.set(id, cachedEntity);
-
-    // Index primary email
-    if (primaryEmail) {
-      this._developersByEmail.set(primaryEmail, id);
-    }
-
-    // Index all alternate emails
-    for (const altEmail of cachedEntity.emails) {
-      if (altEmail && !this._developersByEmail.has(altEmail)) {
-        this._developersByEmail.set(altEmail, id);
-      }
-    }
-
-    if (entity.name) {
-      this._developersByName.set(entity.name.toLowerCase(), id);
-    }
+    this._users.set(encodedEmail, { ...updated, _encodedEmail: encodedEmail });
 
     return id;
   }
 
   /**
-   * Adds an alternate email to an existing developer
-   * @param {string} developerId - The developer ID (e.g., 'dev_002')
-   * @param {string} alternateEmail - The alternate email to add
-   * @returns {Promise<boolean>} - True if successful
-   */
-  async addDeveloperEmail(developerId, alternateEmail) {
-    const developer = this._developers.get(developerId);
-    if (!developer) {
-      return false;
-    }
-
-    const normalizedAltEmail = normalizeEmail(alternateEmail);
-    if (!normalizedAltEmail) {
-      return false;
-    }
-
-    // Check if email already exists for another developer
-    const existingId = this._developersByEmail.get(normalizedAltEmail);
-    if (existingId && existingId !== developerId) {
-      console.warn(`Email ${alternateEmail} already belongs to developer ${existingId}`);
-      return false;
-    }
-
-    // Add to emails array
-    const currentEmails = developer.emails || [developer.email].filter(Boolean);
-    if (!currentEmails.includes(normalizedAltEmail)) {
-      currentEmails.push(normalizedAltEmail);
-    }
-
-    // Save to Firebase
-    await this.saveDeveloper(developerId, {
-      email: developer.email,
-      emails: currentEmails,
-      name: developer.name,
-      active: developer.active
-    });
-
-    return true;
-  }
-
-  /**
-   * Removes an alternate email from an existing developer
-   * @param {string} developerId - The developer ID
-   * @param {string} emailToRemove - The email to remove
-   * @returns {Promise<boolean>} - True if successful
-   */
-  async removeDeveloperEmail(developerId, emailToRemove) {
-    const developer = this._developers.get(developerId);
-    if (!developer) {
-      return false;
-    }
-
-    const normalizedEmail = normalizeEmail(emailToRemove);
-
-    // Cannot remove primary email
-    if (normalizedEmail === developer.email) {
-      console.warn('Cannot remove primary email');
-      return false;
-    }
-
-    const currentEmails = developer.emails || [];
-    const newEmails = currentEmails.filter(e => e !== normalizedEmail);
-
-    // Remove from index
-    this._developersByEmail.delete(normalizedEmail);
-
-    // Save to Firebase
-    await this.saveDeveloper(developerId, {
-      email: developer.email,
-      emails: newEmails,
-      name: developer.name,
-      active: developer.active
-    });
-
-    return true;
-  }
-
-  /**
-   * Deletes a developer by ID
+   * Deletes a developer by ID (removes developerId from /users/ entry)
    * @param {string} id - Developer ID (e.g., 'dev_001')
    */
   async deleteDeveloper(id) {
     const developer = this._developers.get(id);
     if (!developer) return;
 
-    await set(ref(database, `/data/developers/${id}`), null);
+    const encodedEmail = this._findUserByDevId(id);
+    if (encodedEmail) {
+      await set(ref(database, `/users/${encodedEmail}/developerId`), null);
+
+      // Update cached user
+      const user = this._users.get(encodedEmail);
+      if (user) delete user.developerId;
+    }
 
     // Clean up inverse indices
     if (developer.email) {
@@ -757,39 +587,65 @@ class EntityDirectoryService {
   }
 
   /**
-   * Crea o actualiza un stakeholder
+   * Crea o actualiza un stakeholder en /users/
    */
   async saveStakeholder(id, data) {
-    const entity = {
-      email: normalizeEmail(data.email),
-      name: normalizeName(data.name),
-      active: data.active !== false,
-      teamId: data.teamId || null
+    const email = normalizeEmail(data.email);
+    const name = normalizeName(data.name);
+    const active = data.active !== false;
+
+    // Find existing user by stkId or by email
+    let encodedEmail = this._findUserByStkId(id);
+    if (!encodedEmail && email) {
+      encodedEmail = encodeEmailForFirebase(email);
+    }
+    if (!encodedEmail) throw new Error('Cannot save stakeholder without email');
+
+    const userRef = ref(database, `/users/${encodedEmail}`);
+    const existingSnap = await get(userRef);
+    const existing = existingSnap.exists() ? existingSnap.val() : {};
+
+    const updated = {
+      ...existing,
+      name,
+      email,
+      active,
+      stakeholderId: id
     };
 
-    await set(ref(database, `/data/stakeholders/${id}`), entity);
+    if (data.teamId !== undefined) {
+      updated.teamId = data.teamId;
+    }
 
-    // Actualizar cache local
-    this._stakeholders.set(id, { id, ...entity });
-    if (entity.email) {
-      this._stakeholdersByEmail.set(entity.email, id);
-    }
-    if (entity.name) {
-      this._stakeholdersByName.set(entity.name.toLowerCase(), id);
-    }
+    await set(userRef, updated);
+
+    // Update local cache
+    const entity = { id, email, name, active, teamId: data.teamId || null };
+    this._stakeholders.set(id, entity);
+    if (email) this._stakeholdersByEmail.set(email, id);
+    if (name) this._stakeholdersByName.set(name.toLowerCase(), id);
+
+    this._users.set(encodedEmail, { ...updated, _encodedEmail: encodedEmail });
 
     return id;
   }
 
   /**
-   * Deletes a stakeholder by ID
+   * Deletes a stakeholder by ID (removes stakeholderId from /users/ entry)
    * @param {string} id - Stakeholder ID (e.g., 'stk_001')
    */
   async deleteStakeholder(id) {
     const stakeholder = this._stakeholders.get(id);
     if (!stakeholder) return;
 
-    await set(ref(database, `/data/stakeholders/${id}`), null);
+    const encodedEmail = this._findUserByStkId(id);
+    if (encodedEmail) {
+      await set(ref(database, `/users/${encodedEmail}/stakeholderId`), null);
+
+      // Update cached user
+      const user = this._users.get(encodedEmail);
+      if (user) delete user.stakeholderId;
+    }
 
     // Clean up inverse indices
     if (stakeholder.email) {
@@ -834,19 +690,19 @@ class EntityDirectoryService {
     return await this.createStakeholder(email, derivedName);
   }
 
-  // ==================== PROJECT TEAMS ====================
+  // ==================== PROJECT TEAMS (derived from /users/) ====================
 
   /**
-   * Obtiene los IDs de developers de un proyecto
+   * Obtiene los IDs de developers de un proyecto (from /users/ projects assignments)
    */
   async getProjectDeveloperIds(projectId) {
-    try {
-      const project = this._projects.get(projectId);
-      if (!project) return [];
-      return Array.isArray(project.developers) ? [...project.developers] : [];
-    } catch (error) {
-return [];
+    const ids = [];
+    for (const user of this._users.values()) {
+      if (user.developerId && user.projects?.[projectId]?.developer === true) {
+        ids.push(user.developerId);
+      }
     }
+    return ids;
   }
 
   /**
@@ -863,16 +719,16 @@ return [];
   }
 
   /**
-   * Obtiene los IDs de stakeholders de un proyecto
+   * Obtiene los IDs de stakeholders de un proyecto (from /users/ projects assignments)
    */
   async getProjectStakeholderIds(projectId) {
-    try {
-      const project = this._projects.get(projectId);
-      if (!project) return [];
-      return Array.isArray(project.stakeholders) ? [...project.stakeholders] : [];
-    } catch (error) {
-return [];
+    const ids = [];
+    for (const user of this._users.values()) {
+      if (user.stakeholderId && user.projects?.[projectId]?.stakeholder === true) {
+        ids.push(user.stakeholderId);
+      }
     }
+    return ids;
   }
 
   /**
@@ -889,17 +745,38 @@ return [];
   }
 
   /**
-   * Actualiza los developers de un proyecto
+   * Assigns a user to a project with a role (writes to /users/{encodedEmail}/projects/{projectId})
    */
-  async setProjectDevelopers(projectId, developerIds) {
-    await set(ref(database, `/projects/${projectId}/developers`), developerIds);
+  async setUserProjectRole(email, projectId, role, value) {
+    const encodedEmail = encodeEmailForFirebase(normalizeEmail(email));
+    await set(ref(database, `/users/${encodedEmail}/projects/${projectId}/${role}`), value);
   }
 
   /**
-   * Actualiza los stakeholders de un proyecto
+   * Gets all users with their centralized data
+   * @returns {Array} Array of user objects from /users/
    */
-  async setProjectStakeholders(projectId, stakeholderIds) {
-    await set(ref(database, `/projects/${projectId}/stakeholders`), stakeholderIds);
+  getAllUsers() {
+    return Array.from(this._users.values());
+  }
+
+  /**
+   * Gets a user by encoded email
+   * @param {string} encodedEmail - The encoded email key
+   * @returns {Object|null} User data or null
+   */
+  getUser(encodedEmail) {
+    return this._users.get(encodedEmail) || null;
+  }
+
+  /**
+   * Gets a user by raw email
+   * @param {string} email - Raw email address
+   * @returns {Object|null} User data or null
+   */
+  getUserByEmail(email) {
+    const encodedEmail = encodeEmailForFirebase(normalizeEmail(email));
+    return this._users.get(encodedEmail) || null;
   }
 
   // ==================== UTILITIES ====================

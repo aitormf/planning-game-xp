@@ -1,16 +1,17 @@
 /**
  * Tests for onAuthUserCreated auto-provision logic.
  *
- * Tests the normalizeGmailEmail and isEmailPreAuthorized helpers,
- * and the extended setEncodedEmailClaim trigger behavior.
+ * Tests the normalizeGmailEmail, isEmailPreAuthorized, hasActiveProject,
+ * and generateNextId helpers, plus the setEncodedEmailClaim trigger behavior.
+ *
+ * isEmailPreAuthorized now reads from /users/{encodedEmail}/projects
+ * instead of /data/allowedUsers.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ==================== normalizeGmailEmail tests ====================
 
 describe('normalizeGmailEmail', () => {
-  // Import the function by extracting it from the module
-  // Since functions/index.js doesn't export it, we re-implement the pure function for testing
   function normalizeGmailEmail(email) {
     if (!email) return '';
     const lower = email.trim().toLowerCase();
@@ -89,24 +90,58 @@ describe('encodeEmailForFirebase', () => {
   });
 });
 
-// ==================== Auto-provision logic tests ====================
+// ==================== hasActiveProject tests ====================
 
-describe('setEncodedEmailClaim auto-provision', () => {
-  let mockDatabase;
-  let mockAuth;
+describe('hasActiveProject', () => {
+  function hasActiveProject(projects) {
+    if (!projects || typeof projects !== 'object') return false;
+    return Object.values(projects).some(p => p.developer === true || p.stakeholder === true);
+  }
 
-  beforeEach(() => {
-    mockDatabase = {
-      ref: vi.fn().mockReturnThis(),
-      once: vi.fn(),
-      set: vi.fn().mockResolvedValue(undefined),
-    };
-    mockAuth = {
-      getUser: vi.fn(),
-      setCustomUserClaims: vi.fn().mockResolvedValue(undefined),
-    };
+  it('should return true when user is developer in at least one project', () => {
+    expect(hasActiveProject({
+      PlanningGame: { developer: true, stakeholder: false }
+    })).toBe(true);
   });
 
+  it('should return true when user is stakeholder in at least one project', () => {
+    expect(hasActiveProject({
+      Cinema4D: { developer: false, stakeholder: true }
+    })).toBe(true);
+  });
+
+  it('should return true when user has both roles', () => {
+    expect(hasActiveProject({
+      PlanningGame: { developer: true, stakeholder: true }
+    })).toBe(true);
+  });
+
+  it('should return false when all roles are false', () => {
+    expect(hasActiveProject({
+      PlanningGame: { developer: false, stakeholder: false }
+    })).toBe(false);
+  });
+
+  it('should return false for null/undefined', () => {
+    expect(hasActiveProject(null)).toBe(false);
+    expect(hasActiveProject(undefined)).toBe(false);
+  });
+
+  it('should return false for empty projects', () => {
+    expect(hasActiveProject({})).toBe(false);
+  });
+
+  it('should return true if any project has an active role among multiple', () => {
+    expect(hasActiveProject({
+      PlanningGame: { developer: false, stakeholder: false },
+      Cinema4D: { developer: true, stakeholder: false }
+    })).toBe(true);
+  });
+});
+
+// ==================== Auto-provision logic tests (reads /users/) ====================
+
+describe('setEncodedEmailClaim auto-provision', () => {
   function encodeEmailForFirebase(email) {
     if (!email) return '';
     return email.replace(/@/g, '|').replace(/\./g, '!').replace(/#/g, '-');
@@ -123,43 +158,46 @@ describe('setEncodedEmailClaim auto-provision', () => {
     return lower;
   }
 
+  function hasActiveProject(projects) {
+    if (!projects || typeof projects !== 'object') return false;
+    return Object.values(projects).some(p => p.developer === true || p.stakeholder === true);
+  }
+
   async function isEmailPreAuthorized(email, dbRef) {
     const normalizedEmail = email.trim().toLowerCase();
     const encodedExact = encodeEmailForFirebase(normalizedEmail);
 
-    const exactVal = await dbRef(`/data/allowedUsers/${encodedExact}`);
-    if (exactVal === true) return true;
+    const exactVal = await dbRef(`/users/${encodedExact}/projects`);
+    if (hasActiveProject(exactVal)) return true;
 
     const gmailNormalized = normalizeGmailEmail(normalizedEmail);
     if (gmailNormalized !== normalizedEmail) {
       const encodedNormalized = encodeEmailForFirebase(gmailNormalized);
-      const normalizedVal = await dbRef(`/data/allowedUsers/${encodedNormalized}`);
-      if (normalizedVal === true) return true;
+      const normalizedVal = await dbRef(`/users/${encodedNormalized}/projects`);
+      if (hasActiveProject(normalizedVal)) return true;
     }
 
     return false;
   }
 
-  it('should find exact email match in allowedUsers', async () => {
+  it('should find exact email match in /users/', async () => {
     const dbLookup = vi.fn()
-      .mockResolvedValueOnce(true); // exact match found
+      .mockResolvedValueOnce({ PlanningGame: { developer: true, stakeholder: false } });
 
     const result = await isEmailPreAuthorized('user@geniova.com', dbLookup);
     expect(result).toBe(true);
-    expect(dbLookup).toHaveBeenCalledWith('/data/allowedUsers/user|geniova!com');
+    expect(dbLookup).toHaveBeenCalledWith('/users/user|geniova!com/projects');
   });
 
-  it('should find Gmail-normalized match in allowedUsers', async () => {
+  it('should find Gmail-normalized match in /users/', async () => {
     const dbLookup = vi.fn()
-      .mockResolvedValueOnce(null)  // exact match NOT found (jorge.casar encoded)
-      .mockResolvedValueOnce(true); // normalized match found (jorgecasar encoded)
+      .mockResolvedValueOnce(null)  // exact match NOT found
+      .mockResolvedValueOnce({ PlanningGame: { developer: true, stakeholder: false } });
 
     const result = await isEmailPreAuthorized('jorge.casar@gmail.com', dbLookup);
     expect(result).toBe(true);
-    // First call: exact encoded email
-    expect(dbLookup).toHaveBeenCalledWith('/data/allowedUsers/jorge!casar|gmail!com');
-    // Second call: normalized encoded email
-    expect(dbLookup).toHaveBeenCalledWith('/data/allowedUsers/jorgecasar|gmail!com');
+    expect(dbLookup).toHaveBeenCalledWith('/users/jorge!casar|gmail!com/projects');
+    expect(dbLookup).toHaveBeenCalledWith('/users/jorgecasar|gmail!com/projects');
   });
 
   it('should return false for non-authorized email', async () => {
@@ -169,28 +207,29 @@ describe('setEncodedEmailClaim auto-provision', () => {
     expect(result).toBe(false);
   });
 
+  it('should return false when user exists but has no active projects', async () => {
+    const dbLookup = vi.fn()
+      .mockResolvedValueOnce({ PlanningGame: { developer: false, stakeholder: false } });
+
+    const result = await isEmailPreAuthorized('user@geniova.com', dbLookup);
+    expect(result).toBe(false);
+  });
+
   it('should not try Gmail normalization for non-Gmail domains', async () => {
     const dbLookup = vi.fn().mockResolvedValueOnce(null);
 
     const result = await isEmailPreAuthorized('user@company.com', dbLookup);
     expect(result).toBe(false);
-    // Only one call (no Gmail normalization needed)
     expect(dbLookup).toHaveBeenCalledTimes(1);
   });
 
   it('should set allowed=true in claims when email is pre-authorized', () => {
-    // Simulate the claim-setting logic
     const currentClaims = { encodedEmail: 'old' };
     const isAllowed = true;
     const encodedEmail = 'user|geniova!com';
 
-    const newClaims = {
-      ...currentClaims,
-      encodedEmail,
-    };
-    if (isAllowed) {
-      newClaims.allowed = true;
-    }
+    const newClaims = { ...currentClaims, encodedEmail };
+    if (isAllowed) newClaims.allowed = true;
 
     expect(newClaims).toEqual({
       encodedEmail: 'user|geniova!com',
@@ -203,17 +242,10 @@ describe('setEncodedEmailClaim auto-provision', () => {
     const isAllowed = false;
     const encodedEmail = 'unknown|domain!com';
 
-    const newClaims = {
-      ...currentClaims,
-      encodedEmail,
-    };
-    if (isAllowed) {
-      newClaims.allowed = true;
-    }
+    const newClaims = { ...currentClaims, encodedEmail };
+    if (isAllowed) newClaims.allowed = true;
 
-    expect(newClaims).toEqual({
-      encodedEmail: 'unknown|domain!com',
-    });
+    expect(newClaims).toEqual({ encodedEmail: 'unknown|domain!com' });
     expect(newClaims.allowed).toBeUndefined();
   });
 
@@ -222,17 +254,64 @@ describe('setEncodedEmailClaim auto-provision', () => {
     const isAllowed = true;
     const encodedEmail = 'user|geniova!com';
 
-    const newClaims = {
-      ...currentClaims,
-      encodedEmail,
-    };
-    if (isAllowed) {
-      newClaims.allowed = true;
-    }
+    const newClaims = { ...currentClaims, encodedEmail };
+    if (isAllowed) newClaims.allowed = true;
 
     expect(newClaims).toEqual({
       encodedEmail: 'user|geniova!com',
       allowed: true,
     });
+  });
+});
+
+// ==================== generateNextId tests ====================
+
+describe('generateNextId', () => {
+  async function generateNextId(prefix, field, usersData) {
+    let maxNum = 0;
+    for (const userData of Object.values(usersData)) {
+      const id = userData[field];
+      if (id && id.startsWith(prefix)) {
+        const num = parseInt(id.replace(prefix, ''), 10);
+        if (num > maxNum) maxNum = num;
+      }
+    }
+    return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
+  }
+
+  it('should generate dev_001 when no developers exist', async () => {
+    const result = await generateNextId('dev_', 'developerId', {});
+    expect(result).toBe('dev_001');
+  });
+
+  it('should generate next sequential ID', async () => {
+    const users = {
+      'user1': { developerId: 'dev_001' },
+      'user2': { developerId: 'dev_005' },
+      'user3': { developerId: 'dev_003' },
+    };
+    const result = await generateNextId('dev_', 'developerId', users);
+    expect(result).toBe('dev_006');
+  });
+
+  it('should generate stk_001 when no stakeholders exist', async () => {
+    const result = await generateNextId('stk_', 'stakeholderId', {});
+    expect(result).toBe('stk_001');
+  });
+
+  it('should handle users without the field (skip them)', async () => {
+    const users = {
+      'user1': { developerId: 'dev_003' },
+      'user2': { name: 'No dev ID' },
+      'user3': { developerId: 'dev_001' },
+    };
+    const result = await generateNextId('dev_', 'developerId', users);
+    expect(result).toBe('dev_004');
+  });
+
+  it('should zero-pad IDs to 3 digits', async () => {
+    const users = { 'u': { stakeholderId: 'stk_009' } };
+    const result = await generateNextId('stk_', 'stakeholderId', users);
+    expect(result).toBe('stk_010');
   });
 });
