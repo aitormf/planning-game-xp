@@ -167,7 +167,7 @@ export class ThemeEditor extends LitElement {
   // --- Validation ---
 
   _validateConfig() {
-    if (!this._config?.tokens) return false;
+    if (!this._config?.tokens?.brand || !this._config?.tokens?.status) return false;
 
     const { brand, status } = this._config.tokens;
     for (const color of Object.values(brand)) {
@@ -297,7 +297,8 @@ export class ThemeEditor extends LitElement {
   }
 
   _renderBrandColors() {
-    const brand = this._config.tokens.brand;
+    const brand = this._config?.tokens?.brand;
+    if (!brand) return html`<p class="error-message">Brand colors not configured.</p>`;
     return html`
       <h3 class="section-title">Brand Colors</h3>
       <div class="color-grid">
@@ -309,7 +310,8 @@ export class ThemeEditor extends LitElement {
   }
 
   _renderStatusColors() {
-    const status = this._config.tokens.status;
+    const status = this._config?.tokens?.status;
+    if (!status) return html`<p class="error-message">Status colors not configured.</p>`;
     return html`
       <h3 class="section-title">Status Colors</h3>
       <div class="color-grid">

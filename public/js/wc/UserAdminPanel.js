@@ -9,6 +9,7 @@
 import { LitElement, html, nothing } from 'https://cdn.jsdelivr.net/npm/lit@3.0.2/+esm';
 import { UserAdminPanelStyles } from './user-admin-panel-styles.js';
 import { functions, database, ref, get, httpsCallable } from '/firebase-config.js';
+import './MultiSelect.js';
 
 class UserAdminPanel extends LitElement {
   static get properties() {
