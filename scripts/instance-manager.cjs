@@ -255,18 +255,20 @@ function activateInstance(name, { verbose = true } = {}) {
   }
 
   // Symlink org logo: find first image file matching org-logo.* or logo.*
+  // Always clean up previous org-logo.* symlinks first
+  for (const otherExt of ORG_LOGO_EXTENSIONS) {
+    const otherDest = path.join(ROOT_DIR, ORG_LOGO_DEST + otherExt);
+    try { fs.lstatSync(otherDest); fs.unlinkSync(otherDest); } catch { /* does not exist */ }
+  }
   const orgLogoFile = findOrgLogo(instanceDir);
   if (orgLogoFile) {
     const ext = path.extname(orgLogoFile);
     const destPath = path.join(ROOT_DIR, ORG_LOGO_DEST + ext);
-    // Remove any previous org-logo.* symlinks with different extensions
-    for (const otherExt of ORG_LOGO_EXTENSIONS) {
-      const otherDest = path.join(ROOT_DIR, ORG_LOGO_DEST + otherExt);
-      try { fs.lstatSync(otherDest); fs.unlinkSync(otherDest); } catch { /* does not exist */ }
-    }
     createLink(path.join(instanceDir, orgLogoFile), destPath);
     if (verbose) console.log(`  Linked: public/images/org-logo${ext}`);
     linked++;
+  } else {
+    if (verbose) console.log('  No org logo found — cleared previous symlinks');
   }
 
   // Symlink emulator-data directory

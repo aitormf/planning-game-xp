@@ -651,8 +651,11 @@ let user = null;
         if (!container) return;
 
         const orgName = APP_CONSTANTS.ORG_NAME;
+        // If no org name configured, skip branding entirely
+        if (!orgName) return;
+
         const imageExtensions = ['.png', '.jpg', '.jpeg', '.svg', '.webp'];
-        const isImagePath = orgName && imageExtensions.some(ext => orgName.toLowerCase().endsWith(ext));
+        const isImagePath = imageExtensions.some(ext => orgName.toLowerCase().endsWith(ext));
 
         // Try to load org logo image (symlinked from instance to /images/org-logo.*)
         // We try common extensions since the instance may have any format
