@@ -11,10 +11,6 @@ vi.mock('../../public/firebase-config.js', () => ({
   onValue: vi.fn()
 }));
 
-vi.mock('../../public/js/utils/project-people-utils.js', () => ({
-  normalizeProjectPeople: vi.fn().mockReturnValue([])
-}));
-
 describe('EntityDirectoryService delete methods', () => {
   let service;
 
@@ -32,6 +28,7 @@ describe('EntityDirectoryService delete methods', () => {
     service._stakeholders.clear();
     service._stakeholdersByEmail.clear();
     service._stakeholdersByName.clear();
+    service._users.clear();
     service._listeners = [];
 
     // Add test developers
@@ -66,6 +63,20 @@ describe('EntityDirectoryService delete methods', () => {
     });
     service._stakeholdersByEmail.set('carol@example.com', 'stk_001');
     service._stakeholdersByName.set('carol stakeholder', 'stk_001');
+
+    // Add corresponding /users/ entries (required for _findUserByDevId / _findUserByStkId)
+    service._users.set('alice|example!com', {
+      name: 'Alice Developer', email: 'alice@example.com',
+      developerId: 'dev_001', active: true, _encodedEmail: 'alice|example!com'
+    });
+    service._users.set('bob|example!com', {
+      name: 'Bob Developer', email: 'bob@example.com',
+      developerId: 'dev_002', active: true, _encodedEmail: 'bob|example!com'
+    });
+    service._users.set('carol|example!com', {
+      name: 'Carol Stakeholder', email: 'carol@example.com',
+      stakeholderId: 'stk_001', active: true, teamId: 'team_01', _encodedEmail: 'carol|example!com'
+    });
   });
 
   describe('deleteDeveloper', () => {

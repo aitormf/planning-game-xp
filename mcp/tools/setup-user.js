@@ -11,27 +11,34 @@ export const setupMcpUserSchema = z.object({
 export async function setupMcpUser({ developerId, name, email } = {}) {
   const db = getDatabase();
 
-  // Load all developers (needed for listing, name/email matching, and validation)
-  const snapshot = await db.ref('/data/developers').once('value');
-  const developersData = snapshot.val();
+  // Load all users from centralized /users/ model
+  const snapshot = await db.ref('/users').once('value');
+  const usersData = snapshot.val();
 
-  if (!developersData) {
+  if (!usersData) {
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
-          message: 'No developers found in the database. Add developers first.',
+          message: 'No users found in the database. Add users first.',
           developers: []
         }, null, 2)
       }]
     };
   }
 
+  // Build developer list from /users/ entries that have a developerId
   const allDevs = [];
-  for (const [devId, devData] of Object.entries(developersData)) {
-    if (!devId.startsWith('dev_') || typeof devData !== 'object') continue;
-    if (devData.active === false) continue;
-    allDevs.push({ id: devId, name: devData.name || '', email: devData.email || '' });
+  for (const [, userData] of Object.entries(usersData)) {
+    if (!userData || typeof userData !== 'object') continue;
+    if (!userData.developerId) continue;
+    if (userData.active === false) continue;
+    allDevs.push({
+      id: userData.developerId,
+      name: userData.name || '',
+      email: userData.email || '',
+      stakeholderId: userData.stakeholderId || null
+    });
   }
   allDevs.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -59,7 +66,7 @@ export async function setupMcpUser({ developerId, name, email } = {}) {
           type: 'text',
           text: JSON.stringify({
             message: `Multiple developers match "${name || email}". Ask the user which one they are and call again with the developerId.`,
-            matches
+            matches: matches.map(({ stakeholderId: _s, ...rest }) => rest)
           }, null, 2)
         }]
       };
@@ -69,7 +76,7 @@ export async function setupMcpUser({ developerId, name, email } = {}) {
           type: 'text',
           text: JSON.stringify({
             message: `No developer found matching "${name || email}". Ask the user to pick from the full list.`,
-            developers: allDevs
+            developers: allDevs.map(({ stakeholderId: _s, ...rest }) => rest)
           }, null, 2)
         }]
       };
@@ -88,7 +95,7 @@ export async function setupMcpUser({ developerId, name, email } = {}) {
             ? `MCP user is currently configured as "${currentUser.name}" (${currentUser.developerId}). To reconfigure, ask the user their name or email and call setup_mcp_user with the name or email parameter.`
             : 'MCP user is not configured. Ask the user their name or email, then call setup_mcp_user again with the name or email parameter to auto-match.',
           currentUser: currentUser || null,
-          developers: allDevs
+          developers: allDevs.map(({ stakeholderId: _s, ...rest }) => rest)
         }, null, 2)
       }]
     };
@@ -101,30 +108,15 @@ export async function setupMcpUser({ developerId, name, email } = {}) {
   const devData = allDevs.find(d => d.id === developerId);
 
   if (!devData) {
-    throw new Error(`Developer "${developerId}" not found in /data/developers.`);
+    throw new Error(`Developer "${developerId}" not found in /users/.`);
   }
 
   const userData = {
     developerId,
-    stakeholderId: null,
+    stakeholderId: devData.stakeholderId || null,
     name: devData.name,
     email: devData.email
   };
-
-  // Auto-match stakeholder by email
-  if (devData.email) {
-    const stkSnapshot = await db.ref('/data/stakeholders').once('value');
-    const stakeholdersData = stkSnapshot.val() || {};
-
-    for (const [stkId, stkData] of Object.entries(stakeholdersData)) {
-      if (!stkId.startsWith('stk_') || typeof stkData !== 'object') continue;
-      if (stkData.active === false) continue;
-      if (stkData.email && stkData.email.toLowerCase() === devData.email.toLowerCase()) {
-        userData.stakeholderId = stkId;
-        break;
-      }
-    }
-  }
 
   writeMcpUser(userData);
 
