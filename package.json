@@ -16,6 +16,7 @@
     "security:fix": "node scripts/security-check-and-fix.js --fix",
     "security:strict": "node scripts/security-check-and-fix.js --strict",
     "syntax:check": "node scripts/syntax-check.js",
+    "postinstall": "[ -d mcp ] && (cd mcp && npm install --ignore-scripts) || true",
     "prepare": "husky install",
     "pre-commit": "npm run security:check",
     "generate-changelog": "node scripts/generate-changelog.cjs",
