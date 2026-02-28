@@ -842,14 +842,21 @@ export const FirebaseService = {
       // Limpiar campos innecesarios antes de guardar
       const cardToSave = this.cleanCardBeforeSave(card);
 
-      // Normalizar status y priority para bugs - nunca deben ser vacíos
-      if (card.group === 'bugs' || cardToSave.group === 'bugs') {
-        if (!cardToSave.status || cardToSave.status.trim() === '') {
+      // Normalizar status - nunca debe ser vacío en nuevas cards
+      if (isNewCard && (!cardToSave.status || cardToSave.status.trim() === '')) {
+        const group = card.group || cardToSave.group;
+        if (group === 'bugs') {
           cardToSave.status = 'Created';
-}
-        if (!cardToSave.priority || cardToSave.priority.trim() === '') {
-          cardToSave.priority = 'Not Evaluated';
-}
+        } else if (group === 'proposals') {
+          cardToSave.status = 'Proposed';
+        } else {
+          cardToSave.status = 'To Do';
+        }
+      }
+      // Normalizar priority para bugs - nunca debe ser vacío
+      if ((card.group === 'bugs' || cardToSave.group === 'bugs') &&
+          (!cardToSave.priority || cardToSave.priority.trim() === '')) {
+        cardToSave.priority = 'Not Evaluated';
       }
       // Use update() for existing cards to preserve fields not loaded on the component
       // (e.g. startDate, endDate, commits when editing only notes).
