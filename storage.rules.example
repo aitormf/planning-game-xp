@@ -4,37 +4,19 @@ service firebase.storage {
 
     // --- Helper Functions for Permissions ---
 
-    // App Admins: can upload, approve, deprecate, and delete apps
-    // Replace with your admin emails
+    // Check if user has the 'allowed' custom claim (set via Firebase Auth Custom Claims)
+    function isAllowed() {
+      return request.auth != null && request.auth.token.allowed == true;
+    }
+
+    // Check if user has the 'isAppAdmin' custom claim
     function isAppAdmin() {
-      let email = request.auth.token.email;
-      return request.auth != null && (
-        email == 'YOUR_ADMIN_EMAIL'
-      );
+      return request.auth != null && request.auth.token.isAppAdmin == true;
     }
 
-    // App Uploaders: can only upload apps (not approve/delete)
-    // Replace with your uploader emails
-    function isAppUploader() {
-      let email = request.auth.token.email;
-      return request.auth != null && (
-        email == 'YOUR_UPLOADER_EMAIL'
-      );
-    }
-
-    // Can upload apps: admins OR uploaders
+    // Can upload apps: admins or users with 'isAppUploader' custom claim
     function canUploadApps() {
-      return isAppAdmin() || isAppUploader();
-    }
-
-    function isReadAllowed() {
-      // Replace with your domain
-      let isDomainUser = request.auth.token.email.matches(".*@YOUR_DOMAIN\\.com$");
-      return isDomainUser;
-    }
-
-    function isWriteAllowed() {
-      return isAppAdmin();
+      return isAppAdmin() || (request.auth != null && request.auth.token.isAppUploader == true);
     }
 
     // --- Path-specific Rules ---
@@ -46,20 +28,20 @@ service firebase.storage {
     }
 
     match /c4d/{fileType}/{fileName} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAllowed();
     }
 
     match /bug-attachments/{projectId}/{cardId}/{fileName} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAllowed();
     }
 
     match /task-attachments/{projectId}/{cardId}/{fileName} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAllowed();
     }
 
     match /{allPaths=**} {
-      allow read: if request.auth != null && isReadAllowed();
-      allow write: if isWriteAllowed();
+      allow read: if isAllowed();
+      allow write: if isAllowed();
     }
   }
 }
