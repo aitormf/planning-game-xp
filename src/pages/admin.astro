@@ -214,7 +214,7 @@ import Layout from '../layouts/Layout.astro';
               <ul id="groupList-manager" class="group-list"></ul>
               <div class="group-add">
                 <select id="groupAdd-manager" class="filter-input group-select">
-                  <option value="">Añadir developer...</option>
+                  <option value="">Añadir manager...</option>
                 </select>
               </div>
             </div>
@@ -3322,7 +3322,8 @@ import Layout from '../layouts/Layout.astro';
 
       // Render dropdown with unassigned developers
       const selectEl = document.getElementById(`groupAdd-${groupKey}`);
-      selectEl.innerHTML = '<option value="">Añadir developer...</option>';
+      const groupLabels = { internal: 'developer', external: 'developer', manager: 'manager' };
+      selectEl.innerHTML = `<option value="">Añadir ${groupLabels[groupKey] || 'developer'}...</option>`;
 
       for (const [devId, dev] of Object.entries(allDevelopers)) {
         if (!assigned.has(devId) && dev && dev.name) {
