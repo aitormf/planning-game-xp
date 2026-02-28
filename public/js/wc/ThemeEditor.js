@@ -4,6 +4,15 @@ import { ThemeLoaderService } from '../services/theme-loader-service.js';
 
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 
+const DEFAULT_CONFIG = {
+  tokens: {
+    brand: { primary: '#4a9eff', primaryHover: '#3a8eef', secondary: '#ec3e95', secondaryHover: '#d81b60' },
+    status: { todo: '#449bd3', inProgress: '#cce500', toValidate: '#ff6600', done: '#d4edda', blocked: '#f8d7da', expedited: '#ec3e95' }
+  },
+  branding: { appName: 'Planning Game XP', logo: '/images/icono_PGame.png', primaryColor: '#4a9eff' },
+  features: { darkMode: true }
+};
+
 const BRAND_COLOR_LABELS = {
   primary: 'Primary',
   primaryHover: 'Primary Hover',
@@ -60,16 +69,26 @@ export class ThemeEditor extends LitElement {
     this._isLoading = true;
     try {
       const config = await ThemeLoaderService.loadConfig();
-      if (!config) {
-        throw new Error('No theme configuration found');
-      }
-      this._config = structuredClone(config);
-      this._originalConfig = structuredClone(config);
+      const merged = this._mergeWithDefaults(config || {});
+      this._config = structuredClone(merged);
+      this._originalConfig = structuredClone(merged);
     } catch (error) {
       console.error('Failed to load theme config:', error);
-      this._config = null;
+      this._config = structuredClone(DEFAULT_CONFIG);
+      this._originalConfig = structuredClone(DEFAULT_CONFIG);
     }
     this._isLoading = false;
+  }
+
+  _mergeWithDefaults(config) {
+    return {
+      tokens: {
+        brand: { ...DEFAULT_CONFIG.tokens.brand, ...config.tokens?.brand },
+        status: { ...DEFAULT_CONFIG.tokens.status, ...config.tokens?.status },
+      },
+      branding: { ...DEFAULT_CONFIG.branding, ...config.branding },
+      features: { ...DEFAULT_CONFIG.features, ...config.features },
+    };
   }
 
   // --- Color change handlers ---
@@ -144,12 +163,14 @@ export class ThemeEditor extends LitElement {
 
   async _handleResetDefaults() {
     try {
-      const response = await fetch('/theme-config.json');
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const defaults = await response.json();
-      this._config = structuredClone(defaults);
+      let defaults = DEFAULT_CONFIG;
+      try {
+        const response = await fetch('/theme-config.json');
+        if (response.ok) {
+          defaults = await response.json();
+        }
+      } catch { /* use built-in defaults */ }
+      this._config = structuredClone(this._mergeWithDefaults(defaults));
       this._isDirty = true;
 
       if (this._livePreview) {
@@ -331,14 +352,14 @@ export class ThemeEditor extends LitElement {
   }
 
   _renderBranding() {
-    const branding = this._config.branding;
+    const branding = this._config?.branding || {};
     return html`
       <h3 class="section-title">App Branding</h3>
       <div class="form-group">
         <label>Application Name</label>
         <input
           type="text"
-          .value=${branding.appName}
+          .value=${branding.appName || ''}
           @input=${(e) => this._handleBrandingChange('appName', e.target.value)}
         />
       </div>
@@ -346,7 +367,7 @@ export class ThemeEditor extends LitElement {
         <label>Logo URL</label>
         <input
           type="url"
-          .value=${branding.logo}
+          .value=${branding.logo || ''}
           @input=${(e) => this._handleBrandingChange('logo', e.target.value)}
           placeholder="/images/logo.png"
         />
@@ -387,7 +408,7 @@ export class ThemeEditor extends LitElement {
   }
 
   _renderFeatures() {
-    const features = this._config.features;
+    const features = this._config?.features || {};
     return html`
       <h3 class="section-title">Feature Flags</h3>
       <div class="feature-toggle">

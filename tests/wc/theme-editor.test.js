@@ -113,21 +113,23 @@ describe('ThemeEditor', () => {
       expect(editor._isLoading).toBe(false);
     });
 
-    it('should set config to null if loadConfig returns null', async () => {
+    it('should use defaults if loadConfig returns null', async () => {
       mockLoadConfig.mockResolvedValue(null);
       const editor = new ThemeEditor();
       await editor._loadConfig();
 
-      expect(editor._config).toBeNull();
+      expect(editor._config).not.toBeNull();
+      expect(editor._config.tokens.brand.primary).toBe('#4a9eff');
       expect(editor._isLoading).toBe(false);
     });
 
-    it('should set config to null on error', async () => {
+    it('should use defaults on error', async () => {
       mockLoadConfig.mockRejectedValue(new Error('Network error'));
       const editor = new ThemeEditor();
       await editor._loadConfig();
 
-      expect(editor._config).toBeNull();
+      expect(editor._config).not.toBeNull();
+      expect(editor._config.tokens.brand.primary).toBe('#4a9eff');
       expect(editor._isLoading).toBe(false);
     });
 
