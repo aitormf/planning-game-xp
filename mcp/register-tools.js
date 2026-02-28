@@ -11,6 +11,7 @@ import { listPlansSchema, listPlans, getPlanSchema, getPlan, createPlanSchema, c
 import { listPlanProposalsSchema, listPlanProposals, getPlanProposalSchema, getPlanProposal, createPlanProposalSchema, createPlanProposal, updatePlanProposalSchema, updatePlanProposal, deletePlanProposalSchema, deletePlanProposal } from './tools/plan-proposals.js';
 import { listGlobalConfigSchema, listGlobalConfig, getGlobalConfigSchema, getGlobalConfig, createGlobalConfigSchema, createGlobalConfig, updateGlobalConfigSchema, updateGlobalConfig, deleteGlobalConfigSchema, deleteGlobalConfig } from './tools/global-config.js';
 import { setupMcpUserSchema, setupMcpUser } from './tools/setup-user.js';
+import { provisionUserSchema, provisionUser } from './tools/provision-user.js';
 import { checkForUpdates, getUpdateNoticeOnce, getMcpStatus, getLocalVersion, updateMcp, resetNotificationFlag, setLatestVersionInFirebase } from './version-check.js';
 import { USAGE_RULES_CONTENT } from './usage-rules.js';
 import { isMcpUserConfigured } from './user.js';
@@ -292,6 +293,11 @@ export function createMcpServer(serverName) {
   // ── User Setup tool ──
   server.tool('setup_mcp_user', 'Configure MCP user identity. Accepts name, email, or developerId to auto-match. Without params: lists developers and asks the user to identify themselves. Auto-matches stakeholder by email.', setupMcpUserSchema.shape, wrapWithUpdateNotice(async (params) => {
     return await setupMcpUser(params);
+  }));
+
+  // ── User Provisioning tool ──
+  server.tool('provision_user', 'Provision a new user or update an existing one in /users/. Creates user record, auto-generates developer/stakeholder IDs, and assigns projects. Idempotent: safe to re-run.', provisionUserSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await provisionUser(params);
   }));
 
   // ── Usage Rules resource ──

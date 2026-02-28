@@ -20,10 +20,12 @@ class UserAdminPanel extends LitElement {
       _editingEmail: { type: String, state: true },
       _formName: { type: String, state: true },
       _formEmail: { type: String, state: true },
-      _formProjectId: { type: String, state: true },
+      _formProjectIds: { type: Array, state: true },
       _formDeveloper: { type: Boolean, state: true },
       _formStakeholder: { type: Boolean, state: true },
       _searchQuery: { type: String, state: true },
+      _onboardingSteps: { type: Array, state: true },
+      _onboardingActive: { type: Boolean, state: true },
     };
   }
 
@@ -39,6 +41,8 @@ class UserAdminPanel extends LitElement {
     this._showForm = false;
     this._editingEmail = null;
     this._searchQuery = '';
+    this._onboardingSteps = [];
+    this._onboardingActive = false;
     this._resetForm();
   }
 
@@ -86,10 +90,12 @@ class UserAdminPanel extends LitElement {
   _resetForm() {
     this._formName = '';
     this._formEmail = '';
-    this._formProjectId = '';
+    this._formProjectIds = [];
     this._formDeveloper = true;
     this._formStakeholder = false;
     this._editingEmail = null;
+    this._onboardingSteps = [];
+    this._onboardingActive = false;
   }
 
   _openNewForm() {
@@ -101,7 +107,7 @@ class UserAdminPanel extends LitElement {
     this._editingEmail = user.email;
     this._formName = user.name || '';
     this._formEmail = user.email || '';
-    this._formProjectId = '';
+    this._formProjectIds = [];
     this._formDeveloper = true;
     this._formStakeholder = false;
     this._showForm = true;
@@ -114,37 +120,136 @@ class UserAdminPanel extends LitElement {
 
   // ==================== CRUD OPERATIONS ====================
 
+  _checkExistingUser() {
+    const email = this._formEmail.trim().toLowerCase();
+    if (!email || this._editingEmail) return null;
+    return this.users.find((u) => u.email.toLowerCase() === email);
+  }
+
+  _buildOnboardingSteps(projectIds) {
+    const existing = this._checkExistingUser();
+    const steps = [];
+
+    if (existing) {
+      steps.push({ id: 'user', label: `User record (${existing.email})`, status: 'done' });
+      if (existing.developerId) {
+        steps.push({ id: 'dev', label: `Developer ID: ${existing.developerId}`, status: 'done' });
+      } else if (this._formDeveloper) {
+        steps.push({ id: 'dev', label: 'Assign Developer ID', status: 'pending' });
+      }
+      if (existing.stakeholderId) {
+        steps.push({ id: 'stk', label: `Stakeholder ID: ${existing.stakeholderId}`, status: 'done' });
+      } else if (this._formStakeholder) {
+        steps.push({ id: 'stk', label: 'Assign Stakeholder ID', status: 'pending' });
+      }
+    } else {
+      steps.push({ id: 'user', label: 'Create user record', status: 'pending' });
+      if (this._formDeveloper) {
+        steps.push({ id: 'dev', label: 'Assign Developer ID', status: 'pending' });
+      }
+      if (this._formStakeholder) {
+        steps.push({ id: 'stk', label: 'Assign Stakeholder ID', status: 'pending' });
+      }
+    }
+
+    const existingProjects = existing ? Object.keys(existing.projects || {}) : [];
+    for (const pid of projectIds) {
+      if (existingProjects.includes(pid)) {
+        steps.push({ id: `proj-${pid}`, label: `Project: ${pid}`, status: 'done' });
+      } else {
+        steps.push({ id: `proj-${pid}`, label: `Add project: ${pid}`, status: 'pending' });
+      }
+    }
+
+    steps.push({ id: 'claims', label: 'Sync auth claims', status: 'pending' });
+    return steps;
+  }
+
+  _updateStep(stepId, status) {
+    this._onboardingSteps = this._onboardingSteps.map((s) =>
+      s.id === stepId ? { ...s, status } : s
+    );
+  }
+
   async _saveUser() {
     const name = this._formName.trim();
     const email = this._formEmail.trim();
-    const projectId = this._formProjectId;
+    const projectIds = this._formProjectIds;
 
     if (!name || !email) return;
-    if (!projectId) {
-      this._notify('Please select a project', 'warning');
+    if (projectIds.length === 0) {
+      this._notify('Please select at least one project', 'warning');
       return;
     }
 
+    this._onboardingSteps = this._buildOnboardingSteps(projectIds);
+    this._onboardingActive = true;
+
+    const createOrUpdateUserFn = httpsCallable(functions, 'createOrUpdateUser');
+    let hasError = false;
+
+    // First call creates/updates user + assigns first project (also generates dev/stk IDs)
+    const firstProject = projectIds[0];
+    this._updateStep('user', 'running');
+    if (this._formDeveloper) this._updateStep('dev', 'running');
+    if (this._formStakeholder) this._updateStep('stk', 'running');
+    this._updateStep(`proj-${firstProject}`, 'running');
+
     try {
-      const createOrUpdateUserFn = httpsCallable(functions, 'createOrUpdateUser');
       await createOrUpdateUserFn({
         email,
         name,
-        projectId,
+        projectId: firstProject,
         developer: this._formDeveloper,
         stakeholder: this._formStakeholder,
       });
+      this._updateStep('user', 'done');
+      if (this._formDeveloper) this._updateStep('dev', 'done');
+      if (this._formStakeholder) this._updateStep('stk', 'done');
+      this._updateStep(`proj-${firstProject}`, 'done');
+    } catch (error) {
+      console.error('Error creating user:', error);
+      this._updateStep('user', 'error');
+      this._updateStep(`proj-${firstProject}`, 'error');
+      this._notify(`Error creating user: ${error.message}`, 'error');
+      this._onboardingActive = false;
+      return;
+    }
 
+    // Remaining projects (if any) — one call per project
+    for (let i = 1; i < projectIds.length; i++) {
+      const pid = projectIds[i];
+      this._updateStep(`proj-${pid}`, 'running');
+      try {
+        await createOrUpdateUserFn({
+          email,
+          name,
+          projectId: pid,
+          developer: this._formDeveloper,
+          stakeholder: this._formStakeholder,
+        });
+        this._updateStep(`proj-${pid}`, 'done');
+      } catch (error) {
+        console.error(`Error adding project ${pid}:`, error);
+        this._updateStep(`proj-${pid}`, 'error');
+        hasError = true;
+      }
+    }
+
+    // Claims sync happens server-side within createOrUpdateUser
+    this._updateStep('claims', 'done');
+
+    await this._loadUsers();
+
+    if (hasError) {
+      this._notify('User created but some projects failed', 'warning');
+    } else {
       this._showForm = false;
-      this._resetForm();
-      await this._loadUsers();
       this._notify(
-        this._editingEmail ? 'User updated successfully' : 'User created successfully',
+        this._editingEmail ? 'User updated successfully' : 'User onboarded successfully',
         'success'
       );
-    } catch (error) {
-      console.error('Error saving user:', error);
-      this._notify(`Error saving user: ${error.message}`, 'error');
+      this._resetForm();
     }
   }
 
@@ -167,6 +272,14 @@ class UserAdminPanel extends LitElement {
     } catch (error) {
       console.error('Error removing project from user:', error);
       this._notify(`Error removing project: ${error.message}`, 'error');
+    }
+  }
+
+  _toggleProject(projectId) {
+    if (this._formProjectIds.includes(projectId)) {
+      this._formProjectIds = this._formProjectIds.filter((p) => p !== projectId);
+    } else {
+      this._formProjectIds = [...this._formProjectIds, projectId];
     }
   }
 
@@ -254,9 +367,22 @@ class UserAdminPanel extends LitElement {
 
   _renderForm() {
     const isEditing = Boolean(this._editingEmail);
+    const existingUser = this._checkExistingUser();
+    const existingProjectIds = existingUser ? Object.keys(existingUser.projects || {}) : [];
+
     return html`
       <div class="entity-form">
-        <h4 class="form-title">${isEditing ? `Add project to: ${this._editingEmail}` : 'New User'}</h4>
+        <h4 class="form-title">${isEditing ? `Add project to: ${this._editingEmail}` : 'Onboard User'}</h4>
+
+        ${existingUser && !isEditing ? html`
+          <div class="existing-user-notice">
+            User "${existingUser.name}" already exists.
+            ${existingUser.developerId ? html`Dev: <strong>${existingUser.developerId}</strong>` : nothing}
+            ${existingUser.stakeholderId ? html`Stk: <strong>${existingUser.stakeholderId}</strong>` : nothing}
+            — Select additional projects to assign.
+          </div>
+        ` : nothing}
+
         <div class="form-grid">
           <div class="form-group">
             <label for="userName">Name *</label>
@@ -266,7 +392,7 @@ class UserAdminPanel extends LitElement {
               .value=${this._formName}
               @input=${(e) => { this._formName = e.target.value; }}
               placeholder="Full name"
-              ?disabled=${isEditing}
+              ?disabled=${isEditing || this._onboardingActive}
               required
             />
           </div>
@@ -278,22 +404,29 @@ class UserAdminPanel extends LitElement {
               .value=${this._formEmail}
               @input=${(e) => { this._formEmail = e.target.value; }}
               placeholder="email@example.com"
-              ?disabled=${isEditing}
+              ?disabled=${isEditing || this._onboardingActive}
               required
             />
           </div>
-          <div class="form-group">
-            <label for="userProject">Project *</label>
-            <select
-              id="userProject"
-              .value=${this._formProjectId}
-              @change=${(e) => { this._formProjectId = e.target.value; }}
-            >
-              <option value="">-- Select project --</option>
-              ${this.projects.map((p) => html`
-                <option value=${p} ?selected=${this._formProjectId === p}>${p}</option>
-              `)}
-            </select>
+          <div class="form-group form-group-full">
+            <label>Projects * (select one or more)</label>
+            <div class="project-checkboxes">
+              ${this.projects.map((p) => {
+                const alreadyAssigned = existingProjectIds.includes(p);
+                return html`
+                  <label class="project-check ${alreadyAssigned ? 'already-assigned' : ''}">
+                    <input
+                      type="checkbox"
+                      .checked=${this._formProjectIds.includes(p) || alreadyAssigned}
+                      ?disabled=${alreadyAssigned || this._onboardingActive}
+                      @change=${() => this._toggleProject(p)}
+                    />
+                    <span>${p}</span>
+                    ${alreadyAssigned ? html`<span class="assigned-hint">(assigned)</span>` : nothing}
+                  </label>
+                `;
+              })}
+            </div>
           </div>
           <div class="form-row-checkboxes">
             <div class="form-checkbox">
@@ -301,6 +434,7 @@ class UserAdminPanel extends LitElement {
                 type="checkbox"
                 id="userDeveloper"
                 .checked=${this._formDeveloper}
+                ?disabled=${this._onboardingActive}
                 @change=${(e) => { this._formDeveloper = e.target.checked; }}
               />
               <label for="userDeveloper">Developer</label>
@@ -310,22 +444,51 @@ class UserAdminPanel extends LitElement {
                 type="checkbox"
                 id="userStakeholder"
                 .checked=${this._formStakeholder}
+                ?disabled=${this._onboardingActive}
                 @change=${(e) => { this._formStakeholder = e.target.checked; }}
               />
               <label for="userStakeholder">Stakeholder</label>
             </div>
           </div>
         </div>
+
+        ${this._onboardingSteps.length > 0 ? this._renderOnboardingChecklist() : nothing}
+
         <div class="form-actions">
-          <button class="btn btn-secondary" @click=${this._cancelForm}>Cancel</button>
+          <button class="btn btn-secondary" @click=${this._cancelForm} ?disabled=${this._onboardingActive}>Cancel</button>
           <button
             class="btn btn-primary"
             @click=${this._saveUser}
-            ?disabled=${!this._formName.trim() || !this._formEmail.trim() || !this._formProjectId}
+            ?disabled=${!this._formName.trim() || !this._formEmail.trim() || this._formProjectIds.length === 0 || this._onboardingActive}
           >
-            ${isEditing ? 'Add Project' : 'Create User'}
+            ${this._onboardingActive ? 'Processing...' : (isEditing ? 'Add Projects' : 'Onboard User')}
           </button>
         </div>
+      </div>
+    `;
+  }
+
+  _renderOnboardingChecklist() {
+    const statusIcon = (status) => {
+      switch (status) {
+        case 'done': return html`<span class="step-icon step-done">&#10003;</span>`;
+        case 'running': return html`<span class="step-icon step-running"></span>`;
+        case 'error': return html`<span class="step-icon step-error">&#10007;</span>`;
+        default: return html`<span class="step-icon step-pending">&#9711;</span>`;
+      }
+    };
+
+    return html`
+      <div class="onboarding-checklist">
+        <h5 class="checklist-title">Onboarding Progress</h5>
+        <ul class="checklist">
+          ${this._onboardingSteps.map((step) => html`
+            <li class="checklist-item checklist-${step.status}">
+              ${statusIcon(step.status)}
+              <span>${step.label}</span>
+            </li>
+          `)}
+        </ul>
       </div>
     `;
   }
