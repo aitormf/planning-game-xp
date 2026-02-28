@@ -120,6 +120,35 @@ echo "  $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=========================================="
 echo ""
 
+# ── Version check (warn if deploying without a version bump) ──
+if [ -f "$ROOT_DIR/version.json" ]; then
+  BUILD_VERSION=$(node -e "console.log(require('$ROOT_DIR/version.json').version)" 2>/dev/null || echo "?")
+  BUILD_COMMIT=$(node -e "console.log(require('$ROOT_DIR/version.json').lastBuildCommit || '?')" 2>/dev/null || echo "?")
+  HEAD_COMMIT=$(git -C "$ROOT_DIR" rev-parse HEAD 2>/dev/null || echo "?")
+
+  log "Version: $BUILD_VERSION (built from ${BUILD_COMMIT:0:7})"
+
+  if [ "$BUILD_COMMIT" != "?" ] && [ "$HEAD_COMMIT" != "?" ] && [ "$BUILD_COMMIT" != "$HEAD_COMMIT" ]; then
+    COMMITS_SINCE=$(git -C "$ROOT_DIR" log --oneline "$BUILD_COMMIT..HEAD" 2>/dev/null | wc -l)
+    if [ "$COMMITS_SINCE" -gt 0 ]; then
+      echo ""
+      echo "  ⚠️  WARNING: There are $COMMITS_SINCE commits since the last build."
+      echo "  ⚠️  The deployed version ($BUILD_VERSION) may be outdated."
+      echo "  ⚠️  Consider running 'npm run build:all' first."
+      echo ""
+      read -r -p "  Continue deploying anyway? [y/N] " REPLY
+      if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
+        echo "  Deploy cancelled."
+        exit 0
+      fi
+      echo ""
+    fi
+  fi
+else
+  echo "  ⚠️  WARNING: version.json not found. Cannot verify version."
+  echo ""
+fi
+
 for INSTANCE in $INSTANCES; do
   CURRENT=$((CURRENT + 1))
   LOGFILE="/tmp/deploy-all-${INSTANCE}.log"

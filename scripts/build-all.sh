@@ -51,6 +51,16 @@ echo "  $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=========================================="
 echo ""
 
+# ── Version bump (once, before any instance build) ──
+log "Running version bump..."
+if FORCE_BUILD=1 npm run update-version --prefix "$ROOT_DIR" 2>&1; then
+  VERSION=$(node -e "console.log(require('$ROOT_DIR/version.json').version)" 2>/dev/null || echo "?")
+  log "Version: $VERSION"
+else
+  echo "  ⚠️  Version bump failed, continuing with current version"
+fi
+echo ""
+
 for INSTANCE in $INSTANCES; do
   CURRENT=$((CURRENT + 1))
   LOGFILE="/tmp/build-all-${INSTANCE}.log"
@@ -141,4 +151,9 @@ fi
 
 echo "  All $TOTAL instances built successfully."
 echo "  Run 'npm run deploy:all' to deploy all builds."
+echo ""
+
+# ── Post-build version commit (once, after all builds) ──
+log "Running post-build version commit..."
+npm run postbuild:version --prefix "$ROOT_DIR" 2>&1 || echo "  ⚠️  Post-build version commit skipped (no changes or error)"
 echo ""
