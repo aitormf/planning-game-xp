@@ -28,8 +28,22 @@ const { handleSyncCardViews } = require("./handlers/sync-card-views");
 const { handlePortalBugResolved } = require("./handlers/on-portal-bug-resolved");
 const { extractKeywords, findBestEpicMatch } = require("./helpers/epic-inference");
 
-// Demo mode: when DEMO_MODE=true, all new users are auto-allowed with role=demo
-const DEMO_MODE = (process.env.DEMO_MODE || '').toString().trim().toLowerCase() === 'true';
+// Demo mode: when DEMO_MODE=true, all new users are auto-allowed with role=demo.
+// Read from process.env first, then fall back to reading functions/.env directly
+// (Firebase CLI may not inject .env vars during module analysis phase).
+function readDemoMode() {
+  const envVal = (process.env.DEMO_MODE || '').toString().trim().toLowerCase();
+  if (envVal === 'true') return true;
+  if (envVal) return false;
+  // Fallback: read from functions/.env file directly
+  try {
+    const envContent = fs.readFileSync(path.join(__dirname, '.env'), 'utf8');
+    const match = envContent.match(/^DEMO_MODE\s*=\s*(.+)$/m);
+    if (match) return match[1].trim().toLowerCase() === 'true';
+  } catch (_) { /* .env not found, not demo mode */ }
+  return false;
+}
+const DEMO_MODE = readDemoMode();
 
 const normalizeEmail = (email) => (email || '').toString().trim().toLowerCase();
 
