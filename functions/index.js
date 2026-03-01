@@ -5291,8 +5291,10 @@ exports.syncAppPermissionsClaim = onValueWritten({
   }
 });
 
-// Export internal functions for testing
-exports._test = {
-  inferEpicsForPhases,
-  createEpicForPlan
-};
+// Export internal functions for testing (only available when IA functions are loaded)
+if (!DEMO_MODE) {
+  exports._test = {
+    inferEpicsForPhases,
+    createEpicForPlan
+  };
+}
