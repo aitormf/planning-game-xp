@@ -28,6 +28,11 @@ const { handleSyncCardViews } = require("./handlers/sync-card-views");
 const { handlePortalBugResolved } = require("./handlers/on-portal-bug-resolved");
 const { extractKeywords, findBestEpicMatch } = require("./helpers/epic-inference");
 
+// Shared utilities (extracted from this file)
+const { encodeEmailForFirebase, decodeEmailFromFirebase, normalizeEmail, normalizeGmailEmail, extractEmails, resolveEmail, resolveName } = require('./shared/email-utils.cjs');
+const { buildAcceptanceText, buildUserStoryText, buildBranchName, getAbbrId, generateCardId, getRepositoryForTask, hasActiveProject } = require('./shared/card-utils.cjs');
+const { isEmailPreAuthorized, generateNextId } = require('./shared/auth-utils.cjs');
+
 // Demo mode: when DEMO_MODE=true, all new users are auto-allowed with role=demo.
 // Read from process.env first, then fall back to reading functions/.env directly
 // (Firebase CLI may not inject .env vars during module analysis phase).
@@ -45,40 +50,7 @@ function readDemoMode() {
 }
 const DEMO_MODE = readDemoMode();
 
-const normalizeEmail = (email) => (email || '').toString().trim().toLowerCase();
-
-const extractEmails = (rawData, directory = {}) => {
-  const emails = new Set();
-  const addEmail = (value) => {
-    if (!value) return;
-    if (typeof value === 'string' && value.includes('@')) {
-      emails.add(normalizeEmail(value));
-      return;
-    }
-    if (typeof value === 'object') {
-      const candidate = value.id || value.email || value.mail || value.value;
-      if (typeof candidate === 'string' && candidate.includes('@')) {
-        emails.add(normalizeEmail(candidate));
-        return;
-      }
-      if (typeof candidate === 'string' && directory[candidate]?.email) {
-        emails.add(normalizeEmail(directory[candidate].email));
-        return;
-      }
-    }
-    if (typeof value === 'string' && directory[value]?.email) {
-      emails.add(normalizeEmail(directory[value].email));
-    }
-  };
-
-  if (Array.isArray(rawData)) {
-    rawData.forEach(addEmail);
-  } else if (rawData && typeof rawData === 'object') {
-    Object.values(rawData).forEach(addEmail);
-  }
-
-  return Array.from(emails);
-};
+// normalizeEmail, extractEmails → shared/email-utils.cjs
 
 // Initialize Firebase Admin
 initializeApp();
@@ -144,45 +116,7 @@ function getGlobalAgentsContent() {
   return cachedGlobalAgents;
 }
 
-function buildAcceptanceText(scenarios) {
-  if (!Array.isArray(scenarios) || scenarios.length === 0) {
-    return '';
-  }
-  const parts = scenarios.map((scenario, index) => {
-    const givenParts = (scenario.given || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
-    const thenParts = (scenario.then || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
-
-    const givenLines = givenParts.map((line, idx) => idx === 0 ? `Dado ${line}` : `Y ${line}`);
-    const thenLines = thenParts.map((line, idx) => idx === 0 ? `Entonces ${line}` : `Y ${line}`);
-    const whenLine = scenario.when ? `Cuando ${scenario.when}` : '';
-
-    const allLines = [...givenLines, whenLine, ...thenLines].filter(Boolean);
-    const title = scenarios.length > 1 ? `Escenario ${index + 1}:\n` : '';
-    return `${title}${allLines.join('\n')}`;
-  });
-  return parts.filter(Boolean).join('\n\n');
-}
-
-function buildUserStoryText(task) {
-  const entry = Array.isArray(task.descriptionStructured)
-    ? (task.descriptionStructured[0] || {})
-    : (task.descriptionStructured || {});
-  const role = entry.role || '';
-  const goal = entry.goal || '';
-  const benefit = entry.benefit || '';
-  const legacy = entry.legacy || '';
-
-  const pieces = [
-    role ? `Como ${role}` : '',
-    goal ? `Quiero ${goal}` : '',
-    benefit ? `Para ${benefit}` : ''
-  ].filter(Boolean);
-  if (pieces.length > 0) {
-    return pieces.join('\n');
-  }
-  if (legacy) return legacy;
-  return task.description || '';
-}
+// buildAcceptanceText, buildUserStoryText → shared/card-utils.cjs
 
 /**
  * MS Graph API configuration using Firebase Functions v2 secrets
@@ -418,17 +352,7 @@ function generateEmailTemplate(projectName, taskSummary) {
   `;
 }
 
-function buildBranchName(taskId, title) {
-  const slug = (title || '')
-    .toString()
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/g, '-')
-    .replace(/^-+/, '').replace(/-+$/, '') // NOSONAR - simple non-capturing patterns
-    .slice(0, 40);
-  const normalizedId = (taskId || '').toString().replaceAll(/\s+/g, '');
-  const slugSuffix = slug ? `-${slug}` : '';
-  return `feature/${normalizedId}${slugSuffix}`;
-}
+// buildBranchName → shared/card-utils.cjs
 
 /**
  * Analyze tasks and categorize them
@@ -720,69 +644,7 @@ async function sendWeeklyTaskSummaryLegacy() {
   }
 }
 
-/**
- * Resolve email from a developer/stakeholder ID or object
- * @param {string|object} value - Developer ID, email, or object
- * @param {object} directory - Directory to lookup IDs
- * @returns {string|null} - Resolved email or null
- */
-function resolveEmail(value, directory = {}) {
-  if (!value) return null;
-
-  // Direct email
-  if (typeof value === 'string' && value.includes('@')) {
-    return normalizeEmail(value);
-  }
-
-  // Object with email/id
-  if (typeof value === 'object') {
-    const candidate = value.id || value.email || value.mail || value.value;
-    if (typeof candidate === 'string' && candidate.includes('@')) {
-      return normalizeEmail(candidate);
-    }
-    if (typeof candidate === 'string' && directory[candidate]?.email) {
-      return normalizeEmail(directory[candidate].email);
-    }
-  }
-
-  // ID lookup in directory
-  if (typeof value === 'string' && directory[value]?.email) {
-    return normalizeEmail(directory[value].email);
-  }
-
-  return null;
-}
-
-/**
- * Resolve name from a developer/stakeholder ID or object
- * @param {string|object} value - Developer ID, email, or object
- * @param {object} directory - Directory to lookup IDs
- * @returns {string} - Resolved name or 'Usuario'
- */
-function resolveName(value, directory = {}) {
-  if (!value) return 'Usuario';
-
-  // Object with name
-  if (typeof value === 'object') {
-    if (value.name) return value.name;
-    const candidate = value.id || value.value;
-    if (typeof candidate === 'string' && directory[candidate]?.name) {
-      return directory[candidate].name;
-    }
-  }
-
-  // ID lookup in directory
-  if (typeof value === 'string' && directory[value]?.name) {
-    return directory[value].name;
-  }
-
-  // If it's an email, use the part before @
-  if (typeof value === 'string' && value.includes('@')) {
-    return value.split('@')[0];
-  }
-
-  return 'Usuario';
-}
+// resolveEmail, resolveName → shared/email-utils.cjs
 
 /**
  * Add a task to the user task map
@@ -1504,85 +1366,9 @@ exports.sendPushNotification = onValueCreated({
   }
 });
 
-/**
- * Encodes an email for Firebase keys.
- * @param {string} email The email to encode.
- * @return {string} The encoded email.
- */
-function encodeEmailForFirebase(email) {
-  if (!email) return '';
-  return email.replace(/@/g, '|').replace(/\./g, '!').replace(/#/g, '-');
-}
-
-/**
- * Normalizes a Gmail address by removing dots from the local part.
- * Gmail treats "jorge.casar@gmail.com" and "jorgecasar@gmail.com" as the same.
- * For non-Gmail addresses, returns the email as-is (lowercased).
- * @param {string} email The email to normalize.
- * @return {string} The normalized email.
- */
-function normalizeGmailEmail(email) {
-  if (!email) return '';
-  const lower = email.trim().toLowerCase();
-  const [localPart, domain] = lower.split('@');
-  if (!domain) return lower;
-  if (domain === 'gmail.com' || domain === 'googlemail.com') {
-    return localPart.replace(/\./g, '') + '@' + domain;
-  }
-  return lower;
-}
-
-/**
- * Checks if an email is pre-authorized in /users/.
- * A user is authorized if they exist in /users/ and have at least one project assigned.
- * Tries both the exact email and the Gmail-normalized variant.
- * @param {string} email The email to check.
- * @return {Promise<boolean>} Whether the email is allowed.
- */
-async function isEmailPreAuthorized(email) {
-  const normalizedEmail = email.trim().toLowerCase();
-  const encodedExact = encodeEmailForFirebase(normalizedEmail);
-
-  const exactSnap = await admin.database().ref(`/users/${encodedExact}/projects`).once('value');
-  if (hasActiveProject(exactSnap.val())) return true;
-
-  const gmailNormalized = normalizeGmailEmail(normalizedEmail);
-  if (gmailNormalized !== normalizedEmail) {
-    const encodedNormalized = encodeEmailForFirebase(gmailNormalized);
-    const normalizedSnap = await admin.database().ref(`/users/${encodedNormalized}/projects`).once('value');
-    if (hasActiveProject(normalizedSnap.val())) return true;
-  }
-
-  return false;
-}
-
-/**
- * Checks if a projects object has at least one project with developer or stakeholder = true.
- */
-function hasActiveProject(projects) {
-  if (!projects || typeof projects !== 'object') return false;
-  return Object.values(projects).some(p => p.developer === true || p.stakeholder === true);
-}
-
-/**
- * Auto-generates the next available developer or stakeholder ID.
- * @param {string} prefix "dev_" or "stk_"
- * @param {string} field "developerId" or "stakeholderId"
- * @return {Promise<string>} The next ID (e.g., "dev_020")
- */
-async function generateNextId(prefix, field) {
-  const usersSnap = await admin.database().ref('/users').once('value');
-  const users = usersSnap.val() || {};
-  let maxNum = 0;
-  for (const userData of Object.values(users)) {
-    const id = userData[field];
-    if (id && id.startsWith(prefix)) {
-      const num = parseInt(id.replace(prefix, ''), 10);
-      if (num > maxNum) maxNum = num;
-    }
-  }
-  return `${prefix}${String(maxNum + 1).padStart(3, '0')}`;
-}
+// encodeEmailForFirebase, normalizeGmailEmail → shared/email-utils.cjs
+// isEmailPreAuthorized, generateNextId → shared/auth-utils.cjs
+// hasActiveProject → shared/card-utils.cjs
 
 /**
  * Callable function to create a pending email/password account request.
@@ -1968,7 +1754,7 @@ exports.setEncodedEmailClaim = functions.region('europe-west1').auth.user().onCr
       logger.info(`DEMO MODE: auto-allowing user ${email} with role=demo`, { uid: user.uid });
     } else {
       // Production: check if user is pre-authorized in /data/allowedUsers
-      const isAllowed = await isEmailPreAuthorized(email);
+      const isAllowed = await isEmailPreAuthorized(email, admin.database());
       if (isAllowed) {
         newClaims.allowed = true;
         logger.info(`User ${email} is pre-authorized, setting allowed=true`, { uid: user.uid });
@@ -2568,40 +2354,7 @@ async function findIaLinkInDatabases(token) {
   return { linkRef: null, snap: null, dbUsed: null };
 }
 
-/**
- * Get the correct repository for a task based on its repositoryLabel
- * @param {Object} project - Project data from Firebase
- * @param {Object} task - Task data from Firebase
- * @returns {{url: string, label: string}} Repository info
- */
-function getRepositoryForTask(project, task) {
-  const repoUrl = project.repoUrl || project.repositoryUrl;
-
-  // No repository configured
-  if (!repoUrl) {
-    return { url: '', label: '' };
-  }
-
-  // Single repository (string format)
-  if (typeof repoUrl === 'string') {
-    return { url: repoUrl, label: 'Default' };
-  }
-
-  // Multiple repositories (array format)
-  if (Array.isArray(repoUrl) && repoUrl.length > 0) {
-    const taskLabel = task.repositoryLabel;
-    if (taskLabel) {
-      const found = repoUrl.find(r => r.label === taskLabel);
-      if (found) {
-        return { url: found.url || '', label: found.label || '' };
-      }
-    }
-    // No label or not found → use the first one (default)
-    return { url: repoUrl[0]?.url || '', label: repoUrl[0]?.label || 'Default' };
-  }
-
-  return { url: '', label: '' };
-}
+// getRepositoryForTask → shared/card-utils.cjs
 
 /**
  * Build IA context payload from project and card data (task or bug)
@@ -2760,86 +2513,7 @@ exports.getIaContext = onRequest({
 // CREATE CARD API - For programmatic card creation (Claude, scripts, etc.)
 // ============================================================================
 
-/**
- * Generate abbreviation for project/section names
- * Mirrors the frontend logic in firebase-service.js
- */
-function getAbbrId(wordToAbbr) {
-  const upperWord = (wordToAbbr || '').toUpperCase().trim();
-
-  // Exceptions
-  if (upperWord === "BUGS") return 'BUG';
-  if (upperWord === "CINEMA4D") return 'C4D';
-  if (upperWord === "EXTRANET V1") return 'EX1';
-  if (upperWord === "EXTRANET V2") return 'EX2';
-  if (upperWord === "PLANNING-GAME") return 'PLN';
-  if (upperWord === "PLANNINGGAMEXP") return 'PLN';
-
-  // Rule 1: 3 chars or less, return as-is
-  if (upperWord.length <= 3) return upperWord.padStart(3, '_');
-
-  // Extract consonants and vowels
-  const consonants = upperWord.replace(/[AEIOUÁÉÍÓÚÜ\s\d]/gi, '').split('');
-  const vowels = upperWord.replace(/[^AEIOUÁÉÍÓÚÜ]/gi, '').split('');
-
-  // Check for trailing number
-  const matchNumber = upperWord.match(/\d+$/);
-  const lastNumber = matchNumber ? matchNumber[0] : null;
-
-  // Rule 2: Number at end + 3+ consonants
-  if (lastNumber && consonants.length >= 3) {
-    return consonants.slice(0, 2).join('') + lastNumber;
-  }
-
-  // Rule 3: 3+ consonants
-  if (consonants.length >= 3) {
-    return consonants.slice(0, 3).join('');
-  }
-
-  // Rule 4: 2 consonants + first vowel
-  if (consonants.length === 2) {
-    return consonants.join('') + (vowels[0] || '_');
-  }
-
-  // Rule 5: 1 consonant + first and last vowel
-  if (consonants.length === 1) {
-    return consonants[0] + (vowels[0] || '_') + (vowels[vowels.length - 1] || '_');
-  }
-
-  // Rule 6: No consonants, first 3 letters
-  return upperWord.slice(0, 3);
-}
-
-/**
- * Generate a unique card ID using Firestore transaction
- * Format: {PROJECT_ABBR}-{SECTION_ABBR}-{NUMBER}
- * Example: C4D-TSK-0042
- */
-async function generateCardId(projectId, section) {
-  const projectAbbr = getAbbrId(projectId);
-  const sectionAbbr = getAbbrId(section);
-  const counterKey = `${projectAbbr}-${sectionAbbr}`;
-
-  const counterRef = firestore.collection('projectCounters').doc(counterKey);
-
-  // Use transaction to ensure atomic increment
-  const newId = await firestore.runTransaction(async (transaction) => {
-    const docSnap = await transaction.get(counterRef);
-
-    let lastId = 0;
-    if (docSnap.exists) {
-      lastId = docSnap.data().lastId || 0;
-    }
-
-    const nextId = lastId + 1;
-    transaction.set(counterRef, { lastId: nextId }, { merge: true });
-
-    return nextId;
-  });
-
-  const paddedId = newId.toString().padStart(4, '0');
-  return `${counterKey}-${paddedId}`;
-}
+// getAbbrId, generateCardId → shared/card-utils.cjs
 
 /**
  * Validate create card request
@@ -3068,7 +2742,7 @@ exports.createCard = onRequest({
       : `BUGS_${data.projectId}`;
 
     // Generate card ID
-    const cardId = await generateCardId(data.projectId, section);
+    const cardId = await generateCardId(data.projectId, section, firestore);
 
     // Generate Firebase ID
     const cardPath = `/cards/${data.projectId}/${sectionPath}`;
@@ -3190,7 +2864,7 @@ async function inferEpicsForPhases(db, projectId, phases, existingEpics, planTit
  * Create a new epic card for a plan.
  */
 async function createEpicForPlan(db, projectId, planTitle, createdBy, now) {
-  const epicCardId = await generateCardId(projectId, 'epics');
+  const epicCardId = await generateCardId(projectId, 'epics', firestore);
   const epicSectionPath = `EPICS_${projectId}`;
   const epicPath = `/cards/${projectId}/${epicSectionPath}`;
   const newEpicRef = db.ref(epicPath).push();
@@ -3287,7 +2961,7 @@ exports.createTasksFromPlan = onCall({
       if (!task.title) continue;
 
       // Generate unique card ID
-      const cardId = await generateCardId(projectId, 'tasks');
+      const cardId = await generateCardId(projectId, 'tasks', firestore);
 
       // Generate Firebase push key
       const newCardRef = db.ref(cardPath).push();
@@ -3478,7 +3152,7 @@ exports.regenerateTasksFromPlan = onCall({
     for (const task of phaseTasks) {
       if (!task.title) continue;
 
-      const cardId = await generateCardId(projectId, 'tasks');
+      const cardId = await generateCardId(projectId, 'tasks', firestore);
       const newCardRef = db.ref(cardPath).push();
       const firebaseId = newCardRef.key;
 
@@ -4516,17 +4190,7 @@ exports.resyncAllViews = onCall({
   return { success: true, stats };
 });
 
-/**
- * Helper function to decode Firebase-safe email back to original email
- * Reverses: @ -> |, . -> !, # -> -
- */
-function decodeEmailFromFirebase(encodedEmail) {
-  if (!encodedEmail) return null;
-  return encodedEmail
-    .replace(/\|/g, '@')
-    .replace(/!/g, '.')
-    .replace(/-/g, '#');
-}
+// decodeEmailFromFirebase → shared/email-utils.cjs
 
 /**
  * Cloud Function: syncAllAppAdminClaims
@@ -4997,14 +4661,14 @@ exports.createOrUpdateUser = onCall({
   // Handle developer ID
   const isDeveloper = developer === true;
   if (isDeveloper && !existingData.developerId) {
-    const newDevId = await generateNextId('dev_', 'developerId');
+    const newDevId = await generateNextId('dev_', 'developerId', admin.database());
     updates[`/users/${encodedEmail}/developerId`] = newDevId;
   }
 
   // Handle stakeholder ID
   const isStakeholder = stakeholder === true;
   if (isStakeholder && !existingData.stakeholderId) {
-    const newStkId = await generateNextId('stk_', 'stakeholderId');
+    const newStkId = await generateNextId('stk_', 'stakeholderId', admin.database());
     updates[`/users/${encodedEmail}/stakeholderId`] = newStkId;
   }
 
