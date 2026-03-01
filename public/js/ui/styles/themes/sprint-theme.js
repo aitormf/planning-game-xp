@@ -3,11 +3,11 @@ import { css } from 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+esm';
 export const SprintTheme = css`
   :host {
     /* Colores específicos para sprints */
-    --description-color: #4caf50;
-    --retrospective-color: #4caf50;
-    --notes-color: #ff9800;
-    --video-color: #2196f3;
-    --history-color: #9c27b0;
+    --description-color: var(--color-green-500, #4caf50);
+    --retrospective-color: var(--color-green-500, #4caf50);
+    --notes-color: var(--color-orange-500, #ff9800);
+    --video-color: var(--color-info, #2196f3);
+    --history-color: var(--status-expedited, #9c27b0);
 
     display:flex;
     flex-direction: column;
@@ -21,7 +21,7 @@ export const SprintTheme = css`
 
   :host(:hover) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(236,62,149,0.3);
+    box-shadow: var(--card-shadow-hover, 0 4px 8px rgba(236,62,149,0.3));
   }
 
   :host([expanded]) {
@@ -183,7 +183,7 @@ export const SprintTheme = css`
 
   .blockedContainerChild input[type="text"] {
     padding: 5px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-default, #ccc);
     border-radius: var(--radius-sm);
     font-size: var(--font-size-base);
   }
@@ -244,7 +244,7 @@ export const SprintTheme = css`
   }
 
   .copy-link-button:hover {
-    background: rgba(0,0,0,0.05);
+    background: var(--hover-overlay, rgba(0,0,0,0.05));
   }
 
   .copy-link-button.eye-icon {
@@ -257,11 +257,11 @@ export const SprintTheme = css`
   }
 
   .tovalidate {
-    background: #ffeb3b;
+    background: var(--status-to-validate, #ffeb3b);
   }
 
   .done {
-    background: #2CFF1E;
+    background: var(--status-done, #2CFF1E);
     font-weight: bold;
   }
 
@@ -271,7 +271,7 @@ export const SprintTheme = css`
   }
 
   .blocked {
-    background: #ccc;
+    background: var(--status-blocked, #ccc);
     opacity: 0.5;
     border-radius: var(--radius-lg);
   }
@@ -289,7 +289,7 @@ export const SprintTheme = css`
   }
 
   .sprint {
-    background-color: #151efb;
+    background-color: var(--brand-primary, #151efb);
     color: var(--text-white);
     padding: 3px;
     border-radius: var(--radius-sm);
@@ -311,13 +311,13 @@ export const SprintTheme = css`
   }
 
   .to-validate-counter {
-    color: #666;
+    color: var(--text-muted, #666);
     font-weight: bold;
   }
 
   .next-sprint-btn {
-    background: #4a9eff;
-    color: white;
+    background: var(--color-info, #4a9eff);
+    color: var(--text-inverse, white);
     border: none;
     padding: 0.5rem;
     margin-top:0!important;
@@ -334,46 +334,46 @@ export const SprintTheme = css`
   /* Tab buttons - colores de fondo cuando están activos */
   .tab-button.tab-retrospective.active {
     background: var(--retrospective-color) !important;
-    color: white !important;
+    color: var(--text-inverse, white) !important;
     border-color: var(--retrospective-color) !important;
   }
 
   .tab-button.tab-notes.active {
     background: var(--notes-color) !important;
-    color: white !important;
+    color: var(--text-inverse, white) !important;
     border-color: var(--notes-color) !important;
   }
 
   .tab-button.tab-video.active {
     background: var(--video-color) !important;
-    color: white !important;
+    color: var(--text-inverse, white) !important;
     border-color: var(--video-color) !important;
   }
 
   .tab-button.tab-history.active {
     background: var(--history-color) !important;
-    color: white !important;
+    color: var(--text-inverse, white) !important;
     border-color: var(--history-color) !important;
   }
 
   /* Tab buttons - hover states */
   .tab-button.tab-retrospective:hover:not(.active) {
-    background: rgba(76, 175, 80, 0.2) !important;
+    background: var(--hover-overlay, rgba(76, 175, 80, 0.2)) !important;
     border-color: var(--retrospective-color) !important;
   }
 
   .tab-button.tab-notes:hover:not(.active) {
-    background: rgba(255, 152, 0, 0.2) !important;
+    background: var(--hover-overlay, rgba(255, 152, 0, 0.2)) !important;
     border-color: var(--notes-color) !important;
   }
 
   .tab-button.tab-video:hover:not(.active) {
-    background: rgba(33, 150, 243, 0.2) !important;
+    background: var(--hover-overlay, rgba(33, 150, 243, 0.2)) !important;
     border-color: var(--video-color) !important;
   }
 
   .tab-button.tab-history:hover:not(.active) {
-    background: rgba(156, 39, 176, 0.2) !important;
+    background: var(--hover-overlay, rgba(156, 39, 176, 0.2)) !important;
     border-color: var(--history-color) !important;
   }
 
@@ -400,7 +400,7 @@ export const SprintTheme = css`
 
   /* Ensure tab buttons have visible borders in inactive state */
   :host([expanded]) .tab-button {
-    border: 1px solid #ccc !important;
+    border: 1px solid var(--border-default, #ccc) !important;
     border-bottom: none !important;
   }
 `;

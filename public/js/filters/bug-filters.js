@@ -78,8 +78,8 @@ export class BugFilters {
     clearButton.className = 'clear-filters-button';
     clearButton.style.cssText = `
       padding: 8px 12px;
-      background: #dc3545;
-      color: white;
+      background: var(--color-error, #f43f5e);
+      color: var(--text-inverse, white);
       border: none;
       border-radius: 4px;
       cursor: pointer;
@@ -217,7 +217,7 @@ export class BugFilters {
       counter.id = 'bugsFilterCounter';
       counter.style.cssText = `
         font-size: 0.9em;
-        color: #666;
+        color: var(--text-muted, #666);
         margin-left: 1rem;
         font-weight: bold;
       `;

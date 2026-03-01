@@ -3,10 +3,10 @@ import { css } from 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+esm';
 export const BugTheme = css`
   :host {
     /* Colores específicos para bugs */
-    --brand-secondary: #4a9eff;
-    --description-color: #4caf50;
-    --acceptanceCriteria-color: #2196f3;
-    --notes-color: #ff9800;
+    --brand-secondary: var(--color-blue-500, #6366f1);
+    --description-color: var(--color-pink-500, #10b981);
+    --acceptanceCriteria-color: var(--color-blue-400, #818cf8);
+    --notes-color: var(--color-orange-500, #f59e0b);
   }
 
   /* Estilos específicos de bug cards */
@@ -108,7 +108,7 @@ export const BugTheme = css`
   }
 
   .card-actions button:hover {
-    background: rgba(0,0,0,0.1);
+    background: var(--active-overlay, rgba(0,0,0,0.1));
   }
 
   .attachment-indicator {
@@ -126,53 +126,53 @@ export const BugTheme = css`
   }
 
   .card-footer .low {
-    background: #d4edda;
-    color: #155724;
+    background: var(--color-green-100, #dcfce7);
+    color: var(--color-green-800, #166534);
   }
 
   .card-footer .medium {
-    background: #fff3cd;
-    color: #856404;
+    background: var(--color-orange-100, #fef3c7);
+    color: var(--color-orange-800, #92400e);
   }
 
   .card-footer .high {
-    background: #f8d7da;
-    color: #721c24;
+    background: var(--color-red-100, #ffe4e6);
+    color: var(--color-red-800, #9f1239);
   }
 
   .card-footer .critical {
-    background: #dc3545;
-    color: white;
+    background: var(--color-red-500, #f43f5e);
+    color: var(--text-inverse, white);
   }
 
   /* Status badge styles */
   .card-footer .created {
-    background: #e9ecef;
-    color: #495057;
+    background: var(--color-gray-200, #e2e8f0);
+    color: var(--color-gray-600, #475569);
   }
 
   .card-footer .open {
-    background: #cce5ff;
-    color: #004085;
+    background: var(--color-blue-100, #e0e7ff);
+    color: var(--color-blue-800, #3730a3);
   }
 
   .card-footer .inprogress {
-    background: #cce500;
-    color: #004085;
+    background: var(--status-in-progress, #3b82f6);
+    color: var(--status-in-progress-text, #ffffff);
   }
 
   .card-footer .fixed {
-    background: #d4edda;
-    color: #155724;
+    background: var(--status-done, #10b981);
+    color: var(--status-done-text, #ffffff);
   }
 
   .card-footer .verified {
-    background: #c3e6cb;
-    color: #155724;
+    background: var(--color-green-200, #bbf7d0);
+    color: var(--color-green-800, #166534);
   }
 
   .card-footer .closed {
-    background: #6c757d;
-    color: white;
+    background: var(--color-gray-500, #64748b);
+    color: var(--text-inverse, white);
   }
 `;

@@ -243,6 +243,7 @@ export const FilterConfig = {
   DEBOUNCE_DELAY: 300,
   
   // Configuración de UI
+  // Note: JS object properties don't support var() — use cssText if applying to elements
   DEFAULT_CONTAINER_STYLES: {
     display: 'flex',
     flexWrap: 'wrap',

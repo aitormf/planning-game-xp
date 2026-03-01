@@ -25,41 +25,42 @@ import { css } from 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+esm';
  */
 export const DarkThemeTokens = css`
   :host([theme="dark"]),
-  :host-context([data-theme="dark"]) {
+  :host-context([data-theme="dark"]),
+  :host-context(.dark-theme) {
     /* ==================== INVERTED COLOR PALETTE ==================== */
-    --color-gray-0: #1a1a2e;
-    --color-gray-50: #16213e;
-    --color-gray-100: #1f2937;
-    --color-gray-200: #374151;
-    --color-gray-300: #4b5563;
-    --color-gray-400: #6b7280;
-    --color-gray-500: #9ca3af;
-    --color-gray-600: #d1d5db;
-    --color-gray-700: #e5e7eb;
-    --color-gray-800: #f3f4f6;
-    --color-gray-900: #f9fafb;
+    --color-gray-0: #0f172a;
+    --color-gray-50: #1e293b;
+    --color-gray-100: #1e293b;
+    --color-gray-200: #334155;
+    --color-gray-300: #475569;
+    --color-gray-400: #64748b;
+    --color-gray-500: #94a3b8;
+    --color-gray-600: #cbd5e1;
+    --color-gray-700: #e2e8f0;
+    --color-gray-800: #f1f5f9;
+    --color-gray-900: #f8fafc;
     --color-gray-1000: #ffffff;
 
     /* ==================== BACKGROUND COLORS ==================== */
-    --bg-primary: #1a1a2e;
-    --bg-secondary: #16213e;
-    --bg-tertiary: #1f2937;
-    --bg-muted: #374151;
-    --bg-subtle: #0f0f1a;
-    --bg-inverse: #f9fafb;
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --bg-muted: #475569;
+    --bg-subtle: #020617;
+    --bg-inverse: #f8fafc;
 
     /* ==================== TEXT COLORS ==================== */
-    --text-primary: #f9fafb;
-    --text-secondary: #e5e7eb;
-    --text-muted: #9ca3af;
-    --text-placeholder: #6b7280;
-    --text-disabled: #4b5563;
-    --text-inverse: #1a1a2e;
+    --text-primary: #f8fafc;
+    --text-secondary: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-placeholder: #64748b;
+    --text-disabled: #475569;
+    --text-inverse: #0f172a;
 
     /* ==================== BORDER COLORS ==================== */
-    --border-default: #4b5563;
-    --border-subtle: #374151;
-    --border-strong: #6b7280;
+    --border-default: #475569;
+    --border-subtle: #334155;
+    --border-strong: #64748b;
 
     /* ==================== SHADOWS (more pronounced) ==================== */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -71,54 +72,54 @@ export const DarkThemeTokens = css`
     /* ==================== COMPONENT OVERRIDES ==================== */
 
     /* Card */
-    --card-bg: #16213e;
-    --card-bg-hover: #1f2937;
-    --card-border-color: #374151;
-    --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    --card-shadow-hover: 0 6px 12px rgba(74, 158, 255, 0.2);
+    --card-bg: #1e293b;
+    --card-bg-hover: #334155;
+    --card-border-color: #334155;
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --card-shadow-hover: 0 4px 8px rgba(99, 102, 241, 0.15);
 
     /* Modal */
-    --modal-bg: #1a1a2e;
-    --modal-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-    --modal-overlay-bg: rgba(0, 0, 0, 0.8);
+    --modal-bg: #0f172a;
+    --modal-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --modal-overlay-bg: rgba(0, 0, 0, 0.7);
     --modal-header-bg: var(--brand-primary);
-    --modal-footer-bg: #16213e;
+    --modal-footer-bg: #1e293b;
 
     /* Input */
-    --input-bg: #1f2937;
-    --input-border: #4b5563;
+    --input-bg: #1e293b;
+    --input-border: #475569;
 
     /* Dropdown */
-    --dropdown-bg: #16213e;
-    --dropdown-border: #374151;
+    --dropdown-bg: #1e293b;
+    --dropdown-border: #334155;
     --dropdown-item-hover-bg: rgba(255, 255, 255, 0.05);
 
     /* Table */
-    --table-border: #374151;
-    --table-header-bg: #1f2937;
-    --table-row-bg: #1a1a2e;
-    --table-row-hover-bg: #16213e;
-    --table-row-alt-bg: #16213e;
+    --table-border: #334155;
+    --table-header-bg: #1e293b;
+    --table-row-bg: #0f172a;
+    --table-row-hover-bg: #1e293b;
+    --table-row-alt-bg: #1e293b;
 
     /* Sidebar */
-    --sidebar-bg: #0f0f1a;
+    --sidebar-bg: #020617;
 
     /* Header */
-    --header-bg: #1a1a2e;
-    --header-border: #374151;
+    --header-bg: #0f172a;
+    --header-border: #334155;
 
     /* Tab */
-    --tab-bg: #1f2937;
-    --tab-bg-active: #1a1a2e;
+    --tab-bg: #1e293b;
+    --tab-bg-active: #0f172a;
 
     /* Tooltip */
-    --tooltip-bg: #f9fafb;
-    --tooltip-text: #1a1a2e;
+    --tooltip-bg: #f8fafc;
+    --tooltip-text: #0f172a;
 
     /* Interactive states */
     --hover-overlay: rgba(255, 255, 255, 0.04);
     --active-overlay: rgba(255, 255, 255, 0.08);
-    --focus-ring: 0 0 0 3px rgba(74, 158, 255, 0.4);
+    --focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.4);
 
     /* Status colors (feedback messages) */
     --status-error-bg: rgba(220, 53, 69, 0.2);
@@ -144,16 +145,16 @@ export const DarkThemeTokens = css`
     --progress-track-bg: rgba(255, 255, 255, 0.1);
 
     /* MultiSelect component (@manufosela/multi-select) */
-    --multi-select-bg: #1f2937;
-    --multi-select-dropdown-bg: #16213e;
-    --multi-select-text-color: #f9fafb;
-    --multi-select-border-color: #4b5563;
-    --multi-select-border-hover: #6b7280;
-    --multi-select-arrow-color: #9ca3af;
-    --multi-select-placeholder-color: #6b7280;
+    --multi-select-bg: #1e293b;
+    --multi-select-dropdown-bg: #1e293b;
+    --multi-select-text-color: #f8fafc;
+    --multi-select-border-color: #475569;
+    --multi-select-border-hover: #64748b;
+    --multi-select-arrow-color: #94a3b8;
+    --multi-select-placeholder-color: #64748b;
     --multi-select-option-hover-bg: rgba(255, 255, 255, 0.08);
-    --multi-select-option-selected-bg: #374151;
-    --multi-select-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    --multi-select-option-selected-bg: #334155;
+    --multi-select-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
   }
 `;
 
@@ -162,67 +163,67 @@ export const DarkThemeTokens = css`
  * These values are applied to :root when dark theme is selected
  */
 export const DarkThemeValues = {
-  '--color-gray-0': '#1a1a2e',
-  '--color-gray-50': '#16213e',
-  '--color-gray-100': '#1f2937',
-  '--color-gray-200': '#374151',
-  '--color-gray-300': '#4b5563',
-  '--color-gray-400': '#6b7280',
-  '--color-gray-500': '#9ca3af',
-  '--color-gray-600': '#d1d5db',
-  '--color-gray-700': '#e5e7eb',
-  '--color-gray-800': '#f3f4f6',
-  '--color-gray-900': '#f9fafb',
+  '--color-gray-0': '#0f172a',
+  '--color-gray-50': '#1e293b',
+  '--color-gray-100': '#1e293b',
+  '--color-gray-200': '#334155',
+  '--color-gray-300': '#475569',
+  '--color-gray-400': '#64748b',
+  '--color-gray-500': '#94a3b8',
+  '--color-gray-600': '#cbd5e1',
+  '--color-gray-700': '#e2e8f0',
+  '--color-gray-800': '#f1f5f9',
+  '--color-gray-900': '#f8fafc',
   '--color-gray-1000': '#ffffff',
-  '--bg-primary': '#1a1a2e',
-  '--bg-secondary': '#16213e',
-  '--bg-tertiary': '#1f2937',
-  '--bg-muted': '#374151',
-  '--bg-subtle': '#0f0f1a',
-  '--bg-inverse': '#f9fafb',
-  '--text-primary': '#f9fafb',
-  '--text-secondary': '#e5e7eb',
-  '--text-muted': '#9ca3af',
-  '--text-placeholder': '#6b7280',
-  '--text-disabled': '#4b5563',
-  '--text-inverse': '#1a1a2e',
-  '--border-default': '#4b5563',
-  '--border-subtle': '#374151',
-  '--border-strong': '#6b7280',
+  '--bg-primary': '#0f172a',
+  '--bg-secondary': '#1e293b',
+  '--bg-tertiary': '#334155',
+  '--bg-muted': '#475569',
+  '--bg-subtle': '#020617',
+  '--bg-inverse': '#f8fafc',
+  '--text-primary': '#f8fafc',
+  '--text-secondary': '#e2e8f0',
+  '--text-muted': '#94a3b8',
+  '--text-placeholder': '#64748b',
+  '--text-disabled': '#475569',
+  '--text-inverse': '#0f172a',
+  '--border-default': '#475569',
+  '--border-subtle': '#334155',
+  '--border-strong': '#64748b',
   '--shadow-sm': '0 1px 2px rgba(0, 0, 0, 0.3)',
-  '--shadow-md': '0 2px 4px rgba(0, 0, 0, 0.4)',
-  '--shadow-lg': '0 4px 8px rgba(0, 0, 0, 0.5)',
-  '--shadow-xl': '0 8px 16px rgba(0, 0, 0, 0.6)',
-  '--shadow-2xl': '0 12px 24px rgba(0, 0, 0, 0.7)',
-  '--card-bg': '#16213e',
-  '--card-bg-hover': '#1f2937',
-  '--card-border-color': '#374151',
-  '--card-shadow': '0 4px 8px rgba(0, 0, 0, 0.4)',
-  '--card-shadow-hover': '0 6px 12px rgba(74, 158, 255, 0.2)',
-  '--modal-bg': '#1a1a2e',
-  '--modal-shadow': '0 8px 32px rgba(0, 0, 0, 0.6)',
-  '--modal-overlay-bg': 'rgba(0, 0, 0, 0.8)',
-  '--modal-footer-bg': '#16213e',
-  '--input-bg': '#1f2937',
-  '--input-border': '#4b5563',
-  '--dropdown-bg': '#16213e',
-  '--dropdown-border': '#374151',
+  '--shadow-md': '0 2px 4px rgba(0, 0, 0, 0.35)',
+  '--shadow-lg': '0 4px 8px rgba(0, 0, 0, 0.4)',
+  '--shadow-xl': '0 8px 16px rgba(0, 0, 0, 0.5)',
+  '--shadow-2xl': '0 12px 24px rgba(0, 0, 0, 0.6)',
+  '--card-bg': '#1e293b',
+  '--card-bg-hover': '#334155',
+  '--card-border-color': '#334155',
+  '--card-shadow': '0 1px 3px rgba(0, 0, 0, 0.3)',
+  '--card-shadow-hover': '0 4px 8px rgba(99, 102, 241, 0.15)',
+  '--modal-bg': '#0f172a',
+  '--modal-shadow': '0 8px 32px rgba(0, 0, 0, 0.5)',
+  '--modal-overlay-bg': 'rgba(0, 0, 0, 0.7)',
+  '--modal-footer-bg': '#1e293b',
+  '--input-bg': '#1e293b',
+  '--input-border': '#475569',
+  '--dropdown-bg': '#1e293b',
+  '--dropdown-border': '#334155',
   '--dropdown-item-hover-bg': 'rgba(255, 255, 255, 0.05)',
-  '--table-border': '#374151',
-  '--table-header-bg': '#1f2937',
-  '--table-row-bg': '#1a1a2e',
-  '--table-row-hover-bg': '#16213e',
-  '--table-row-alt-bg': '#16213e',
-  '--sidebar-bg': '#0f0f1a',
-  '--header-bg': '#1a1a2e',
-  '--header-border': '#374151',
-  '--tab-bg': '#1f2937',
-  '--tab-bg-active': '#1a1a2e',
-  '--tooltip-bg': '#f9fafb',
-  '--tooltip-text': '#1a1a2e',
+  '--table-border': '#334155',
+  '--table-header-bg': '#1e293b',
+  '--table-row-bg': '#0f172a',
+  '--table-row-hover-bg': '#1e293b',
+  '--table-row-alt-bg': '#1e293b',
+  '--sidebar-bg': '#020617',
+  '--header-bg': '#0f172a',
+  '--header-border': '#334155',
+  '--tab-bg': '#1e293b',
+  '--tab-bg-active': '#0f172a',
+  '--tooltip-bg': '#f8fafc',
+  '--tooltip-text': '#0f172a',
   '--hover-overlay': 'rgba(255, 255, 255, 0.04)',
   '--active-overlay': 'rgba(255, 255, 255, 0.08)',
-  '--focus-ring': '0 0 0 3px rgba(74, 158, 255, 0.4)',
+  '--focus-ring': '0 0 0 3px rgba(99, 102, 241, 0.4)',
   '--status-error-bg': 'rgba(220, 53, 69, 0.2)',
   '--status-error-text': '#f5a6ae',
   '--status-error-border': 'rgba(220, 53, 69, 0.3)',
@@ -241,14 +242,14 @@ export const DarkThemeValues = {
   '--color-warning': '#fbbf24',
   '--progress-track-bg': 'rgba(255, 255, 255, 0.1)',
   // MultiSelect component (@manufosela/multi-select)
-  '--multi-select-bg': '#1f2937',
-  '--multi-select-dropdown-bg': '#16213e',
-  '--multi-select-text-color': '#f9fafb',
-  '--multi-select-border-color': '#4b5563',
-  '--multi-select-border-hover': '#6b7280',
-  '--multi-select-arrow-color': '#9ca3af',
-  '--multi-select-placeholder-color': '#6b7280',
+  '--multi-select-bg': '#1e293b',
+  '--multi-select-dropdown-bg': '#1e293b',
+  '--multi-select-text-color': '#f8fafc',
+  '--multi-select-border-color': '#475569',
+  '--multi-select-border-hover': '#64748b',
+  '--multi-select-arrow-color': '#94a3b8',
+  '--multi-select-placeholder-color': '#64748b',
   '--multi-select-option-hover-bg': 'rgba(255, 255, 255, 0.08)',
-  '--multi-select-option-selected-bg': '#374151',
-  '--multi-select-shadow': '0 2px 4px rgba(0, 0, 0, 0.4)',
+  '--multi-select-option-selected-bg': '#334155',
+  '--multi-select-shadow': '0 2px 4px rgba(0, 0, 0, 0.35)',
 };

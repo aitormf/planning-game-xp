@@ -137,8 +137,8 @@ export class CardFactory {
               message: `Tienes cambios sin guardar en este ${cardType}.<br><br>¿Quieres cerrar de todos modos?`,
               confirmText: 'Sí, cerrar sin guardar',
               cancelText: 'No, volver a editar',
-              confirmColor: '#f44336',
-              cancelColor: '#fcaf00'
+              confirmColor: '#f43f5e',
+              cancelColor: '#f59e0b'
             });
             if (!confirmed) {
               return; // Usuario canceló, no cerrar

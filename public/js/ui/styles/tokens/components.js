@@ -12,10 +12,10 @@ export const ComponentTokens = css`
     --card-bg-hover: var(--bg-subtle);
     --card-border-color: var(--border-default);
     --card-border-radius: var(--radius-lg);
-    --card-shadow: var(--shadow-md);
-    --card-shadow-hover: 0 4px 8px rgba(74, 158, 255, 0.15);
+    --card-shadow: var(--shadow-sm);
+    --card-shadow-hover: var(--shadow-md);
     --card-padding: var(--spacing-md);
-    --card-width: 300px;
+    --card-width: 320px;
     --card-min-height: 180px;
     --card-height-task: 260px;
     --card-height-bug: 275px;
@@ -86,9 +86,9 @@ export const ComponentTokens = css`
     /* ==================== MODAL TOKENS ==================== */
     --modal-bg: var(--bg-primary);
     --modal-text: var(--text-primary);
-    --modal-border-radius: var(--radius-lg);
-    --modal-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    --modal-overlay-bg: rgba(0, 0, 0, 0.6);
+    --modal-border-radius: var(--radius-xl);
+    --modal-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    --modal-overlay-bg: rgba(0, 0, 0, 0.4);
     --modal-max-width: 80vw;
     --modal-max-height: 80vh;
     --modal-padding: var(--spacing-lg);

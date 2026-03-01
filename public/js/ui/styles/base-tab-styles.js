@@ -37,7 +37,7 @@ export const BaseTabStyles = css`
     font-size: var(--font-size-base);
     color: var(--text-primary);
     box-shadow: var(--shadow-sm);
-    border: 4px solid var(--description-color);
+    border: 2px solid var(--description-color);
   }
 
   .tab-content textarea {
@@ -57,7 +57,7 @@ export const BaseTabStyles = css`
   }
 
   .ta-description, .ta-retrospective {
-    border: 4px solid var(--description-color);
+    border: 2px solid var(--description-color);
   }
 
   .acceptancecriteria {
@@ -65,7 +65,7 @@ export const BaseTabStyles = css`
   }
 
   .ta-acceptanceCriteria {
-    border: 4px solid var(--acceptanceCriteria-color);
+    border: 2px solid var(--acceptanceCriteria-color);
   }
 
   .notes {
@@ -73,20 +73,20 @@ export const BaseTabStyles = css`
   }
 
   .ta-notes {
-    border: 4px solid var(--notes-color);
+    border: 2px solid var(--notes-color);
     background: var(--bg-primary);
   }
 
   .ta-attachment {
-    border: 4px solid var(--color-pink-700);
+    border: 2px solid var(--color-pink-700);
   }
 
   .ta-relatedTasks {
-    border: 4px solid var(--color-gray-600);
+    border: 2px solid var(--color-gray-600);
   }
 
   .ta-history {
-    border: 4px solid var(--color-orange-800);
+    border: 2px solid var(--color-orange-800);
   }
 
   /* Tab panels - hidden by default */

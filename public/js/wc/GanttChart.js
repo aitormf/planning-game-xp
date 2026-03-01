@@ -29,7 +29,7 @@ export class GanttChart extends LitElement {
       }
      */
     this.tasks = [];
-    this.colorBar = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#6366f1', '#8b5cf6', '#f59e0b'];
+    this.colorBar = ['#6366f1', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#f43f5e', '#0ea5e9', '#14b8a6'];
     this.year = null; // If set, fixes the time scale to January 1 - December 31 of this year
   }
 
@@ -253,7 +253,7 @@ const width = 1000 - margin.left - margin.right;
       // Verificar que tengamos fechas válidas
       if (dates.length === 0) {
         console.warn('No hay fechas válidas para mostrar en el Gantt chart');
-        container.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">No hay tareas con fechas válidas para mostrar en el gráfico Gantt.</p>';
+        container.innerHTML = '<p style="padding: 20px; text-align: center; color: var(--text-secondary, #666);">No hay tareas con fechas válidas para mostrar en el gráfico Gantt.</p>';
         return;
       }
 
@@ -263,7 +263,7 @@ const width = 1000 - margin.left - margin.right;
 
     // Show message if no tasks but year is set
     if (flatTasks.length === 0 && this.year) {
-      container.innerHTML = `<p style="padding: 20px; text-align: center; color: #666;">No hay épicas con actividad en ${this.year}.</p>`;
+      container.innerHTML = `<p style="padding: 20px; text-align: center; color: var(--text-secondary, #666);">No hay épicas con actividad en ${this.year}.</p>`;
       return;
     }
 
@@ -317,7 +317,7 @@ const width = 1000 - margin.left - margin.right;
 
       // Detectar si la tarea está en curso (sin fecha de fin real, solo asignada como hoy)
       const isEnCurso = !task.realEnd && task.plannedEnd === todayStr && !task.isEpic;
-      const brandPrimary = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary').trim() || '#4a9eff';
+      const brandPrimary = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary').trim() || '#6366f1';
       const brandSecondary = getComputedStyle(document.documentElement).getPropertyValue('--brand-secondary').trim() || '#ec3e95';
       const barColor = task.isEpic ? brandPrimary : (isEnCurso ? brandSecondary : '#8b5cf6');
 

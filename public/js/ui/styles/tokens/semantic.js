@@ -60,18 +60,18 @@ export const SemanticTokens = css`
     --border-error: var(--color-error);
 
     /* ==================== CARD STATUS COLORS ==================== */
-    --status-todo: #449bd3;
-    --status-todo-text: var(--color-gray-0);
-    --status-in-progress: #cce500;
-    --status-in-progress-text: var(--color-gray-900);
-    --status-to-validate: #ff6600;
-    --status-to-validate-text: var(--color-gray-0);
-    --status-done: #d4edda;
-    --status-done-text: var(--color-gray-900);
-    --status-blocked: #f8d7da;
-    --status-blocked-text: var(--color-gray-900);
-    --status-expedited: var(--color-pink-500);
-    --status-expedited-text: var(--color-gray-0);
+    --status-todo: #94a3b8;
+    --status-todo-text: #ffffff;
+    --status-in-progress: #3b82f6;
+    --status-in-progress-text: #ffffff;
+    --status-to-validate: #f59e0b;
+    --status-to-validate-text: #ffffff;
+    --status-done: #10b981;
+    --status-done-text: #ffffff;
+    --status-blocked: #f43f5e;
+    --status-blocked-text: #ffffff;
+    --status-expedited: #8b5cf6;
+    --status-expedited-text: #ffffff;
 
     /* ==================== BADGE COLORS ==================== */
     --badge-success-bg: var(--color-success);
@@ -86,8 +86,8 @@ export const SemanticTokens = css`
     --badge-neutral-hover: var(--color-gray-800);
 
     /* ==================== TAB COLORS ==================== */
-    --tab-description-color: var(--color-green-500);
-    --tab-acceptance-criteria-color: var(--color-blue-400);
+    --tab-description-color: var(--color-pink-500);
+    --tab-acceptance-criteria-color: var(--color-blue-500);
     --tab-notes-color: var(--color-orange-500);
 
     /* ==================== SEMANTIC SPACING ==================== */
@@ -113,8 +113,8 @@ export const SemanticTokens = css`
     --transition-slow: var(--duration-slow) var(--easing-default);
 
     /* ==================== INTERACTIVE STATES ==================== */
-    --focus-ring: 0 0 0 3px rgba(74, 158, 255, 0.3);
-    --focus-ring-error: 0 0 0 3px rgba(217, 83, 79, 0.3);
+    --focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    --focus-ring-error: 0 0 0 3px rgba(244, 63, 94, 0.3);
     --hover-overlay: rgba(0, 0, 0, 0.04);
     --active-overlay: rgba(0, 0, 0, 0.08);
     --disabled-opacity: 0.5;

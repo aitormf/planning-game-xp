@@ -370,8 +370,8 @@ import Layout from '../layouts/Layout.astro';
 
   function getProjectColor(index) {
     const colors = [
-      '#ec3e95', // brand pink
-      '#4a9eff', // primary blue
+      '#6366f1', // indigo primary
+      '#10b981', // emerald secondary
       '#10b981', // emerald
       '#f59e0b', // amber
       '#8b5cf6', // violet
@@ -1214,7 +1214,7 @@ import Layout from '../layouts/Layout.astro';
   }
 
   :global(.archived-badge) {
-    background-color: #6c757d;
+    background-color: var(--text-muted, #64748b);
     color: white;
     font-size: 0.65rem;
     padding: 2px 8px;

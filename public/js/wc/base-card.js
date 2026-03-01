@@ -482,15 +482,17 @@ this.canEditPermission = permissions.canEdit || false;
     `;
     
     const content = overlay.querySelector('.saving-content');
+    const isDark = document.documentElement.classList.contains('dark-theme');
     content.style.cssText = `
-      background: white;
+      background: ${isDark ? '#1e293b' : 'white'};
+      color: ${isDark ? '#f8fafc' : '#333'};
       padding: 2rem;
       border-radius: 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 1rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, ${isDark ? '0.4' : '0.1'});
     `;
     
     const spinner = overlay.querySelector('.spinner');
@@ -984,11 +986,13 @@ Object.keys(savedData).forEach(key => {
     `;
 
     const modalContent = document.createElement('div');
+    const isDarkModal = document.documentElement.classList.contains('dark-theme');
     modalContent.style.cssText = `
-      background: white;
+      background: ${isDarkModal ? '#1e293b' : 'white'};
+      color: ${isDarkModal ? '#f8fafc' : '#333'};
       border-radius: 8px;
       padding: 2rem;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 16px rgba(0,0,0,${isDarkModal ? '0.5' : '0.2'});
       min-width: 400px;
       max-width: 500px;
       position: relative;
@@ -1005,29 +1009,31 @@ Object.keys(savedData).forEach(key => {
       border: none;
       font-size: 1.5rem;
       cursor: pointer;
-      color: #999;
+      color: ${isDarkModal ? '#94a3b8' : '#999'};
     `;
     closeBtn.onclick = () => modal.remove();
 
     // Title
     const title = document.createElement('h3');
     title.textContent = 'Mover a otro proyecto';
-    title.style.cssText = 'margin: 0 0 1rem 0; color: #333;';
+    title.style.cssText = `margin: 0 0 1rem 0; color: ${isDarkModal ? '#f8fafc' : '#333'};`;
 
     // Message
     const message = document.createElement('p');
     message.innerHTML = `Mover <b>${this.cardId}</b> a:`;
-    message.style.cssText = 'margin: 0 0 1rem 0; color: #666;';
+    message.style.cssText = `margin: 0 0 1rem 0; color: ${isDarkModal ? '#e2e8f0' : '#666'};`;
 
     // Project selector
     const projectSelect = document.createElement('select');
     projectSelect.style.cssText = `
       width: 100%;
       padding: 0.75rem;
-      border: 1px solid #ddd;
+      border: 1px solid ${isDarkModal ? '#475569' : '#ddd'};
       border-radius: 4px;
       font-size: 1rem;
       margin-bottom: 1.5rem;
+      background: ${isDarkModal ? '#0f172a' : '#fff'};
+      color: ${isDarkModal ? '#f8fafc' : '#333'};
     `;
 
     // Default option

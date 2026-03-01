@@ -24,8 +24,8 @@ export class UpdateManager extends LitElement {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: linear-gradient(135deg, #4a9eff, #0066cc);
-        color: white;
+        background: linear-gradient(135deg, var(--brand-primary, #6366f1), var(--brand-primary-strong, #4f46e5));
+        color: var(--text-inverse, white);
         padding: 16px 20px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -85,7 +85,7 @@ export class UpdateManager extends LitElement {
 
       .btn-primary {
         background: rgba(255, 255, 255, 0.2);
-        color: white;
+        color: var(--text-inverse, white);
         border: 1px solid rgba(255, 255, 255, 0.3);
       }
 
@@ -95,7 +95,7 @@ export class UpdateManager extends LitElement {
 
       .btn-secondary {
         background: transparent;
-        color: white;
+        color: var(--text-inverse, white);
         border: 1px solid rgba(255, 255, 255, 0.3);
       }
 
@@ -114,7 +114,7 @@ export class UpdateManager extends LitElement {
 
       .progress-fill {
         height: 100%;
-        background: white;
+        background: var(--text-inverse, white);
         transition: width 0.3s ease;
       }
 
@@ -132,7 +132,7 @@ export class UpdateManager extends LitElement {
       }
 
       .modal {
-        background: white;
+        background: var(--bg-primary, white);
         border-radius: 8px;
         padding: 24px;
         max-width: 500px;
@@ -150,17 +150,17 @@ export class UpdateManager extends LitElement {
       .modal-title {
         font-size: 20px;
         font-weight: 600;
-        color: #333;
+        color: var(--text-primary, #333);
       }
 
       .modal-content {
-        color: #666;
+        color: var(--text-secondary, #666);
         line-height: 1.5;
         margin-bottom: 20px;
       }
 
       .update-details {
-        background: #f8f9fa;
+        background: var(--bg-secondary, #f8f9fa);
         padding: 12px;
         border-radius: 6px;
         margin: 12px 0;
@@ -177,24 +177,24 @@ export class UpdateManager extends LitElement {
         max-height: 200px;
         overflow-y: auto;
         font-size: 13px;
-        color: #555;
+        color: var(--text-secondary, #555);
       }
 
       .error-message {
-        background: #fee;
-        color: #c33;
+        background: var(--color-error-bg, #fee);
+        color: var(--color-error, #f43f5e);
         padding: 12px;
         border-radius: 6px;
-        border-left: 4px solid #c33;
+        border-left: 4px solid var(--color-error, #f43f5e);
         margin: 12px 0;
       }
 
       .success-message {
-        background: #efe;
-        color: #363;
+        background: var(--color-success-bg, #efe);
+        color: var(--color-success, #10b981);
         padding: 12px;
         border-radius: 6px;
-        border-left: 4px solid #363;
+        border-left: 4px solid var(--color-success, #10b981);
         margin: 12px 0;
       }
 
@@ -206,11 +206,11 @@ export class UpdateManager extends LitElement {
         border: none;
         font-size: 18px;
         cursor: pointer;
-        color: #999;
+        color: var(--text-muted, #999);
       }
 
       .close-btn:hover {
-        color: #333;
+        color: var(--text-primary, #333);
       }
 
       .spinner {
@@ -219,7 +219,7 @@ export class UpdateManager extends LitElement {
         height: 16px;
         border: 2px solid rgba(255, 255, 255, 0.3);
         border-radius: 50%;
-        border-top-color: white;
+        border-top-color: var(--text-inverse, white);
         animation: spin 1s ease-in-out infinite;
       }
 

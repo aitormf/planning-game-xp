@@ -32,7 +32,7 @@ export const AppManagerStyles = css`
   .section-title {
     font-size: 1.4rem;
     font-weight: bold;
-    color: var(--secondary-color, #333);
+    color: var(--text-primary, #333);
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--brand-secondary, #ec3e95);
@@ -65,9 +65,9 @@ export const AppManagerStyles = css`
   }
 
   .upload-description.error {
-    color: #dc3545;
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
+    color: var(--color-error, #dc3545);
+    background: var(--status-error-bg, #f8d7da);
+    border: 1px solid var(--status-error-border, #f5c6cb);
     border-radius: 4px;
     padding: 0.75rem;
     font-weight: 500;
@@ -154,9 +154,9 @@ export const AppManagerStyles = css`
   }
 
   .view-toggle button.active {
-    background: #0d6efd;
-    color: #fff;
-    border-color: #0d6efd;
+    background: var(--brand-primary, #6366f1);
+    color: var(--text-inverse, white);
+    border-color: var(--brand-primary, #6366f1);
   }
 
   .stats-table {
@@ -197,7 +197,7 @@ export const AppManagerStyles = css`
   .chart-bar span {
     display: block;
     height: 100%;
-    background: linear-gradient(90deg, #4a9eff, #0d6efd);
+    background: linear-gradient(90deg, var(--brand-primary, #6366f1), var(--brand-primary-hover, #4f46e5));
   }
 
   .chart-label,
@@ -214,7 +214,7 @@ export const AppManagerStyles = css`
 
   .files-list h4 {
     margin: 0 0 1rem 0;
-    color: var(--secondary-color, #333);
+    color: var(--text-primary, #333);
     font-size: 1.2rem;
   }
 
@@ -261,7 +261,7 @@ export const AppManagerStyles = css`
   .download-btn {
     padding: 0.5rem 1rem;
     background: var(--brand-secondary, #ec3e95);
-    color: white;
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -274,13 +274,13 @@ export const AppManagerStyles = css`
   }
 
   .download-btn:hover {
-    background: #d63384;
+    background: var(--brand-secondary, #10b981);
   }
 
   .share-btn {
     padding: 0.5rem 1rem;
-    background: var(--primary-color, #4a9eff);
-    color: var(--text-white, white);
+    background: var(--brand-primary, #6366f1);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: var(--radius-sm, 4px);
     cursor: pointer;
@@ -292,13 +292,13 @@ export const AppManagerStyles = css`
   }
 
   .share-btn:hover {
-    background: var(--primary-hover, #3a8eef);
+    background: var(--brand-primary-hover, #4f46e5);
   }
 
   .delete-btn {
     padding: 0.5rem 1rem;
-    background: var(--danger-color, #d9534f);
-    color: var(--text-white, white);
+    background: var(--color-error, #d9534f);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: var(--radius-sm, 4px);
     cursor: pointer;
@@ -307,7 +307,7 @@ export const AppManagerStyles = css`
   }
 
   .delete-btn:hover {
-    background: var(--danger-hover, #c9302c);
+    background: var(--color-error-hover, #c9302c);
   }
 
   .app-access-info,
@@ -326,7 +326,7 @@ export const AppManagerStyles = css`
 
   .app-access-locked h3 {
     margin-bottom: 0.75rem;
-    color: #b02a37;
+    color: var(--color-error, #f43f5e);
   }
 
   .app-access-locked p {
@@ -354,7 +354,7 @@ export const AppManagerStyles = css`
     display: inline-block;
     width: 20px;
     height: 20px;
-    border: 2px solid #f3f3f3;
+    border: 2px solid var(--border-default, #f3f3f3);
     border-top: 2px solid var(--brand-secondary, #ec3e95);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -400,21 +400,21 @@ export const AppManagerStyles = css`
   }
 
   .error-message {
-    background: #f8d7da;
-    color: #721c24;
+    background: var(--status-error-bg, #f8d7da);
+    color: var(--color-error, #721c24);
     padding: 1rem;
     border-radius: 4px;
     margin: 1rem 0;
-    border: 1px solid #f5c6cb;
+    border: 1px solid var(--status-error-border, #f5c6cb);
   }
 
   .success-message {
-    background: #d4edda;
-    color: #155724;
+    background: var(--status-success-bg, #d4edda);
+    color: var(--color-success, #155724);
     padding: 1rem;
     border-radius: 4px;
     margin: 1rem 0;
-    border: 1px solid #c3e6cb;
+    border: 1px solid var(--status-success-border, #c3e6cb);
   }
 
   /* Upload metadata form styles */
@@ -451,7 +451,7 @@ export const AppManagerStyles = css`
   .upload-metadata-form .form-textarea:focus {
     outline: none;
     border-color: var(--brand-secondary, #ec3e95);
-    box-shadow: 0 0 0 2px rgba(236, 62, 149, 0.15);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
   }
 
   .upload-metadata-form .form-textarea {
@@ -463,10 +463,10 @@ export const AppManagerStyles = css`
   .upload-notice {
     margin-top: 1rem;
     padding: 0.75rem;
-    background: #fff3cd;
-    border: 1px solid #ffc107;
+    background: var(--status-warning-bg, #fff3cd);
+    border: 1px solid var(--color-warning, #ffc107);
     border-radius: 6px;
-    color: #856404;
+    color: var(--color-warning, #856404);
     font-size: 0.85rem;
     text-align: left;
   }
@@ -483,39 +483,39 @@ export const AppManagerStyles = css`
   }
 
   .badge-release {
-    background: var(--badge-success, #4caf50);
-    color: var(--text-white, #fff);
+    background: var(--color-success, #4caf50);
+    color: var(--text-inverse, #fff);
   }
 
   .badge-beta {
-    background: var(--badge-warning, #ff9800);
+    background: var(--color-warning, #ff9800);
     color: var(--text-primary, #333);
   }
 
   .badge-admin {
-    background: var(--badge-admin, #9c27b0);
-    color: var(--text-white, #fff);
+    background: var(--status-expedited, #8b5cf6);
+    color: var(--text-inverse, #fff);
   }
 
   .badge-pending {
     background: var(--badge-neutral, #6c757d);
-    color: var(--text-white, #fff);
+    color: var(--text-inverse, #fff);
   }
 
   .badge-deprecated {
     background: var(--badge-danger, #d9534f);
-    color: var(--text-white, #fff);
+    color: var(--text-inverse, #fff);
   }
 
   .badge-recommended {
-    background: linear-gradient(135deg, var(--badge-success, #4caf50) 0%, var(--badge-info, #17a2b8) 100%);
-    color: var(--text-white, #fff);
+    background: linear-gradient(135deg, var(--color-success, #4caf50) 0%, var(--badge-info, #17a2b8) 100%);
+    color: var(--text-inverse, #fff);
     font-weight: 700;
   }
 
   .file-item.recommended {
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.2) 100%);
-    border: 2px solid var(--badge-success, #4caf50);
+    border: 2px solid var(--color-success, #4caf50);
   }
 
   .app-badge.small {
@@ -532,7 +532,7 @@ export const AppManagerStyles = css`
 
   .file-item.pending {
     background: rgba(255, 152, 0, 0.15);
-    border-color: var(--badge-warning, #ff9800);
+    border-color: var(--color-warning, #ff9800);
   }
 
   .file-badges {
@@ -576,8 +576,8 @@ export const AppManagerStyles = css`
   /* Admin action buttons */
   .approve-btn {
     padding: 0.5rem 1rem;
-    background: var(--badge-success, #4caf50);
-    color: var(--text-white, white);
+    background: var(--color-success, #4caf50);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: var(--radius-sm, 4px);
     cursor: pointer;
@@ -586,12 +586,12 @@ export const AppManagerStyles = css`
   }
 
   .approve-btn:hover {
-    background: var(--badge-success-hover, #43a047);
+    background: var(--color-success-hover, #43a047);
   }
 
   .deprecate-btn {
     padding: 0.5rem 1rem;
-    background: var(--badge-warning, #ff9800);
+    background: var(--color-warning, #ff9800);
     color: var(--text-primary, #333);
     border: none;
     border-radius: var(--radius-sm, 4px);
@@ -601,13 +601,13 @@ export const AppManagerStyles = css`
   }
 
   .deprecate-btn:hover {
-    background: var(--badge-warning-hover, #f57c00);
+    background: var(--color-warning-hover, #f57c00);
   }
 
   .restore-btn {
     padding: 0.5rem 1rem;
-    background: var(--badge-info, #17a2b8);
-    color: var(--text-white, white);
+    background: var(--color-info, #17a2b8);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: var(--radius-sm, 4px);
     cursor: pointer;
@@ -616,13 +616,13 @@ export const AppManagerStyles = css`
   }
 
   .restore-btn:hover {
-    background: var(--badge-info-hover, #138496);
+    background: var(--color-info-hover, #138496);
   }
 
   .edit-btn {
     padding: 0.5rem 1rem;
     background: var(--badge-neutral, #6c757d);
-    color: var(--text-white, white);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: var(--radius-sm, 4px);
     cursor: pointer;
@@ -641,7 +641,7 @@ export const AppManagerStyles = css`
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--modal-overlay-bg, rgba(0, 0, 0, 0.6));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -672,18 +672,18 @@ export const AppManagerStyles = css`
 
   /* Required label and error styles */
   .required-label {
-    color: #dc3545;
+    color: var(--color-error, #dc3545);
     font-weight: 600;
     font-size: 0.85em;
   }
 
   .input-error {
-    border-color: #dc3545 !important;
+    border-color: var(--color-error, #dc3545) !important;
     box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2) !important;
   }
 
   .input-error:focus {
-    border-color: #dc3545 !important;
+    border-color: var(--color-error, #dc3545) !important;
     box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important;
   }
 
@@ -729,8 +729,8 @@ export const AppManagerStyles = css`
     width: 100%;
     padding: 0.75rem 1.5rem;
     margin-top: 0.75rem;
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--color-success, #28a745) 0%, var(--color-success, #20c997) 100%);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 6px;
     font-size: 1rem;
@@ -740,7 +740,7 @@ export const AppManagerStyles = css`
   }
 
   .upload-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+    background: linear-gradient(135deg, var(--color-success-hover, #218838) 0%, var(--color-success-hover, #1aa179) 100%);
     transform: translateY(-1px);
   }
 
@@ -771,21 +771,21 @@ export const AppManagerStyles = css`
   /* Recommended version - highlighted card */
   .recommended-app {
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, rgba(76, 175, 80, 0.15) 100%);
-    border: 2px solid var(--badge-success, #4caf50);
+    border: 2px solid var(--color-success, #4caf50);
     border-radius: var(--radius-lg, 12px);
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.25);
   }
 
   .recommended-header {
-    background: linear-gradient(135deg, var(--badge-success, #4caf50) 0%, var(--badge-info, #17a2b8) 100%);
+    background: linear-gradient(135deg, var(--color-success, #4caf50) 0%, var(--badge-info, #17a2b8) 100%);
     padding: 0.5rem 1rem;
   }
 
   .recommended-label {
     font-weight: 700;
     font-size: 0.9rem;
-    color: var(--text-white, #fff);
+    color: var(--text-inverse, #fff);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -859,15 +859,15 @@ export const AppManagerStyles = css`
   /* Download button primary */
   .download-btn.primary {
     padding: 0.5rem 1.25rem;
-    background: linear-gradient(135deg, var(--brand-secondary, #ec3e95) 0%, #d63384 100%);
+    background: linear-gradient(135deg, var(--brand-primary, #6366f1) 0%, var(--brand-primary-hover, #4f46e5) 100%);
     font-size: 0.95rem;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(236, 62, 149, 0.3);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
   }
 
   .download-btn.primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(236, 62, 149, 0.4);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
   }
 
   .download-btn.small {
@@ -968,11 +968,11 @@ export const AppManagerStyles = css`
     padding: 0;
     max-width: 500px;
     width: 90%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-lg, 0 8px 32px rgba(0, 0, 0, 0.3));
   }
 
   dialog.changelog-modal::backdrop {
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--modal-overlay-bg, rgba(0, 0, 0, 0.5));
   }
 
   .changelog-modal-content {
@@ -985,8 +985,8 @@ export const AppManagerStyles = css`
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.25rem;
-    background: linear-gradient(135deg, var(--brand-secondary, #ec3e95) 0%, #d63384 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--brand-primary, #6366f1) 0%, var(--brand-primary-hover, #4f46e5) 100%);
+    color: var(--text-inverse, white);
   }
 
   .changelog-modal-header h3 {
@@ -998,7 +998,7 @@ export const AppManagerStyles = css`
   .changelog-modal-header .close-btn {
     background: none;
     border: none;
-    color: white;
+    color: var(--text-inverse, white);
     font-size: 1.5rem;
     cursor: pointer;
     line-height: 1;
@@ -1101,35 +1101,35 @@ export const AppManagerStyles = css`
 
   /* Release block - green theme */
   .release-block {
-    border: 2px solid #4caf50;
-    background: #fff;
+    border: 2px solid var(--color-success, #4caf50);
+    background: var(--bg-primary, #fff);
   }
 
   .release-block .block-header {
-    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--color-success, #4caf50) 0%, var(--color-success, #66bb6a) 100%);
+    color: var(--text-inverse, #fff);
   }
 
   /* Beta block - orange theme */
   .beta-block {
-    border: 2px solid #ff9800;
-    background: #fff;
+    border: 2px solid var(--color-warning, #ff9800);
+    background: var(--bg-primary, #fff);
   }
 
   .beta-block .block-header {
-    background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
-    color: #333;
+    background: linear-gradient(135deg, var(--color-warning, #ff9800) 0%, var(--color-warning, #ffa726) 100%);
+    color: var(--text-primary, #333);
   }
 
   /* Admin block - purple theme */
   .admin-block {
-    border: 2px solid #9c27b0;
-    background: #fff;
+    border: 2px solid var(--status-expedited, #8b5cf6);
+    background: var(--bg-primary, #fff);
   }
 
   .admin-block .block-header {
-    background: linear-gradient(135deg, #9c27b0 0%, #ab47bc 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--status-expedited, #8b5cf6) 0%, var(--status-expedited, #a78bfa) 100%);
+    color: var(--text-inverse, #fff);
   }
 
   /* Latest version card inside blocks */
@@ -1153,8 +1153,8 @@ export const AppManagerStyles = css`
   }
 
   .recommended-badge {
-    background: linear-gradient(135deg, #4caf50 0%, #17a2b8 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--color-success, #4caf50) 0%, var(--badge-info, #17a2b8) 100%);
+    color: var(--text-inverse, #fff);
   }
 
   .latest-badge {
@@ -1293,8 +1293,8 @@ export const AppManagerStyles = css`
     align-items: center;
     gap: 0.25rem;
     padding: 0.2rem 0.5rem;
-    background: #e3f2fd;
-    color: #1565c0;
+    background: var(--status-info-bg, #e3f2fd);
+    color: var(--color-info, #1565c0);
     border-radius: 12px;
     font-size: 0.8rem;
     font-weight: 500;
@@ -1306,7 +1306,7 @@ export const AppManagerStyles = css`
   }
 
   .download-count.clickable:hover {
-    background: #bbdefb;
+    background: var(--status-info-border, #bbdefb);
     transform: scale(1.05);
   }
 

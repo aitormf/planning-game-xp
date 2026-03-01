@@ -25,7 +25,7 @@ export const GlobalConfigListStyles = css`
   }
 
   .sidebar {
-    background: var(--surface-secondary, #f5f5f5);
+    background: var(--bg-secondary, #f8f9fa);
     border-radius: 8px;
     padding: 1rem;
     position: sticky;
@@ -63,11 +63,11 @@ export const GlobalConfigListStyles = css`
   }
 
   .type-tab:hover {
-    background: var(--surface-tertiary, #e5e5e5);
+    background: var(--bg-tertiary, #e9ecef);
   }
 
   .type-tab.active {
-    background: var(--color-blue-500, #4a9eff);
+    background: var(--brand-primary, #6366f1);
     color: white;
   }
 
@@ -93,7 +93,7 @@ export const GlobalConfigListStyles = css`
     align-items: center;
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
-    border-bottom: 2px solid var(--border-color, #e0e0e0);
+    border-bottom: 2px solid var(--border-default, #e5e7eb);
   }
 
   .content-title {
@@ -113,7 +113,7 @@ export const GlobalConfigListStyles = css`
 
   .filter-select {
     padding: 0.4rem 0.8rem;
-    border: 1px solid var(--border-color, #e0e0e0);
+    border: 1px solid var(--border-default, #e5e7eb);
     border-radius: 4px;
     background: var(--input-bg, white);
     color: var(--text-primary, inherit);
@@ -126,7 +126,7 @@ export const GlobalConfigListStyles = css`
     align-items: center;
     gap: 0.4rem;
     padding: 0.4rem 0.8rem;
-    background: var(--color-blue-500, #4a9eff);
+    background: var(--brand-primary, #6366f1);
     color: white;
     border: none;
     border-radius: 4px;
@@ -136,7 +136,7 @@ export const GlobalConfigListStyles = css`
   }
 
   .btn-new:hover {
-    background: var(--color-blue-600, #2563eb);
+    background: var(--brand-primary-hover, #4f46e5);
   }
 
   .empty-state {
@@ -173,6 +173,6 @@ export const GlobalConfigListStyles = css`
     font-size: 0.8rem;
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
-    background: var(--surface-secondary, #f5f5f5);
+    background: var(--bg-secondary, #f8f9fa);
   }
 `;

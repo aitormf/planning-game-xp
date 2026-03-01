@@ -512,7 +512,7 @@ const developerValue = developerOptions.find(opt => opt.value === this.developer
 
           <div class="field-group" style="flex: 1;">
             <label>Register Date:</label>
-            <div style="padding: 0.5rem; background: #f5f5f5; border-radius: 4px;">
+            <div style="padding: 0.5rem; background: var(--bg-secondary, #f5f5f5); border-radius: 4px;">
               ${this.formatDate(this.registerDate || this.today)} - ${this.createdBy || this.userEmail}
             </div>
           </div>
@@ -807,8 +807,8 @@ return;
           message: `Are you sure you want to delete <b>${this.title}</b>?`,
           button1Text: 'Yes',
           button2Text: 'No',
-          button1css: 'background-color: green',
-          button2css: 'background-color: red',
+          button1css: 'background-color: #10b981',
+          button2css: 'background-color: #f43f5e',
           button1Action: () => this._confirmDelete(),
           button2Action: () => { } // Just close the modal
         }
@@ -834,7 +834,7 @@ return;
           button1Text: 'Convertir',
           button2Text: 'Cancelar',
           button1css: 'background-color: var(--brand-secondary);',
-          button2css: 'background-color: #999;',
+          button2css: 'background-color: #6b7280;',
           button1Action: () => this.convertToTask(),
           button2Action: () => { },
           maxWidth: '520px'
@@ -1078,7 +1078,7 @@ return;
    */
   _showConversionLoading() {
     const loading = document.createElement('loading-layer');
-    loading.setAttribute('color', '#003b82');
+    loading.setAttribute('color', '#6366f1');
     loading.setAttribute('message', 'Convirtiendo propuesta y generando Acceptance tests con IA. Esta acción puede tardar más de un minuto...');
     loading.setAttribute('size', '80');
     loading.setAttribute('stroke-width', '6');
@@ -1457,8 +1457,8 @@ this.projectScoringSystem = '1-5';
           message: 'Esto reemplazará los criterios actuales por una versión generada con IA. ¿Quieres continuar?',
           button1Text: 'Regenerar',
           button2Text: 'Cancelar',
-          button1css: 'background-color: #0d6efd; color: white;',
-          button2css: 'background-color: #6c757d; color: white;',
+          button1css: 'background-color: #6366f1; color: white;',
+          button2css: 'background-color: #6b7280; color: white;',
           button1Action: () => this._regenerateAcceptanceCriteria(),
           button2Action: () => { }
         }
@@ -1527,7 +1527,7 @@ this.projectScoringSystem = '1-5';
 
   _showAcceptanceLoading() {
     const loading = document.createElement('loading-layer');
-    loading.setAttribute('color', '#003b82');
+    loading.setAttribute('color', '#6366f1');
     loading.setAttribute('message', 'Generando Acceptance tests. Esta acción puede tardar más de un minuto');
     loading.setAttribute('size', '80');
     loading.setAttribute('stroke-width', '6');

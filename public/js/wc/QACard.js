@@ -392,7 +392,7 @@ return true; // Por seguridad, asumimos que está en uso si hay error
             <input type="text" .value=${this.newSuiteName} @input=${this.handleNewSuiteInput.bind(this)} placeholder="Nombre de la nueva suite" autofocus style="width:90%; padding:0.5rem;" />
             <div style="display:flex; gap:1rem; justify-content:center;">
               <button type="button" @click=${this.saveNewSuite.bind(this)} ?disabled=${!this.newSuiteName.trim() || !this.isEditable} style="padding:0.5rem 1.2rem;">Guardar suite</button>
-              <button type="button" @click=${this.closeSuiteDialog.bind(this)} style="padding:0.5rem 1.2rem; background:#eee;">Cancelar</button>
+              <button type="button" @click=${this.closeSuiteDialog.bind(this)} style="padding:0.5rem 1.2rem; background:var(--bg-secondary, #eee);">Cancelar</button>
             </div>
           </form>
         </dialog>
@@ -400,11 +400,11 @@ return true; // Por seguridad, asumimos que está en uso si hay error
         <dialog id="deleteSuiteDialog" style="padding:2rem; border-radius:10px; min-width:320px; text-align:center;">
           <form method="dialog" @submit=${e => e.preventDefault()} style="display:flex; flex-direction:column; gap:1rem; align-items:center;">
             <h3 style="margin:0 0 0.5rem 0;">Borrar suite</h3>
-            <p style="margin:0; color:#666;">Escribe el nombre exacto de la suite que deseas borrar</p>
+            <p style="margin:0; color:var(--text-secondary, #666);">Escribe el nombre exacto de la suite que deseas borrar</p>
             <input type="text" .value=${this.suiteToDelete} @input=${this.handleDeleteSuiteInput.bind(this)} placeholder="Nombre de la suite a borrar" autofocus style="width:90%; padding:0.5rem;" />
             <div style="display:flex; gap:1rem; justify-content:center;">
-              <button type="button" @click=${this.deleteSuite.bind(this)} ?disabled=${!this.suiteToDelete.trim() || !this.isEditable} style="padding:0.5rem 1.2rem; background:#dc3545; color:white;">Borrar suite</button>
-              <button type="button" @click=${this.closeDeleteSuiteDialog.bind(this)} style="padding:0.5rem 1.2rem; background:#eee;">Cancelar</button>
+              <button type="button" @click=${this.deleteSuite.bind(this)} ?disabled=${!this.suiteToDelete.trim() || !this.isEditable} style="padding:0.5rem 1.2rem; background:#f43f5e; color:white;">Borrar suite</button>
+              <button type="button" @click=${this.closeDeleteSuiteDialog.bind(this)} style="padding:0.5rem 1.2rem; background:var(--bg-secondary, #eee);">Cancelar</button>
             </div>
           </form>
         </dialog>
@@ -605,8 +605,8 @@ return;
           message: `Are you sure you want to delete <b>${this.title}</b>?`,
           button1Text: 'Yes',
           button2Text: 'No',
-          button1css: 'background-color: green',
-          button2css: 'background-color: red',
+          button1css: 'background-color: #10b981',
+          button2css: 'background-color: #f43f5e',
           button1Action: () => this._confirmDelete(),
           button2Action: () => { } // Just close the modal
         }

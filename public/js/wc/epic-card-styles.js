@@ -15,19 +15,19 @@ const EpicCardSpecificStyles = css`
     max-width: 300px;
     box-sizing: border-box;
     border-radius: 8px;
-    --description-color: #4caf50;
-    --objective-color: #ffcc1b;
-    --acceptanceCriteria-color: #2196f3;
-    --notes-color: #ff9800;
+    --description-color: var(--tab-description-color, #ec4899);
+    --objective-color: var(--color-warning, #f59e0b);
+    --acceptanceCriteria-color: var(--tab-acceptance-criteria-color, #3b82f6);
+    --notes-color: var(--tab-notes-color, #f97316);
   }
 
   :host(:hover) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(236,62,149,0.3);
+    box-shadow: 0 4px 8px var(--card-shadow-hover, rgba(236,62,149,0.3));
   }
 
   :host([selected]) {
-    border: 2px solid #4a9eff;
+    border: 2px solid var(--brand-primary, #6366f1);
   }
 
   :host([expanded]) {
@@ -81,7 +81,7 @@ const EpicCardSpecificStyles = css`
   }
 
   :host([expanded]) .tab-button:hover {
-    background: rgba(0,0,0,0.05);
+    background: var(--hover-overlay, rgba(0,0,0,0.05));
   }
 
   :host([expanded]) .tab-button.active {
@@ -111,8 +111,8 @@ const EpicCardSpecificStyles = css`
 
   :host([expanded]) .tab-content textarea:focus {
     outline: none;
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    border-color: var(--border-focus, #6366f1);
+    box-shadow: var(--focus-ring, 0 0 0 0.2rem rgba(99,102,241,.25));
   }
 
   :host([expanded]) .dates-group {
@@ -137,8 +137,8 @@ const EpicCardSpecificStyles = css`
 
   :host([expanded]) .save-button {
     padding: 0.5rem 2rem;
-    background: #007bff;
-    color: white;
+    background: var(--brand-primary, #6366f1);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -147,7 +147,7 @@ const EpicCardSpecificStyles = css`
   }
 
   :host([expanded]) .save-button:hover {
-    background: #0056b3;
+    background: var(--brand-primary-hover, #4f46e5);
   }
 
   :host([expanded]) .save-button:disabled {
@@ -175,11 +175,11 @@ const EpicCardSpecificStyles = css`
   }
 
   .copy-link-button:focus {
-    outline: 2px solid #4a9eff;
+    outline: 2px solid var(--brand-primary, #6366f1);
   }
 
   .copy-link-button:hover {
-    background: rgba(0,0,0,0.05);
+    background: var(--hover-overlay, rgba(0,0,0,0.05));
   }
 
   .copy-link-button.eye-icon {
@@ -189,7 +189,7 @@ const EpicCardSpecificStyles = css`
   .priority {
     font-size: 1.5em;
     font-weight: bold;
-    color: #4a9eff;
+    color: var(--brand-primary, #6366f1);
     text-align: right;
   }
 
@@ -201,16 +201,16 @@ const EpicCardSpecificStyles = css`
   }
 
   .business-points {
-    background: #4caf50;
-    color: white;
+    background: var(--color-success, #10b981);
+    color: var(--text-inverse, white);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 1rem;
   }
 
   .dev-points {
-    background: #ff9800;
-    color: white;
+    background: var(--color-warning, #f59e0b);
+    color: var(--text-inverse, white);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 1rem;
@@ -265,8 +265,8 @@ const EpicCardSpecificStyles = css`
   }
 
   button {
-    background: #4a9eff;
-    color: white;
+    background: var(--brand-primary, #6366f1);
+    color: var(--text-inverse, white);
     border: none;
     padding: 8px 16px;
     border-radius: 4px;
@@ -275,7 +275,7 @@ const EpicCardSpecificStyles = css`
   }
 
   button:hover {
-    background: #3a8eef;
+    background: var(--brand-primary-hover, #4f46e5);
   }
 
   label {
@@ -429,54 +429,54 @@ const EpicCardSpecificStyles = css`
     border: none;
     cursor: pointer;
     font-size: 1.5rem;
-    color: #d9534f;
+    color: var(--color-error, #f43f5e);
     margin: 0;
     padding: 0;
   }
 
   .delete-button:hover {
-    color: #c9302c;
+    color: var(--color-error-hover, #e11d48);
     font-size:1 rem;
   }
 
   .inprogress {
-    background: #ff9800;
+    background: var(--status-in-progress, #3b82f6);
   }
 
   .tovalidate {
-    background: #ffeb3b;
+    background: var(--status-to-validate, #f59e0b);
   }
 
   .done {
-    background: #2CFF1E;
+    background: var(--status-done, #10b981);
     font-weight: bold;
   }
 
   .todo {
-    background: #ec3e95;
-    color: #fff;
+    background: var(--status-todo, #94a3b8);
+    color: var(--text-inverse, #fff);
   }
 
 
   .blocked {
-    background: #ccc;
+    background: var(--status-blocked, #f43f5e);
     opacity: 0.5;
     border-radius: 8px;
   }
   .expedit {
-    background: #ec3e95;
-    color: #fff;
+    background: var(--status-expedited, #8b5cf6);
+    color: var(--text-inverse, #fff);
     border-radius: 8px;
   }
   .expedit span:first-child {
     font-weight: bold;
-    border: 1px solid #fff;
+    border: 1px solid var(--text-inverse, #fff);
     border-radius: 4px;
   }
 
   .sprint {
-    background-color: #151efb;
-    color: white;
+    background-color: var(--brand-primary, #6366f1);
+    color: var(--text-inverse, white);
     padding: 3px;
     border-radius: 4px;
   }
@@ -498,7 +498,7 @@ const EpicCardSpecificStyles = css`
     font-weight: bold;
   }
   .tab-button:hover {
-    background: #777;
+    background: var(--bg-muted, #777);
   }
   .tab-content {
     border: 0;
@@ -584,14 +584,14 @@ const EpicCardSpecificStyles = css`
     background-color: var(--bg-tertiary);
     color: var(--text-primary);
   }
-  .status-todo { background-color: #ec3e95; color: white; padding: 4px 8px; border-radius: 4px; }
-  .status-inprogress { background-color: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; }
-  .status-done { background-color: #2CFF1E; color: black; font-weight: bold; padding: 4px 8px; border-radius: 4px; }
-  .status-blocked { background-color: #ccc; opacity: 0.5; padding: 4px 8px; border-radius: 4px; }
-  .status-inreview { background-color: #ffeb3b; color: black; padding: 4px 8px; border-radius: 4px; }
-  .status-testing { background-color: #2196f3; color: white; padding: 4px 8px; border-radius: 4px; }
-  .status-tovalidate { background-color: #ffeb3b; color: black; padding: 4px 8px; border-radius: 4px; }
-  .status-cancelled { background-color: #d9534f; color: white; padding: 4px 8px; border-radius: 4px; }
+  .status-todo { background-color: var(--status-todo, #94a3b8); color: var(--status-todo-text, white); padding: 4px 8px; border-radius: 4px; }
+  .status-inprogress { background-color: var(--status-in-progress, #3b82f6); color: var(--status-in-progress-text, white); padding: 4px 8px; border-radius: 4px; }
+  .status-done { background-color: var(--status-done, #10b981); color: var(--status-done-text, white); font-weight: bold; padding: 4px 8px; border-radius: 4px; }
+  .status-blocked { background-color: var(--status-blocked, #f43f5e); color: var(--status-blocked-text, white); opacity: 0.5; padding: 4px 8px; border-radius: 4px; }
+  .status-inreview { background-color: var(--status-to-validate, #f59e0b); color: var(--status-to-validate-text, white); padding: 4px 8px; border-radius: 4px; }
+  .status-testing { background-color: var(--status-in-progress, #3b82f6); color: var(--status-in-progress-text, white); padding: 4px 8px; border-radius: 4px; }
+  .status-tovalidate { background-color: var(--status-to-validate, #f59e0b); color: var(--status-to-validate-text, white); padding: 4px 8px; border-radius: 4px; }
+  .status-cancelled { background-color: var(--color-error, #f43f5e); color: var(--text-inverse, white); padding: 4px 8px; border-radius: 4px; }
 
   /* Stakeholder tags */
   .stakeholder-tag {
@@ -615,15 +615,15 @@ const EpicCardSpecificStyles = css`
   }
 
   .invalid-field {
-    border: 2px solid #ff4444 !important;
-    box-shadow: 0 0 0 0.25rem rgba(255, 68, 68, 0.3) !important;
-    background-color: rgba(255, 68, 68, 0.05) !important;
+    border: 2px solid var(--color-error, #f43f5e) !important;
+    box-shadow: var(--focus-ring-error, 0 0 0 0.25rem rgba(244, 63, 94, 0.3)) !important;
+    background-color: var(--color-error-light, rgba(244, 63, 94, 0.05)) !important;
   }
-  
+
   .invalid-field:focus {
-    border-color: #ff4444 !important;
-    box-shadow: 0 0 0 0.25rem rgba(255, 68, 68, 0.5) !important;
-    background-color: rgba(255, 68, 68, 0.08) !important;
+    border-color: var(--color-error, #f43f5e) !important;
+    box-shadow: var(--focus-ring-error, 0 0 0 0.25rem rgba(244, 63, 94, 0.5)) !important;
+    background-color: var(--color-error-light, rgba(244, 63, 94, 0.08)) !important;
   }
 `;
 

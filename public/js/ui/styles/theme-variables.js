@@ -1,5 +1,6 @@
 import { css } from 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+esm';
 import { AllTokens } from './tokens/index.js';
+import { DarkThemeTokens } from './themes/dark-theme.js';
 
 /**
  * Theme Variables
@@ -92,6 +93,7 @@ const BackwardCompatibleAliases = css`
 export const ThemeVariables = css`
   ${AllTokens}
   ${BackwardCompatibleAliases}
+  ${DarkThemeTokens}
 `;
 
 /**

@@ -12,16 +12,16 @@ export class SprintRenderer {
 
     // Paleta de gradientes únicos para cada sprint
     const sprintGradients = [
-      'linear-gradient(135deg, #667eea, #764ba2)',  // Púrpura azulado
-      'linear-gradient(135deg, #f093fb, #f5576c)',  // Rosa magenta
-      'linear-gradient(135deg, #4facfe, #00f2fe)',  // Azul cian
-      'linear-gradient(135deg, #43e97b, #38f9d7)',  // Verde menta
-      'linear-gradient(135deg, #fa709a, #fee140)',  // Rosa amarillo
-      'linear-gradient(135deg, #a8edea, #fed6e3)',  // Aguamarina rosa
-      'linear-gradient(135deg, #ffecd2, #fcb69f)',  // Melocotón
-      'linear-gradient(135deg, #c471ed, #f64f59)',  // Violeta rojo
-      'linear-gradient(135deg, #12c2e9, #c471ed)',  // Azul violeta
-      'linear-gradient(135deg, #f6d365, #fda085)'   // Amarillo coral
+      'linear-gradient(135deg, #6366f1, #818cf8)',  // Indigo
+      'linear-gradient(135deg, #3b82f6, #2563eb)',  // Blue
+      'linear-gradient(135deg, #10b981, #059669)',  // Emerald
+      'linear-gradient(135deg, #f59e0b, #d97706)',  // Amber
+      'linear-gradient(135deg, #8b5cf6, #7c3aed)',  // Violet
+      'linear-gradient(135deg, #f43f5e, #e11d48)',  // Rose
+      'linear-gradient(135deg, #06b6d4, #0891b2)',  // Cyan
+      'linear-gradient(135deg, #ec4899, #db2777)',  // Pink
+      'linear-gradient(135deg, #14b8a6, #0d9488)',  // Teal
+      'linear-gradient(135deg, #f97316, #ea580c)'   // Orange
     ];
 
     // Ordenar sprints de mayor a menor (por título)
@@ -90,7 +90,7 @@ export class SprintRenderer {
 
       const pointsInfo = UIUtils.createElement('div', {
         className: 'sprint-points',
-        style: { fontSize: '0.9em', color: '#666', marginTop: '0.5rem' }
+        style: { fontSize: '0.9em', color: '#64748b', marginTop: '0.5rem' }
       }, `B: ${sprint.businessPoints || 0} | D: ${sprint.devPoints || 0}`);
 
       column.appendChild(header);

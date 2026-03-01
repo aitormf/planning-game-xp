@@ -79,7 +79,7 @@ export class BaseFilter {
         gap: 1rem;
         align-items: flex-start;
         padding: 1rem;
-        background: #f8f9fa;
+        background: var(--bg-secondary, #f8f9fa);
         border-radius: 6px;
         margin-bottom: 1rem;
       `;
@@ -154,7 +154,7 @@ export class BaseFilter {
     labelElement.style.cssText = `
       font-size: 0.9em;
       font-weight: 500;
-      color: #333;
+      color: var(--text-primary, #333);
     `;
 
     const multiSelect = document.createElement('multi-select');
@@ -195,8 +195,8 @@ export class BaseFilter {
     if (this.isComplexFilterLayout()) {
       clearButton.style.cssText = `
         padding: 10px 16px;
-        background: #dc3545;
-        color: white;
+        background: var(--color-error, #f43f5e);
+        color: var(--text-inverse, white);
         border: none;
         border-radius: 6px;
         cursor: pointer;
@@ -208,17 +208,17 @@ export class BaseFilter {
       `;
 
       clearButton.addEventListener('mouseover', () => {
-        clearButton.style.backgroundColor = '#c82333';
+        clearButton.style.backgroundColor = '#e11d48';
       });
 
       clearButton.addEventListener('mouseout', () => {
-        clearButton.style.backgroundColor = '#dc3545';
+        clearButton.style.backgroundColor = '#f43f5e';
       });
     } else {
       clearButton.style.cssText = `
         padding: 8px 12px;
-        background: #dc3545;
-        color: white;
+        background: var(--color-error, #f43f5e);
+        color: var(--text-inverse, white);
         border: none;
         border-radius: 4px;
         cursor: pointer;
@@ -242,14 +242,14 @@ export class BaseFilter {
     counter.id = `${this.cardType}FilterCounter`;
     counter.style.cssText = `
       font-size: 0.9em;
-      color: #666;
+      color: var(--text-muted, #666);
       font-weight: 500;
       align-self: flex-end;
       margin-top: 20px;
       padding: 10px 16px;
-      background: white;
+      background: var(--bg-primary, white);
       border-radius: 6px;
-      border: 1px solid #dee2e6;
+      border: 1px solid var(--border-default, #dee2e6);
     `;
     this.filtersContainer.appendChild(counter);
   }
@@ -388,7 +388,7 @@ export class BaseFilter {
       counter.id = counterId;
       counter.style.cssText = `
         font-size: 0.9em;
-        color: #666;
+        color: var(--text-muted, #666);
         margin-left: 1rem;
         font-weight: bold;
       `;

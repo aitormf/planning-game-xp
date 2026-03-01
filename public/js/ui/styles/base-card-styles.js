@@ -15,14 +15,15 @@ export const BaseCardStyles = css`
     margin: var(--spacing-sm);
     background: var(--bg-white);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+    border: 1px solid var(--border-subtle, #e2e8f0);
+    box-shadow: var(--shadow-sm);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
     overflow: hidden;
   }
 
   :host(:hover) {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-hover);
+    border-color: var(--brand-primary, #6366f1);
+    box-shadow: var(--shadow-md);
   }
 
   :host([selected]) {
@@ -354,7 +355,7 @@ export const BaseCardStyles = css`
   }
 
   :host([view-mode="ultra-compact"]:hover) {
-    transform: translateY(-1px);
+    border-color: var(--brand-primary, #6366f1);
   }
 
   /* Override ultra-compact styles when expanded (modal view) */
@@ -489,16 +490,16 @@ export const BaseCardStyles = css`
     padding: 0.1em 0.3em;
     border-radius: 2px;
     white-space: nowrap;
-    color: white;
+    color: var(--text-inverse, white);
     letter-spacing: 0.03em;
     text-decoration: none;
     line-height: 1.2;
     cursor: default;
   }
 
-  .pipeline-badge.commit { background-color: #6366f1; }
-  .pipeline-badge.pr { background-color: #3b82f6; cursor: pointer; }
-  .pipeline-badge.pr:hover { background-color: #2563eb; }
-  .pipeline-badge.merge { background-color: #8b5cf6; }
-  .pipeline-badge.deploy { background-color: #10b981; }
+  .pipeline-badge.commit { background-color: var(--brand-primary, #6366f1); }
+  .pipeline-badge.pr { background-color: var(--color-info, #3b82f6); cursor: pointer; }
+  .pipeline-badge.pr:hover { background-color: var(--color-info-hover, #2563eb); }
+  .pipeline-badge.merge { background-color: var(--status-expedited, #8b5cf6); }
+  .pipeline-badge.deploy { background-color: var(--color-success, #10b981); }
 `;

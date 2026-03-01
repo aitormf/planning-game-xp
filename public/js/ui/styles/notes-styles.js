@@ -35,89 +35,92 @@ export const NotesStyles = css`
     max-width: 100%;
     box-sizing: border-box;
     padding: 0.5rem;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--border-default, #ced4da);
     border-radius: 0.25rem;
     font-family: inherit;
     font-size: 0.9rem;
     resize: vertical;
+    background: var(--input-bg, #fff);
+    color: var(--text-primary, inherit);
   }
-  
+
   .new-note-input:focus {
     outline: none;
-    border-color: #4a9eff;
-    box-shadow: 0 0 0 0.2rem rgba(74, 158, 255, 0.25);
+    border-color: var(--brand-primary, #6366f1);
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
   }
-  
+
   .add-note-btn {
     padding: 0.25rem 0.5rem;
-    background: #007bff;
-    color: white;
+    background: var(--brand-primary, #6366f1);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 0.25rem;
     cursor: pointer;
     font-size: 0.8rem;
   }
-  
+
   .add-note-btn:hover {
-    background: #0056b3;
+    background: var(--brand-primary-hover, #4f46e5);
   }
   
   .notes-table-container {
     flex: 1;
     overflow-y: auto;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border-default, #dee2e6);
     border-radius: 0.25rem;
   }
-  
+
   .notes-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.85rem;
-    background: white;
+    background: var(--bg-primary, white);
   }
-  
+
   .notes-table thead {
     position: sticky;
     top: 0;
-    background: #343a40;
+    background: var(--bg-muted, #343a40);
     z-index: 1;
   }
-  
+
   .notes-table th {
     padding: 0.5rem;
     text-align: left;
-    border: 1px solid #495057;
+    border: 1px solid var(--border-strong, #495057);
     font-weight: bold;
-    color: white;
+    color: var(--text-inverse, white);
   }
-  
+
   .notes-table td {
     padding: 0.5rem;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border-default, #dee2e6);
     vertical-align: top;
     text-align: left;
+    color: var(--text-primary, inherit);
   }
-  
+
   .notes-table tbody tr:hover {
-    background-color: #f8f9fa;
+    background-color: var(--bg-secondary, #f8f9fa);
   }
-  
+
   .note-author-cell {
     width: 20%;
     font-weight: 500;
-    color: #495057;
+    color: var(--text-secondary, #495057);
   }
-  
+
   .note-content-cell {
     width: 55%;
     white-space: pre-wrap;
     word-break: break-word;
   }
-  
+
   .note-date-cell {
     width: 15%;
     font-size: 0.8rem;
-    color: #6c757d;
+    color: var(--text-muted, #6c757d);
   }
   
   .note-actions-cell {
@@ -153,12 +156,12 @@ export const NotesStyles = css`
   }
   
   .edit-note-btn:hover {
-    background: #e9ecef !important;
+    background: var(--bg-tertiary, #e9ecef) !important;
   }
-  
+
   .no-notes {
     text-align: center;
-    color: #6c757d;
+    color: var(--text-muted, #6c757d);
     font-style: italic;
     padding: 2rem 1rem;
   }
@@ -170,7 +173,7 @@ export const NotesStyles = css`
   
   .note-modal-content h3 {
     margin: 0 0 1.5rem 0;
-    color: #333;
+    color: var(--text-primary, #333);
   }
   
   .note-modal-fields {
@@ -188,29 +191,31 @@ export const NotesStyles = css`
   
   .note-field label {
     font-weight: 500;
-    color: #495057;
+    color: var(--text-secondary, #495057);
     font-size: 0.9rem;
   }
-  
+
   .note-modal-textarea {
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--border-default, #ced4da);
     border-radius: 0.25rem;
     font-family: inherit;
     font-size: 0.9rem;
     resize: vertical;
     min-height: 100px;
+    background: var(--input-bg, #fff);
+    color: var(--text-primary, inherit);
   }
-  
+
   .note-modal-input {
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--border-default, #ced4da);
     border-radius: 0.25rem;
     font-size: 0.9rem;
-    background-color: #e9ecef;
-    color: #495057;
+    background-color: var(--bg-tertiary, #e9ecef);
+    color: var(--text-secondary, #495057);
   }
   
   .note-modal-actions {
@@ -228,29 +233,29 @@ export const NotesStyles = css`
   }
   
   .save-note-btn {
-    background: #28a745;
-    color: white;
+    background: var(--color-success, #28a745);
+    color: var(--text-inverse, white);
   }
-  
+
   .save-note-btn:hover {
-    background: #218838;
+    background: var(--color-success-hover, #218838);
   }
-  
+
   .cancel-note-btn {
-    background: #6c757d;
-    color: white;
+    background: var(--text-muted, #6c757d);
+    color: var(--text-inverse, white);
   }
-  
+
   .cancel-note-btn:hover {
-    background: #5a6268;
+    background: var(--text-disabled, #5a6268);
   }
-  
+
   .delete-note-btn {
-    background: #dc3545;
-    color: white;
+    background: var(--color-error, #dc3545);
+    color: var(--text-inverse, white);
   }
-  
+
   .delete-note-btn:hover {
-    background: #c82333;
+    background: var(--color-error-hover, #c82333);
   }
 `;

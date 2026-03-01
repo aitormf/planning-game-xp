@@ -21,21 +21,21 @@ export const NotificationBellStyles = css`
   }
 
   .bell-container:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--hover-overlay, rgba(0, 0, 0, 0.05));
   }
 
   .bell-icon {
     width: 24px;
     height: 24px;
-    fill: white;
+    fill: var(--text-muted, #64748b);
   }
 
   .badge {
     position: absolute;
     top: 2px;
     right: 2px;
-    background-color: #dc3545;
-    color: white;
+    background-color: var(--color-error, #f43f5e);
+    color: var(--text-inverse, white);
     font-size: 0.7rem;
     font-weight: bold;
     border-radius: 50%;
@@ -142,7 +142,7 @@ export const NotificationBellStyles = css`
   }
 
   .notification-link:hover {
-    background-color: rgba(0, 123, 255, 0.1);
+    background-color: var(--brand-primary-light, rgba(99, 102, 241, 0.1));
     color: var(--color-blue-600, #0056b3);
   }
 
@@ -192,13 +192,13 @@ export const NotificationBellStyles = css`
   }
 
   .action-button.primary {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
+    background-color: var(--brand-primary, #6366f1);
+    color: var(--text-inverse, white);
+    border-color: var(--brand-primary, #6366f1);
   }
 
   .action-button.primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
+    background-color: var(--brand-primary-hover, #4f46e5);
+    border-color: var(--brand-primary-hover, #4f46e5);
   }
 `;

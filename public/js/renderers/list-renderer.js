@@ -11,7 +11,7 @@ export class ListRenderer {
 
     if (!cards || Object.keys(cards).length === 0) {
       const emptyMessage = UIUtils.createElement('p', {
-        style: { textAlign: 'center', padding: '2rem', color: '#666' }
+        style: { textAlign: 'center', padding: '2rem', color: '#64748b' }
       }, 'No cards found');
       container.appendChild(emptyMessage);
       return;

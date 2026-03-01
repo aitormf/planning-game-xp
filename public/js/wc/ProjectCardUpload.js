@@ -313,7 +313,7 @@ this.analysisError = error?.message || 'No se pudieron subir las cards.';
   static styles = css`
     :host {
       display: block;
-      color: #0f172a;
+      color: var(--text-primary, #0f172a);
     }
 
     .upload-container {
@@ -327,8 +327,8 @@ this.analysisError = error?.message || 'No se pudieron subir las cards.';
     }
 
     .card {
-      background: #fff;
-      border: 1px solid #dbe2f0;
+      background: var(--bg-primary, #fff);
+      border: 1px solid var(--border-default, #dbe2f0);
       border-radius: 12px;
       padding: 1.25rem;
       box-shadow: 0 10px 30px -20px rgba(15, 23, 42, 0.35);
@@ -355,21 +355,21 @@ this.analysisError = error?.message || 'No se pudieron subir las cards.';
       width: 100%;
       padding: 0.6rem;
       border-radius: 8px;
-      border: 1px solid #cbd5f5;
+      border: 1px solid var(--border-default, #cbd5f5);
       font-size: 0.95rem;
     }
 
     .project-pill {
       padding: 0.65rem;
       border-radius: 999px;
-      background: #eef2ff;
-      border: 1px dashed #a5b4fc;
+      background: var(--bg-secondary, #eef2ff);
+      border: 1px dashed var(--brand-primary, #a5b4fc);
       font-weight: 600;
       text-align: center;
     }
 
     .dropzone {
-      border: 2px dashed #94a3b8;
+      border: 2px dashed var(--border-default, #94a3b8);
       cursor: pointer;
       transition: border-color 0.2s ease;
       display: block;
@@ -387,8 +387,8 @@ this.analysisError = error?.message || 'No se pudieron subir las cards.';
     }
 
     .badge {
-      background: #e0f2fe;
-      color: #0369a1;
+      background: var(--color-info-bg, #e0f2fe);
+      color: var(--color-info-text, #0369a1);
       padding: 0.2rem 0.65rem;
       border-radius: 999px;
       font-size: 0.8rem;
@@ -403,7 +403,7 @@ this.analysisError = error?.message || 'No se pudieron subir las cards.';
 
     .subtitle {
       margin: 0;
-      color: #475569;
+      color: var(--text-secondary, #475569);
       font-size: 0.9rem;
     }
 
@@ -411,14 +411,14 @@ this.analysisError = error?.message || 'No se pudieron subir las cards.';
       margin-top: 0.35rem;
       padding: 0.4rem 1rem;
       border-radius: 999px;
-      border: 1px solid #2563eb;
-      color: #2563eb;
+      border: 1px solid var(--brand-primary, #6366f1);
+      color: var(--brand-primary, #6366f1);
       font-weight: 600;
       font-size: 0.85rem;
     }
 
     .dropzone:is(:hover, :focus-within) {
-      border-color: #2563eb;
+      border-color: var(--brand-primary, #6366f1);
     }
 
     .dropzone.is-disabled {
@@ -437,8 +437,8 @@ this.analysisError = error?.message || 'No se pudieron subir las cards.';
     }
 
     .warning {
-      border-color: #f97316;
-      background: #fff7ed;
+      border-color: var(--color-warning, #f59e0b);
+      background: var(--color-warning-bg, #fff7ed);
     }
 
     .warning li {
@@ -452,8 +452,8 @@ this.analysisError = error?.message || 'No se pudieron subir las cards.';
     }
 
     button.primary {
-      background: #2563eb;
-      color: #fff;
+      background: var(--brand-primary, #6366f1);
+      color: var(--text-inverse, #fff);
       border: none;
       padding: 0.65rem 1.5rem;
       border-radius: 999px;
@@ -463,17 +463,17 @@ this.analysisError = error?.message || 'No se pudieron subir las cards.';
     }
 
     button.primary:disabled {
-      background: #94a3b8;
+      background: var(--text-muted, #94a3b8);
       cursor: not-allowed;
     }
 
     .error {
-      color: #b91c1c;
+      color: var(--color-error, #f43f5e);
       margin: 0;
     }
 
     .status {
-      color: #0f5132;
+      color: var(--color-success, #10b981);
       margin: 0;
     }
 

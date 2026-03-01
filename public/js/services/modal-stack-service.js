@@ -81,8 +81,8 @@ return modalInfo;
       message = '¿Estás seguro?',
       confirmText = 'Sí',
       cancelText = 'No',
-      confirmColor = '#f44336',
-      cancelColor = '#fcaf00'
+      confirmColor = '#f43f5e',
+      cancelColor = '#f59e0b'
     } = options;
 
     return new Promise((resolve) => {
@@ -101,7 +101,7 @@ return modalInfo;
       // Contenido del modal
       modal.innerHTML = `
         <div style="padding: 1.5rem; text-align: center;">
-          <p style="margin: 0; color: #666; line-height: 1.4; font-size: 1.1rem;">
+          <p style="margin: 0; color: var(--text-muted, #666); line-height: 1.4; font-size: 1.1rem;">
             ${message}
           </p>
         </div>
@@ -109,14 +109,14 @@ return modalInfo;
 
       // Configurar botones
       modal.button1Text = cancelText;
-      modal.button1Css = `background-color: ${cancelColor}; color: white; padding: 0.75rem 1.5rem; margin-right: 0.5rem;`;
+      modal.button1Css = `background-color: ${cancelColor}; color: var(--text-inverse, white); padding: 0.75rem 1.5rem; margin-right: 0.5rem;`;
       modal.button1Action = () => {
         this._closeConfirmationModal(modal, modalId);
         resolve(false); // Usuario canceló
       };
 
       modal.button2Text = confirmText;
-      modal.button2Css = `background-color: ${confirmColor}; color: white; padding: 0.75rem 1.5rem;`;
+      modal.button2Css = `background-color: ${confirmColor}; color: var(--text-inverse, white); padding: 0.75rem 1.5rem;`;
       modal.button2Action = () => {
         this._closeConfirmationModal(modal, modalId);
         resolve(true); // Usuario confirmó
