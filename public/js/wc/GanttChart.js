@@ -30,7 +30,8 @@ export class GanttChart extends LitElement {
      */
     this.tasks = [];
     this.colorBar = ['#6366f1', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#f43f5e', '#0ea5e9', '#14b8a6'];
-    this.year = null; // If set, fixes the time scale to January 1 - December 31 of this year
+    this.year = null; // If set, adapts the time scale to January 1 - current month + margin
+    this._collapsedEpics = new Set(); // Track collapsed epic indices
   }
 
   async connectedCallback() {
@@ -175,13 +176,16 @@ return;
       totalTasks++;
       // Solo agregar épicas que tengan fechas válidas (sin filtro de status)
       if (hasValidDates(epic, true)) {
-        flatTasks.push({ ...epic, isEpic: true, flatIndex: flatTasks.length });
+        const hasSubtasks = Array.isArray(epic.subtasks) && epic.subtasks.length > 0;
+        const isCollapsed = this._collapsedEpics.has(i);
+        flatTasks.push({ ...epic, isEpic: true, epicIndex: i, hasSubtasks, isCollapsed, flatIndex: flatTasks.length });
       } else {
         filteredTasks++;
       }
 
-      // Solo agregar subtareas que tengan fechas válidas (con filtro de status)
-      if (Array.isArray(epic.subtasks)) {
+      // Solo agregar subtareas si la épica NO está colapsada y tienen fechas válidas
+      const isCollapsed = this._collapsedEpics.has(i);
+      if (!isCollapsed && Array.isArray(epic.subtasks)) {
         epic.subtasks.forEach((sub, j) => {
           totalTasks++;
           if (hasValidDates(sub, false)) {
@@ -243,9 +247,16 @@ const width = 1000 - margin.left - margin.right;
     let minDate, maxDate;
 
     if (this.year) {
-      // If year is specified, use fixed range January 1 - December 31
+      // Adaptive timeline: Jan 1 to (current month + 2 months) or Dec 31, whichever is earlier
+      const now = new Date();
       minDate = new Date(this.year, 0, 1); // January 1
-      maxDate = new Date(this.year, 11, 31); // December 31
+      if (now.getFullYear() === this.year) {
+        // Current year: show up to current month + 2 months margin
+        const adaptiveEnd = new Date(now.getFullYear(), now.getMonth() + 3, 0); // End of month+2
+        maxDate = adaptiveEnd > new Date(this.year, 11, 31) ? new Date(this.year, 11, 31) : adaptiveEnd;
+      } else {
+        maxDate = new Date(this.year, 11, 31); // Past/future year: show full year
+      }
     } else {
       // Otherwise, calculate from task dates
       const dates = flatTasks.flatMap(task => [
@@ -342,17 +353,35 @@ const width = 1000 - margin.left - margin.right;
 
       // Mostrar etiqueta solo para épicas, truncando si es necesario
       if (task.isEpic) {
-        const maxLen = 20;
+        const maxLen = 22;
         let label = task.name || '';
         if (label.length > maxLen) label = label.slice(0, maxLen - 3) + '...';
-        svg.append('text')
+
+        // Collapse/expand indicator
+        const indicator = task.hasSubtasks ? (task.isCollapsed ? '+ ' : '- ') : '  ';
+
+        const epicLabel = svg.append('text')
           .attr('x', -10)
           .attr('y', i * 22 + 22)
           .attr('text-anchor', 'end')
           .attr('font-weight', 'bold')
           .attr('font-size', '13px')
-          .text(label)
-          .append('title').text(task.name || '');
+          .style('cursor', task.hasSubtasks ? 'pointer' : 'default')
+          .text(indicator + label);
+
+        epicLabel.append('title').text(task.name || '');
+
+        // Click to toggle collapse
+        if (task.hasSubtasks) {
+          epicLabel.on('click', () => {
+            if (this._collapsedEpics.has(task.epicIndex)) {
+              this._collapsedEpics.delete(task.epicIndex);
+            } else {
+              this._collapsedEpics.add(task.epicIndex);
+            }
+            this.renderChart();
+          });
+        }
       }
     });
 

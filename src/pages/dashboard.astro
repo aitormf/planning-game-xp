@@ -713,6 +713,11 @@ this.innerHTML = '<p class="error">Error loading projects</p>';
           }
         }
 
+        // Fallback: epic has year matching but no dates at all — use year boundaries
+        if (!epicTask.plannedStart && selectedYear && epic.year === selectedYear) {
+          epicTask.plannedStart = `${selectedYear}-01-01`;
+        }
+
         // Only add epic if we have valid dates (start is required, end is optional for ongoing epics)
         if (epicTask.plannedStart) {
           // For ongoing epics without end date, use end of selected year for visualization
