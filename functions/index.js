@@ -1581,6 +1581,224 @@ exports.requestEmailAccess = functions.region('europe-west1').https.onCall(async
 const DEMO_MODE = (process.env.DEMO_MODE || '').toString().trim().toLowerCase() === 'true';
 
 /**
+ * Provision demo data for a new user: creates a sample project with
+ * example cards (tasks, bugs, epics, sprint) so users can explore
+ * the app immediately after signup.
+ *
+ * Uses the user's email prefix as the project name to isolate data per user.
+ * If the user already has a project, this is a no-op (idempotent).
+ */
+async function provisionDemoData(email, encodedEmail) {
+  const db = admin.database();
+  const now = new Date().toISOString();
+  const today = now.split('T')[0];
+  const year = new Date().getFullYear();
+  const userPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+  const projectId = `Demo_${userPrefix}`;
+  const projectAbbr = 'DMO';
+  const createdBy = email;
+
+  // Check if user already has a project (idempotent)
+  const existingProject = await db.ref(`/projects/${projectId}`).once('value');
+  if (existingProject.exists()) {
+    logger.info(`DEMO: Project ${projectId} already exists for ${email}, skipping provision`);
+    return;
+  }
+
+  // 1. Create project
+  const projectData = {
+    name: projectId,
+    abbreviation: projectAbbr,
+    scoringSystem: '1-5',
+    description: 'Sample demo project — explore tasks, bugs, sprints, and more!',
+    stakeholders: [{ name: email.split('@')[0], email }],
+    developers: [{ id: 'dev_demo', name: email.split('@')[0], email }],
+    iaEnabled: false,
+    createdAt: now,
+    createdBy,
+  };
+  await db.ref(`/projects/${projectId}`).set(projectData);
+
+  // 2. Create sprint
+  const sprintStart = new Date();
+  const sprintEnd = new Date(sprintStart.getTime() + 14 * 24 * 60 * 60 * 1000);
+  const sprintRef = db.ref(`/cards/${projectId}/SPRINTS_${projectId}`).push();
+  const sprintId = `${projectAbbr}-SPR-0001`;
+  await sprintRef.set({
+    cardId: sprintId,
+    id: sprintRef.key,
+    firebaseId: sprintRef.key,
+    cardType: 'sprint-card',
+    group: 'sprints',
+    section: 'sprints',
+    projectId,
+    startDate: today,
+    endDate: sprintEnd.toISOString().split('T')[0],
+    businessPoints: 0,
+    devPoints: 0,
+    year,
+    createdBy,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  // 3. Create epics
+  const epics = [
+    { title: 'Getting Started', desc: 'Onboarding and setup tasks' },
+    { title: 'Core Features', desc: 'Main application functionality' },
+  ];
+  const epicIds = [];
+  for (let i = 0; i < epics.length; i++) {
+    const epicRef = db.ref(`/cards/${projectId}/EPICS_${projectId}`).push();
+    const epicId = `${projectAbbr}-PCS-${String(i + 1).padStart(4, '0')}`;
+    epicIds.push(epicId);
+    await epicRef.set({
+      cardId: epicId,
+      id: epicRef.key,
+      firebaseId: epicRef.key,
+      cardType: 'epic-card',
+      group: 'epics',
+      section: 'epics',
+      projectId,
+      title: epics[i].title,
+      description: epics[i].desc,
+      year,
+      createdBy,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  // 4. Create sample tasks (various statuses for demo)
+  const tasks = [
+    {
+      title: 'Explore the Kanban board',
+      status: 'To Do',
+      devPoints: 1, businessPoints: 3,
+      desc: { role: 'As a new user', goal: 'I want to see the Kanban board', benefit: 'To understand task workflow' },
+    },
+    {
+      title: 'Try drag and drop between columns',
+      status: 'To Do',
+      devPoints: 1, businessPoints: 2,
+      desc: { role: 'As a user', goal: 'I want to drag tasks between status columns', benefit: 'To learn how to update task status' },
+    },
+    {
+      title: 'Create your first task',
+      status: 'To Do',
+      devPoints: 1, businessPoints: 4,
+      desc: { role: 'As a user', goal: 'I want to create a new task', benefit: 'To start managing my work' },
+    },
+    {
+      title: 'Review the sprint view',
+      status: 'In Progress',
+      devPoints: 2, businessPoints: 3,
+      desc: { role: 'As a user', goal: 'I want to check the sprint planning view', benefit: 'To plan my work across sprints' },
+      startDate: today,
+    },
+    {
+      title: 'Check the dashboard',
+      status: 'Done&Validated',
+      devPoints: 1, businessPoints: 2,
+      desc: { role: 'As a user', goal: 'I want to see the project dashboard', benefit: 'To get an overview of project health' },
+      startDate: today,
+      endDate: today,
+    },
+  ];
+
+  for (let i = 0; i < tasks.length; i++) {
+    const t = tasks[i];
+    const taskRef = db.ref(`/cards/${projectId}/TASKS_${projectId}`).push();
+    const cardId = `${projectAbbr}-TSK-${String(i + 1).padStart(4, '0')}`;
+    await taskRef.set({
+      cardId,
+      id: taskRef.key,
+      firebaseId: taskRef.key,
+      cardType: 'task-card',
+      group: 'tasks',
+      section: 'tasks',
+      projectId,
+      title: t.title,
+      status: t.status,
+      description: '',
+      descriptionStructured: t.desc,
+      sprint: sprintId,
+      epic: epicIds[i < 3 ? 0 : 1],
+      developer: t.status !== 'To Do' ? 'dev_demo' : '',
+      validator: '',
+      businessPoints: t.businessPoints,
+      devPoints: t.devPoints,
+      startDate: t.startDate || '',
+      endDate: t.endDate || '',
+      year,
+      createdBy,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  // 5. Create sample bug
+  const bugRef = db.ref(`/cards/${projectId}/BUGS_${projectId}`).push();
+  await bugRef.set({
+    cardId: `${projectAbbr}-BUG-0001`,
+    id: bugRef.key,
+    firebaseId: bugRef.key,
+    cardType: 'bug-card',
+    group: 'bugs',
+    section: 'bugs',
+    projectId,
+    title: 'Sample bug: button alignment on mobile',
+    status: 'Created',
+    priority: 'USER EXPERIENCE ISSUE',
+    description: 'The submit button overlaps with the form on small screens',
+    registerDate: today,
+    sprint: sprintId,
+    year,
+    createdBy,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  // 6. Create sample proposal
+  const proposalRef = db.ref(`/cards/${projectId}/PROPOSALS_${projectId}`).push();
+  await proposalRef.set({
+    cardId: `${projectAbbr}-PRP-0001`,
+    id: proposalRef.key,
+    firebaseId: proposalRef.key,
+    cardType: 'proposal-card',
+    group: 'proposals',
+    section: 'proposals',
+    projectId,
+    title: 'Add dark mode support',
+    status: 'Proposed',
+    description: '',
+    descriptionStructured: {
+      role: 'As a user',
+      goal: 'I want a dark mode option',
+      benefit: 'To reduce eye strain during night usage',
+    },
+    year,
+    createdBy,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  // 7. Add user to appPerms for the demo project
+  await db.ref(`/data/appPerms/${encodedEmail}`).set({
+    projects: [projectId],
+    updatedAt: now,
+  });
+
+  logger.info(`DEMO: Provisioned sample data for ${email}`, {
+    projectId,
+    tasks: tasks.length,
+    bugs: 1,
+    proposals: 1,
+    epics: epics.length,
+  });
+}
+
+/**
  * Auto-provisions new users on Firebase Auth account creation.
  * - Sets `encodedEmail` custom claim (for security rules)
  * - Checks /data/allowedUsers and sets `allowed: true` if pre-authorized
@@ -1634,6 +1852,16 @@ exports.setEncodedEmailClaim = functions.region('europe-west1').auth.user().onCr
       role: newClaims.role || 'standard',
       timestamp: Date.now(),
     });
+
+    // Demo mode: provision sample project and data for new user
+    if (DEMO_MODE) {
+      try {
+        await provisionDemoData(email, encodedEmail);
+      } catch (provisionError) {
+        // Non-fatal: user is still allowed, just without sample data
+        logger.error(`DEMO MODE: Failed to provision demo data for ${email}`, provisionError);
+      }
+    }
 
     return { success: true, email, allowed: newClaims.allowed || false };
   } catch (error) {
