@@ -3,6 +3,36 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [1.153.6] - 2026-03-01
+
+### Fixed
+
+- Enforce pipelineStatus.prCreated validation on task/bug transitions
+
+## [1.153.5] - 2026-03-01
+
+### Fixed
+
+- Increase header z-index to 200 so popups render above filter components
+
+## [1.153.4] - 2026-03-01
+
+### Fixed
+
+- Header z-index so notification bell and system-status tooltips render above content
+
+## [1.153.3] - 2026-03-01
+
+### Fixed
+
+- Gantt chart text color adapts to dark mode theme
+
+## [1.153.2] - 2026-03-01
+
+### Fixed
+
+- Gantt chart shows all epics with collapsible rows and adaptive timeline
+
 ## [1.153.1] - 2026-03-01
 
 ### Fixed
