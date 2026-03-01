@@ -4358,7 +4358,9 @@ exports.onBugFixed = onValueUpdated({
  * Triggers when a bug is updated. If the bug was created from the
  * Portal de Incidencias and transitions to "Fixed" or "Verified",
  * notifies the Portal via POST so the ticket is auto-resolved.
+ * Skipped in DEMO_MODE (no Portal integration needed).
  */
+if (!DEMO_MODE) {
 exports.onPortalBugResolved = onValueUpdated({
   ref: "/cards/{projectId}/{section}/{cardId}",
   region: "europe-west1",
@@ -4379,6 +4381,7 @@ exports.onPortalBugResolved = onValueUpdated({
     }
   );
 });
+}
 
 /**
  * Cloud Function: onTaskStatusValidation
