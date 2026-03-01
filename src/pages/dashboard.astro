@@ -627,16 +627,24 @@ this.innerHTML = '<p class="error">Error loading projects</p>';
           const epicEndYear = endDate ? new Date(endDate).getFullYear() : null;
 
           // Check if epic has activity in the selected year:
-          // - Start year matches selected year, OR
-          // - End year matches selected year, OR
-          // - Epic spans across the selected year (start before, end after), OR
-          // - Epic has no end date and started before or during the selected year (ongoing epic)
           const startsInYear = epicStartYear === selectedYear;
           const endsInYear = epicEndYear === selectedYear;
           const spansYear = epicStartYear && epicEndYear && epicStartYear < selectedYear && epicEndYear > selectedYear;
           const isOngoingInYear = epicStartYear && !epicEndYear && epicStartYear <= selectedYear && selectedYear <= currentYear;
 
-          if (!startsInYear && !endsInYear && !spansYear && !isOngoingInYear) {
+          // Check if epic has no dates but has tasks with activity in the selected year
+          const hasTasksInYear = !epicStartYear && !epicEndYear && Object.values(projectTasks).some(task => {
+            if (task.deletedAt) return false;
+            const taskEpicId = task.epic || task.epicId;
+            if (taskEpicId !== epic.cardId && taskEpicId !== id) return false;
+            const taskYear = task.year || (task.startDate ? new Date(task.startDate).getFullYear() : null);
+            return taskYear === selectedYear;
+          });
+
+          // Also check epic.year field directly
+          const epicYearMatches = epic.year === selectedYear;
+
+          if (!startsInYear && !endsInYear && !spansYear && !isOngoingInYear && !hasTasksInYear && !epicYearMatches) {
             return; // Skip this epic, not in selected year
           }
         }
@@ -681,6 +689,29 @@ this.innerHTML = '<p class="error">Error loading projects</p>';
             }
           }
         });
+
+        // If epic has no start date, infer from earliest subtask
+        if (!epicTask.plannedStart && epicTask.subtasks.length > 0) {
+          const subtaskStarts = epicTask.subtasks
+            .map(s => s.plannedStart)
+            .filter(Boolean)
+            .sort();
+          if (subtaskStarts.length > 0) {
+            epicTask.plannedStart = subtaskStarts[0];
+          }
+        }
+
+        // If epic has no end date, infer from latest subtask
+        if (!epicTask.plannedEnd && epicTask.subtasks.length > 0) {
+          const subtaskEnds = epicTask.subtasks
+            .map(s => s.plannedEnd)
+            .filter(Boolean)
+            .sort()
+            .reverse();
+          if (subtaskEnds.length > 0) {
+            epicTask.plannedEnd = subtaskEnds[0];
+          }
+        }
 
         // Only add epic if we have valid dates (start is required, end is optional for ongoing epics)
         if (epicTask.plannedStart) {

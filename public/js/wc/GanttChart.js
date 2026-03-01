@@ -82,6 +82,7 @@ this.setTaskData(tasks);
 
   setTaskData(data) {
     this.tasks = data;
+    this._dataFromExternal = true; // Mark data as externally provided (skip fetchData)
     // Verificar que el componente esté listo antes de renderizar
     if (this.shadowRoot?.querySelector('.chart-container')) {
       this.renderChart();
@@ -96,7 +97,7 @@ this.setTaskData(tasks);
   }
 
   updated(changedProperties) {
-    if (changedProperties.has('project')) {
+    if (changedProperties.has('project') && !this._dataFromExternal) {
       this.fetchData();
     }
     if (this.tasks.length > 0 && this.shadowRoot) {
@@ -124,42 +125,44 @@ return;
     }
 
     const margin = { top: 40, right: 40, bottom: 40, left: 180 };
-    // 1. Función para validar si una tarea tiene fechas válidas
-    const hasValidDates = (task) => {
+    // 1. Función para validar si una tarea/épica tiene fechas válidas para el Gantt
+    const hasValidDates = (task, isEpic = false) => {
       if (!task.plannedStart || !task.plannedEnd) {
         return false;
       }
-      
-      const startStr = task.plannedStart.trim();
-      const endStr = task.plannedEnd.trim();
-      
+
+      const startStr = String(task.plannedStart).trim();
+      const endStr = String(task.plannedEnd).trim();
+
       // Verificar que las fechas no estén vacías o sean valores inválidos
-      if (startStr === '' || endStr === '' || 
+      if (startStr === '' || endStr === '' ||
           startStr === '0000-00-00' || endStr === '0000-00-00' ||
           startStr === 'null' || endStr === 'null' ||
           startStr === 'undefined' || endStr === 'undefined') {
         return false;
       }
-      
+
       // Verificar que las fechas sean válidas
       const startDate = new Date(startStr);
       const endDate = new Date(endStr);
-      
+
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
         return false;
       }
-      
+
       // Verificar que la fecha de fin sea posterior a la de inicio
       if (endDate <= startDate) {
         return false;
       }
-      
-      // Filtrar tareas en estados que no deberían mostrarse en el Gantt
-      const excludedStatuses = ['To Do', 'TODO', 'Backlog', 'New', 'Open'];
-      if (task.status && excludedStatuses.includes(task.status)) {
-        return false;
+
+      // Filtrar subtareas en estados iniciales (no aplica a épicas)
+      if (!isEpic) {
+        const excludedStatuses = ['To Do', 'TODO', 'Backlog', 'New', 'Open'];
+        if (task.status && excludedStatuses.includes(task.status)) {
+          return false;
+        }
       }
-      
+
       return true;
     };
 
@@ -170,18 +173,18 @@ return;
     
     this.tasks.forEach((epic, i) => {
       totalTasks++;
-      // Solo agregar épicas que tengan fechas válidas
-      if (hasValidDates(epic)) {
+      // Solo agregar épicas que tengan fechas válidas (sin filtro de status)
+      if (hasValidDates(epic, true)) {
         flatTasks.push({ ...epic, isEpic: true, flatIndex: flatTasks.length });
       } else {
         filteredTasks++;
       }
-      
-      // Solo agregar subtareas que tengan fechas válidas
+
+      // Solo agregar subtareas que tengan fechas válidas (con filtro de status)
       if (Array.isArray(epic.subtasks)) {
         epic.subtasks.forEach((sub, j) => {
           totalTasks++;
-          if (hasValidDates(sub)) {
+          if (hasValidDates(sub, false)) {
             flatTasks.push({ ...sub, parentEpic: epic, isEpic: false, flatIndex: flatTasks.length });
           } else {
             filteredTasks++;
