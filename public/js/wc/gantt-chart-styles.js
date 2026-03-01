@@ -27,4 +27,13 @@ export const GanttChartStyles = css`
     stroke-width: 2;
     stroke-dasharray: 4;
   }
+  text {
+    fill: var(--text-primary, currentColor);
+  }
+  .x-axis text {
+    fill: var(--text-secondary, currentColor);
+  }
+  .x-axis line, .x-axis path {
+    stroke: var(--border-color, currentColor);
+  }
 `;
