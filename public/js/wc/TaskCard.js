@@ -132,7 +132,7 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
           transition: background 0.2s;
         }
         .copy-link-button:focus {
-          outline: 2px solid #4a9eff;
+          outline: 2px solid var(--brand-primary, #6366f1);
         }
         .copy-link-button:hover {
           background: rgba(0,0,0,0.05);
@@ -208,16 +208,16 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
 
         .attachment-section {
           padding: 1rem;
-          border: 1px solid #e0e0e0;
+          border: 1px solid var(--border-default, #e0e0e0);
           border-radius: 4px;
-          background: #f9f9f9;
+          background: var(--bg-secondary, #f9f9f9);
         }
-        
+
         .attachment-section label {
           display: block;
           margin-bottom: 0.5rem;
           font-weight: 500;
-          color: #333;
+          color: var(--text-primary, #333);
         }
 
         firebase-storage-uploader {
@@ -226,20 +226,20 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         }
         
         .invalid-field {
-          border: 2px solid #ff4444 !important;
+          border: 2px solid #f43f5e !important;
           box-shadow: 0 0 0 0.25rem rgba(255, 68, 68, 0.3) !important;
           background-color: rgba(255, 68, 68, 0.05) !important;
         }
         
         .invalid-field:focus {
-          border-color: #ff4444 !important;
+          border-color: #f43f5e !important;
           box-shadow: 0 0 0 0.25rem rgba(255, 68, 68, 0.5) !important;
           background-color: rgba(255, 68, 68, 0.08) !important;
         }
 
         .tab-button.invalid-field {
-          border: 2px solid #ff4444 !important;
-          color: #ff4444 !important;
+          border: 2px solid #f43f5e !important;
+          color: #f43f5e !important;
           background-color: rgba(255, 68, 68, 0.08) !important;
         }
 
@@ -250,7 +250,7 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
           width: 100%;
           margin-bottom: 0.5rem;
           padding: 0.5rem;
-          border: 1px solid #ccc;
+          border: 1px solid var(--border-default, #ccc);
           border-radius: 4px;
         }
 
@@ -264,11 +264,11 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         }
 
         .scenario-block {
-          border: 1px solid #e0e0e0;
+          border: 1px solid var(--border-default, #e0e0e0);
           padding: 0.75rem;
           border-radius: 6px;
           margin-bottom: 0.75rem;
-          background: #f9f9f9;
+          background: var(--bg-secondary, #f9f9f9);
         }
 
         .scenario-title {
@@ -312,7 +312,7 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
 
         .convert-ia-btn:hover:not(.disabled) {
           background: rgba(230, 0, 126, 1);
-          color: white;
+          color: var(--text-inverse, white);
           text-shadow: 1px 0px #000;
         }
 
@@ -324,10 +324,10 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         .improve-ia-button {
           margin-top: 0.75rem;
           padding: 0.5rem 1rem;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, var(--brand-primary, #6366f1) 0%, var(--brand-primary-strong, #4f46e5) 100%);
           border: none;
           border-radius: 6px;
-          color: white;
+          color: var(--text-inverse, white);
           font-size: 0.85rem;
           font-weight: 500;
           cursor: pointer;
@@ -339,7 +339,7 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
 
         .improve-ia-button:hover:not(:disabled) {
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }
 
         .improve-ia-button:active:not(:disabled) {
@@ -353,8 +353,8 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         }
 
         .secondary-button.danger {
-          color: #d9534f;
-          border-color: #d9534f;
+          color: var(--color-error, #f43f5e);
+          border-color: var(--color-error, #f43f5e);
         }
 
         .scenario-table-wrapper {
@@ -368,7 +368,7 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
 
         .scenario-table th,
         .scenario-table td {
-          border: 1px solid #e0e0e0;
+          border: 1px solid var(--border-default, #e0e0e0);
           padding: 0.2rem 0.3rem;
           vertical-align: middle;
           line-height: 1.2;
@@ -376,7 +376,7 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         }
 
         .scenario-table th {
-          background: #f8f9fa;
+          background: var(--bg-secondary, #f8f9fa);
         }
 
         .scenario-table .ellipsis {
@@ -400,8 +400,8 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         }
 
         .icon-button {
-          border: 1px solid #ccc;
-          background: #fff;
+          border: 1px solid var(--border-default, #ccc);
+          background: var(--bg-primary, #fff);
           padding: 0.1rem 0.25rem;
           border-radius: 4px;
           cursor: pointer;
@@ -410,22 +410,22 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         }
 
         .icon-button.danger {
-          border-color: #d9534f;
-          color: #d9534f;
+          border-color: var(--color-error, #f43f5e);
+          color: var(--color-error, #f43f5e);
         }
         
         .attachment-indicator {
           font-size: 1.2em;
           margin-right: 0.3em;
-          color: #4a9eff;
+          color: var(--brand-primary, #6366f1);
           cursor: help;
         }
         
         .related-tasks-section {
           padding: 1rem;
-          border: 1px solid #e0e0e0;
+          border: 1px solid var(--border-default, #e0e0e0);
           border-radius: 4px;
-          background: #f9f9f9;
+          background: var(--bg-secondary, #f9f9f9);
         }
         
         .related-tasks-header {
@@ -437,12 +437,12 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         
         .related-tasks-header label {
           font-weight: 500;
-          color: #333;
+          color: var(--text-primary, #333);
         }
         
         .add-related-task-btn {
-          background: #4a9eff;
-          color: white;
+          background: var(--brand-primary, #6366f1);
+          color: var(--text-inverse, white);
           border: none;
           padding: 0.5rem 1rem;
           border-radius: 4px;
@@ -452,7 +452,7 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         }
         
         .add-related-task-btn:hover {
-          background: #3a8eef;
+          background: var(--brand-primary-strong, #4f46e5);
         }
         
         .related-tasks-list {
@@ -466,26 +466,26 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
           align-items: center;
           padding: 0.5rem;
           margin-bottom: 0.5rem;
-          background: white;
-          border: 1px solid #ddd;
+          background: var(--bg-primary, white);
+          border: 1px solid var(--border-default, #ddd);
           border-radius: 4px;
         }
         
         .related-task-link {
           cursor: pointer;
-          color: #4a9eff;
+          color: var(--brand-primary, #6366f1);
           text-decoration: underline;
           flex: 1;
         }
         
         .related-task-link:hover {
-          color: #3a8eef;
+          color: var(--brand-primary-strong, #4f46e5);
         }
         
         .remove-related-task-btn {
           background: none;
           border: none;
-          color: #d9534f;
+          color: var(--color-error, #f43f5e);
           font-size: 1.1em;
           cursor: pointer;
           padding: 0.2rem 0.5rem;
@@ -494,12 +494,12 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         }
         
         .remove-related-task-btn:hover {
-          background: #ffeaea;
+          background: var(--color-error-bg, #ffeaea);
         }
         
         .no-related-tasks {
           text-align: center;
-          color: #666;
+          color: var(--text-secondary, #666);
           font-style: italic;
           padding: 1rem;
         }
@@ -507,7 +507,7 @@ export class TaskCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManag
         .related-tasks-indicator {
           font-size: 1.2em;
           margin-right: 0.3em;
-          color: #28a745;
+          color: var(--color-success, #10b981);
           cursor: help;
         }
       `
@@ -3418,8 +3418,8 @@ return html`<div class="no-related-tasks">No hay tareas relacionadas</div>`;
           message: 'Esto reemplazará los criterios actuales por una versión generada con IA. ¿Quieres continuar?',
           button1Text: 'Regenerar',
           button2Text: 'Cancelar',
-          button1css: 'background-color: #0d6efd; color: white;',
-          button2css: 'background-color: #6c757d; color: white;',
+          button1css: 'background-color: #6366f1; color: white;',
+          button2css: 'background-color: #6b7280; color: white;',
           button1Action: () => this._regenerateAcceptanceCriteria(),
           button2Action: () => { }
         }
@@ -3506,7 +3506,7 @@ this._showNotification(`No se pudo generar Acceptance Criteria con IA: ${reason}
    */
   _showAcceptanceLoading() {
     const loading = document.createElement('loading-layer');
-    loading.setAttribute('color', '#003b82');
+    loading.setAttribute('color', '#6366f1');
     loading.setAttribute('message', 'Generando Acceptance tests. Esta acción puede tardar más de un minuto');
     loading.setAttribute('size', '80');
     loading.setAttribute('stroke-width', '6');
@@ -3540,8 +3540,8 @@ this._showNotification(`No se pudo generar Acceptance Criteria con IA: ${reason}
           message: `Are you sure you want to delete <b>${this.title}</b>?`,
           button1Text: 'Yes',
           button2Text: 'No',
-          button1css: 'background-color: green',
-          button2css: 'background-color: red',
+          button1css: 'background-color: #10b981',
+          button2css: 'background-color: #f43f5e',
           button1Action: () => this._confirmDelete(),
           button2Action: () => { } // Just close the modal
         }
@@ -4071,12 +4071,12 @@ this.repositoryLabel = newLabel;
     return html`
       <div class="form-field inline" style="gap: 0.5rem; flex-wrap: wrap;">
         ${this.totalPausedTime > 0 ? html`
-          <span style="font-size: 0.85em; color: #ff9800;" title="Tiempo total en pausa">
+          <span style="font-size: 0.85em; color: var(--color-warning, #f59e0b);" title="Tiempo total en pausa">
             ⏸ Pausado: ${this._formatDuration(this.totalPausedTime)}
           </span>
         ` : ''}
         ${this.effectiveWorkTime > 0 ? html`
-          <span style="font-size: 0.85em; color: #4caf50;" title="Tiempo efectivo de trabajo">
+          <span style="font-size: 0.85em; color: var(--color-success, #10b981);" title="Tiempo efectivo de trabajo">
             ⏱ Efectivo: ${this._formatDuration(this.effectiveWorkTime)}
           </span>
         ` : ''}
@@ -4378,8 +4378,8 @@ this._showNotification(`${developerName} ya tiene una tarea en progreso: ${taskI
     const styleElement = document.createElement('style');
     styleElement.textContent = `
       .existing-task-info {
-        background: #f8f9fa;
-        color: #212529;
+        background: var(--bg-secondary, #f8f9fa);
+        color: var(--text-primary, #212529);
         border-left: 4px solid var(--primary-color);
         padding: 0.75rem 1rem;
         margin: 0.75rem 0;
@@ -4404,32 +4404,32 @@ this._showNotification(`${developerName} ya tiene una tarea en progreso: ${taskI
         transform: translateX(4px);
       }
       .done-btn {
-        background: #d4edda;
-        color: #155724;
+        background: var(--color-success-bg, #d4edda);
+        color: var(--color-success-text, #155724);
       }
       .done-btn:hover {
-        background: #c3e6cb;
+        background: var(--color-success-hover, #c3e6cb);
       }
       .validate-btn {
-        background: #fff3cd;
-        color: #856404;
+        background: var(--color-warning-bg, #fff3cd);
+        color: var(--color-warning-text, #856404);
       }
       .validate-btn:hover {
-        background: #ffe69c;
+        background: var(--color-warning-hover, #ffe69c);
       }
       .todo-btn {
-        background: #cce5ff;
-        color: #004085;
+        background: var(--color-info-bg, #cce5ff);
+        color: var(--color-info-text, #004085);
       }
       .todo-btn:hover {
-        background: #b8daff;
+        background: var(--color-info-hover, #b8daff);
       }
       .cancel-btn {
-        background: #f8d7da;
-        color: #721c24;
+        background: var(--color-error-bg, #f8d7da);
+        color: var(--color-error-text, #721c24);
       }
       .cancel-btn:hover {
-        background: #f5c6cb;
+        background: var(--color-error-hover, #f5c6cb);
       }
     `;
     content.appendChild(styleElement);
@@ -5028,7 +5028,7 @@ this._showNotification(`${developerName} ya tiene una tarea en progreso: ${taskI
       <div class="related-task-item">
         <span class="related-task-link" @click=${this._handleRelatedTaskLinkClick.bind(this, task.id, task.projectId)}>
           📋 Tarea ${task.id} - ${task.title}
-          ${task.projectId && task.projectId !== this.projectId ? html`<span style="color: #666; font-size: 0.9em;"> (${task.projectId})</span>` : ''}
+          ${task.projectId && task.projectId !== this.projectId ? html`<span style="color: var(--text-secondary, #666); font-size: 0.9em;"> (${task.projectId})</span>` : ''}
         </span>
         <button class="remove-related-task-btn" @click=${this._handleRemoveRelatedTaskClick.bind(this, task.id)} title="Eliminar asociación">
           ✖
@@ -5213,7 +5213,7 @@ this._showNotification(`${developerName} ya tiene una tarea en progreso: ${taskI
 
     const modalContent = document.createElement('div');
     modalContent.style.cssText = `
-      background: white;
+      background: var(--bg-primary, white);
       border-radius: 8px;
       padding: 2rem;
       box-shadow: 0 4px 16px rgba(0,0,0,0.2);
@@ -5232,7 +5232,7 @@ this._showNotification(`${developerName} ya tiene una tarea en progreso: ${taskI
       border: none;
       font-size: 1.5rem;
       cursor: pointer;
-      color: #999;
+      color: #6b7280;
       padding: 0.5rem;
       border-radius: 50%;
       transition: all 0.2s;
@@ -5243,7 +5243,7 @@ this._showNotification(`${developerName} ya tiene una tarea en progreso: ${taskI
     title.textContent = 'Seleccionar tarea relacionada';
     title.style.cssText = `
       margin: 0 0 1rem 0;
-      color: #333;
+      color: var(--text-primary, #333);
       font-size: 1.2rem;
     `;
 
@@ -5251,7 +5251,7 @@ this._showNotification(`${developerName} ya tiene una tarea en progreso: ${taskI
     message.textContent = `Selecciona un proyecto y una tarea para asociar con la tarea ${this.cardId}:`;
     message.style.cssText = `
       margin: 0 0 1rem 0;
-      color: #666;
+      color: var(--text-secondary, #666);
     `;
 
     // Contenedor para el selector de proyecto
@@ -5266,17 +5266,17 @@ this._showNotification(`${developerName} ya tiene una tarea en progreso: ${taskI
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 500;
-      color: #333;
+      color: var(--text-primary, #333);
     `;
 
     const projectSelect = document.createElement('select');
     projectSelect.style.cssText = `
       width: 100%;
       padding: 0.75rem;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border-default, #ddd);
       border-radius: 4px;
       font-size: 1rem;
-      background: white;
+      background: var(--bg-primary, white);
     `;
 
     // Añadir opciones de proyectos
@@ -5304,17 +5304,17 @@ this._showNotification(`${developerName} ya tiene una tarea en progreso: ${taskI
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 500;
-      color: #333;
+      color: var(--text-primary, #333);
     `;
 
     const taskSelect = document.createElement('select');
     taskSelect.style.cssText = `
       width: 100%;
       padding: 0.75rem;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border-default, #ddd);
       border-radius: 4px;
       font-size: 1rem;
-      background: white;
+      background: var(--bg-primary, white);
     `;
 
     // Añadir opción por defecto
@@ -5421,10 +5421,10 @@ if (selectedProjectName) {
     cancelBtn.textContent = 'Cancelar';
     cancelBtn.style.cssText = `
       padding: 0.5rem 1rem;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border-default, #ddd);
       border-radius: 4px;
-      background: #f8f9fa;
-      color: #333;
+      background: var(--bg-secondary, #f8f9fa);
+      color: var(--text-primary, #333);
       cursor: pointer;
       font-size: 1rem;
     `;
@@ -5436,8 +5436,8 @@ if (selectedProjectName) {
       padding: 0.5rem 1rem;
       border: none;
       border-radius: 4px;
-      background: #4a9eff;
-      color: white;
+      background: var(--brand-primary, #6366f1);
+      color: var(--text-inverse, white);
       cursor: pointer;
       font-size: 1rem;
     `;
@@ -5501,8 +5501,8 @@ if (selectedProjectName) {
           message: `¿Estás seguro de que quieres eliminar la asociación con la tarea ${taskId}?`,
           button1Text: 'Sí, eliminar',
           button2Text: 'Cancelar',
-          button1css: 'background-color: #d9534f; color: white;',
-          button2css: 'background-color: #ccc; color: #333;',
+          button1css: 'background-color: #f43f5e; color: white;',
+          button2css: 'background-color: #6b7280; color: #fff;',
           button1Action: () => this._removeRelatedTask(taskId),
           button2Action: () => { }
         }

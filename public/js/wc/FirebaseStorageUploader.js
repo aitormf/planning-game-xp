@@ -363,8 +363,8 @@ this.errorMessage = `Error al subir archivo: ${error.message}`;
           <div class="delete-confirm-title">¿Eliminar archivo?</div>
           <div>¿Seguro que quieres eliminar este archivo del servidor?</div>
           <div style="margin-top:1.5rem;">
-            <button @click=${this._deleteFileFromStorage.bind(this)} style="background:#d9534f;">Sí, eliminar</button>
-            <button @click=${this._closeDeleteConfirmModal.bind(this)} style="background:#ccc; color:#222;">Cancelar</button>
+            <button @click=${this._deleteFileFromStorage.bind(this)} style="background:#f43f5e;">Sí, eliminar</button>
+            <button @click=${this._closeDeleteConfirmModal.bind(this)} style="background:var(--bg-tertiary, #ccc); color:var(--text-primary, #222);">Cancelar</button>
           </div>
         </div>
       </div>
@@ -422,7 +422,7 @@ this.errorMessage = `Error al eliminar archivo: ${err.message}`;
     if (!this.firebaseConfig) {
       return html`
         <div class="uploader">
-          <span style="color: red;">No hay configuración de Firebase Storage disponible.</span>
+          <span style="color: var(--color-error, #f43f5e);">No hay configuración de Firebase Storage disponible.</span>
         </div>
       `;
     }

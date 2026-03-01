@@ -18,6 +18,9 @@ let user = null;
     <meta name="description" content="XP Planning Game" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <title>{title}</title>
     <ViewTransitions />
     <link rel="manifest" href="/manifest.json">
@@ -52,7 +55,20 @@ let user = null;
           }
           // Apply dark/light mode from cache
           var theme = localStorage.getItem('pgxp-theme');
-          if (theme === 'dark') root.classList.add('dark-theme');
+          if (theme === 'dark') {
+            root.classList.add('dark-theme');
+            // Apply critical dark tokens before ThemeManagerService loads
+            var dt = {
+              '--bg-primary':'#0f172a','--bg-secondary':'#1e293b','--bg-tertiary':'#334155',
+              '--text-primary':'#f8fafc','--text-secondary':'#e2e8f0','--text-muted':'#94a3b8',
+              '--border-default':'#475569','--border-subtle':'#334155',
+              '--card-bg':'#1e293b','--input-bg':'#1e293b','--input-border':'#475569',
+              '--header-bg':'#0f172a','--modal-bg':'#0f172a',
+              '--dropdown-bg':'#1e293b','--dropdown-border':'#334155',
+              '--table-header-bg':'#1e293b','--table-row-bg':'#0f172a'
+            };
+            for (var p in dt) root.style.setProperty(p, dt[p]);
+          }
         } catch(e) {}
       })();
     </script>
@@ -193,11 +209,16 @@ let user = null;
   import { encodeEmailForFirebase } from '/js/utils/email-sanitizer.js';
       import { SYSTEM_REQUIREMENTS } from '/js/config/system-requirements-config.js';
 
-      // Theme system - imports only; initialization handled by main.js
+      // Theme system - initialize on every page via Layout
       // Blocking script in <head> applies cached tokens before first paint
       import '/js/wc/ThemeToggle.js';
       import { ThemeLoaderService } from '/js/services/theme-loader-service.js';
       import { ThemeManagerService } from '/js/services/theme-manager-service.js';
+
+      // Initialize theme services (design tokens + dark/light mode)
+      // Non-blocking: init tokens synchronously, load config in background
+      ThemeManagerService.init();
+      ThemeLoaderService.loadAndApply().catch(() => {});
 
       // Version check - detect new deployments and notify users on all pages
       import '/js/wc/VersionUpdateModal.js';
@@ -867,15 +888,15 @@ let user = null;
     <style is:global>
       :root {
         /* Legacy aliases — values come from ThemeLoaderService (--brand-*) */
-        --primary-color: var(--brand-primary, #4a9eff);
-        --primary-color-dark: var(--brand-primary-hover, #357ae8);
-        --secondary-color: var(--brand-primary-hover, #357ae8);
-        --terciary-color: #f5f7fa;
-        --background-color: var(--bg-secondary, #f5f7fa);
+        --primary-color: var(--brand-primary, #6366f1);
+        --primary-color-dark: var(--brand-primary-hover, #4f46e5);
+        --secondary-color: var(--brand-secondary, #10b981);
+        --terciary-color: #f8fafc;
+        --background-color: var(--bg-secondary, #f8fafc);
 
         /* Aliases: map legacy variable names used by components to design system tokens */
-        --text-color: var(--text-primary, #1f2937);
-        --border-color: var(--border-default, #dee2e6);
+        --text-color: var(--text-primary, #0f172a);
+        --border-color: var(--border-default, #cbd5e1);
       }
 
       /*
@@ -926,36 +947,41 @@ let user = null;
       }
 
       html {
-        font-family: system-ui, sans-serif;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         background: var(--background-color);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
       body {
         display: flex;
         flex-direction: column;
         min-height: 100vh;
-        color: var(--text-primary, #1f2937);
+        color: var(--text-primary, #0f172a);
       }
 
       header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background-color: var(--primary-color, #4a9eff);
-        padding: 0.5rem 1.5rem;
-        color: var(--text-on-primary, white);
-        border-bottom: 2px solid var(--primary-color-dark, #357ae8);
+        background: var(--bg-primary, #ffffff);
+        padding: 0.6rem 1.5rem;
+        color: var(--text-primary, #0f172a);
+        border-bottom: 1px solid var(--border-subtle, #e2e8f0);
       }
 
       .header-title-container {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 12px;
       }
 
       header h1 {
-        color: var(--terciary-color);
+        color: var(--brand-primary, #6366f1);
         margin: 0;
+        font-size: 1.3rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
       }
 
       system-status {
@@ -965,16 +991,21 @@ let user = null;
 
       main {
         flex: 1;
-        padding: 2rem;
-        padding-bottom: 5rem;
+        padding: 1.5rem 2rem;
+        padding-bottom: 4rem;
       }
 
       main h2 {
         width: 100%;
         text-align: center;
-        padding-bottom: 1rem;
-        background: var(--secondary-color);
-        color: white;
+        padding: 0.75rem 1rem;
+        background: var(--bg-secondary, #f1f5f9);
+        color: var(--text-primary, #0f172a);
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-subtle, #e2e8f0);
       }
 
       main stoy-card {
@@ -995,7 +1026,7 @@ let user = null;
       }
 
       .planning-game-icon {
-        height: 55px;
+        height: 36px;
         width: auto;
       }
 
@@ -1012,10 +1043,10 @@ let user = null;
       }
 
       .org-name-heading {
-        font-size: 1.2rem;
-        font-weight: 700;
-        letter-spacing: 0.01em;
-        color: var(--text-on-primary, #ffffff);
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--text-muted, #64748b);
         white-space: nowrap;
         margin: 0;
         line-height: 1;
@@ -1042,45 +1073,55 @@ let user = null;
       }
 
       .login-button, .logout-button {
-        padding: 8px 12px;
-        background: var(--primary-color, #4a9eff);
-        color: var(--text-on-primary, white);
+        padding: 6px 14px;
+        background: var(--brand-primary, #6366f1);
+        color: #ffffff;
         border: none;
-        border-radius: 4px;
+        border-radius: 8px;
         cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: background 0.15s ease, box-shadow 0.15s ease;
       }
 
       .login-button {
-        background: var(--brand-secondary);
+        background: var(--brand-primary, #6366f1);
       }
       .login-button:hover {
-        background: var(--brand-secondary-light, #fc6ec5);
+        background: var(--brand-primary-hover, #4f46e5);
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
       }
 
       .logout-button {
-        background: var(--secondary-color);
+        background: transparent;
+        color: var(--text-muted, #64748b);
+        border: 1px solid var(--border-subtle, #e2e8f0);
       }
       .logout-button:hover {
-        background: var(--primary-color-dark, #3a8eef);
+        background: var(--bg-secondary, #f1f5f9);
+        color: var(--text-primary, #0f172a);
       }
 
       .secondary-button {
-        padding: 8px 12px;
+        padding: 6px 14px;
         background: transparent;
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        border-radius: 4px;
+        color: var(--text-secondary, #334155);
+        border: 1px solid var(--border-subtle, #e2e8f0);
+        border-radius: 8px;
         cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: background 0.15s ease;
       }
 
       .secondary-button:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: var(--bg-secondary, #f1f5f9);
       }
 
       .link-button {
         border: none;
         background: transparent;
-        color: var(--secondary-color);
+        color: var(--brand-primary, #6366f1);
         cursor: pointer;
         padding: 0;
         margin-left: 0.25rem;
@@ -1089,7 +1130,7 @@ let user = null;
       }
 
       .link-button:hover {
-        color: var(--primary-color);
+        color: var(--brand-primary-hover, #4f46e5);
       }
 
       .email-login-form {
@@ -1247,32 +1288,116 @@ let user = null;
       .welcome-content {
         padding: 3rem;
         background: var(--bg-primary, white);
-        border-radius: 12px;
-        box-shadow: var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.1));
+        border-radius: 16px;
+        border: 1px solid var(--border-subtle, #e2e8f0);
         display: flex;
         flex-direction: column;
         align-items: center;
       }
 
       .welcome-logo {
-        width: 150px;
+        width: 120px;
         height: auto;
         margin-bottom: 2rem;
       }
 
       .welcome-title {
-        font-size: 3rem;
-        color: var(--primary-color);
-        margin-bottom: 1.5rem;
-        font-weight: 300;
+        font-size: 2.5rem;
+        color: var(--brand-primary, #6366f1);
+        margin-bottom: 1rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
         text-align: center;
       }
 
       .welcome-subtitle {
-        font-size: 1.5rem;
-        color: var(--text-muted, #666);
+        font-size: 1.1rem;
+        color: var(--text-muted, #64748b);
         margin: 0;
         text-align: center;
+      }
+
+      /* ==================== DARK MODE GLOBAL OVERRIDES ==================== */
+      html.dark-theme {
+        background: var(--bg-primary, #0f172a);
+        color-scheme: dark;
+      }
+
+      .dark-theme body {
+        color: var(--text-primary, #f8fafc);
+      }
+
+      .dark-theme header {
+        background: var(--header-bg, #0f172a);
+        border-bottom-color: var(--border-subtle, #334155);
+      }
+
+      .dark-theme .welcome-content {
+        background: var(--card-bg, #1e293b);
+        border-color: var(--border-subtle, #334155);
+      }
+
+      .dark-theme .email-login-form,
+      .dark-theme .email-register-form {
+        background: var(--card-bg, #1e293b);
+        border: 1px solid var(--border-subtle, #334155);
+      }
+
+      .dark-theme .email-login-form input,
+      .dark-theme .email-register-form input,
+      .dark-theme .email-register-form select,
+      .dark-theme .email-register-form textarea {
+        background: var(--input-bg, #1e293b);
+        border-color: var(--input-border, #475569);
+        color: var(--text-primary, #f8fafc);
+      }
+
+      .dark-theme main h2 {
+        background: var(--bg-secondary, #1e293b);
+        border-color: var(--border-subtle, #334155);
+        color: var(--text-primary, #f8fafc);
+      }
+
+      .dark-theme .logout-button {
+        border-color: var(--border-subtle, #334155);
+        color: var(--text-muted, #94a3b8);
+      }
+
+      .dark-theme .logout-button:hover {
+        background: var(--bg-secondary, #1e293b);
+        color: var(--text-primary, #f8fafc);
+      }
+
+      .dark-theme .secondary-button {
+        color: var(--text-secondary, #e2e8f0);
+        border-color: var(--border-subtle, #334155);
+      }
+
+      .dark-theme .secondary-button:hover {
+        background: var(--bg-secondary, #1e293b);
+      }
+
+      /* Dark mode overrides for app-modal */
+      .dark-theme app-modal {
+        --modal-bg: var(--bg-primary, #0f172a);
+        --modal-text-color: var(--text-primary, #f8fafc);
+        --modal-body-color: var(--text-primary, #f8fafc);
+        --modal-header-bg: var(--bg-secondary, #1e293b);
+        --modal-header-text: var(--text-primary, #f8fafc);
+        --modal-footer-bg: var(--bg-secondary, #1e293b);
+        --modal-border-color: var(--border-default, #475569);
+        --modal-close-bg: var(--bg-tertiary, #334155);
+        --modal-close-color: var(--text-secondary, #e2e8f0);
+        --modal-close-hover-bg: var(--bg-primary, #0f172a);
+        --modal-close-hover-color: var(--text-primary, #f8fafc);
+        --modal-btn-primary-bg: var(--brand-primary, #6366f1);
+        --modal-btn-primary-text: #ffffff;
+        --modal-btn-secondary-bg: var(--color-error, #f43f5e);
+        --modal-btn-secondary-text: #ffffff;
+        --modal-btn-tertiary-bg: var(--bg-tertiary, #334155);
+        --modal-btn-tertiary-text: var(--text-primary, #f8fafc);
+        --modal-overlay-bg: rgba(0, 0, 0, 0.7);
+        --modal-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
       }
     </style>
   </body>

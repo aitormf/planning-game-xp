@@ -54,21 +54,21 @@ export class KanbanRenderer {
           switch (colorKey) {
             case 'HIGH':
             case 'CRITICAL':
-              headerGradient = 'linear-gradient(135deg, #dc3545, #c82333)';
+              headerGradient = 'linear-gradient(135deg, #f43f5e, #e11d48)';
               break;
             case 'MEDIUM':
             case 'NORMAL':
-              headerGradient = 'linear-gradient(135deg, #ffc107, #fd7e14)';
+              headerGradient = 'linear-gradient(135deg, #f59e0b, #d97706)';
               break;
             case 'LOW':
-              headerGradient = 'linear-gradient(135deg, #28a745, #20c997)';
+              headerGradient = 'linear-gradient(135deg, #10b981, #059669)';
               break;
             default:
-              headerGradient = 'linear-gradient(135deg, #6c757d, #495057)';
+              headerGradient = 'linear-gradient(135deg, #64748b, #475569)';
           }
         } else {
           // Para status que no están definidos, usar el gradiente por defecto
-          headerGradient = 'linear-gradient(135deg, #6c757d, #495057)';
+          headerGradient = 'linear-gradient(135deg, #64748b, #475569)';
         }
       }
 
@@ -204,8 +204,8 @@ export class KanbanRenderer {
   handleDragEnter(e) {
     e.preventDefault();
     e.currentTarget.classList.add('drag-over');
-    e.currentTarget.style.backgroundColor = 'rgba(74, 144, 217, 0.15)';
-    e.currentTarget.style.border = '2px dashed #4a90d9';
+    e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.15)';
+    e.currentTarget.style.border = '2px dashed #6366f1';
   }
 
   handleDragLeave(e) {

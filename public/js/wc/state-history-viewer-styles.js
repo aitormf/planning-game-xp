@@ -13,7 +13,7 @@ export const StateHistoryViewerStyles = css`
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--modal-overlay-bg, rgba(0, 0, 0, 0.5));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -56,8 +56,8 @@ export const StateHistoryViewerStyles = css`
     align-items: center;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-default);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--header-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+    color: var(--text-inverse, white);
     border-radius: 12px 12px 0 0;
   }
 
@@ -86,7 +86,7 @@ export const StateHistoryViewerStyles = css`
   .close-btn {
     background: rgba(255, 255, 255, 0.2);
     border: none;
-    color: white;
+    color: var(--text-inverse, white);
     font-size: 1.5rem;
     width: 32px;
     height: 32px;
@@ -150,7 +150,7 @@ export const StateHistoryViewerStyles = css`
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--header-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
   }
 
   /* Modal Content */
@@ -283,7 +283,7 @@ export const StateHistoryViewerStyles = css`
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    border: 3px solid white;
+    border: 3px solid var(--bg-primary, white);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 
@@ -302,7 +302,7 @@ export const StateHistoryViewerStyles = css`
   }
 
   .status-badge {
-    color: white;
+    color: var(--text-inverse, white);
     padding: 3px 10px;
     border-radius: 4px;
     font-size: 0.8rem;
@@ -384,8 +384,8 @@ export const StateHistoryViewerStyles = css`
   }
 
   .metric-card.highlight {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--header-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+    color: var(--text-inverse, white);
   }
 
   .metric-card.highlight .metric-hint {
@@ -480,9 +480,9 @@ export const StateHistoryViewerStyles = css`
     align-items: center;
     gap: 12px;
     padding: 20px;
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    background: var(--cycles-gradient, linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%));
     border-radius: 12px;
-    color: white;
+    color: var(--text-inverse, white);
   }
 
   .cycles-count {

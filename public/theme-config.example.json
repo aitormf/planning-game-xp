@@ -1,24 +1,24 @@
 {
   "tokens": {
     "brand": {
-      "primary": "#4a9eff",
-      "primaryHover": "#3a8eef",
-      "secondary": "#ec3e95",
-      "secondaryHover": "#d81b60"
+      "primary": "#6366f1",
+      "primaryHover": "#4f46e5",
+      "secondary": "#10b981",
+      "secondaryHover": "#059669"
     },
     "status": {
-      "todo": "#449bd3",
-      "inProgress": "#cce500",
-      "toValidate": "#ff6600",
-      "done": "#d4edda",
-      "blocked": "#f8d7da",
-      "expedited": "#ec3e95"
+      "todo": "#94a3b8",
+      "inProgress": "#3b82f6",
+      "toValidate": "#f59e0b",
+      "done": "#10b981",
+      "blocked": "#f43f5e",
+      "expedited": "#8b5cf6"
     }
   },
   "branding": {
     "appName": "Planning Game XP",
     "logo": "/images/icono_PGame.png",
-    "primaryColor": "#4a9eff"
+    "primaryColor": "#6366f1"
   },
   "features": {
     "darkMode": true

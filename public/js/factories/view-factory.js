@@ -596,7 +596,7 @@ export class ViewFactory {
     // Contador de resultados
     const resultsCounter = document.createElement('div');
     resultsCounter.className = 'filters-results-counter';
-    resultsCounter.style = 'margin-bottom: 0.5rem; font-size: 0.95em; color: #555;';
+    resultsCounter.style = 'margin-bottom: 0.5rem; font-size: 0.95em; color: var(--text-secondary, #555);';
     container.appendChild(resultsCounter);
 
     // Botón de limpiar filtros
@@ -629,7 +629,7 @@ export class ViewFactory {
       labelEl.style.fontWeight = 'bold';
       const select = document.createElement('select');
       select.style.padding = '0.5rem';
-      select.style.border = '1px solid #ddd';
+      select.style.setProperty('border', '1px solid var(--border-default, #ddd)');
       select.style.borderRadius = '4px';
       select.style.fontSize = '0.9rem';
       options.forEach(option => {

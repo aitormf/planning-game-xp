@@ -284,9 +284,9 @@ throw error;
       flex-direction: column;
       gap: 1rem;
       padding: 1rem;
-      border: 2px dashed #ccc;
+      border: 2px dashed var(--border-default, #ccc);
       border-radius: 8px;
-      background: #f8f9fa;
+      background: var(--bg-secondary, #f8f9fa);
       min-height: 150px;
       align-items: center;
       justify-content: center;
@@ -305,7 +305,7 @@ throw error;
       <div style="text-align: center;">
         <div style="font-size: 3rem;">📹</div>
         <div style="font-size: 1.2rem; font-weight: bold; margin: 0.5rem 0;">Subir Video de Demo</div>
-        <div style="color: #666; font-size: 0.9rem;">
+        <div style="color: var(--text-muted, #666); font-size: 0.9rem;">
           Haz clic o arrastra el video aquí<br>
           Formatos: MP4, WebM, OGG, MOV, AVI, MKV, FLV, 3GP, TS, WMV<br>
           Tamaño máximo: 500MB
@@ -315,8 +315,8 @@ throw error;
 
     // Hover effect
     container.addEventListener('mouseenter', () => {
-      container.style.borderColor = '#007bff';
-      container.style.background = '#e7f3ff';
+      container.style.borderColor = '#6366f1';
+      container.style.background = '#eef2ff';
     });
 
     container.addEventListener('mouseleave', () => {
@@ -332,8 +332,8 @@ throw error;
     // Drag and drop support
     container.addEventListener('dragover', (e) => {
       e.preventDefault();
-      container.style.borderColor = '#28a745';
-      container.style.background = '#e7f9e7';
+      container.style.borderColor = '#10b981';
+      container.style.background = '#ecfdf5';
     });
 
     container.addEventListener('dragleave', () => {
@@ -362,11 +362,11 @@ throw error;
           <div style="text-align: center;">
             <div style="font-size: 3rem;">🎬</div>
             <div style="font-size: 1.1rem; font-weight: bold;">${file.name}</div>
-            <div style="color: #666; font-size: 0.9rem;">
+            <div style="color: var(--text-muted, #666); font-size: 0.9rem;">
               Tamaño: ${(file.size / (1024 * 1024)).toFixed(2)}MB<br>
               Tipo: ${file.type}
             </div>
-            <button id="change-video-btn" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            <button id="change-video-btn" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--text-muted, #6c757d); color: var(--text-inverse, white); border: none; border-radius: 4px; cursor: pointer;">
               Cambiar video
             </button>
           </div>
@@ -409,7 +409,7 @@ throw error;
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background: white;
+      background: var(--bg-primary, white);
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       padding: 1rem;
@@ -419,11 +419,11 @@ throw error;
 
     notification.innerHTML = `
       <div style="display: flex; align-items: center; gap: 1rem;">
-        <div class="spinner" style="width: 24px; height: 24px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <div class="spinner" style="width: 24px; height: 24px; border: 3px solid var(--border-default, #f3f3f3); border-top: 3px solid var(--brand-primary, #6366f1); border-radius: 50%; animation: spin 1s linear infinite;"></div>
         <div style="flex: 1;">
           <div style="font-weight: bold;">${message}</div>
-          <div style="margin-top: 0.5rem; height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
-            <div style="height: 100%; width: ${progress}%; background: #007bff; transition: width 0.3s ease;"></div>
+          <div style="margin-top: 0.5rem; height: 4px; background: var(--bg-tertiary, #e9ecef); border-radius: 2px; overflow: hidden;">
+            <div style="height: 100%; width: ${progress}%; background: var(--brand-primary, #6366f1); transition: width 0.3s ease;"></div>
           </div>
         </div>
       </div>
@@ -466,8 +466,8 @@ throw error;
       position: fixed;
       top: 20px;
       right: 20px;
-      background: #28a745;
-      color: white;
+      background: var(--color-success, #28a745);
+      color: var(--text-inverse, white);
       padding: 1rem 1.5rem;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -493,8 +493,8 @@ throw error;
       position: fixed;
       top: 20px;
       right: 20px;
-      background: #dc3545;
-      color: white;
+      background: var(--color-error, #f43f5e);
+      color: var(--text-inverse, white);
       padding: 1rem 1.5rem;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

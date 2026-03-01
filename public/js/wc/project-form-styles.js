@@ -89,7 +89,7 @@ export const ProjectFormStyles = css`
   .stakeholder-input button {
     padding: 0.75rem 1rem;
     background-color: var(--brand-secondary);
-    color: white;
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -119,7 +119,7 @@ export const ProjectFormStyles = css`
   .developer-input button {
     padding: 0.75rem 1rem;
     background-color: var(--brand-secondary);
-    color: white;
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -169,8 +169,8 @@ export const ProjectFormStyles = css`
   }
 
   .remove-developer {
-    background: #dc3545;
-    color: white;
+    background: var(--color-error, #f43f5e);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 4px;
     padding: 0.25rem 0.5rem;
@@ -179,7 +179,7 @@ export const ProjectFormStyles = css`
   }
 
   .remove-developer:hover {
-    background: #c82333;
+    background: var(--color-error-hover, #e11d48);
   }
 
   .empty-developers {
@@ -224,8 +224,8 @@ export const ProjectFormStyles = css`
   }
 
   .remove-stakeholder {
-    background: #dc3545;
-    color: white;
+    background: var(--color-error, #f43f5e);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 4px;
     padding: 0.25rem 0.5rem;
@@ -234,7 +234,7 @@ export const ProjectFormStyles = css`
   }
 
   .remove-stakeholder:hover {
-    background: #c82333;
+    background: var(--color-error-hover, #e11d48);
   }
 
   .empty-stakeholders {
@@ -247,7 +247,7 @@ export const ProjectFormStyles = css`
   }
 
   .required {
-    color: #dc3545;
+    color: var(--color-error, #f43f5e);
   }
 
   .helper-text {
@@ -272,13 +272,13 @@ export const ProjectFormStyles = css`
   }
 
   .error {
-    color: #dc3545;
+    color: var(--color-error, #f43f5e);
     font-size: 0.875rem;
     margin-top: 0.25rem;
   }
 
   input.error {
-    border-color: #dc3545 !important;
+    border-color: var(--color-error, #f43f5e) !important;
     box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
     animation: shake 0.5s ease-in-out;
   }
@@ -395,8 +395,8 @@ export const ProjectFormStyles = css`
   }
 
   .delete-button {
-    background-color: #dc3545;
-    color: white;
+    background-color: var(--color-error, #f43f5e);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 6px;
     padding: 0.5rem 1rem;
@@ -406,7 +406,7 @@ export const ProjectFormStyles = css`
   }
 
   .delete-button:hover {
-    background-color: #c82333;
+    background-color: var(--color-error-hover, #e11d48);
   }
 
   .delete-confirmation {
@@ -422,8 +422,8 @@ export const ProjectFormStyles = css`
   }
 
   .final-delete-button {
-    background-color: #dc3545;
-    color: white;
+    background-color: var(--color-error, #f43f5e);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 6px;
     padding: 0.75rem 1.5rem;
@@ -438,7 +438,7 @@ export const ProjectFormStyles = css`
   }
 
   .final-delete-button:not(:disabled):hover {
-    background-color: #a02834;
+    background-color: var(--color-error-hover, #e11d48);
   }
 
   /* Entity selection section styles */
@@ -457,7 +457,7 @@ export const ProjectFormStyles = css`
   .add-btn {
     padding: 0.75rem 1rem;
     background-color: var(--brand-secondary);
-    color: white;
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -476,8 +476,8 @@ export const ProjectFormStyles = css`
 
   .create-new-btn {
     padding: 0.75rem 1rem;
-    background-color: #28a745;
-    color: white;
+    background-color: var(--color-success, #10b981);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -486,7 +486,7 @@ export const ProjectFormStyles = css`
   }
 
   .create-new-btn:hover {
-    background-color: #218838;
+    background-color: var(--color-success-hover, #059669);
   }
 
   .create-entity-form {
@@ -511,8 +511,8 @@ export const ProjectFormStyles = css`
 
   .create-btn {
     padding: 0.75rem 1rem;
-    background-color: #28a745;
-    color: white;
+    background-color: var(--color-success, #10b981);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -521,7 +521,7 @@ export const ProjectFormStyles = css`
   }
 
   .create-btn:hover {
-    background-color: #218838;
+    background-color: var(--color-success-hover, #059669);
   }
 
   .create-btn:disabled {
@@ -609,7 +609,7 @@ export const ProjectFormStyles = css`
 
   .default-badge {
     background-color: var(--brand-secondary);
-    color: white;
+    color: var(--text-inverse, white);
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
@@ -617,8 +617,8 @@ export const ProjectFormStyles = css`
   }
 
   .remove-repo-btn {
-    background-color: #dc3545;
-    color: white;
+    background-color: var(--color-error, #f43f5e);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 4px;
     width: 28px;
@@ -631,13 +631,13 @@ export const ProjectFormStyles = css`
   }
 
   .remove-repo-btn:hover {
-    background-color: #c82333;
+    background-color: var(--color-error-hover, #e11d48);
   }
 
   .add-another-repo-btn {
     padding: 0.5rem 1rem;
-    background-color: #28a745;
-    color: white;
+    background-color: var(--color-success, #10b981);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -645,7 +645,7 @@ export const ProjectFormStyles = css`
   }
 
   .add-another-repo-btn:hover {
-    background-color: #218838;
+    background-color: var(--color-success-hover, #059669);
   }
 
   /* Archive zone styles */
@@ -695,8 +695,8 @@ export const ProjectFormStyles = css`
   }
 
   .unarchive-button {
-    background-color: #28a745;
-    color: white;
+    background-color: var(--color-success, #10b981);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 6px;
     padding: 0.5rem 1rem;
@@ -706,7 +706,7 @@ export const ProjectFormStyles = css`
   }
 
   .unarchive-button:hover {
-    background-color: #218838;
+    background-color: var(--color-success-hover, #059669);
   }
 
   /* ========================== */
@@ -862,8 +862,8 @@ export const ProjectFormStyles = css`
 
   .add-permission-btn {
     padding: 0.5rem 1rem;
-    background: #6c5ce7;
-    color: white;
+    background: var(--brand-primary, #6366f1);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -874,7 +874,7 @@ export const ProjectFormStyles = css`
   }
 
   .add-permission-btn:hover:not(:disabled) {
-    background: #5b4cdb;
+    background: var(--brand-primary-hover, #4f46e5);
   }
 
   .add-permission-btn:disabled {
@@ -967,8 +967,8 @@ export const ProjectFormStyles = css`
   }
 
   .markdown-preview pre {
-    background: #2d2d2d;
-    color: #f8f8f2;
+    background: var(--code-block-bg, #2d2d2d);
+    color: var(--code-block-text, #f8f8f2);
     padding: 12px;
     border-radius: 4px;
     overflow-x: auto;

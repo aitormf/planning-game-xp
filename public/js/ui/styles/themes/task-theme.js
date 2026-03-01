@@ -6,7 +6,7 @@ export const TaskTheme = css/*css*/`
     display: inline-block;
     font-size: 0.65em;
     font-weight: 600;
-    color: white;
+    color: var(--text-inverse, white);
     padding: 0.1em 0.4em;
     border-radius: 3px;
     margin-left: 0.4em;
@@ -160,7 +160,7 @@ export const TaskTheme = css/*css*/`
   }
 
   .card-container.expedited {
-    border: 2px solid #ffc107;
+    border: 2px solid var(--color-warning, #ffc107);
   }
 
   /* Header específico de tasks - Ajustes mínimos */
@@ -177,7 +177,7 @@ export const TaskTheme = css/*css*/`
   }
 
   .expedited-icon {
-    color: #ffc107;
+    color: var(--color-warning, #ffc107);
     font-size: var(--font-size-xl);
     margin-left: var(--spacing-sm);
     flex-shrink: 0;
@@ -196,7 +196,7 @@ export const TaskTheme = css/*css*/`
 
   /* Sprint info específico - Altura fija para uniformidad */
   .sprint-info {
-    background: #400447;
+    background: var(--bg-muted, #475569);
     height: 32px;
     display: flex;
     align-items: center;
@@ -215,14 +215,14 @@ export const TaskTheme = css/*css*/`
   }
 
   .sprint-label {
-    color: #909290;
+    color: var(--text-muted, #94a3b8);
     font-weight: 500;
     flex-shrink: 0;
   }
 
   .sprint-value {
     color: var(--text-white);
-    background: #400447;
+    background: var(--bg-muted, #475569);
     font-weight: bold;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -266,7 +266,7 @@ export const TaskTheme = css/*css*/`
   }
 
   .priority-points {
-    background: #e600ce;
+    background: var(--brand-secondary, #10b981);
     color: var(--text-white);
     font-weight: bold;
     margin-left: auto;
@@ -283,8 +283,8 @@ export const TaskTheme = css/*css*/`
 
   .priority-label {
     /* Default fallback - actual color set via inline style for gradient effect */
-    background: #e600ce;
-    color: white;
+    background: var(--brand-secondary, #10b981);
+    color: var(--text-inverse, white);
     font-weight: bold;
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
@@ -297,7 +297,7 @@ export const TaskTheme = css/*css*/`
     top: -6px;
     right: -6px;
     background: rgba(0, 0, 0, 0.5);
-    color: white;
+    color: var(--text-inverse, white);
     font-size: 0.65rem;
     padding: 1px 4px;
     border-radius: 6px;
@@ -353,21 +353,21 @@ export const TaskTheme = css/*css*/`
   }
 
   .blocked-compact.business {
-    color: #dc3545;
-    background: rgba(220, 53, 69, 0.1);
+    color: var(--color-error, #f43f5e);
+    background: var(--status-error-bg, rgba(220, 53, 69, 0.1));
   }
 
   .blocked-compact.business:hover {
-    background: rgba(220, 53, 69, 0.2);
+    background: rgba(244, 63, 94, 0.2);
   }
 
   .blocked-compact.development {
-    color: #0066cc;
-    background: rgba(0, 102, 204, 0.1);
+    color: var(--color-info, #3b82f6);
+    background: var(--status-info-bg, rgba(0, 102, 204, 0.1));
   }
 
   .blocked-compact.development:hover {
-    background: rgba(0, 102, 204, 0.2);
+    background: rgba(59, 130, 246, 0.2);
   }
 
   /* Tooltips personalizados para indicadores de bloqueo */
@@ -382,7 +382,7 @@ export const TaskTheme = css/*css*/`
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.9);
-    color: white;
+    color: var(--text-inverse, white);
     padding: 12px !important;
     border-radius: 4px;
     font-size: 0.9rem;
@@ -413,7 +413,7 @@ export const TaskTheme = css/*css*/`
     display: block !important;
     font-weight: bold !important;
     margin-bottom: 6px !important;
-    color: #ffeb3b !important;
+    color: var(--color-warning, #fbbf24) !important;
     padding: 0 !important;
   }
 
@@ -496,30 +496,30 @@ export const TaskTheme = css/*css*/`
   /* Status específicos de tasks */
   .status[class*="todo"],
   .status[class*="to-do"] {
-    background: #449bd3;
-    color: var(--text-white);
+    background: var(--status-todo, #94a3b8);
+    color: var(--status-todo-text, #ffffff);
   }
 
   .status[class*="progress"],
   .status[class*="in-progress"] {
-    background: #cce500;
-    color: #004085;
+    background: var(--status-in-progress, #3b82f6);
+    color: var(--status-in-progress-text, #ffffff);
   }
 
   .status[class*="validate"],
   .status[class*="to-validate"] {
-    background: #ff6600;
-    color: var(--text-white);
+    background: var(--status-to-validate, #f59e0b);
+    color: var(--status-to-validate-text, #ffffff);
   }
 
   .status[class*="done"] {
-    background: #d4edda;
-    color: #155724;
+    background: var(--status-done, #10b981);
+    color: var(--status-done-text, #ffffff);
   }
 
   .status[class*="blocked"] {
-    background: #f8d7da;
-    color: #721c24;
+    background: var(--status-blocked, #f43f5e);
+    color: var(--status-blocked-text, #ffffff);
   }
 
   .developer {
@@ -610,8 +610,8 @@ export const TaskTheme = css/*css*/`
 
   /* Opciones deshabilitadas en selects (ej: Done&Validated) */
   :host([expanded]) .status-select option:disabled {
-    color: #999;
-    background-color: #f5f5f5;
+    color: var(--text-disabled, #999);
+    background-color: var(--bg-tertiary, #f5f5f5);
     font-style: italic;
   }
 
@@ -746,7 +746,7 @@ export const TaskTheme = css/*css*/`
     align-items: center;
     padding: 0.5rem 0.75rem;
     margin: 0 1rem 0.5rem 1rem;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     border-left: 3px solid var(--primary-color);
@@ -799,7 +799,7 @@ export const TaskTheme = css/*css*/`
   :host([expanded]) .form-row .form-field.inline select:focus,
   :host([expanded]) .form-row .form-field.inline input:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
     outline: none;
   }
 
@@ -842,7 +842,7 @@ export const TaskTheme = css/*css*/`
   :host([expanded]) .form-row .readonly-field {
     padding: 0.35rem 0.5rem;
     background: var(--bg-secondary);
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-default, #e9ecef);
     border-radius: var(--radius-sm);
     font-size: 0.9rem;
     height: 2.1rem;
@@ -859,8 +859,8 @@ export const TaskTheme = css/*css*/`
     gap: var(--spacing-lg);
     padding: var(--spacing-md);
     margin: 0 1rem var(--spacing-md) 1rem;
-    background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
-    border: 1px solid #f8d7da;
+    background: var(--status-error-bg, #fff5f5);
+    border: 1px solid var(--status-error-border, #f8d7da);
     border-radius: var(--radius-md);
     border-left: 4px solid var(--danger-color);
   }
@@ -916,7 +916,7 @@ export const TaskTheme = css/*css*/`
 
   :host([expanded]) .blocked-field-header select:disabled,
   :host([expanded]) .blocked-field-group textarea:disabled {
-    background: #f0f0f0;
+    background: var(--bg-tertiary, #f0f0f0);
     cursor: not-allowed;
     opacity: 0.6;
   }
@@ -945,7 +945,7 @@ export const TaskTheme = css/*css*/`
 
   :host([expanded]) .save-button {
     padding: var(--spacing-sm) var(--spacing-xl);
-    background: #007bff;
+    background: var(--brand-primary, #6366f1);
     color: var(--text-white);
     border: none;
     border-radius: var(--radius-sm);
@@ -956,11 +956,11 @@ export const TaskTheme = css/*css*/`
   }
 
   :host([expanded]) .save-button:hover {
-    background: #0056b3;
+    background: var(--brand-primary-hover, #4f46e5);
   }
 
   :host([expanded]) .save-button:disabled {
-    background: #ccc;
+    background: var(--bg-muted, #ccc);
     cursor: not-allowed;
   }
 
@@ -1002,7 +1002,7 @@ export const TaskTheme = css/*css*/`
     left: 0;
     right: 0;
     background: rgba(0, 0, 0, 0.9);
-    color: white;
+    color: var(--text-inverse, white);
     padding: var(--spacing-sm);
     border-radius: var(--radius-sm);
     font-size: var(--font-size-sm);
@@ -1060,8 +1060,8 @@ export const TaskTheme = css/*css*/`
     position: absolute;
     top: 4px;
     right: 4px;
-    background: #9c27b0;
-    color: #fff;
+    background: var(--status-expedited, #8b5cf6);
+    color: var(--text-inverse, #ffffff);
     font-weight: bold;
     padding: 2px 8px;
     border-radius: var(--radius-sm);
@@ -1096,8 +1096,8 @@ export const TaskTheme = css/*css*/`
     position: absolute;
     top: 4px;
     right: 4px;
-    background: #ffc107;
-    color: #000;
+    background: var(--color-warning, #ffc107);
+    color: var(--text-inverse, #000);
     font-weight: bold;
     padding: 2px 8px;
     border-radius: var(--radius-sm);
@@ -1204,7 +1204,7 @@ export const TaskTheme = css/*css*/`
     background: var(--input-bg);
     padding: 1rem;
     border-radius: 4px;
-    border: 1px solid #bbf7d0;
+    border: 1px solid var(--status-success-border, #bbf7d0);
     margin: 0;
     text-align: left;
   }
@@ -1291,13 +1291,13 @@ export const TaskTheme = css/*css*/`
   }
 
   .plan-step.done {
-    border-color: #86efac;
+    border-color: var(--status-success-border, #86efac);
     background: var(--color-success-light);
   }
 
   .plan-step.in_progress {
-    border-color: #93c5fd;
-    background: #eff6ff;
+    border-color: var(--status-info-border, #93c5fd);
+    background: var(--status-info-bg, #eff6ff);
   }
 
   .step-header {
@@ -1324,7 +1324,7 @@ export const TaskTheme = css/*css*/`
     margin-left: auto;
     background: none;
     border: none;
-    color: #ef4444;
+    color: var(--color-error, #ef4444);
     cursor: pointer;
     font-size: 1.2em;
     padding: 0 4px;
@@ -1334,7 +1334,7 @@ export const TaskTheme = css/*css*/`
     margin-top: 4px;
     padding: 4px 10px;
     background: var(--bg-secondary);
-    border: 1px dashed #d1d5db;
+    border: 1px dashed var(--border-default, #d1d5db);
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85em;
@@ -1356,8 +1356,8 @@ export const TaskTheme = css/*css*/`
   /* Reopen cycles section */
   .reopen-info {
     margin-top: var(--spacing-md);
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border: 1px solid #f59e0b;
+    background: var(--status-warning-bg, #fef3c7);
+    border: 1px solid var(--color-warning, #f59e0b);
     border-radius: var(--radius-md);
     padding: var(--spacing-sm);
   }
@@ -1375,8 +1375,8 @@ export const TaskTheme = css/*css*/`
   }
 
   .reopen-badge {
-    background: #dc2626;
-    color: white;
+    background: var(--color-error, #dc2626);
+    color: var(--text-inverse, white);
     font-size: 0.75rem;
     font-weight: 600;
     padding: 2px 8px;
@@ -1395,14 +1395,14 @@ export const TaskTheme = css/*css*/`
     flex-direction: column;
     gap: var(--spacing-xs);
     padding-left: var(--spacing-md);
-    border-left: 2px solid #f59e0b;
+    border-left: 2px solid var(--color-warning, #f59e0b);
   }
 
   .reopen-cycle-item {
     font-size: 0.8rem;
     color: var(--text-secondary);
     padding: var(--spacing-xs) var(--spacing-sm);
-    background: rgba(255, 255, 255, 0.6);
+    background: var(--hover-overlay, rgba(255, 255, 255, 0.6));
     border-radius: var(--radius-sm);
   }
 

@@ -61,8 +61,8 @@ const QACardSpecificStyles = css`
     padding: 1rem;
   }
   .save-button {
-    background: #4a9eff;
-    color: white;
+    background: var(--brand-primary, #6366f1);
+    color: var(--text-inverse, white);
     border: none;
     padding: 8px 16px;
     border-radius: 4px;
@@ -91,12 +91,12 @@ const QACardSpecificStyles = css`
     border: none;
     cursor: pointer;
     font-size: 1.5rem;
-    color: #d9534f;
+    color: var(--color-error, #f43f5e);
     margin-left: 0.5rem;
     padding: 0;
   }
   .delete-button:hover {
-    color: #c9302c;
+    color: var(--color-error-hover, #e11d48);
   }
   .copy-link-button {
     background: transparent;
@@ -111,7 +111,7 @@ const QACardSpecificStyles = css`
     transition: background 0.2s;
   }
   .copy-link-button:focus {
-    outline: 2px solid #4a9eff;
+    outline: 2px solid var(--brand-primary, #6366f1);
   }
   .copy-link-button:hover {
     background: rgba(0,0,0,0.05);
@@ -119,7 +119,7 @@ const QACardSpecificStyles = css`
   .attachment-indicator {
     font-size: 1.2em;
     margin-right: 0.3em;
-    color: #4a9eff;
+    color: var(--brand-primary, #6366f1);
     cursor: help;
   }
 `;

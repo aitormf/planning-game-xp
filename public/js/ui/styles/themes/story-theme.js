@@ -3,9 +3,9 @@ import { css } from 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+esm';
 export const StoryTheme = css`
   :host {
     /* Colores específicos para stories */
-    --description-color: #4caf50;
-    --acceptanceCriteria-color: #2196f3;
-    --notes-color: #ff9800;
+    --description-color: var(--color-green-500, #4caf50);
+    --acceptanceCriteria-color: var(--color-info, #2196f3);
+    --notes-color: var(--color-orange-500, #ff9800);
     
     display: block;
     margin: var(--spacing-md);
@@ -19,7 +19,7 @@ export const StoryTheme = css`
 
   :host(:hover) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(236,62,149,0.3);
+    box-shadow: var(--card-shadow-hover, 0 4px 8px rgba(236,62,149,0.3));
   }
 
   .card-header {

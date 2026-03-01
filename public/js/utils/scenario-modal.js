@@ -15,9 +15,9 @@ export function openScenarioModal({ existing = null, isNew = false, onSave }) {
 
   // Color scheme for each field type
   const fieldColors = {
-    given: { bg: '#e8f5e9', border: '#4caf50', accent: '#2e7d32' },
-    when: { bg: '#e3f2fd', border: '#2196f3', accent: '#1565c0' },
-    then: { bg: '#fff3e0', border: '#ff9800', accent: '#e65100' }
+    given: { bg: '#ecfdf5', border: '#10b981', accent: '#059669' },
+    when: { bg: '#eef2ff', border: '#6366f1', accent: '#4f46e5' },
+    then: { bg: '#fffbeb', border: '#f59e0b', accent: '#d97706' }
   };
 
   const formContainer = document.createElement('div');
@@ -52,7 +52,7 @@ export function openScenarioModal({ existing = null, isNew = false, onSave }) {
     badge.textContent = keyword;
     badge.style.cssText = `
       background: ${colors.accent};
-      color: white;
+      color: var(--text-inverse, white);
       padding: 0.25rem 0.6rem;
       border-radius: 4px;
       font-size: 0.75rem;
@@ -65,7 +65,7 @@ export function openScenarioModal({ existing = null, isNew = false, onSave }) {
     label.textContent = labelText;
     label.style.cssText = `
       font-weight: 500;
-      color: #4a5568;
+      color: var(--text-secondary, #4a5568);
       font-size: 0.9rem;
     `.replace(/\s+/g, ' ').trim();
 
@@ -84,8 +84,8 @@ export function openScenarioModal({ existing = null, isNew = false, onSave }) {
       border-radius: 6px;
       resize: vertical;
       box-sizing: border-box;
-      background: white;
-      color: #1a202c;
+      background: var(--input-bg, white);
+      color: var(--text-primary, #1a202c);
       transition: border-color 0.2s, box-shadow 0.2s;
     `.replace(/\s+/g, ' ').trim();
     textarea.placeholder = `Describe ${labelText.toLowerCase()}...`;

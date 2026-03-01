@@ -297,33 +297,49 @@ function isActiveLink(href: string, currentPath: string): boolean {
 <style>
   nav {
     display: flex;
-    gap: 16px;
+    gap: 2px;
     position: relative;
-    border-bottom: 2px solid transparent;
-    padding: 0 2rem;
-    background: var(--brand-secondary, #ec3e95);
-    height: 2rem;
+    padding: 0 1.5rem;
+    background: var(--bg-primary, #ffffff);
+    height: 2.5rem;
     align-items: center;
+    border-bottom: 1px solid var(--border-subtle, #e2e8f0);
   }
 
   .nav-link {
     text-decoration: none;
-    color: #fff;
-    padding: 0.3rem 1rem;
+    color: var(--text-muted, #64748b);
+    padding: 0.35rem 0.75rem;
     position: relative;
-    font-size: 16px;
-    transition: color 0.3s, font-weight 0.3s;
-    font-weight: normal;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color 0.15s ease, background-color 0.15s ease;
+    border-radius: 6px;
   }
 
   .nav-link:hover {
-    color: #000;
+    color: var(--text-primary, #0f172a);
+    background: var(--bg-secondary, #f1f5f9);
   }
 
   .nav-link[active],
   .nav-link.active {
-    font-weight: bold;
-    color: #000;
+    font-weight: 600;
+    color: var(--brand-primary, #6366f1);
+    background: rgba(99, 102, 241, 0.08);
+  }
+
+  .nav-link[active]::after,
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -0.45rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 2px;
+    background: var(--brand-primary, #6366f1);
+    border-radius: 1px;
   }
 
   .nav-link.hidden {
@@ -333,8 +349,8 @@ function isActiveLink(href: string, currentPath: string): boolean {
   .nav-indicator {
     position: absolute;
     height: 2px;
-    background-color: #fff;
-    transition: all 0.3s ease-in-out;
+    background-color: var(--brand-primary, #6366f1);
+    transition: all 0.2s ease-in-out;
     width: 0;
   }
 
@@ -348,13 +364,16 @@ function isActiveLink(href: string, currentPath: string): boolean {
 
   .nav-link.doc-link {
     margin-left: auto;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    font-size: 14px;
-    padding: 0.2rem 0.8rem;
+    background: var(--bg-secondary, #f1f5f9);
+    color: var(--text-muted, #64748b);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.65rem;
+    border: 1px solid var(--border-subtle, #e2e8f0);
   }
 
   .nav-link.doc-link:hover {
-    background: rgba(255, 255, 255, 0.4);
+    background: var(--bg-tertiary, #e2e8f0);
+    color: var(--text-primary, #0f172a);
   }
 </style>

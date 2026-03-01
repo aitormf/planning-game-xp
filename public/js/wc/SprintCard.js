@@ -365,7 +365,7 @@ this.canEditPermission = permissions.canEdit || false;
                 <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
                   🎬 Enlace del Video de la Demo
                 </label>
-                <p style="color: #666; font-size: 0.9em; margin: 0 0 0.5rem 0;">
+                <p style="color: var(--text-muted, #666); font-size: 0.9em; margin: 0 0 0.5rem 0;">
                   Pega aquí el enlace de SharePoint donde está almacenado el video de la demo.
                 </p>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -374,7 +374,7 @@ this.canEditPermission = permissions.canEdit || false;
                     .value=${this.demoVideoUrl || ''}
                     @input=${this._handleDemoVideoUrlChange}
                     placeholder="https://sharepoint.com/..."
-                    style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"
+                    style="flex: 1; padding: 0.5rem; border: 1px solid var(--border-subtle, #ddd); border-radius: 4px;"
                     ?disabled=${!this.isEditable}
                   />
                   ${this.demoVideoUrl ? html`
@@ -394,27 +394,27 @@ this.canEditPermission = permissions.canEdit || false;
                 <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
                   📝 Resumen de la Demo
                 </label>
-                <p style="color: #666; font-size: 0.9em; margin: 0 0 0.5rem 0;">
+                <p style="color: var(--text-muted, #666); font-size: 0.9em; margin: 0 0 0.5rem 0;">
                   Añade aquí el resumen o notas de la sesión de demo del sprint.
                 </p>
                 <textarea
                   .value=${this.demoSummary || ''}
                   @input=${this._handleDemoSummaryChange}
                   placeholder="Resumen de la demo: funcionalidades presentadas, feedback recibido, decisiones tomadas..."
-                  style="width: 100%; min-height: 200px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; box-sizing: border-box;"
+                  style="width: 100%; min-height: 200px; padding: 0.5rem; border: 1px solid var(--border-subtle, #ddd); border-radius: 4px; resize: vertical; box-sizing: border-box;"
                   ?disabled=${!this.isEditable}
                 ></textarea>
               </div>
             </div>
 
             ${this.demoVideo ? html`
-              <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+              <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle, #eee);">
                 <details>
-                  <summary style="cursor: pointer; color: #666; font-size: 0.9em;">
+                  <summary style="cursor: pointer; color: var(--text-muted, #666); font-size: 0.9em;">
                     📁 Video subido anteriormente (legacy)
                   </summary>
-                  <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                    <p style="margin: 0 0 0.5rem 0; color: #666; font-size: 0.9em;">
+                  <div style="margin-top: 0.5rem; padding: 0.5rem; background: var(--bg-secondary, #f8f9fa); border-radius: 4px;">
+                    <p style="margin: 0 0 0.5rem 0; color: var(--text-muted, #666); font-size: 0.9em;">
                       <strong>${this.demoVideo.title || 'Sin título'}</strong><br>
                       Subido por: ${this.demoVideo.uploadedBy || 'Usuario desconocido'}
                     </p>
@@ -511,8 +511,8 @@ this.canEditPermission = permissions.canEdit || false;
           message: `Are you sure you want to delete <b>${this.title}</b>?`,
           button1Text: 'Yes',
           button2Text: 'No',
-          button1css: 'background-color: green',
-          button2css: 'background-color: red',
+          button1css: 'background-color: #10b981',
+          button2css: 'background-color: #f43f5e',
           button1Action: () => this._confirmDelete(),
           button2Action: () => { } // Just close the modal
         }
@@ -566,7 +566,7 @@ try {
       titleInput.type = 'text';
       titleInput.placeholder = 'Título del video (opcional)';
       titleInput.value = `Sprint ${this.cardId} Demo`;
-      titleInput.style.cssText = 'padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;';
+      titleInput.style.cssText = 'padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px;';
 
       const descLabel = document.createElement('label');
       descLabel.textContent = 'Descripción:';
@@ -575,7 +575,7 @@ try {
       const descriptionTextarea = document.createElement('textarea');
       descriptionTextarea.placeholder = 'Descripción del video (opcional)';
       descriptionTextarea.rows = 3;
-      descriptionTextarea.style.cssText = 'padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical;';
+      descriptionTextarea.style.cssText = 'padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px; resize: vertical;';
 
       let selectedFile = null;
 
@@ -584,7 +584,7 @@ try {
         selectedFile = file;
         uploadBtn.disabled = false;
         uploadBtn.textContent = `Subir "${file.name}" a Firebase`;
-        uploadBtn.style.background = '#28a745';
+        uploadBtn.style.background = '#10b981';
       });
 
       // Upload button
@@ -593,7 +593,7 @@ try {
       uploadBtn.disabled = true;
       uploadBtn.style.cssText = `
         padding: 0.75rem 1.5rem;
-        background: #6c757d;
+        background: #64748b;
         color: white;
         border: none;
         border-radius: 4px;
@@ -608,7 +608,7 @@ try {
       cancelBtn.textContent = 'Cancelar';
       cancelBtn.style.cssText = `
         padding: 0.5rem 1rem;
-        background: #6c757d;
+        background: #64748b;
         color: white;
         border: none;
         border-radius: 4px;
@@ -648,7 +648,7 @@ try {
         try {
           uploadBtn.disabled = true;
           uploadBtn.textContent = 'Subiendo a Firebase Storage...';
-          uploadBtn.style.background = '#007bff';
+          uploadBtn.style.background = '#6366f1';
 
           const result = await firebaseVideoService.uploadSprintDemoVideo(selectedFile, {
             sprintId: this.cardId,
@@ -668,7 +668,7 @@ try {
         } catch (error) {
           uploadBtn.disabled = false;
           uploadBtn.textContent = `Subir "${selectedFile.name}" a Firebase`;
-          uploadBtn.style.background = '#28a745';
+          uploadBtn.style.background = '#10b981';
           
           console.error('Error uploading video:', error);
           
@@ -676,13 +676,13 @@ try {
           const errorContent = document.createElement('div');
           errorContent.style.cssText = 'padding: 1rem; text-align: center;';
           errorContent.innerHTML = `
-            <div style="font-size: 3rem; margin-bottom: 1rem; color: #dc3545;">⚠️</div>
+            <div style="font-size: 3rem; margin-bottom: 1rem; color: #f43f5e;">⚠️</div>
             <h3>Error al subir video</h3>
             <p>Ha ocurrido un error al subir el video a Firebase Storage:</p>
-            <p style="color: #dc3545; font-family: monospace; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; margin: 1rem 0;">
+            <p style="color: #f43f5e; font-family: monospace; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; margin: 1rem 0;">
               ${error.message}
             </p>
-            <p style="color: #666; font-size: 0.9rem;">
+            <p style="color: #64748b; font-size: 0.9rem;">
               Por favor, verifica que estés logueado con tu cuenta corporativa y que tengas permisos para subir archivos.
             </p>
           `;
@@ -703,10 +703,10 @@ try {
       const content = document.createElement('div');
       content.style.cssText = 'padding: 1rem; text-align: center;';
       content.innerHTML = `
-        <div style="font-size: 3rem; margin-bottom: 1rem; color: #dc3545;">❌</div>
+        <div style="font-size: 3rem; margin-bottom: 1rem; color: #f43f5e;">❌</div>
         <h3>Error del Sistema</h3>
         <p>No se pudieron cargar los servicios necesarios.</p>
-        <p style="color: #666; font-size: 0.9rem;">Error: ${error.message}</p>
+        <p style="color: #64748b; font-size: 0.9rem;">Error: ${error.message}</p>
       `;
       
       await modalService.createModal({
@@ -784,19 +784,19 @@ if (!this.demoVideo) {
         const videoInfo = document.createElement('div');
         videoInfo.style.cssText = `
           padding: 1rem;
-          background: #f8f9fa;
+          background: #f1f5f9;
           border-radius: 8px;
           margin-bottom: 1rem;
         `;
-        
-        const uploadDate = this.demoVideo.uploadedAt?.seconds 
+
+        const uploadDate = this.demoVideo.uploadedAt?.seconds
           ? new Date(this.demoVideo.uploadedAt.seconds * 1000).toLocaleDateString('es-ES')
           : 'Fecha desconocida';
-          
+
         videoInfo.innerHTML = `
-          <h4 style="margin: 0 0 0.5rem 0; color: #495057;">📹 ${this.demoVideo.title || 'Video de Demo'}</h4>
-          ${this.demoVideo.description ? `<p style="margin: 0 0 0.5rem 0; color: #666;">${this.demoVideo.description}</p>` : ''}
-          <div style="font-size: 0.9rem; color: #666; display: flex; gap: 1rem; flex-wrap: wrap;">
+          <h4 style="margin: 0 0 0.5rem 0; color: #334155;">📹 ${this.demoVideo.title || 'Video de Demo'}</h4>
+          ${this.demoVideo.description ? `<p style="margin: 0 0 0.5rem 0; color: #64748b;">${this.demoVideo.description}</p>` : ''}
+          <div style="font-size: 0.9rem; color: #64748b; display: flex; gap: 1rem; flex-wrap: wrap;">
             <span>📅 ${uploadDate}</span>
             <span>👤 ${this.demoVideo.uploadedBy || 'Usuario desconocido'}</span>
             <span>📁 ${this.demoVideo.size ? (this.demoVideo.size / (1024 * 1024)).toFixed(2) + ' MB' : 'N/A'}</span>
@@ -827,7 +827,7 @@ if (!this.demoVideo) {
         viewVideoBtn.textContent = '▶ Ver Video';
         viewVideoBtn.style.cssText = `
           padding: 0.5rem 1rem;
-          background: #0078d4;
+          background: #6366f1;
           color: white;
           border: none;
           border-radius: 4px;
@@ -843,7 +843,7 @@ if (!this.demoVideo) {
         downloadBtn.textContent = '📥 Descargar';
         downloadBtn.style.cssText = `
           padding: 0.5rem 1rem;
-          background: #6c757d;
+          background: #64748b;
           color: white;
           border: none;
           border-radius: 4px;
@@ -865,7 +865,7 @@ if (!this.demoVideo) {
           deleteBtn.textContent = '🗑️ Eliminar';
           deleteBtn.style.cssText = `
             padding: 0.5rem 1rem;
-            background: #dc3545;
+            background: #f43f5e;
             color: white;
             border: none;
             border-radius: 4px;
@@ -906,13 +906,13 @@ if (!this.demoVideo) {
         const errorContent = document.createElement('div');
         errorContent.style.cssText = 'padding: 1rem; text-align: center;';
         errorContent.innerHTML = `
-          <div style="font-size: 3rem; margin-bottom: 1rem; color: #dc3545;">⚠️</div>
+          <div style="font-size: 3rem; margin-bottom: 1rem; color: #f43f5e;">⚠️</div>
           <h3>Error al cargar el video</h3>
           <p>No se pudo cargar el video desde Firebase Storage:</p>
-          <p style="color: #dc3545; font-family: monospace; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; margin: 1rem 0;">
+          <p style="color: #f43f5e; font-family: monospace; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; margin: 1rem 0;">
             ${error.message}
           </p>
-          <p style="color: #666; font-size: 0.9rem;">
+          <p style="color: #64748b; font-size: 0.9rem;">
             Puede que el enlace haya expirado o que no tengas permisos para acceder al archivo.
           </p>
         `;
@@ -1005,7 +1005,7 @@ if (!this.demoVideo) {
         const successContent = document.createElement('div');
         successContent.style.cssText = 'padding: 1rem; text-align: center;';
         successContent.innerHTML = `
-          <div style="font-size: 3rem; margin-bottom: 1rem; color: #28a745;">✅</div>
+          <div style="font-size: 3rem; margin-bottom: 1rem; color: #10b981;">✅</div>
           <h3>Video eliminado correctamente</h3>
           <p>El video ha sido eliminado de Firebase Storage y del sprint.</p>
         `;
@@ -1026,13 +1026,13 @@ if (!this.demoVideo) {
         const errorContent = document.createElement('div');
         errorContent.style.cssText = 'padding: 1rem; text-align: center;';
         errorContent.innerHTML = `
-          <div style="font-size: 3rem; margin-bottom: 1rem; color: #dc3545;">⚠️</div>
+          <div style="font-size: 3rem; margin-bottom: 1rem; color: #f43f5e;">⚠️</div>
           <h3>Error al eliminar video</h3>
           <p>No se pudo eliminar el video de Firebase Storage:</p>
-          <p style="color: #dc3545; font-family: monospace; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; margin: 1rem 0;">
+          <p style="color: #f43f5e; font-family: monospace; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; margin: 1rem 0;">
             ${error.message}
           </p>
-          <p style="color: #666; font-size: 0.9rem;">
+          <p style="color: #64748b; font-size: 0.9rem;">
             Por favor, verifica que tengas permisos para eliminar archivos o contacta con el administrador.
           </p>
         `;
@@ -1144,7 +1144,7 @@ if (sprintTasks.length === 0) {
             title: `Tareas del sprint: ${this.title}`,
             message: `<p>No hay tareas asignadas a este sprint.</p>`,
             button1Text: 'Cerrar',
-            button1css: 'background-color: green; color: white;',
+            button1css: 'background-color: #10b981; color: white;',
             button1Action: () => { },
             maxWidth: '80vw',
             maxHeight: '80vh',
@@ -1173,14 +1173,14 @@ if (sprintTasks.length === 0) {
     modal.maxWidth = '80vw';
     modal.maxHeight = '80vh';
     modal.button1Text = 'Ver gráfico del sprint';
-    modal.button1Css = 'background-color: #4a9eff; color: white;';
+    modal.button1Css = 'background-color: #6366f1; color: white;';
     modal.button1Action = () => {
       // Abrir modal de gráfico del sprint sin cerrar este modal
       this._showSprintChartModal(sprintTasks);
       return false; // Evitar que se cierre este modal
     };
     modal.button2Text = 'Cerrar';
-    modal.button2Css = 'background-color: #6c757d; color: white;';
+    modal.button2Css = 'background-color: #64748b; color: white;';
     modal.button2Action = () => {
       // Solo cerrar este modal específico
       modal.close();
@@ -1245,45 +1245,45 @@ if (sprintTasks.length === 0) {
           border-collapse: collapse;
           margin-top: 1rem;
           font-size: 0.95em;
-          background-color: #ffffff;
-          color: #333333;
+          background-color: var(--bg-primary, #ffffff);
+          color: var(--text-primary, #333333);
         }
         .sprint-tasks-table th,
         .sprint-tasks-table td {
-          border: 1px solid #ddd;
+          border: 1px solid var(--border-subtle, #ddd);
           padding: 10px;
           text-align: left;
-          color: #333333;
+          color: var(--text-primary, #333333);
         }
         .sprint-tasks-table th {
-          background-color: #4a9eff;
-          color: #ffffff;
+          background-color: var(--brand-primary, #6366f1);
+          color: var(--text-inverse, #ffffff);
           font-weight: bold;
           font-size: 1em;
         }
         .sprint-tasks-table tbody tr {
-          background-color: #ffffff;
-          color: #333333;
+          background-color: var(--bg-primary, #ffffff);
+          color: var(--text-primary, #333333);
         }
         .sprint-tasks-table tbody tr:nth-child(even) {
-          background-color: #f8f9fa;
-          color: #333333;
+          background-color: var(--bg-secondary, #f8f9fa);
+          color: var(--text-primary, #333333);
         }
         .sprint-tasks-table tbody tr:hover {
-          background-color: #e9ecef;
-          color: #333333;
+          background-color: var(--bg-tertiary, #e9ecef);
+          color: var(--text-primary, #333333);
         }
-        .status-todo { background-color: #ec3e95; color: white; padding: 4px 8px; border-radius: 4px; }
-        .status-inprogress { background-color: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; }
-        .status-done { background-color: #2CFF1E; color: black; font-weight: bold; padding: 4px 8px; border-radius: 4px; }
-        .status-blocked { background-color: #ccc; opacity: 0.5; padding: 4px 8px; border-radius: 4px; }
-        .status-inreview { background-color: #ffeb3b; color: black; padding: 4px 8px; border-radius: 4px; }
-        .status-testing { background-color: #2196f3; color: white; padding: 4px 8px; border-radius: 4px; }
-        .status-tovalidate { background-color: #ffeb3b; color: black; padding: 4px 8px; border-radius: 4px; }
-        .status-cancelled { background-color: #d9534f; color: white; padding: 4px 8px; border-radius: 4px; }
+        .status-todo { background-color: var(--status-todo, #94a3b8); color: var(--status-todo-text, white); padding: 4px 8px; border-radius: 4px; }
+        .status-inprogress { background-color: var(--status-in-progress, #3b82f6); color: var(--status-in-progress-text, white); padding: 4px 8px; border-radius: 4px; }
+        .status-done { background-color: var(--status-done, #10b981); color: var(--status-done-text, white); font-weight: bold; padding: 4px 8px; border-radius: 4px; }
+        .status-blocked { background-color: var(--status-blocked, #f43f5e); color: var(--status-blocked-text, white); opacity: 0.5; padding: 4px 8px; border-radius: 4px; }
+        .status-inreview { background-color: var(--status-to-validate, #f59e0b); color: var(--status-to-validate-text, white); padding: 4px 8px; border-radius: 4px; }
+        .status-testing { background-color: var(--status-in-progress, #3b82f6); color: var(--status-in-progress-text, white); padding: 4px 8px; border-radius: 4px; }
+        .status-tovalidate { background-color: var(--status-to-validate, #f59e0b); color: var(--status-to-validate-text, white); padding: 4px 8px; border-radius: 4px; }
+        .status-cancelled { background-color: var(--color-error, #f43f5e); color: var(--text-inverse, white); padding: 4px 8px; border-radius: 4px; }
         .view-task-btn {
-          background: #4a9eff;
-          color: white;
+          background: var(--brand-primary, #6366f1);
+          color: var(--text-inverse, white);
           border: none;
           padding: 6px 10px;
           border-radius: 4px;
@@ -1292,7 +1292,7 @@ if (sprintTasks.length === 0) {
           transition: background-color 0.2s;
         }
         .view-task-btn:hover {
-          background: #3a8eef;
+          background: var(--brand-primary-hover, #4f46e5);
         }
         .view-task-btn:active {
           transform: scale(0.95);
@@ -1431,8 +1431,8 @@ if (sprintTasks.length === 0) {
               message: 'Tienes cambios sin guardar en esta tarea.<br><br>¿Quieres cerrar de todos modos?',
               confirmText: 'Sí, cerrar sin guardar',
               cancelText: 'No, volver a editar',
-              confirmColor: '#f44336',
-              cancelColor: '#fcaf00'
+              confirmColor: '#f43f5e',
+              cancelColor: '#f59e0b'
             });
             if (!confirmed) {
               return;
@@ -1483,7 +1483,7 @@ if (sprintTasks.length === 0) {
     chartModal.maxWidth = '95vw';
     chartModal.maxHeight = '90vh';
     chartModal.button1Text = 'Cerrar';
-    chartModal.button1Css = 'background-color: #6c757d; color: white;';
+    chartModal.button1Css = 'background-color: #64748b; color: white;';
     chartModal.button1Action = () => {
       chartModal.close();
     };
@@ -1550,7 +1550,7 @@ if (sprintTasks.length === 0) {
           width: 100%;
           height: 500px;
           overflow: auto;
-          border: 1px solid #ddd;
+          border: 1px solid var(--border-subtle, #ddd);
           border-radius: 4px;
         }
         .sprint-header {
@@ -1559,16 +1559,16 @@ if (sprintTasks.length === 0) {
           align-items: center;
           margin-bottom: 1rem;
           padding: 1rem;
-          background: #f8f9fa;
+          background: var(--bg-secondary, #f8f9fa);
           border-radius: 4px;
         }
         .sprint-info {
           font-size: 0.9em;
-          color: #666;
+          color: var(--text-muted, #666);
         }
         .sprint-chart {
           min-height: 400px;
-          background: white;
+          background: var(--bg-primary, white);
           position: relative;
         }
         .sprint-loading {
@@ -1577,7 +1577,7 @@ if (sprintTasks.length === 0) {
           align-items: center;
           height: 400px;
           font-size: 1.1em;
-          color: #666;
+          color: var(--text-muted, #666);
         }
       </style>
       <div class="sprint-header">
@@ -1969,8 +1969,8 @@ return {
           gap: 1rem;
         }
         .chart-section {
-          background: white;
-          border: 1px solid #ddd;
+          background: var(--bg-primary, white);
+          border: 1px solid var(--border-subtle, #ddd);
           border-radius: 8px;
           padding: 1rem;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -1979,7 +1979,7 @@ return {
           font-size: 1.2em;
           font-weight: bold;
           margin-bottom: 1rem;
-          color: #333;
+          color: var(--text-primary, #333);
           text-align: center;
         }
         .metric-bar {
@@ -1990,11 +1990,11 @@ return {
           justify-content: space-between;
           font-size: 0.9em;
           margin-bottom: 4px;
-          color: #666;
+          color: var(--text-muted, #666);
         }
         .progress-bar {
           height: 20px;
-          background: #f0f0f0;
+          background: var(--bg-tertiary, #f0f0f0);
           border-radius: 10px;
           overflow: hidden;
           position: relative;
@@ -2006,14 +2006,14 @@ return {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: white;
+          color: var(--text-inverse, white);
           font-size: 0.8em;
           font-weight: bold;
         }
-        .business-points { background: #4a9eff; }
-        .dev-points { background: #ff9800; }
-        .task-completion { background: #2CFF1E; }
-        .bug-resolution { background: #ec3e95; }
+        .business-points { background: var(--brand-primary, #6366f1); }
+        .dev-points { background: var(--color-warning, #f59e0b); }
+        .task-completion { background: var(--status-done, #10b981); }
+        .bug-resolution { background: var(--status-expedited, #8b5cf6); }
         .metrics-summary {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -2025,38 +2025,38 @@ return {
         }
         .metric-card {
           text-align: center;
-          background: #f8f9fa;
+          background: var(--bg-secondary, #f8f9fa);
           padding: 0;
           border-radius: 6px;
-          border: 1px solid #e9ecef;
+          border: 1px solid var(--bg-tertiary, #e9ecef);
         }
         .metric-card.completed-tasks {
-          background: #28a745;
-          color: white;
+          background: var(--color-success, #10b981);
+          color: var(--text-inverse, white);
         }
         .metric-card.blocked-tasks {
-          background: #dc3545;
-          color: white;
+          background: var(--color-error, #f43f5e);
+          color: var(--text-inverse, white);
         }
         .metric-number {
           font-size: 1.8em;
           font-weight: bold;
-          color: #007bff;
+          color: var(--brand-primary, #6366f1);
           padding: 1rem 0.5rem 0.25rem 0.5rem;
         }
         .metric-text {
           font-size: 0.8em;
-          color: #666;
+          color: var(--text-muted, #666);
           margin-top: 4px;
           padding: 0 0.5rem 1rem 0.5rem;
         }
         .completed-tasks .metric-number,
         .blocked-tasks .metric-number {
-          color: white;
+          color: var(--text-inverse, white);
         }
         .completed-tasks .metric-text,
         .blocked-tasks .metric-text {
-          color: white;
+          color: var(--text-inverse, white);
         }
       </style>
       <div class="chart-grid">

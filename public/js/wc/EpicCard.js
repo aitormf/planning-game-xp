@@ -473,8 +473,8 @@ this.stakeholders = [];
           message: `Are you sure you want to delete <b>${this.title}</b>?`,
           button1Text: 'Yes',
           button2Text: 'No',
-          button1css: 'background-color: green',
-          button2css: 'background-color: red',
+          button1css: 'background-color: #10b981',
+          button2css: 'background-color: #f43f5e',
           button1Action: () => this._confirmDelete(),
           button2Action: () => { } // Just close the modal
         }
@@ -683,8 +683,8 @@ this.canEditPermission = permissions.canEdit || false;
               message: 'Tienes cambios sin guardar en esta épica.<br><br>¿Quieres cerrar de todos modos?',
               confirmText: 'Sí, cerrar sin guardar',
               cancelText: 'No, volver a editar',
-              confirmColor: '#f44336',
-              cancelColor: '#fcaf00'
+              confirmColor: '#f43f5e',
+              cancelColor: '#f59e0b'
             });
             if (!confirmed) {
               return; // User cancelled, don't close
@@ -768,7 +768,7 @@ this.canEditPermission = permissions.canEdit || false;
             title: `Tareas de la épica: ${this.title}`,
             message: `<p>No hay tareas asignadas a esta épica.</p>`,
             button1Text: 'Cerrar',
-            button1css: 'background-color: green; color: white;',
+            button1css: 'background-color: #10b981; color: white;',
             button1Action: () => { },
             maxWidth: '80vw',
             maxHeight: '80vh',
@@ -797,14 +797,14 @@ this.canEditPermission = permissions.canEdit || false;
     modal.maxWidth = '80vw';
     modal.maxHeight = '80vh';
     modal.button1Text = 'Ver diagrama de Gantt';
-    modal.button1Css = 'background-color: #4a9eff; color: white;';
+    modal.button1Css = 'background-color: #6366f1; color: white;';
     modal.button1Action = () => {
       // Abrir modal de diagrama de Gantt sin cerrar este modal
       this._showGanttModal(epicTasks);
       return false; // Evitar que se cierre este modal
     };
     modal.button2Text = 'Cerrar';
-    modal.button2Css = 'background-color: #6c757d; color: white;';
+    modal.button2Css = 'background-color: #64748b; color: white;';
     modal.button2Action = () => {
       // Solo cerrar este modal específico
       modal.close();
@@ -868,45 +868,45 @@ this.canEditPermission = permissions.canEdit || false;
           border-collapse: collapse;
           margin-top: 1rem;
           font-size: 0.95em;
-          background-color: #ffffff;
-          color: #333333;
+          background-color: var(--bg-primary, #ffffff);
+          color: var(--text-primary, #333333);
         }
         .epic-tasks-table th,
         .epic-tasks-table td {
-          border: 1px solid #ddd;
+          border: 1px solid var(--border-subtle, #ddd);
           padding: 10px;
           text-align: left;
-          color: #333333;
+          color: var(--text-primary, #333333);
         }
         .epic-tasks-table th {
-          background-color: #4a9eff;
-          color: #ffffff;
+          background-color: var(--brand-primary, #6366f1);
+          color: var(--text-inverse, #ffffff);
           font-weight: bold;
           font-size: 1em;
         }
         .epic-tasks-table tbody tr {
-          background-color: #ffffff;
-          color: #333333;
+          background-color: var(--bg-primary, #ffffff);
+          color: var(--text-primary, #333333);
         }
         .epic-tasks-table tbody tr:nth-child(even) {
-          background-color: #f8f9fa;
-          color: #333333;
+          background-color: var(--bg-secondary, #f8f9fa);
+          color: var(--text-primary, #333333);
         }
         .epic-tasks-table tbody tr:hover {
-          background-color: #e9ecef;
-          color: #333333;
+          background-color: var(--bg-tertiary, #e9ecef);
+          color: var(--text-primary, #333333);
         }
-        .status-todo { background-color: var(--status-todo, #449bd3); padding: 4px 8px; border-radius: 4px; }
-        .status-inprogress { background-color: var(--status-in-progress, #cce500); padding: 4px 8px; border-radius: 4px; }
-        .status-done { background-color: var(--status-done, #d4edda); font-weight: bold; padding: 4px 8px; border-radius: 4px; }
-        .status-blocked { background-color: var(--status-blocked, #f8d7da); opacity: 0.5; padding: 4px 8px; border-radius: 4px; }
-        .status-inreview { background-color: var(--status-to-validate, #ff6600); padding: 4px 8px; border-radius: 4px; }
-        .status-testing { background-color: var(--status-in-progress, #cce500); padding: 4px 8px; border-radius: 4px; }
-        .status-tovalidate { background-color: var(--status-to-validate, #ff6600); padding: 4px 8px; border-radius: 4px; }
-        .status-cancelled { background-color: var(--status-blocked, #f8d7da); padding: 4px 8px; border-radius: 4px; }
+        .status-todo { background-color: var(--status-todo, #94a3b8); color: var(--status-todo-text, white); padding: 4px 8px; border-radius: 4px; }
+        .status-inprogress { background-color: var(--status-in-progress, #3b82f6); color: var(--status-in-progress-text, white); padding: 4px 8px; border-radius: 4px; }
+        .status-done { background-color: var(--status-done, #10b981); color: var(--status-done-text, white); font-weight: bold; padding: 4px 8px; border-radius: 4px; }
+        .status-blocked { background-color: var(--status-blocked, #f43f5e); color: var(--status-blocked-text, white); opacity: 0.5; padding: 4px 8px; border-radius: 4px; }
+        .status-inreview { background-color: var(--status-to-validate, #f59e0b); color: var(--status-to-validate-text, white); padding: 4px 8px; border-radius: 4px; }
+        .status-testing { background-color: var(--status-in-progress, #3b82f6); color: var(--status-in-progress-text, white); padding: 4px 8px; border-radius: 4px; }
+        .status-tovalidate { background-color: var(--status-to-validate, #f59e0b); color: var(--status-to-validate-text, white); padding: 4px 8px; border-radius: 4px; }
+        .status-cancelled { background-color: var(--color-error, #f43f5e); color: var(--text-inverse, white); padding: 4px 8px; border-radius: 4px; }
         .view-task-btn {
-          background: #4a9eff;
-          color: white;
+          background: var(--brand-primary, #6366f1);
+          color: var(--text-inverse, white);
           border: none;
           padding: 6px 10px;
           border-radius: 4px;
@@ -915,7 +915,7 @@ this.canEditPermission = permissions.canEdit || false;
           transition: background-color 0.2s;
         }
         .view-task-btn:hover {
-          background: #3a8eef;
+          background: var(--brand-primary-hover, #4f46e5);
         }
         .view-task-btn:active {
           transform: scale(0.95);
@@ -1052,8 +1052,8 @@ this.canEditPermission = permissions.canEdit || false;
               message: 'Tienes cambios sin guardar en esta tarea.<br><br>¿Quieres cerrar de todos modos?',
               confirmText: 'Sí, cerrar sin guardar',
               cancelText: 'No, volver a editar',
-              confirmColor: '#f44336',
-              cancelColor: '#fcaf00'
+              confirmColor: '#f43f5e',
+              cancelColor: '#f59e0b'
             });
             if (!confirmed) {
               return;
@@ -1129,7 +1129,7 @@ this.canEditPermission = permissions.canEdit || false;
     ganttModal.maxWidth = '95vw';
     ganttModal.maxHeight = '90vh';
     ganttModal.button1Text = 'Cerrar';
-    ganttModal.button1Css = 'background-color: #6c757d; color: white;';
+    ganttModal.button1Css = 'background-color: #64748b; color: white;';
     ganttModal.button1Action = () => {
       ganttModal.close();
     };
@@ -1196,7 +1196,7 @@ this.canEditPermission = permissions.canEdit || false;
           width: 100%;
           height: 500px;
           overflow: auto;
-          border: 1px solid #ddd;
+          border: 1px solid var(--border-subtle, #ddd);
           border-radius: 4px;
         }
         .gantt-header {
@@ -1205,16 +1205,16 @@ this.canEditPermission = permissions.canEdit || false;
           align-items: center;
           margin-bottom: 1rem;
           padding: 1rem;
-          background: #f8f9fa;
+          background: var(--bg-secondary, #f8f9fa);
           border-radius: 4px;
         }
         .gantt-info {
           font-size: 0.9em;
-          color: #666;
+          color: var(--text-muted, #666);
         }
         .gantt-chart {
           min-height: 400px;
-          background: white;
+          background: var(--bg-primary, white);
           position: relative;
         }
         .gantt-loading {
@@ -1223,7 +1223,7 @@ this.canEditPermission = permissions.canEdit || false;
           align-items: center;
           height: 400px;
           font-size: 1.1em;
-          color: #666;
+          color: var(--text-muted, #666);
         }
       </style>
       <div class="gantt-header">
@@ -1303,7 +1303,7 @@ this.canEditPermission = permissions.canEdit || false;
       startDate: this.startDate,
       endDate: this.endDate,
       progress: this._calculateEpicProgress(tasks),
-      color: '#ec3e95'
+      color: '#8b5cf6'
     });
 
     // Agregar las tareas
@@ -1431,13 +1431,13 @@ this.canEditPermission = permissions.canEdit || false;
         }
         .epic-label {
           font-weight: bold;
-          color: #ec3e95;
+          color: var(--status-expedited, #8b5cf6);
         }
         .gantt-timeline {
           flex: 1;
           position: relative;
           height: 30px;
-          background: #f5f5f5;
+          background: var(--bg-secondary, #f5f5f5);
           border-radius: 4px;
           margin-right: 1rem;
         }
@@ -1447,14 +1447,14 @@ this.canEditPermission = permissions.canEdit || false;
           border-radius: 4px;
           display: flex;
           align-items: center;
-          color: white;
+          color: var(--text-inverse, white);
           font-size: 0.8em;
           padding: 0 8px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .task-info {
           font-size: 0.8em;
-          color: #666;
+          color: var(--text-muted, #666);
           width: 100px;
         }
         .gantt-dates {
@@ -1462,7 +1462,7 @@ this.canEditPermission = permissions.canEdit || false;
           margin-bottom: 1rem;
           padding-left: 250px;
           font-size: 0.8em;
-          color: #666;
+          color: var(--text-muted, #666);
         }
       </style>
       <div class="simple-gantt">

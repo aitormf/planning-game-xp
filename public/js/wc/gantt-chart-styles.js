@@ -23,7 +23,7 @@ export const GanttChartStyles = css`
     color: var(--text-primary, inherit);
   }
   .current-date-line {
-    stroke: #ff0000;
+    stroke: var(--color-error, #f43f5e);
     stroke-width: 2;
     stroke-dasharray: 4;
   }

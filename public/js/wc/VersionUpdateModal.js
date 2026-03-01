@@ -42,7 +42,7 @@ export class VersionUpdateModal extends LitElement {
       }
 
       .modal {
-        background: white;
+        background: var(--bg-primary, white);
         border-radius: 16px;
         padding: 32px;
         max-width: 450px;
@@ -77,13 +77,13 @@ export class VersionUpdateModal extends LitElement {
       .title {
         font-size: 24px;
         font-weight: 700;
-        color: #1a1a2e;
+        color: var(--text-primary, #1a1a2e);
         margin-bottom: 12px;
       }
 
       .message {
         font-size: 16px;
-        color: #666;
+        color: var(--text-secondary, #666);
         margin-bottom: 24px;
         line-height: 1.5;
       }
@@ -103,13 +103,13 @@ export class VersionUpdateModal extends LitElement {
       }
 
       .version-old {
-        background: #fee2e2;
-        color: #dc2626;
+        background: var(--color-error-bg, #fee2e2);
+        color: var(--color-error, #dc2626);
       }
 
       .version-new {
-        background: #d1fae5;
-        color: #059669;
+        background: var(--color-success-bg, #d1fae5);
+        color: var(--color-success, #059669);
       }
 
       .countdown-container {
@@ -120,7 +120,7 @@ export class VersionUpdateModal extends LitElement {
         width: 100px;
         height: 100px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--brand-primary, #6366f1) 0%, var(--brand-primary-strong, #4f46e5) 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -133,20 +133,20 @@ export class VersionUpdateModal extends LitElement {
         position: absolute;
         inset: 4px;
         border-radius: 50%;
-        background: white;
+        background: var(--bg-primary, white);
       }
 
       .countdown-number {
         font-size: 36px;
         font-weight: 700;
-        color: #667eea;
+        color: var(--brand-primary, #6366f1);
         position: relative;
         z-index: 1;
       }
 
       .countdown-text {
         font-size: 14px;
-        color: #888;
+        color: var(--text-muted, #888);
       }
 
       .countdown-paused {
@@ -172,23 +172,23 @@ export class VersionUpdateModal extends LitElement {
       }
 
       .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: linear-gradient(135deg, var(--brand-primary, #6366f1) 0%, var(--brand-primary-strong, #4f46e5) 100%);
+        color: var(--text-inverse, white);
       }
 
       .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
       }
 
       .btn-secondary {
-        background: #f3f4f6;
-        color: #374151;
-        border: 1px solid #d1d5db;
+        background: var(--bg-secondary, #f3f4f6);
+        color: var(--text-primary, #374151);
+        border: 1px solid var(--border-default, #d1d5db);
       }
 
       .btn-secondary:hover {
-        background: #e5e7eb;
+        background: var(--bg-tertiary, #e5e7eb);
       }
 
       .hidden {

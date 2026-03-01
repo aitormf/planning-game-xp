@@ -837,33 +837,33 @@ const notification = document.createElement('slide-notification');
           border-collapse: collapse;
           margin-top: 1rem;
           font-size: 0.95em;
-          background-color: #ffffff;
-          color: #333333;
+          background-color: var(--bg-primary, #ffffff);
+          color: var(--text-primary, #333333);
         }
         .epic-tasks-table th,
         .epic-tasks-table td {
-          border: 1px solid #dee2e6;
+          border: 1px solid var(--border-subtle, #dee2e6);
           padding: 10px;
           text-align: left;
-          color: #333333;
+          color: var(--text-primary, #333333);
         }
         .epic-tasks-table th {
-          background-color: #4a9eff;
+          background-color: var(--brand-primary, #6366f1);
           color: #ffffff;
           font-weight: bold;
           font-size: 1em;
         }
         .epic-tasks-table tbody tr {
-          background-color: #ffffff;
-          color: #333333;
+          background-color: var(--bg-primary, #ffffff);
+          color: var(--text-primary, #333333);
         }
         .epic-tasks-table tbody tr:nth-child(even) {
-          background-color: #f8f9fa;
-          color: #333333;
+          background-color: var(--bg-secondary, #f8f9fa);
+          color: var(--text-primary, #333333);
         }
         .epic-tasks-table tbody tr:hover {
-          background-color: #e9ecef;
-          color: #333333;
+          background-color: var(--bg-tertiary, #e9ecef);
+          color: var(--text-primary, #333333);
         }
         .status-badge {
           display: inline-block;
@@ -872,16 +872,16 @@ const notification = document.createElement('slide-notification');
           font-size: 0.85em;
           font-weight: 500;
         }
-        .status-todo { background-color: #ec3e95; color: #ffffff; }
-        .status-inprogress { background-color: #ff9800; color: #ffffff; }
-        .status-done { background-color: #28a745; color: #ffffff; }
-        .status-blocked { background-color: #6c757d; color: #ffffff; }
-        .status-inreview { background-color: #ffc107; color: #333333; }
-        .status-testing { background-color: #17a2b8; color: #ffffff; }
-        .status-tovalidate { background-color: #fd7e14; color: #ffffff; }
-        .status-cancelled { background-color: #dc3545; color: #ffffff; }
+        .status-todo { background-color: var(--status-todo, #94a3b8); color: #ffffff; }
+        .status-inprogress { background-color: var(--status-in-progress, #3b82f6); color: #ffffff; }
+        .status-done { background-color: var(--status-done, #10b981); color: #ffffff; }
+        .status-blocked { background-color: var(--status-blocked, #f43f5e); color: #ffffff; }
+        .status-inreview { background-color: var(--status-expedited, #8b5cf6); color: #ffffff; }
+        .status-testing { background-color: var(--status-in-progress, #3b82f6); color: #ffffff; }
+        .status-tovalidate { background-color: var(--status-to-validate, #f59e0b); color: #ffffff; }
+        .status-cancelled { background-color: var(--status-blocked, #f43f5e); color: #ffffff; }
         .view-task-btn {
-          background: #4a9eff;
+          background: var(--brand-primary, #6366f1);
           color: #ffffff;
           border: none;
           padding: 6px 10px;
@@ -891,7 +891,7 @@ const notification = document.createElement('slide-notification');
           transition: background-color 0.2s;
         }
         .view-task-btn:hover {
-          background: #3a8eef;
+          background: var(--brand-primary-hover, #4f46e5);
         }
         .view-task-btn:active {
           transform: scale(0.95);
@@ -1123,7 +1123,7 @@ return;
                 title: 'Seleccionar repositorio',
                 message: `<div style="padding: 0.5rem;">${repoLinks}</div>`,
                 button1Text: 'Cerrar',
-                button1css: 'background-color: #4a9eff; color: white;',
+                button1css: 'background-color: var(--brand-primary, #6366f1); color: white;',
                 button1Action: () => {},
                 maxWidth: '500px',
                 showHeader: true
@@ -1153,7 +1153,7 @@ return;
               title: `Documentación: ${projectData.name || 'Proyecto'}`,
               message: `<md-renderer style="display: block; text-align: left; padding: 1rem;">${escapedDescription}</md-renderer>`,
               button1Text: 'Cerrar',
-              button1css: 'background-color: #4a9eff; color: white;',
+              button1css: 'background-color: var(--brand-primary, #6366f1); color: white;',
               button1Action: () => {},
               maxWidth: '700px',
               maxHeight: '80vh',
@@ -1678,7 +1678,7 @@ document.addEventListener('astro:page-load', () => {
         margin-bottom: 1rem;
         color: #1a1a1a;
         font-size: 1.5rem;
-        border-bottom: 2px solid #4a9eff;
+        border-bottom: 2px solid #6366f1;
         padding-bottom: 0.5rem;
       }
       .task-guide-content h3 {
@@ -1694,7 +1694,7 @@ document.addEventListener('astro:page-load', () => {
         font-size: 1.05rem;
       }
       .task-guide-content code {
-        background: #f0f4f8;
+        background: var(--bg-tertiary, #f0f4f8);
         padding: 0.15rem 0.4rem;
         border-radius: 4px;
         font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
@@ -1708,7 +1708,7 @@ document.addEventListener('astro:page-load', () => {
         border-radius: 8px;
         overflow-x: auto;
         margin: 1rem 0;
-        border-left: 4px solid #4a9eff;
+        border-left: 4px solid var(--brand-primary, #6366f1);
       }
       .task-guide-content pre code {
         background: transparent;
@@ -1726,16 +1726,16 @@ document.addEventListener('astro:page-load', () => {
       }
       .task-guide-content th,
       .task-guide-content td {
-        border: 1px solid #e0e0e0;
+        border: 1px solid var(--border-subtle, #e0e0e0);
         padding: 0.75rem 1rem;
         text-align: left !important;
       }
       .task-guide-content th {
-        background: #f8f9fa;
+        background: var(--bg-secondary, #f8f9fa);
         font-weight: 600;
-        color: #333;
+        color: var(--text-primary, #333);
       }
-      .task-guide-content tr:nth-child(even) td { background: #fafafa; }
+      .task-guide-content tr:nth-child(even) td { background: var(--bg-secondary, #fafafa); }
       .task-guide-content ul,
       .task-guide-content ol {
         padding-left: 2rem;
@@ -1746,13 +1746,13 @@ document.addEventListener('astro:page-load', () => {
         padding-left: 0.5rem;
         line-height: 1.6;
       }
-      .task-guide-content ul li::marker { color: #4a9eff; }
+      .task-guide-content ul li::marker { color: var(--brand-primary, #6366f1); }
       .task-guide-content hr {
         margin: 2rem 0;
         border: none;
         border-top: 1px solid #e0e0e0;
       }
-      .task-guide-content a { color: #4a9eff; text-decoration: none; }
+      .task-guide-content a { color: #6366f1; text-decoration: none; }
       .task-guide-content a:hover { text-decoration: underline; }
       .task-guide-content strong { color: #1a1a1a; font-weight: 600; }
     </style>
@@ -1773,7 +1773,7 @@ document.addEventListener('astro:page-load', () => {
             title: 'Guía de Tasks',
             message: `${taskGuideStyles}<div class="task-guide-content">${html}</div>`,
             button1Text: 'Cerrar',
-            button1css: 'background-color: #4a9eff; color: white;',
+            button1css: 'background-color: var(--brand-primary, #6366f1); color: white;',
             button1Action: () => {},
             maxWidth: '800px',
             maxHeight: '85vh',
@@ -1875,7 +1875,7 @@ document.addEventListener('astro:page-load', () => {
 
   .edit-project-btn:hover {
     background: var(--bg-tertiary, #e9ecef);
-    border-color: #4a9eff;
+    border-color: #6366f1;
   }
 
   .tablinks {
@@ -1897,9 +1897,9 @@ document.addEventListener('astro:page-load', () => {
   }
 
   .mode-switch select:focus {
-    border-color: #4a9eff;
+    border-color: var(--brand-primary, #6366f1);
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(74, 158, 255, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
   }
 
   .subheader-hint {
@@ -1930,16 +1930,15 @@ document.addEventListener('astro:page-load', () => {
     cursor: pointer;
     font-weight: bold;
     font-size: 1.2rem;
-    color: #333;
-    background: linear-gradient(135deg, #4a9eff, #007bff);
+    background: var(--brand-primary, #6366f1);
     color: white;
     border-radius: 8px 8px 0 0;
     user-select: none;
-    display: block; /* Asegura que el summary ocupe todo el ancho */
+    display: block;
   }
 
   details summary:hover {
-    background: linear-gradient(135deg, #007bff, #4a9eff);
+    background: var(--brand-primary-hover, #4f46e5);
   }
 
   details[open] summary {
@@ -2022,7 +2021,7 @@ document.addEventListener('astro:page-load', () => {
   .add-plan-button {
     width: 12rem;
     padding: 12px;
-    background: var(--brand-primary, #4a9eff);
+    background: var(--brand-primary, #6366f1);
     color: white;
     border: 3px solid var(--brand-secondary);
     border-radius: 8px;
@@ -2035,7 +2034,7 @@ document.addEventListener('astro:page-load', () => {
   .add-button:hover,
   .add-plan-button:hover {
     background: var(--brand-secondary);
-    border: 3px solid var(--brand-primary, #4a9eff);
+    border: 3px solid var(--brand-primary, #6366f1);
   }
 
   .help-button {
@@ -2046,7 +2045,7 @@ document.addEventListener('astro:page-load', () => {
     height: 1.5rem;
     padding: 0;
     margin-left: 0.5rem;
-    background: #6c757d;
+    background: var(--text-muted, #64748b);
     color: white;
     border: none;
     border-radius: 50%;
@@ -2058,15 +2057,15 @@ document.addEventListener('astro:page-load', () => {
   }
 
   .help-button:hover {
-    background: #5a6268;
+    background: var(--text-secondary, #475569);
   }
 
   .doc-button {
-    background: #007bff;
+    background: var(--brand-primary, #6366f1);
   }
 
   .doc-button:hover {
-    background: #0056b3;
+    background: var(--brand-primary-hover, #4f46e5);
   }
 
   .doc-button svg {
@@ -2112,11 +2111,11 @@ document.addEventListener('astro:page-load', () => {
   }
 
   .tablinks.active {
-      background-color: #007bff !important;
+      background-color: var(--brand-primary, #6366f1) !important;
       color: white !important;
-      border-color: #007bff !important;
+      border-color: var(--brand-primary, #6366f1) !important;
       font-weight: bold !important;
-      box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3) !important;
+      box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3) !important;
   }
 
   .tabcontent {
@@ -2207,9 +2206,9 @@ document.addEventListener('astro:page-load', () => {
   }
 
   .view-button.active {
-    background: #2196F3;
+    background: var(--brand-primary, #6366f1);
     color: white;
-    border-color: #2196F3;
+    border-color: var(--brand-primary, #6366f1);
   }
 
   /* When kanban is active, prevent main scroll */
@@ -2451,7 +2450,7 @@ document.addEventListener('astro:page-load', () => {
 
   .sprint-cards.drag-over {
     background: rgba(74, 158, 255, 0.1);
-    border: 2px dashed #4a9eff;
+    border: 2px dashed #6366f1;
   }
 
   /* Estilos para scrollbars */
@@ -2506,7 +2505,7 @@ document.addEventListener('astro:page-load', () => {
   :global(.bug-filter-select) {
     font-size: 1.1em;
     padding: 8px 32px 8px 12px;
-    border: 2px solid #4a9eff;
+    border: 2px solid #6366f1;
     border-radius: 8px;
     background: var(--bg-secondary, #f8f9fa);
     color: var(--text-primary, #333);
@@ -2524,14 +2523,14 @@ document.addEventListener('astro:page-load', () => {
   }
   :global(.task-filter-select:focus),
   :global(.bug-filter-select:focus) {
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(74,158,255,0.15);
+    border-color: var(--brand-primary, #6366f1);
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
     background: var(--bg-primary, #fff);
   }
   :global(.task-filter-select:hover),
   :global(.bug-filter-select:hover) {
-    border-color: #007bff;
-    background: #eaf4ff;
+    border-color: var(--brand-primary, #6366f1);
+    background: var(--bg-secondary, #f1f5f9);
   }
   :global(.task-filter-select option),
   :global(.bug-filter-select option) {
@@ -2543,7 +2542,7 @@ document.addEventListener('astro:page-load', () => {
   /* Flecha personalizada para el select */
   :global(.task-filter-select),
   :global(.bug-filter-select) {
-    background-image: url('data:image/svg+xml;utf8,<svg fill="%234a9eff" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%236366f1" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 20px 20px;
@@ -2607,7 +2606,7 @@ document.addEventListener('astro:page-load', () => {
 
   #tasksFilters .clear-button {
     padding: 0.5rem;
-    background: #dc3545;
+    background: var(--color-error, #f43f5e);
     color: white;
     border: none;
     border-radius: 4px;
@@ -2617,11 +2616,11 @@ document.addEventListener('astro:page-load', () => {
   }
 
   #tasksFilters .clear-button:hover {
-    background: #c82333;
+    background: var(--status-blocked, #e11d48);
   }
 
   #tasksFilters .clear-button:disabled {
-    background: #6c757d;
+    background: var(--text-muted, #64748b);
     cursor: not-allowed;
   }
 

@@ -31,8 +31,8 @@ export class CardSearch extends LitElement {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        background: white;
-        border: 1px solid #d1d5db;
+        background: var(--bg-primary, white);
+        border: 1px solid var(--border-subtle, #d1d5db);
         border-radius: 6px;
         padding: 0.25rem 0.5rem;
         transition: border-color 0.2s, box-shadow 0.2s;
@@ -44,15 +44,15 @@ export class CardSearch extends LitElement {
       }
 
       .search-container.has-results {
-        border-color: #10b981;
+        border-color: var(--color-success, #10b981);
       }
 
       .search-container.no-results {
-        border-color: #ef4444;
+        border-color: var(--color-error, #ef4444);
       }
 
       .search-icon {
-        color: #9ca3af;
+        color: var(--text-placeholder, #9ca3af);
         font-size: 0.9rem;
         flex-shrink: 0;
       }
@@ -67,14 +67,14 @@ export class CardSearch extends LitElement {
       }
 
       .search-input::placeholder {
-        color: #9ca3af;
+        color: var(--text-placeholder, #9ca3af);
       }
 
       .clear-btn {
         background: none;
         border: none;
         cursor: pointer;
-        color: #9ca3af;
+        color: var(--text-placeholder, #9ca3af);
         font-size: 0.9rem;
         padding: 0.1rem;
         display: flex;
@@ -89,7 +89,7 @@ export class CardSearch extends LitElement {
       }
 
       .clear-btn:hover {
-        color: #6b7280;
+        color: var(--text-muted, #6b7280);
       }
 
       .results-badge {
@@ -101,13 +101,13 @@ export class CardSearch extends LitElement {
       }
 
       .results-badge.has-results {
-        background: #d1fae5;
-        color: #065f46;
+        background: var(--color-success-light, #d1fae5);
+        color: var(--color-success-dark, #065f46);
       }
 
       .results-badge.no-results {
-        background: #fee2e2;
-        color: #991b1b;
+        background: var(--color-error-light, #fee2e2);
+        color: var(--color-error-dark, #991b1b);
       }
     `;
   }

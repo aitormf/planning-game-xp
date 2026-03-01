@@ -170,8 +170,8 @@ export const bugFiltersStyles = css`
 
   .clear-button {
     padding: 6px 10px;
-    background: #dc3545;
-    color: white;
+    background: var(--color-error, #f43f5e);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -182,18 +182,18 @@ export const bugFiltersStyles = css`
   }
 
   .clear-button:hover {
-    background: #c82333;
+    background: var(--color-error-hover, #e11d48);
   }
 
   .clear-button:disabled {
-    background: #6c757d;
+    background: var(--text-muted, #999);
     cursor: not-allowed;
   }
 
   .migrate-button {
     padding: 6px 10px;
-    background: #17a2b8;
-    color: white;
+    background: var(--color-info, #3b82f6);
+    color: var(--text-inverse, white);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -205,11 +205,11 @@ export const bugFiltersStyles = css`
   }
 
   .migrate-button:hover {
-    background: #138496;
+    background: var(--color-info-hover, #2563eb);
   }
 
   .migrate-button:disabled {
-    background: #6c757d;
+    background: var(--text-muted, #999);
     cursor: not-allowed;
   }
 

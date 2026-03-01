@@ -9,13 +9,13 @@
  * ```json
  * {
  *   "tokens": {
- *     "brand": { "primary": "#4a9eff", "secondary": "#ec3e95" },
- *     "status": { "todo": "#449bd3", "inProgress": "#cce500" }
+ *     "brand": { "primary": "#6366f1", "secondary": "#10b981" },
+ *     "status": { "todo": "#94a3b8", "inProgress": "#3b82f6" }
  *   },
  *   "branding": {
  *     "appName": "Planning Game XP",
  *     "logo": "/images/icono_PGame.png",
- *     "primaryColor": "#4a9eff"
+ *     "primaryColor": "#6366f1"
  *   },
  *   "features": { "darkMode": true }
  * }

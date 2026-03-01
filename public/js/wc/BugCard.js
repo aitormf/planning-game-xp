@@ -120,9 +120,9 @@ export class BugCard extends AiUsageDisplayMixin(CommitsDisplayMixin(NotesManage
     );
     this.activeTab = 'description';
 
-    this.descriptionColor = "#4caf50";
-    this.acceptanceCriteriaColor = "#2196f3";
-    this.notesColor = "#ff9800";
+    this.descriptionColor = "#10b981";
+    this.acceptanceCriteriaColor = "#3b82f6";
+    this.notesColor = "#f59e0b";
 
     // EXTRA FIELDS FOR TYPE C4D
     this.cinemaFile = '';
@@ -696,12 +696,12 @@ return [];
   _openMiniModalCloseWarning() {
     const dialog = document.createElement('dialog');
     dialog.id = 'close-warning-dialog';
-    dialog.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; padding: 4rem; border: 4px solid red; border-radius: 12px; font-size: 1.5rem;';
+    dialog.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; padding: 4rem; border: 4px solid #f43f5e; border-radius: 12px; font-size: 1.5rem;';
     dialog.innerHTML = `
       <p>Tienes cambios sin guardar.<br>¿Quieres cerrar de todos modos?</p>
       <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-        <button id="confirmClose" style="background-color: #f44336; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.5rem;">Sí, cerrar sin guardar</button>
-        <button id="cancelClose" style="background-color: #fcaf00; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.5rem;">No, quiero guardar antes</button>
+        <button id="confirmClose" style="background-color: #f43f5e; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.5rem;">Sí, cerrar sin guardar</button>
+        <button id="cancelClose" style="background-color: #f59e0b; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.5rem;">No, quiero guardar antes</button>
       </div>
     `;
 
@@ -1436,8 +1436,8 @@ if (this.userAuthorizedEmails.includes(this.userEmail)) {
           message: `Are you sure you want to delete <b>${this.title}</b>?`,
           button1Text: 'Yes',
           button2Text: 'No',
-          button1css: 'background-color: green',
-          button2css: 'background-color: red',
+          button1css: 'background-color: #10b981',
+          button2css: 'background-color: #f43f5e',
           button1Action: () => this._confirmDelete(),
           button2Action: () => { } // Solo cierra el modal
         }
@@ -2128,8 +2128,8 @@ this.attachment = '';
               message: `No se pudo analizar la descripción: ${reason}. ¿Deseas guardar sin análisis de IA?`,
               button1Text: 'Guardar sin IA',
               button2Text: 'Cancelar',
-              button1css: 'background-color: #ffc107; color: black;',
-              button2css: 'background-color: #6c757d; color: white;',
+              button1css: 'background-color: #f59e0b; color: black;',
+              button2css: 'background-color: #6b7280; color: white;',
               button1Action: () => {
                 document.dispatchEvent(new CustomEvent('close-modal', { detail: { target: 'all' } }));
                 setTimeout(() => this._proceedWithSave(), 50);
@@ -2176,8 +2176,8 @@ this.attachment = '';
             message: 'No se pudieron generar los criterios de aceptación. ¿Deseas guardar sin ellos?',
             button1Text: 'Guardar sin criterios',
             button2Text: 'Cancelar',
-            button1css: 'background-color: #ffc107; color: black;',
-            button2css: 'background-color: #6c757d; color: white;',
+            button1css: 'background-color: #f59e0b; color: black;',
+            button2css: 'background-color: #6b7280; color: white;',
             button1Action: () => {
               document.dispatchEvent(new CustomEvent('close-modal', { detail: { target: 'all' } }));
               setTimeout(() => this._proceedWithSave(), 50);
@@ -2210,7 +2210,7 @@ this.attachment = '';
     const intro = document.createElement('p');
     intro.textContent = 'La IA necesita más información para generar los criterios de aceptación. Por favor, responde las siguientes preguntas:';
     intro.style.marginBottom = '0.5rem';
-    intro.style.color = '#666';
+    intro.style.color = '#6b7280';
     formContainer.appendChild(intro);
 
     const inputs = [];
@@ -2224,16 +2224,16 @@ this.attachment = '';
       label.style.fontWeight = '600';
       label.style.display = 'block';
       label.style.marginBottom = '0.25rem';
-      label.style.color = '#212529';
+      label.style.color = '#1f2937';
 
       const textarea = document.createElement('textarea');
       textarea.style.width = '100%';
       textarea.style.minHeight = '60px';
       textarea.style.padding = '0.5rem';
-      textarea.style.border = '1px solid #ddd';
+      textarea.style.border = '1px solid #d1d5db';
       textarea.style.borderRadius = '4px';
       textarea.style.backgroundColor = '#fff';
-      textarea.style.color = '#212529';
+      textarea.style.color = '#1f2937';
       textarea.placeholder = q.placeholder || '';
       textarea.dataset.question = q.question;
 
@@ -2252,8 +2252,8 @@ this.attachment = '';
           maxWidth: '850px',
           button1Text: 'Continuar',
           button2Text: autoSave ? 'Guardar sin IA' : 'Cancelar',
-          button1css: 'background-color: #0d6efd; color: white;',
-          button2css: 'background-color: #6c757d; color: white;',
+          button1css: 'background-color: #6366f1; color: white;',
+          button2css: 'background-color: #6b7280; color: white;',
           button1Action: () => this._handleClarificationResponse(inputs, { autoSave }),
           button2Action: autoSave
             ? () => {
@@ -2569,8 +2569,8 @@ this.attachment = '';
           message: 'Esto reemplazará los criterios actuales por una versión generada con IA. ¿Quieres continuar?',
           button1Text: 'Regenerar',
           button2Text: 'Cancelar',
-          button1css: 'background-color: #0d6efd; color: white;',
-          button2css: 'background-color: #6c757d; color: white;',
+          button1css: 'background-color: #6366f1; color: white;',
+          button2css: 'background-color: #6b7280; color: white;',
           button1Action: () => this._regenerateAcceptanceCriteria(),
           button2Action: () => { }
         }
@@ -2653,7 +2653,7 @@ this.attachment = '';
    */
   _showAcceptanceLoading() {
     const loading = document.createElement('loading-layer');
-    loading.setAttribute('color', '#003b82');
+    loading.setAttribute('color', '#6366f1');
     loading.setAttribute('message', 'Generando Acceptance Criteria. Esta acción puede tardar más de un minuto');
     loading.setAttribute('size', '80');
     loading.setAttribute('stroke-width', '6');

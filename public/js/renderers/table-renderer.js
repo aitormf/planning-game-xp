@@ -451,7 +451,7 @@ include = false;
         display: 'inline-flex',
         alignItems: 'center',
         gap: '2px',
-        background: '#6f42c1',
+        background: '#8b5cf6', // --status-expedited
         color: '#fff',
         padding: '0 5px',
         borderRadius: '10px',
@@ -493,7 +493,7 @@ include = false;
       left: '50%',
       transform: 'translateX(-50%)',
       marginBottom: '6px',
-      background: '#1a1a2e',
+      background: '#0f172a', // --bg-primary dark
       color: '#fff',
       padding: '8px 10px',
       borderRadius: '6px',
@@ -872,9 +872,9 @@ include = false;
     });
 
     const typeConfig = {
-      blockedBy: { color: '#e53935', icon: '\u23F8', label: 'Bloqueada por' },
-      blocks: { color: '#1976d2', icon: '\u2192', label: 'Bloquea a' },
-      related: { color: '#78909c', icon: '\uD83D\uDD17', label: 'Relacionadas' }
+      blockedBy: { color: '#f43f5e', icon: '\u23F8', label: 'Bloqueada por' }, // --color-error
+      blocks: { color: '#3b82f6', icon: '\u2192', label: 'Bloquea a' }, // --color-info
+      related: { color: '#94a3b8', icon: '\uD83D\uDD17', label: 'Relacionadas' } // --text-muted
     };
 
     const wrapper = UIUtils.createElement('div', {
@@ -967,7 +967,7 @@ include = false;
             if (status === 'Done' || status === 'Done&Validated') {
               text += ' ';
               const resolved = UIUtils.createElement('span', {
-                style: { color: '#2e7d32', fontWeight: '600', fontSize: '0.75rem' }
+                style: { color: '#10b981', fontWeight: '600', fontSize: '0.75rem' } // --color-success
               }, '(Resuelta)');
               item.textContent = text;
               item.appendChild(resolved);
@@ -976,7 +976,7 @@ include = false;
             } else {
               text += ' ';
               const pending = UIUtils.createElement('span', {
-                style: { color: '#e65100', fontWeight: '600', fontSize: '0.75rem' }
+                style: { color: '#f59e0b', fontWeight: '600', fontSize: '0.75rem' } // --color-warning
               }, '(Pendiente)');
               item.textContent = text;
               item.appendChild(pending);
@@ -986,7 +986,7 @@ include = false;
           } else {
             text += ' ';
             const unknown = UIUtils.createElement('span', {
-              style: { color: '#9e9e9e', fontWeight: '600', fontSize: '0.75rem' }
+              style: { color: '#94a3b8', fontWeight: '600', fontSize: '0.75rem' } // --text-muted
             }, '(estado desconocido)');
             item.textContent = text;
             item.appendChild(unknown);
@@ -1056,7 +1056,7 @@ include = false;
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.15rem',
-          background: '#6f42c1',
+          background: '#8b5cf6', // --status-expedited
           color: '#fff',
           padding: '0.1rem 0.35rem',
           borderRadius: '4px',
@@ -1226,8 +1226,8 @@ const style = {
 
       // Añadir estilo destacado para tareas spike
       if (card.spike) {
-        row.style.backgroundColor = 'rgba(156, 39, 176, 0.1)';
-        row.style.border = '2px solid #9c27b0';
+        row.style.backgroundColor = 'rgba(139, 92, 246, 0.1)'; // --status-expedited @ 10%
+        row.style.border = '2px solid #8b5cf6'; // --status-expedited
       }
       // Añadir estilo destacado para tareas expedit (sobreescribe spike si ambas)
       if (card.expedited) {
@@ -1270,34 +1270,34 @@ const style = {
       // Badges de bloqueo (business/dev) - only show if status is "Blocked"
       const isBlockedStatus = (card.status || '').toLowerCase() === 'blocked';
       if (isBlockedStatus && card.blockedByBusiness) {
-        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#e74c3c', color: '#fff' } }, 'BUS');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#f43f5e', color: '#fff' } }, 'BUS'); // --color-error
         badge.title = 'Bloqueada por negocio';
         badges.push(badge);
       }
       if (isBlockedStatus && card.blockedByDevelopment) {
-        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#f39c12', color: '#fff' } }, 'DEV');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#f59e0b', color: '#fff' } }, 'DEV'); // --color-warning
         badge.title = 'Bloqueada por desarrollo';
         badges.push(badge);
       }
       // Badge de SPIKE
       if (card.spike) {
-        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#9c27b0', color: '#fff' } }, 'SPIKE');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#8b5cf6', color: '#fff' } }, 'SPIKE'); // --status-expedited
         badge.title = 'Spike - Investigación técnica';
         badges.push(badge);
       }
       // Badge de EXPEDIT
       if (card.expedited) {
-        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#ffc107', color: '#000' } }, 'EXPEDIT');
+        const badge = UIUtils.createElement('span', { style: { ...badgeStyle, background: '#ffc107', color: '#0f172a' } }, 'EXPEDIT'); // --color-warning bg, --bg-primary dark text
         badge.title = 'Tarea urgente';
         badges.push(badge);
       }
       // Badge de PLAN
       if (card.planStatus) {
         const planConfig = {
-          pending:     { label: 'Plan',       bg: '#6b7280', color: '#fff' },
+          pending:     { label: 'Plan',       bg: '#94a3b8', color: '#fff' }, // --text-muted
           proposed:    { label: 'Plan: Prop', bg: '#3b82f6', color: '#fff' },
           validated:   { label: 'Plan: Val',  bg: '#8b5cf6', color: '#fff' },
-          in_progress: { label: 'Plan: WIP',  bg: '#f59e0b', color: '#000' },
+          in_progress: { label: 'Plan: WIP',  bg: '#f59e0b', color: '#0f172a' }, // --bg-primary dark text
           completed:   { label: 'Plan: OK',   bg: '#10b981', color: '#fff' }
         };
         const cfg = planConfig[card.planStatus] || planConfig.pending;
@@ -1665,9 +1665,9 @@ const style = {
           style: {
             padding: '0.4rem',
             borderRadius: '4px',
-            border: '1px solid #dc3545',
+            border: '1px solid #f43f5e', // --color-error
             background: 'var(--bg-primary, #fff)',
-            color: '#dc3545',
+            color: '#f43f5e', // --color-error
             cursor: 'pointer',
             fontSize: '1rem'
           }
@@ -1832,9 +1832,9 @@ const style = {
           style: {
             padding: '0.4rem',
             borderRadius: '4px',
-            border: '1px solid #dc3545',
+            border: '1px solid #f43f5e', // --color-error
             background: 'var(--bg-primary, #fff)',
-            color: '#dc3545',
+            color: '#f43f5e', // --color-error
             cursor: 'pointer',
             fontSize: '1rem'
           }
@@ -1879,7 +1879,7 @@ const style = {
     modal.showFooter = true;
     modal.button1Text = 'Eliminar';
     modal.button2Text = 'Cancelar';
-    modal.button1Css = 'background: #dc3545; color: #fff; border: none;';
+    modal.button1Css = 'background: #f43f5e; color: #fff; border: none;'; // --color-error
     modal.button2Css = 'background: var(--bg-primary, #fff); color: var(--text-muted, #6c757d); border: 1px solid var(--border-default, #6c757d);';
 
     modal.button1Action = () => {
@@ -1925,7 +1925,7 @@ const style = {
     modal.showFooter = true;
     modal.button1Text = 'Eliminar';
     modal.button2Text = 'Cancelar';
-    modal.button1Css = 'background: #dc3545; color: #fff; border: none;';
+    modal.button1Css = 'background: #f43f5e; color: #fff; border: none;'; // --color-error
     modal.button2Css = 'background: var(--bg-primary, #fff); color: var(--text-muted, #6c757d); border: 1px solid var(--border-default, #6c757d);';
 
     modal.button1Action = () => {

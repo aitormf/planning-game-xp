@@ -23,7 +23,7 @@ export class CardHistoryViewer extends LitElement {
     }
 
     .history-container {
-      background: var(--background-color, #f8f9fa);
+      background: var(--bg-secondary, #f8f9fa);
       border-radius: 8px;
       padding: 12px;
     }
@@ -37,14 +37,14 @@ export class CardHistoryViewer extends LitElement {
     }
 
     details.history-entry {
-      background: white;
+      background: var(--bg-primary, white);
       border-radius: 6px;
-      border-left: 3px solid #007bff;
+      border-left: 3px solid var(--brand-primary, #6366f1);
       overflow: hidden;
     }
 
     details.history-entry[open] {
-      border-left-color: #28a745;
+      border-left-color: var(--color-success, #10b981);
     }
 
     summary.entry-summary {
@@ -52,7 +52,7 @@ export class CardHistoryViewer extends LitElement {
       cursor: pointer;
       user-select: none;
       font-size: 0.9em;
-      color: #333;
+      color: var(--text-primary, #333);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -66,7 +66,7 @@ export class CardHistoryViewer extends LitElement {
     summary.entry-summary::before {
       content: '▶';
       font-size: 0.7em;
-      color: #666;
+      color: var(--text-muted, #666);
       transition: transform 0.2s;
     }
 
@@ -75,27 +75,27 @@ export class CardHistoryViewer extends LitElement {
     }
 
     summary.entry-summary:hover {
-      background: #f8f9fa;
+      background: var(--bg-secondary, #f8f9fa);
     }
 
     .entry-date {
       font-weight: 500;
-      color: #495057;
+      color: var(--text-secondary, #495057);
     }
 
     .entry-separator {
-      color: #adb5bd;
+      color: var(--text-disabled, #adb5bd);
     }
 
     .entry-user {
-      color: #007bff;
+      color: var(--brand-primary, #6366f1);
       font-weight: 500;
     }
 
     .entry-changes {
       padding: 12px;
       padding-top: 8px;
-      background: #f8f9fa;
+      background: var(--bg-secondary, #f8f9fa);
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -107,13 +107,13 @@ export class CardHistoryViewer extends LitElement {
       gap: 8px;
       font-size: 0.85em;
       padding: 4px 8px;
-      background: white;
+      background: var(--bg-primary, white);
       border-radius: 4px;
     }
 
     .change-field {
       font-weight: 500;
-      color: #555;
+      color: var(--text-secondary, #555);
       min-width: 100px;
     }
 
@@ -126,8 +126,8 @@ export class CardHistoryViewer extends LitElement {
     }
 
     .value-from {
-      background: #fee;
-      color: #c00;
+      background: var(--color-error-light, #fee);
+      color: var(--color-error, #c00);
       padding: 2px 6px;
       border-radius: 3px;
       max-width: 200px;
@@ -137,8 +137,8 @@ export class CardHistoryViewer extends LitElement {
     }
 
     .value-to {
-      background: #efe;
-      color: #060;
+      background: var(--color-success-light, #efe);
+      color: var(--color-success-dark, #060);
       padding: 2px 6px;
       border-radius: 3px;
       max-width: 200px;
@@ -148,19 +148,19 @@ export class CardHistoryViewer extends LitElement {
     }
 
     .value-arrow {
-      color: #999;
+      color: var(--text-disabled, #999);
     }
 
     .loading {
       text-align: center;
       padding: 20px;
-      color: #666;
+      color: var(--text-muted, #666);
     }
 
     .no-history {
       text-align: center;
       padding: 20px;
-      color: #999;
+      color: var(--text-disabled, #999);
       font-style: italic;
     }
   `;

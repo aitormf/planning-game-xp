@@ -8,32 +8,35 @@ export const MenuNavStyles = css`
 
   nav {
     display: flex;
-    gap: 16px;
+    gap: 2px;
     position: relative;
-    border-bottom: 2px solid transparent;
-    padding: 0 2rem;
-    background: var(--brand-secondary, #ec3e95);
-    height: 2rem;
+    padding: 0 1.5rem;
+    background: var(--bg-primary, #ffffff);
+    height: 2.5rem;
     align-items: center;
+    border-bottom: 1px solid var(--border-subtle, #e2e8f0);
   }
 
   ::slotted(a) {
     text-decoration: none;
-    color: #fff;
-    padding: 0.3rem 1rem !important;
+    color: var(--text-muted, #64748b);
+    padding: 0.35rem 0.75rem !important;
     position: relative;
-    font-size: 16px;
-    transition: color 0.3s, font-weight 0.3s;
-    font-weight: normal;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color 0.15s ease, background-color 0.15s ease;
+    border-radius: 6px;
   }
 
   ::slotted(a:hover) {
-    color: #000;
+    color: var(--text-primary, #0f172a);
+    background: var(--bg-secondary, #f1f5f9);
   }
 
   ::slotted(a[active]) {
-    font-weight: bold;
-    color: #000;
+    font-weight: 600;
+    color: var(--brand-primary, #6366f1);
+    background: rgba(99, 102, 241, 0.08);
   }
 
   ::slotted(a.hidden) {
@@ -43,8 +46,8 @@ export const MenuNavStyles = css`
   .nav-indicator {
     position: absolute;
     height: 2px;
-    background-color: #fff;
-    transition: all 0.3s ease-in-out;
+    background-color: var(--brand-primary, #6366f1);
+    transition: all 0.2s ease-in-out;
     width: 0;
   }
 

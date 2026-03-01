@@ -9,103 +9,103 @@ export const PrimitiveTokens = css`
   :host, :root {
     /* ==================== COLOR PALETTE ==================== */
 
-    /* Blue scale */
-    --color-blue-50: #e3f2fd;
-    --color-blue-100: #bbdefb;
-    --color-blue-200: #90caf9;
-    --color-blue-300: #64b5f6;
-    --color-blue-400: #42a5f5;
-    --color-blue-500: #4a9eff;
-    --color-blue-600: #3a8eef;
-    --color-blue-700: #1976d2;
-    --color-blue-800: #1565c0;
-    --color-blue-900: #0d47a1;
+    /* Blue scale (Indigo) */
+    --color-blue-50: #eef2ff;
+    --color-blue-100: #e0e7ff;
+    --color-blue-200: #c7d2fe;
+    --color-blue-300: #a5b4fc;
+    --color-blue-400: #818cf8;
+    --color-blue-500: #6366f1;
+    --color-blue-600: #4f46e5;
+    --color-blue-700: #4338ca;
+    --color-blue-800: #3730a3;
+    --color-blue-900: #312e81;
 
-    /* Pink scale */
-    --color-pink-50: #fce4ec;
-    --color-pink-100: #f8bbd9;
-    --color-pink-200: #f48fb1;
-    --color-pink-300: #f06292;
-    --color-pink-400: #ec407a;
-    --color-pink-500: #ec3e95;
-    --color-pink-600: #d81b60;
-    --color-pink-700: #c2185b;
-    --color-pink-800: #ad1457;
-    --color-pink-900: #880e4f;
+    /* Pink scale (Emerald) */
+    --color-pink-50: #ecfdf5;
+    --color-pink-100: #d1fae5;
+    --color-pink-200: #a7f3d0;
+    --color-pink-300: #6ee7b7;
+    --color-pink-400: #34d399;
+    --color-pink-500: #10b981;
+    --color-pink-600: #059669;
+    --color-pink-700: #047857;
+    --color-pink-800: #065f46;
+    --color-pink-900: #064e3b;
 
-    /* Green scale */
-    --color-green-50: #e8f5e9;
-    --color-green-100: #c8e6c9;
-    --color-green-200: #a5d6a7;
-    --color-green-300: #81c784;
-    --color-green-400: #66bb6a;
-    --color-green-500: #4caf50;
-    --color-green-600: #43a047;
-    --color-green-700: #388e3c;
-    --color-green-800: #2e7d32;
-    --color-green-900: #1b5e20;
+    /* Green scale (Tailwind Green) */
+    --color-green-50: #f0fdf4;
+    --color-green-100: #dcfce7;
+    --color-green-200: #bbf7d0;
+    --color-green-300: #86efac;
+    --color-green-400: #4ade80;
+    --color-green-500: #22c55e;
+    --color-green-600: #16a34a;
+    --color-green-700: #15803d;
+    --color-green-800: #166534;
+    --color-green-900: #14532d;
 
-    /* Orange scale */
-    --color-orange-50: #fff3e0;
-    --color-orange-100: #ffe0b2;
-    --color-orange-200: #ffcc80;
-    --color-orange-300: #ffb74d;
-    --color-orange-400: #ffa726;
-    --color-orange-500: #ff9800;
-    --color-orange-600: #fb8c00;
-    --color-orange-700: #f57c00;
-    --color-orange-800: #ef6c00;
-    --color-orange-900: #e65100;
+    /* Orange scale (Amber) */
+    --color-orange-50: #fffbeb;
+    --color-orange-100: #fef3c7;
+    --color-orange-200: #fde68a;
+    --color-orange-300: #fcd34d;
+    --color-orange-400: #fbbf24;
+    --color-orange-500: #f59e0b;
+    --color-orange-600: #d97706;
+    --color-orange-700: #b45309;
+    --color-orange-800: #92400e;
+    --color-orange-900: #78350f;
 
-    /* Red scale */
-    --color-red-50: #ffebee;
-    --color-red-100: #ffcdd2;
-    --color-red-200: #ef9a9a;
-    --color-red-300: #e57373;
-    --color-red-400: #ef5350;
-    --color-red-500: #d9534f;
-    --color-red-600: #c9302c;
-    --color-red-700: #d32f2f;
-    --color-red-800: #c62828;
-    --color-red-900: #b71c1c;
+    /* Red scale (Rose) */
+    --color-red-50: #fff1f2;
+    --color-red-100: #ffe4e6;
+    --color-red-200: #fecdd3;
+    --color-red-300: #fda4af;
+    --color-red-400: #fb7185;
+    --color-red-500: #f43f5e;
+    --color-red-600: #e11d48;
+    --color-red-700: #be123c;
+    --color-red-800: #9f1239;
+    --color-red-900: #881337;
 
-    /* Yellow scale */
-    --color-yellow-50: #fffde7;
-    --color-yellow-100: #fff9c4;
-    --color-yellow-200: #fff59d;
-    --color-yellow-300: #fff176;
-    --color-yellow-400: #ffee58;
-    --color-yellow-500: #cce500;
-    --color-yellow-600: #fdd835;
-    --color-yellow-700: #fbc02d;
-    --color-yellow-800: #f9a825;
-    --color-yellow-900: #f57f17;
+    /* Yellow scale (Tailwind Yellow) */
+    --color-yellow-50: #fefce8;
+    --color-yellow-100: #fef9c3;
+    --color-yellow-200: #fef08a;
+    --color-yellow-300: #fde047;
+    --color-yellow-400: #facc15;
+    --color-yellow-500: #eab308;
+    --color-yellow-600: #ca8a04;
+    --color-yellow-700: #a16207;
+    --color-yellow-800: #854d0e;
+    --color-yellow-900: #713f12;
 
-    /* Cyan/Teal scale */
-    --color-cyan-50: #e0f7fa;
-    --color-cyan-100: #b2ebf2;
-    --color-cyan-200: #80deea;
-    --color-cyan-300: #4dd0e1;
-    --color-cyan-400: #26c6da;
-    --color-cyan-500: #17a2b8;
-    --color-cyan-600: #138496;
-    --color-cyan-700: #0097a7;
-    --color-cyan-800: #00838f;
-    --color-cyan-900: #006064;
+    /* Cyan scale (Tailwind Cyan) */
+    --color-cyan-50: #ecfeff;
+    --color-cyan-100: #cffafe;
+    --color-cyan-200: #a5f3fc;
+    --color-cyan-300: #67e8f9;
+    --color-cyan-400: #22d3ee;
+    --color-cyan-500: #06b6d4;
+    --color-cyan-600: #0891b2;
+    --color-cyan-700: #0e7490;
+    --color-cyan-800: #155e75;
+    --color-cyan-900: #164e63;
 
-    /* Gray scale */
+    /* Gray scale (Slate) */
     --color-gray-0: #ffffff;
-    --color-gray-50: #fafafa;
-    --color-gray-100: #f8f9fa;
-    --color-gray-200: #f1f1f1;
-    --color-gray-300: #e9ecef;
-    --color-gray-400: #e0e0e0;
-    --color-gray-500: #dee2e6;
-    --color-gray-600: #999999;
-    --color-gray-700: #6c757d;
-    --color-gray-800: #666666;
-    --color-gray-900: #333333;
-    --color-gray-1000: #212121;
+    --color-gray-50: #f8fafc;
+    --color-gray-100: #f1f5f9;
+    --color-gray-200: #e2e8f0;
+    --color-gray-300: #cbd5e1;
+    --color-gray-400: #94a3b8;
+    --color-gray-500: #64748b;
+    --color-gray-600: #475569;
+    --color-gray-700: #334155;
+    --color-gray-800: #1e293b;
+    --color-gray-900: #0f172a;
+    --color-gray-1000: #020617;
 
     /* ==================== SPACING SCALE ==================== */
     --space-0: 0;
@@ -117,6 +117,9 @@ export const PrimitiveTokens = css`
     --space-6: 3rem;     /* 48px */
 
     /* ==================== TYPOGRAPHY SCALE ==================== */
+    --font-family-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-family-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, 'Cascadia Code', monospace;
+
     --font-size-2xs: 0.625rem;  /* 10px */
     --font-size-xs: 0.75rem;    /* 12px */
     --font-size-sm: 0.8rem;     /* 12.8px */
@@ -139,20 +142,20 @@ export const PrimitiveTokens = css`
     /* ==================== BORDER RADIUS ==================== */
     --radius-none: 0;
     --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    --radius-xl: 12px;
-    --radius-2xl: 16px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
     --radius-full: 9999px;
 
     /* ==================== SHADOWS ==================== */
     --shadow-none: none;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.15);
-    --shadow-2xl: 0 12px 24px rgba(0, 0, 0, 0.2);
-    --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
+    --shadow-2xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
+    --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.04);
 
     /* ==================== TRANSITIONS ==================== */
     --duration-instant: 0ms;
