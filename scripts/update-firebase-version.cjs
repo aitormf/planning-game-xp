@@ -30,7 +30,15 @@ function getDatabaseUrl() {
   if (!match) {
     throw new Error('PUBLIC_FIREBASE_DATABASE_URL not found in .env.prod');
   }
-  return match[1].trim();
+  // Firebase Admin SDK requires firebaseio.com format, not firebasedatabase.app
+  // Convert: https://proj-default-rtdb.region.firebasedatabase.app
+  //      to: https://proj-default-rtdb.firebaseio.com
+  const url = match[1].trim();
+  const regionMatch = url.match(/^(https:\/\/[^.]+)\.[^.]+\.firebasedatabase\.app\/?$/);
+  if (regionMatch) {
+    return `${regionMatch[1]}.firebaseio.com`;
+  }
+  return url;
 }
 
 const DATABASE_URL = getDatabaseUrl();
