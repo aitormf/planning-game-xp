@@ -28,6 +28,9 @@ const { handleSyncCardViews } = require("./handlers/sync-card-views");
 const { handlePortalBugResolved } = require("./handlers/on-portal-bug-resolved");
 const { extractKeywords, findBestEpicMatch } = require("./helpers/epic-inference");
 
+// Demo mode: when DEMO_MODE=true, all new users are auto-allowed with role=demo
+const DEMO_MODE = (process.env.DEMO_MODE || '').toString().trim().toLowerCase() === 'true';
+
 const normalizeEmail = (email) => (email || '').toString().trim().toLowerCase();
 
 const extractEmails = (rawData, directory = {}) => {
@@ -1692,9 +1695,6 @@ exports.requestEmailAccess = functions.region('europe-west1').https.onCall(async
     status: 'pending'
   };
 });
-
-// Demo mode: when DEMO_MODE=true, all new users are auto-allowed with role=demo
-const DEMO_MODE = (process.env.DEMO_MODE || '').toString().trim().toLowerCase() === 'true';
 
 /**
  * Provision demo data for a new user: creates a sample project with
