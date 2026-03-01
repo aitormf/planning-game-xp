@@ -33,6 +33,10 @@ const { encodeEmailForFirebase, decodeEmailFromFirebase, normalizeEmail, normali
 const { buildAcceptanceText, buildUserStoryText, buildBranchName, getAbbrId, generateCardId, getRepositoryForTask, hasActiveProject } = require('./shared/card-utils.cjs');
 const { isEmailPreAuthorized, generateNextId } = require('./shared/auth-utils.cjs');
 
+// Handlers (extracted from this file)
+const { handlePushNotification } = require('./handlers/push-notification');
+const { handleDemoCleanup } = require('./handlers/demo-cleanup');
+
 // Demo mode: when DEMO_MODE=true, all new users are auto-allowed with role=demo.
 // Read from process.env first, then fall back to reading functions/.env directly
 // (Firebase CLI may not inject .env vars during module analysis phase).
@@ -1139,108 +1143,20 @@ exports.testHourlyDigest = onRequest({
 // DEMO CLEANUP - Remove inactive demo users and their data
 // ============================================================================
 
-/**
- * Cleanup inactive demo users and their data.
- * Only runs when DEMO_MODE=true.
- *
- * Criteria: users with role=demo claim whose lastSignInTime > 7 days ago.
- * Removes: Auth account, project data (/projects/Demo_*), cards, appPerms, claimsLog.
- */
-async function cleanupInactiveDemoUsers() {
-  if (!DEMO_MODE) {
-    logger.info('cleanupDemoUsers: DEMO_MODE is off, skipping');
-    return { skipped: true, reason: 'DEMO_MODE is off' };
-  }
+// cleanupInactiveDemoUsers → handlers/demo-cleanup.js
+const demoCleanupDeps = () => ({ db: admin.database(), auth: admin.auth(), logger, demoMode: DEMO_MODE });
 
-  const INACTIVE_DAYS = 7;
-  const cutoff = Date.now() - INACTIVE_DAYS * 24 * 60 * 60 * 1000;
-  const db = admin.database();
-  const deleted = [];
-  const kept = [];
-
-  try {
-    // List all users (Firebase Auth paginates at 1000)
-    let nextPageToken;
-    const allUsers = [];
-    do {
-      const listResult = await admin.auth().listUsers(1000, nextPageToken);
-      allUsers.push(...listResult.users);
-      nextPageToken = listResult.pageToken;
-    } while (nextPageToken);
-
-    for (const userRecord of allUsers) {
-      // Only process demo users
-      const claims = userRecord.customClaims || {};
-      if (claims.role !== 'demo') continue;
-
-      const lastActive = userRecord.metadata.lastSignInTime
-        ? new Date(userRecord.metadata.lastSignInTime).getTime()
-        : new Date(userRecord.metadata.creationTime).getTime();
-
-      if (lastActive > cutoff) {
-        kept.push(userRecord.email);
-        continue;
-      }
-
-      // User is inactive — delete their data
-      const email = userRecord.email || '';
-      const userPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
-      const projectId = `Demo_${userPrefix}`;
-      const encodedEmail = encodeEmailForFirebase(email.toLowerCase());
-
-      logger.info(`cleanupDemoUsers: Deleting inactive demo user ${email}`, {
-        uid: userRecord.uid,
-        lastActive: new Date(lastActive).toISOString(),
-        projectId,
-      });
-
-      // Delete RTDB data (project, cards, appPerms, claimsLog)
-      const deletions = {};
-      deletions[`/projects/${projectId}`] = null;
-      deletions[`/cards/${projectId}`] = null;
-      deletions[`/data/appPerms/${encodedEmail}`] = null;
-      deletions[`/userClaimsLog/${userRecord.uid}`] = null;
-      deletions[`/history/${projectId}`] = null;
-      deletions[`/notifications/${userRecord.uid}`] = null;
-      await db.ref().update(deletions);
-
-      // Delete Firebase Auth account
-      await admin.auth().deleteUser(userRecord.uid);
-
-      deleted.push({ email, uid: userRecord.uid, projectId });
-    }
-
-    logger.info(`cleanupDemoUsers: Done. Deleted ${deleted.length}, kept ${kept.length}`, {
-      deleted: deleted.map(d => d.email),
-      kept,
-    });
-
-    return { deleted: deleted.length, kept: kept.length, details: deleted };
-  } catch (error) {
-    logger.error('cleanupDemoUsers: Error during cleanup', error);
-    throw error;
-  }
-}
-
-/**
- * Scheduled cleanup: runs daily at 3:00 AM to remove inactive demo users
- */
 exports.cleanupDemoUsers = onSchedule({
-  schedule: '0 3 * * *', // Every day at 3:00 AM
+  schedule: '0 3 * * *',
   timeZone: 'Europe/Madrid',
   region: 'europe-west1',
-}, async () => {
-  return await cleanupInactiveDemoUsers();
-});
+}, async () => handleDemoCleanup(demoCleanupDeps()));
 
-/**
- * HTTP trigger for manual testing of demo cleanup
- */
 exports.testCleanupDemoUsers = onRequest({
   region: 'europe-west1',
 }, async (req, res) => {
   try {
-    const result = await cleanupInactiveDemoUsers();
+    const result = await handleDemoCleanup(demoCleanupDeps());
     res.json(result);
   } catch (error) {
     logger.error('Error in testCleanupDemoUsers:', error);
@@ -1248,122 +1164,16 @@ exports.testCleanupDemoUsers = onRequest({
   }
 });
 
-/**
- * Firebase Cloud Function for Push Notifications
- * Triggers when a new notification is created for any user
- */
+// sendPushNotification → handlers/push-notification.js
 exports.sendPushNotification = onValueCreated({
- ref: "/notifications/{userId}/{notificationId}",
-  region: "europe-west1"
+  ref: "/notifications/{userId}/{notificationId}",
+  region: "europe-west1",
 }, async (event) => {
-  try {
-    // Permitir desactivar envíos durante importaciones masivas
-    if (process.env.SKIP_PUSH_ON_IMPORT) {
-      logger.info('🔔 SKIP_PUSH_ON_IMPORT activo, notificación ignorada');
-      return null;
-    }
-
-    const userId = event.params.userId;
-    const notificationId = event.params.notificationId;
-    const notificationData = event.data.val();
-    
-    logger.info('🔔 New notification created:', {
-      userId,
-      notificationId,
-      title: notificationData.title
-    });
-
-    // Get user's FCM token
-    const db = getDatabase();
-    const userTokenSnapshot = await db.ref(`userTokens/${userId}`).once('value');
-    const userTokenData = userTokenSnapshot.val();
-    
-    if (!userTokenData || !userTokenData.token) {
-      logger.warn('🔔 No FCM token found for user:', userId);
-      return;
-    }
-
-    const fcmToken = userTokenData.token;
-    logger.info('🔔 Found FCM token for user:', userId);
-
-    // Prepare FCM message
-    const message = {
-      token: fcmToken,
-      notification: {
-        title: notificationData.title || 'Nueva notificación',
-        body: notificationData.message || 'Tienes una nueva actualización'
-      },
-      data: {
-        notificationId: notificationId,
-        type: notificationData.type || 'info',
-        projectId: notificationData.projectId || '',
-        taskId: notificationData.taskId || '',
-        bugId: notificationData.bugId || '',
-        timestamp: String(notificationData.timestamp || Date.now()),
-        // Agregar datos personalizados del payload
-        ...(notificationData.data && typeof notificationData.data === 'object' ? 
-           Object.fromEntries(
-             Object.entries(notificationData.data).map(([k, v]) => [k, String(v)])
-           ) : {})
-      },
-      android: {
-        priority: 'high',
-        notification: {
-          icon: 'stock_ticker_update',
-          color: '#4a9eff',
-          sound: 'default'
-        }
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: 'default',
-            badge: 1
-          }
-        }
-      },
-      webpush: {
-        headers: {
-          'Urgency': 'high'
-        },
-        notification: {
-          icon: '/favicon.ico',
-          badge: '/favicon.ico',
-          requireInteraction: true,
-          actions: [
-            {
-              action: 'open',
-              title: 'Abrir'
-            }
-          ]
-        }
-      }
-    };
-
-    // Send FCM message
-    const messaging = getMessaging();
-    const response = await messaging.send(message);
-    
-    logger.info('🔔 Push notification sent successfully:', {
-      userId,
-      notificationId,
-      messageId: response
-    });
-
-    return response;
-
-  } catch (error) {
-    logger.error('🔔 Error sending push notification:', error);
-    
-    // Don't throw error to avoid function retries for invalid tokens
-    if (error.code === 'messaging/registration-token-not-registered' ||
-        error.code === 'messaging/invalid-registration-token') {
-      logger.warn('🔔 Invalid or expired FCM token, should clean up:', error.code);
-      // TODO: Remove invalid token from database
-    }
-    
-    return null;
-  }
+  return handlePushNotification(
+    event.params,
+    event.data.val(),
+    { db: getDatabase(), messaging: getMessaging(), logger }
+  );
 });
 
 // encodeEmailForFirebase, normalizeGmailEmail → shared/email-utils.cjs
