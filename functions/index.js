@@ -1171,7 +1171,9 @@ async function sendWeeklyTaskSummary(filterEmail = null) {
 
 /**
  * Scheduled function - runs every Monday at 9:00 AM in European region
+ * Skipped in DEMO_MODE (no Microsoft secrets available)
  */
+if (!DEMO_MODE) {
 exports.weeklyTaskSummary = onSchedule({
   schedule: "0 9 * * 1", // Every Monday at 9:00 AM
   timeZone: "Europe/Madrid",
@@ -1248,6 +1250,7 @@ exports.testHourlyDigest = onRequest({
     res.status(500).json({ error: error.message });
   }
 });
+} // end if (!DEMO_MODE) — email functions
 
 // ============================================================================
 // DEMO CLEANUP - Remove inactive demo users and their data
@@ -2206,6 +2209,11 @@ function parseAcceptanceCriteriaResponse(aiData) {
 
   return scenarios;
 }
+
+// ============================================================================
+// IA + API functions — skipped in DEMO_MODE (no secrets available)
+// ============================================================================
+if (!DEMO_MODE) {
 
 /**
  * Generate acceptance criteria for a task using IA.
@@ -4265,6 +4273,7 @@ exports.getProjectEpics = onRequest({
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 });
+} // end if (!DEMO_MODE) — IA + API functions
 
 /**
  * Cloud Function: onCardToValidate
