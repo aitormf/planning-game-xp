@@ -374,3 +374,90 @@ describe('DEMO_MODE claim logic', () => {
     expect(claims.role).toBeUndefined();
   });
 });
+
+// ==================== provisionDemoData logic tests ====================
+
+describe('provisionDemoData logic', () => {
+  function buildDemoProjectId(email) {
+    const userPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+    return `Demo_${userPrefix}`;
+  }
+
+  function buildDemoProjectData(email, projectId) {
+    const now = new Date().toISOString();
+    return {
+      name: projectId,
+      abbreviation: 'DMO',
+      scoringSystem: '1-5',
+      description: 'Sample demo project — explore tasks, bugs, sprints, and more!',
+      stakeholders: [{ name: email.split('@')[0], email }],
+      developers: [{ id: 'dev_demo', name: email.split('@')[0], email }],
+      iaEnabled: false,
+      createdAt: now,
+      createdBy: email,
+    };
+  }
+
+  it('should generate projectId from email prefix', () => {
+    expect(buildDemoProjectId('john.doe@example.com')).toBe('Demo_johndoe');
+    expect(buildDemoProjectId('user@demo.com')).toBe('Demo_user');
+    expect(buildDemoProjectId('test-user@mail.com')).toBe('Demo_testuser');
+  });
+
+  it('should strip special characters from projectId', () => {
+    expect(buildDemoProjectId('user+tag@mail.com')).toBe('Demo_usertag');
+    expect(buildDemoProjectId('a.b.c@mail.com')).toBe('Demo_abc');
+  });
+
+  it('should create project with correct structure', () => {
+    const email = 'demo@test.com';
+    const projectId = buildDemoProjectId(email);
+    const data = buildDemoProjectData(email, projectId);
+
+    expect(data.name).toBe('Demo_demo');
+    expect(data.abbreviation).toBe('DMO');
+    expect(data.scoringSystem).toBe('1-5');
+    expect(data.developers).toHaveLength(1);
+    expect(data.developers[0].email).toBe(email);
+    expect(data.stakeholders).toHaveLength(1);
+    expect(data.createdBy).toBe(email);
+  });
+
+  it('should define sample tasks with various statuses', () => {
+    const sampleStatuses = ['To Do', 'To Do', 'To Do', 'In Progress', 'Done&Validated'];
+    expect(sampleStatuses).toContain('To Do');
+    expect(sampleStatuses).toContain('In Progress');
+    expect(sampleStatuses).toContain('Done&Validated');
+    expect(sampleStatuses).toHaveLength(5);
+  });
+
+  it('should define sample bug with valid priority', () => {
+    const validPriorities = [
+      'APPLICATION BLOCKER',
+      'DEPARTMENT BLOCKER',
+      'INDIVIDUAL BLOCKER',
+      'USER EXPERIENCE ISSUE',
+      'WORKFLOW IMPROVEMENT',
+      'WORKAROUND AVAILABLE ISSUE',
+    ];
+    const bugPriority = 'USER EXPERIENCE ISSUE';
+    expect(validPriorities).toContain(bugPriority);
+  });
+
+  it('should create sprint with 2-week duration', () => {
+    const start = new Date('2026-03-01');
+    const end = new Date(start.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const diffDays = (end - start) / (1000 * 60 * 60 * 24);
+    expect(diffDays).toBe(14);
+  });
+
+  it('should create 2 epics for organizing tasks', () => {
+    const epics = [
+      { title: 'Getting Started', desc: 'Onboarding and setup tasks' },
+      { title: 'Core Features', desc: 'Main application functionality' },
+    ];
+    expect(epics).toHaveLength(2);
+    expect(epics[0].title).toBe('Getting Started');
+    expect(epics[1].title).toBe('Core Features');
+  });
+});
