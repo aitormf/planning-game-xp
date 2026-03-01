@@ -5,8 +5,96 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Add project resolver with fuzzy matching for MCP tools
+
+## [1.153.0] - 2026-03-01
+
 ### Added
 
+- Modern visual redesign with Indigo/Emerald palette and full dark mode support
+
+## [1.151.1] - 2026-03-01
+
+### Fixed
+
+- Dark mode, View Transitions re-init, Cards View, Kanban order
+
+## [1.151.0] - 2026-02-28
+
+### Added
+
+- Add View Transitions and FOUC prevention
+
+### Fixed
+
+- Correct GitHub repo URL from AvilaManuel to manufosela
+
+### Other
+
+- Bump MCP version to 1.13.1 (fix npm repo URL)
+
+## [1.150.0] - 2026-02-28
+
+### Added
+
+- Add text color pickers and fix hardcoded nav/header theme colors (#58)
+
+## [1.149.0] - 2026-02-28
+
+### Added
+
+- Unify status colors via CSS variables with auto-contrast (#57)
+
+## [1.148.6] - 2026-02-28
+
+### Fixed
+
+- Skip org branding when no ORG_NAME configured
+- ThemeEditor handles empty/missing config with sensible defaults
+- Change Manager group dropdown placeholder from "developer" to "manager"
+
+## [1.148.5] - 2026-02-28
+
+### Fixed
+
+- Use bg-tertiary for table hover to support dark mode
+
+## [1.148.4] - 2026-02-28
+
+### Fixed
+
+- Only show app permissions gear on projects with allowExecutables
+
+## [1.148.3] - 2026-02-28
+
+### Fixed
+
+- Show all projects in multi-select with assigned ones pre-selected
+
+## [1.148.2] - 2026-02-28
+
+### Fixed
+
+- Import MultiSelect in UserAdminPanel and guard ThemeEditor tokens
+
+## [1.148.1] - 2026-02-28
+
+### Fixed
+
+- Improve user admin panel UX and dark mode support
+
+## [1.148.0] - 2026-02-28
+
+### Added
+
+- Add delete user and unified app permissions management
+- Add one-click onboarding and MCP provision_user tool
+- Add Users tab to admin and remove legacy user management
+- Replace legacy Cloud Functions with centralized /users/ CRUD
+- Add migration script for centralized /users/ model
+- Define centralized /users/ data model and database rules
 - Auto-provision users on first login with Gmail normalization
 - Add Allowed Users management tab in EntityDirectoryManager
 - Add Cloud Functions deploy support to deploy-all.sh
@@ -24,6 +112,7 @@ Auto-generated from git commits on each build.
 
 ### Changed
 
+- Read EntityDirectoryService and MCP tools from /users/
 - Centralize Firebase CLI account switching in instance-manager
 
 ### Fixed
@@ -40,22 +129,9 @@ Auto-generated from git commits on each build.
 
 ### Other
 
+- Add version bump to build:all and version check to deploy:all
+- Bump version to 1.146.0 and update changelog
 - Bump MCP version to 1.13.0
-
-## [1.152.0] - 2026-03-01
-
-### Fixed
-
-- Fix dark mode not persisting across View Transition navigations (class `dark` → `dark-theme` in blocking script)
-- Fix duplicate listener/subscription accumulation on View Transition navigations (guard `_layoutInitialized` in Layout.astro)
-- Fix Cards View showing empty content (CSS `.cards-container > *` was constraining `.cards-list-container` to 300px)
-- Fix Kanban View column ordering: Done&Validated now appears to the right of To Validate
-
-### Changed
-
-- Reuse existing AppController on View Transition navigations instead of creating new instances
-- Add `onPageNavigated()` method to AppController for lightweight re-initialization after navigation
-- Order Kanban task columns using `TASK_STATUS_ORDER` constant (same pattern as bugs)
 
 ## [1.145.0] - 2026-02-27
 
