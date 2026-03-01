@@ -13,6 +13,7 @@ import Layout from '../layouts/Layout.astro';
 <script type="module">
   import { onAuthStateChanged, auth, database, ref, onValue, set, get, update, superAdminEmail } from '/firebase-config.js';
   import { showModal } from '@manufosela/app-modal';
+  import { demoModeService } from '/js/services/demo-mode-service.js';
   import '/js/wc/ProjectForm.js';
   import { APP_CONSTANTS } from '/js/constants/app-constants.js';
   import { encodeEmailForFirebase } from '/js/utils/email-sanitizer.js';
@@ -787,6 +788,16 @@ import Layout from '../layouts/Layout.astro';
   };
 
   async function createProject(projectForm) {
+    // Demo mode: enforce project count limit
+    if (demoModeService.isDemo() && demoModeService.maxProjects > 0) {
+      const projectsSnap = await get(ref(database, '/projects'));
+      const currentCount = projectsSnap.exists() ? Object.keys(projectsSnap.val()).length : 0;
+      if (currentCount >= demoModeService.maxProjects) {
+        demoModeService.showLimitReached('projects');
+        return;
+      }
+    }
+
     const formData = projectForm.getFormData();
     const normalizedDevelopers = normalizeDevelopersForForm(formData.developers);
     const developersWithIa = [...normalizedDevelopers];

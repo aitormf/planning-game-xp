@@ -10,6 +10,7 @@ import { normalizeDeveloperEntry } from '../utils/developer-normalizer.js';
 import { normalizeProjectPeople } from '../utils/project-people-utils.js';
 import { APP_CONSTANTS } from '../constants/app-constants.js';
 import { CARD_SCHEMAS } from '../schemas/card-field-schemas.js';
+import { demoModeService } from './demo-mode-service.js';
 
 const normalizeEmail = (email) => (email || '').toString().trim().toLowerCase();
 const legacyEncodeEmail = (email) => normalizeEmail(email).replace(/[@.#$\[\]\/]/g, '_');
@@ -773,6 +774,22 @@ export const FirebaseService = {
 
     // Determinar si es una tarjeta nueva o existente basándose en si tiene Firebase ID
     const isNewCard = !card.firebaseId && !card.id;
+
+    // Demo mode: enforce card count limit for new cards
+    if (isNewCard && demoModeService.isDemo() && demoModeService.maxTasksPerProject > 0) {
+      try {
+        const sectionPath = this.getCardPath(card);
+        const sectionRef = ref(database, sectionPath);
+        const snapshot = await get(sectionRef);
+        const currentCount = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+        if (currentCount >= demoModeService.maxTasksPerProject) {
+          demoModeService.showLimitReached('tasks');
+          return;
+        }
+      } catch (err) {
+        console.warn('[FirebaseService] Demo limit check failed, allowing write:', err);
+      }
+    }
 
     if (isNewCard) {
       // Nueva tarjeta: generar ID único de Firebase
