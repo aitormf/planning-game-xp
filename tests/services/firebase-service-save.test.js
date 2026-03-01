@@ -81,6 +81,17 @@ vi.mock('@/constants/app-constants.js', () => ({
   APP_CONSTANTS: { STATUS: {} }
 }));
 
+const mockDemoModeService = {
+  isDemo: vi.fn().mockReturnValue(false),
+  maxTasksPerProject: 0,
+  maxProjects: 0,
+  showLimitReached: vi.fn(),
+  showFeatureDisabled: vi.fn(),
+};
+vi.mock('@/services/demo-mode-service.js', () => ({
+  demoModeService: mockDemoModeService,
+}));
+
 const { FirebaseService: firebaseService } = await import('@/services/firebase-service.js');
 
 // Mock document events to prevent errors
@@ -189,5 +200,122 @@ describe('saveCard - update vs set', () => {
     expect(savedData).not.toHaveProperty('startDate');
     expect(savedData).not.toHaveProperty('endDate');
     expect(savedData).not.toHaveProperty('commits');
+  });
+});
+
+describe('saveCard - demo mode card count limit', () => {
+  beforeEach(() => {
+    mockDemoModeService.isDemo.mockReturnValue(false);
+    mockDemoModeService.maxTasksPerProject = 0;
+    mockDemoModeService.showLimitReached.mockClear();
+  });
+
+  it('should block new card creation when demo limit is reached', async () => {
+    mockDemoModeService.isDemo.mockReturnValue(true);
+    mockDemoModeService.maxTasksPerProject = 2;
+
+    // Simulate 2 existing cards in the section
+    mockGet.mockResolvedValueOnce({
+      exists: () => true,
+      val: () => ({ '-key1': {}, '-key2': {} }),
+    });
+
+    const newCard = {
+      cardType: 'task-card',
+      title: 'Demo task',
+      status: 'To Do',
+      group: 'tasks',
+      projectId: 'DemoProject',
+      cardId: 'DM-TSK-0003',
+      year: 2026,
+    };
+
+    await firebaseService.saveCard(newCard, { silent: true, skipHistory: true });
+
+    // Should NOT write to Firebase
+    expect(mockSet).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockDemoModeService.showLimitReached).toHaveBeenCalledWith('tasks');
+  });
+
+  it('should allow new card creation when demo limit is not reached', async () => {
+    mockDemoModeService.isDemo.mockReturnValue(true);
+    mockDemoModeService.maxTasksPerProject = 5;
+
+    // Simulate 2 existing cards (under limit of 5)
+    mockGet
+      .mockResolvedValueOnce({
+        exists: () => true,
+        val: () => ({ '-key1': {}, '-key2': {} }),
+      })
+      // Second get() call is for history tracking (existing card lookup)
+      .mockResolvedValueOnce({
+        exists: () => false,
+        val: () => null,
+      });
+
+    mockPush.mockReturnValue({ key: '-NewDemoKey' });
+
+    const newCard = {
+      cardType: 'task-card',
+      title: 'Demo task under limit',
+      status: 'To Do',
+      group: 'tasks',
+      projectId: 'DemoProject',
+      cardId: 'DM-TSK-0001',
+      year: 2026,
+    };
+
+    await firebaseService.saveCard(newCard, { silent: true, skipHistory: true });
+
+    // Should write to Firebase
+    expect(mockSet).toHaveBeenCalledTimes(1);
+    expect(mockDemoModeService.showLimitReached).not.toHaveBeenCalled();
+  });
+
+  it('should skip demo check for existing cards (update)', async () => {
+    mockDemoModeService.isDemo.mockReturnValue(true);
+    mockDemoModeService.maxTasksPerProject = 1;
+
+    const existingCard = {
+      cardType: 'task-card',
+      firebaseId: '-ExistingKey',
+      cardId: 'DM-TSK-0001',
+      title: 'Existing demo task',
+      status: 'In Progress',
+      group: 'tasks',
+      projectId: 'DemoProject',
+      year: 2026,
+    };
+
+    await firebaseService.saveCard(existingCard, { silent: true, skipHistory: true });
+
+    // Should use update() regardless of demo mode (it's an existing card)
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockDemoModeService.showLimitReached).not.toHaveBeenCalled();
+  });
+
+  it('should not check demo limits when not in demo mode', async () => {
+    mockDemoModeService.isDemo.mockReturnValue(false);
+    mockDemoModeService.maxTasksPerProject = 2;
+
+    mockPush.mockReturnValue({ key: '-NewKey' });
+    mockGet.mockResolvedValueOnce({ exists: () => false, val: () => null });
+
+    const newCard = {
+      cardType: 'task-card',
+      title: 'Normal task',
+      status: 'To Do',
+      group: 'tasks',
+      projectId: 'MyProject',
+      cardId: 'PRJ-TSK-0001',
+      year: 2026,
+    };
+
+    await firebaseService.saveCard(newCard, { silent: true, skipHistory: true });
+
+    // Should write without demo check
+    expect(mockSet).toHaveBeenCalledTimes(1);
+    expect(mockDemoModeService.showLimitReached).not.toHaveBeenCalled();
   });
 });
