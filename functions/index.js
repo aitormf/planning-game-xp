@@ -4273,6 +4273,13 @@ exports.getProjectEpics = onRequest({
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 });
+
+// Export internal functions for testing
+exports._test = {
+  inferEpicsForPhases,
+  createEpicForPlan
+};
+
 } // end if (!DEMO_MODE) — IA + API functions
 
 /**
@@ -5291,10 +5298,3 @@ exports.syncAppPermissionsClaim = onValueWritten({
   }
 });
 
-// Export internal functions for testing (only available when IA functions are loaded)
-if (!DEMO_MODE) {
-  exports._test = {
-    inferEpicsForPhases,
-    createEpicForPlan
-  };
-}
