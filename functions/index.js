@@ -92,15 +92,19 @@ const ALLOWED_SIGNUP_EMAIL_DOMAINS = (process.env.PUBLIC_ALLOWED_EMAIL_DOMAINS |
   .map(d => d.trim())
   .filter(Boolean);
 
-// Define secrets for Azure AD configuration
-const msClientId = defineSecret("MS_CLIENT_ID");
-const msClientSecret = defineSecret("MS_CLIENT_SECRET");
-const msTenantId = defineSecret("MS_TENANT_ID");
-const msFromEmail = defineSecret("MS_FROM_EMAIL");
-const msAlertEmail = defineSecret("MS_ALERT_EMAIL"); // Email address for system alerts (e.g. localhost URL detection)
-const IA_GLOBAL_ENABLE = defineSecret("IA_GLOBAL_ENABLE"); // optional: 'true'/'false'
-const IA_API_KEY = defineSecret("IA_API_KEY");
-const CREATE_CARD_API_KEY = defineSecret("CREATE_CARD_API_KEY"); // API Key for creating cards programmatically
+// Define secrets for Azure AD / IA configuration (skipped in DEMO_MODE)
+let msClientId, msClientSecret, msTenantId, msFromEmail, msAlertEmail;
+let IA_GLOBAL_ENABLE, IA_API_KEY, CREATE_CARD_API_KEY;
+if (!DEMO_MODE) {
+  msClientId = defineSecret("MS_CLIENT_ID");
+  msClientSecret = defineSecret("MS_CLIENT_SECRET");
+  msTenantId = defineSecret("MS_TENANT_ID");
+  msFromEmail = defineSecret("MS_FROM_EMAIL");
+  msAlertEmail = defineSecret("MS_ALERT_EMAIL");
+  IA_GLOBAL_ENABLE = defineSecret("IA_GLOBAL_ENABLE");
+  IA_API_KEY = defineSecret("IA_API_KEY");
+  CREATE_CARD_API_KEY = defineSecret("CREATE_CARD_API_KEY");
+}
 
 let cachedGlobalAgents = null;
 function getGlobalAgentsContent() {
