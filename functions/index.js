@@ -1917,9 +1917,16 @@ async function provisionDemoData(email, encodedEmail) {
     updatedAt: now,
   });
 
-  // 7. Add user to appPerms for the demo project
+  // 7. Add user to appPerms for their demo project + shared demo project
+  const sharedDemoProject = 'TaskFlow';
+  const userProjects = [projectId];
+  // If the shared demo project exists, also grant access
+  const sharedSnap = await db.ref(`/projects/${sharedDemoProject}`).once('value');
+  if (sharedSnap.exists()) {
+    userProjects.push(sharedDemoProject);
+  }
   await db.ref(`/data/appPerms/${encodedEmail}`).set({
-    projects: [projectId],
+    projects: userProjects,
     updatedAt: now,
   });
 
