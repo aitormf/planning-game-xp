@@ -1,7 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import { listProjectsSchema, listProjects, getProjectSchema, getProject, updateProjectSchema, updateProject, createProjectSchema, createProject } from './tools/projects.js';
+import { listProjectsSchema, listProjects, getProjectSchema, getProject, updateProjectSchema, updateProject, createProjectSchema, createProject, discoverProjectSchema, discoverProject } from './tools/projects.js';
+import { resolveProjectId } from './services/project-resolver.js';
 import { listCardsSchema, getCardSchema, createCardSchema, updateCardSchema, relateCardsSchema, getTransitionRulesSchema, listCards, getCard, createCard, updateCard, relateCards, getTransitionRules } from './tools/cards.js';
 import { listSprintsSchema, listSprints, createSprintSchema, createSprint, updateSprintSchema, updateSprint, getSprintSchema, getSprint } from './tools/sprints.js';
 import { listDevelopersSchema, listDevelopers } from './tools/developers.js';
@@ -75,6 +76,47 @@ function wrapWithUpdateNotice(handler) {
 }
 
 /**
+ * Wrap tool handler to resolve projectId via fuzzy matching before calling the handler.
+ * If the projectId was fuzzy-resolved, adds a _projectResolution note to the response.
+ */
+function wrapWithProjectResolution(handler) {
+  return async (params) => {
+    if (params.projectId) {
+      const resolution = await resolveProjectId(params.projectId);
+      params.projectId = resolution.resolvedId;
+
+      const result = await handler(params);
+
+      if (resolution.wasResolved && result.content && result.content.length > 0) {
+        const firstContent = result.content[0];
+        if (firstContent.type === 'text') {
+          const parsed = safeJsonParse(firstContent.text);
+          if (parsed) {
+            parsed._projectResolution = {
+              input: resolution.input,
+              resolvedTo: resolution.resolvedId,
+              note: `projectId "${resolution.input}" was automatically resolved to "${resolution.resolvedId}". Use the exact ID in future calls for best performance.`
+            };
+            result.content[0] = { type: 'text', text: JSON.stringify(parsed, null, 2) };
+          }
+        }
+      }
+
+      return result;
+    }
+
+    return handler(params);
+  };
+}
+
+/**
+ * Compose two wrappers: first resolves projectId, then adds update notice.
+ */
+function wrapWithProjectAndNotice(handler) {
+  return wrapWithUpdateNotice(wrapWithProjectResolution(handler));
+}
+
+/**
  * Create and configure a McpServer with all tools and resources registered.
  * @param {string} serverName - Name for the MCP server instance
  * @returns {McpServer}
@@ -90,11 +132,11 @@ export function createMcpServer(serverName) {
     return await listProjects();
   }));
 
-  server.tool('get_project', 'Get full details of a project including description, repos, languages, frameworks, and team', getProjectSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('get_project', 'Get full details of a project including description, repos, languages, frameworks, and team', getProjectSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await getProject(params);
   }));
 
-  server.tool('update_project', 'Update fields of an existing project (description, repoUrl, languages, frameworks, agentsGuidelines, etc.)', updateProjectSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('update_project', 'Update fields of an existing project (description, repoUrl, languages, frameworks, agentsGuidelines, etc.)', updateProjectSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await updateProject(params);
   }));
 
@@ -102,45 +144,49 @@ export function createMcpServer(serverName) {
     return await createProject(params);
   }));
 
+  server.tool('discover_project', 'Discover a project by its repository URL (supports HTTPS, SSH, with/without .git)', discoverProjectSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await discoverProject(params);
+  }));
+
   // ── Card tools ──
-  server.tool('list_cards', 'List cards of a project filtered by type, status, sprint, developer, or year', listCardsSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('list_cards', 'List cards of a project filtered by type, status, sprint, developer, or year', listCardsSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await listCards(params);
   }));
 
-  server.tool('get_card', 'Get full details of a card by its cardId', getCardSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('get_card', 'Get full details of a card by its cardId', getCardSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await getCard(params);
   }));
 
-  server.tool('create_card', 'Create a new card (task, bug, epic, or proposal) with auto-generated ID', createCardSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('create_card', 'Create a new card (task, bug, epic, or proposal) with auto-generated ID', createCardSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await createCard(params);
   }));
 
-  server.tool('update_card', 'Update fields of an existing card', updateCardSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('update_card', 'Update fields of an existing card', updateCardSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await updateCard(params);
   }));
 
-  server.tool('relate_cards', 'Create or remove relations between cards (related, blocks/blockedBy)', relateCardsSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('relate_cards', 'Create or remove relations between cards (related, blocks/blockedBy)', relateCardsSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await relateCards(params);
   }));
 
-  server.tool('get_transition_rules', 'Get status transition rules for cards. Call this BEFORE attempting status updates to understand requirements.', getTransitionRulesSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('get_transition_rules', 'Get status transition rules for cards. Call this BEFORE attempting status updates to understand requirements.', getTransitionRulesSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await getTransitionRules(params);
   }));
 
   // ── Sprint tools ──
-  server.tool('list_sprints', 'List sprints of a project with dates and points', listSprintsSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('list_sprints', 'List sprints of a project with dates and points', listSprintsSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await listSprints(params);
   }));
 
-  server.tool('get_sprint', 'Get full details of a sprint by its cardId', getSprintSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('get_sprint', 'Get full details of a sprint by its cardId', getSprintSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await getSprint(params);
   }));
 
-  server.tool('create_sprint', 'Create a new sprint with start and end dates', createSprintSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('create_sprint', 'Create a new sprint with start and end dates', createSprintSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await createSprint(params);
   }));
 
-  server.tool('update_sprint', 'Update fields of an existing sprint', updateSprintSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('update_sprint', 'Update fields of an existing sprint', updateSprintSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await updateSprint(params);
   }));
 
@@ -154,65 +200,65 @@ export function createMcpServer(serverName) {
   }));
 
   // ── ADR tools ──
-  server.tool('list_adrs', 'List all ADRs for a project', listAdrsSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('list_adrs', 'List all ADRs for a project', listAdrsSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await listAdrs(params);
   }));
 
-  server.tool('get_adr', 'Get full details of an ADR', getAdrSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('get_adr', 'Get full details of an ADR', getAdrSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await getAdr(params);
   }));
 
-  server.tool('create_adr', 'Create a new ADR (Architecture Decision Record)', createAdrSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('create_adr', 'Create a new ADR (Architecture Decision Record)', createAdrSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await createAdr(params);
   }));
 
-  server.tool('update_adr', 'Update an existing ADR', updateAdrSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('update_adr', 'Update an existing ADR', updateAdrSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await updateAdr(params);
   }));
 
-  server.tool('delete_adr', 'Delete an ADR (moves to trash)', deleteAdrSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('delete_adr', 'Delete an ADR (moves to trash)', deleteAdrSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await deleteAdr(params);
   }));
 
   // ── Development Plans tools ──
-  server.tool('list_plans', 'List development plans for a project, optionally filtered by status (draft, accepted, rejected)', listPlansSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('list_plans', 'List development plans for a project, optionally filtered by status (draft, accepted, rejected)', listPlansSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await listPlans(params);
   }));
 
-  server.tool('get_plan', 'Get full details of a development plan including phases and proposed tasks', getPlanSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('get_plan', 'Get full details of a development plan including phases and proposed tasks', getPlanSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await getPlan(params);
   }));
 
-  server.tool('create_plan', 'Create a new development plan with phases and proposed tasks', createPlanSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('create_plan', 'Create a new development plan with phases and proposed tasks', createPlanSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await createPlan(params);
   }));
 
-  server.tool('update_plan', 'Update a development plan (title, objective, status, phases)', updatePlanSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('update_plan', 'Update a development plan (title, objective, status, phases)', updatePlanSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await updatePlan(params);
   }));
 
-  server.tool('delete_plan', 'Delete a development plan (moves to trash)', deletePlanSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('delete_plan', 'Delete a development plan (moves to trash)', deletePlanSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await deletePlan(params);
   }));
 
   // ── Plan Proposal tools ──
-  server.tool('list_plan_proposals', 'List plan proposals for a project, optionally filtered by status (pending, planned, rejected)', listPlanProposalsSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('list_plan_proposals', 'List plan proposals for a project, optionally filtered by status (pending, planned, rejected)', listPlanProposalsSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await listPlanProposals(params);
   }));
 
-  server.tool('get_plan_proposal', 'Get full details of a plan proposal including linked plan IDs', getPlanProposalSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('get_plan_proposal', 'Get full details of a plan proposal including linked plan IDs', getPlanProposalSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await getPlanProposal(params);
   }));
 
-  server.tool('create_plan_proposal', 'Create a new plan proposal (feature request that can later generate technical plans)', createPlanProposalSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('create_plan_proposal', 'Create a new plan proposal (feature request that can later generate technical plans)', createPlanProposalSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await createPlanProposal(params);
   }));
 
-  server.tool('update_plan_proposal', 'Update a plan proposal (title, description, status, tags, planIds)', updatePlanProposalSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('update_plan_proposal', 'Update a plan proposal (title, description, status, tags, planIds)', updatePlanProposalSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await updatePlanProposal(params);
   }));
 
-  server.tool('delete_plan_proposal', 'Delete a plan proposal (moves to trash)', deletePlanProposalSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('delete_plan_proposal', 'Delete a plan proposal (moves to trash)', deletePlanProposalSchema.shape, wrapWithProjectAndNotice(async (params) => {
     return await deletePlanProposal(params);
   }));
 

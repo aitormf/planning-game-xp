@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { getDatabase, getFirestore } from '../firebase-adapter.js';
 import { getMcpUser, getMcpUserId } from '../user.js';
 import { buildSectionPath, getAbbrId, SECTION_MAP } from '../../shared/utils.js';
+import { invalidateProjectCache, discoverProjectByRepo } from '../services/project-resolver.js';
 
 export const listProjectsSchema = z.object({});
 
@@ -24,6 +25,10 @@ export const createProjectSchema = z.object({
   repoUrl: z.string().optional().describe('Repository URL'),
   languages: z.array(z.string()).optional().describe('Programming languages used'),
   frameworks: z.array(z.string()).optional().describe('Frameworks used')
+});
+
+export const discoverProjectSchema = z.object({
+  repoUrl: z.string().describe('Repository URL (HTTPS, SSH, with/without .git suffix)')
 });
 
 export async function listProjects() {
@@ -176,6 +181,7 @@ export async function updateProject({ projectId, updates }) {
   cleanUpdates.updatedBy = getMcpUserId();
 
   await projectRef.update(cleanUpdates);
+  invalidateProjectCache();
 
   const updatedSnapshot = await projectRef.once('value');
   const updatedProject = updatedSnapshot.val();
@@ -277,6 +283,7 @@ export async function createProject({ projectId, name, abbreviation, description
   };
 
   await projectRef.set(project);
+  invalidateProjectCache();
 
   const epicSectionPath = buildSectionPath(projectId, 'epic');
   const sectionAbbr = getAbbrId(SECTION_MAP['epic']);
@@ -328,6 +335,23 @@ export async function createProject({ projectId, name, abbreviation, description
     content: [{
       type: 'text',
       text: JSON.stringify(response, null, 2)
+    }]
+  };
+}
+
+export async function discoverProject({ repoUrl }) {
+  const result = await discoverProjectByRepo(repoUrl);
+
+  return {
+    content: [{
+      type: 'text',
+      text: JSON.stringify({
+        projectId: result.resolvedId,
+        name: result.project.name || result.resolvedId,
+        abbreviation: result.project.abbreviation || null,
+        repoUrl: result.project.repoUrl || null,
+        message: `Project found: "${result.resolvedId}" matches repository URL "${repoUrl}".`
+      }, null, 2)
     }]
   };
 }
