@@ -439,6 +439,16 @@ async function handleSetEncodedEmailClaim(user, deps) {
       timestamp: Date.now(),
     });
 
+    // Record first-login event in login history
+    await db.ref(`/loginHistory/${encodedEmail}`).push({
+      timestamp: new Date().toISOString(),
+      email,
+      displayName: user.displayName || '',
+      provider: user.providerData?.[0]?.providerId || 'unknown',
+      loginType: 'first-login',
+      userAgent: 'server-side',
+    });
+
     // Demo mode: provision sample project and data for new user
     if (DEMO_MODE) {
       try {

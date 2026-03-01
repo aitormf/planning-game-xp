@@ -124,6 +124,15 @@
         ".validate": "newData.hasChildren(['name', 'slug', 'order'])"
       }
     },
+    "loginHistory": {
+      "$encodedEmail": {
+        ".read": "auth != null && auth.token.isAppAdmin === true",
+        ".write": "auth != null && auth.token.allowed === true && auth.token.encodedEmail === $encodedEmail",
+        "$eventId": {
+          ".validate": "newData.hasChildren(['timestamp', 'email', 'provider', 'loginType'])"
+        }
+      }
+    },
     "users": {
       ".read": "auth != null",
       ".write": "auth != null && auth.token.isAppAdmin === true",
