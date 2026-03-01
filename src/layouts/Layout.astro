@@ -205,7 +205,7 @@ let user = null;
       import { APP_CONSTANTS } from '/js/constants/app-constants.js';
   import '/js/services/notification-service.js';
   import '/js/debug-notifications.js';
-  import { database, ref, onValue, auth, authProvider, authProviderName, signOut, signInWithPopup, signInWithEmailAndPassword, functions, httpsCallable, app, get } from '/firebase-config.js';
+  import { database, ref, push, onValue, auth, authProvider, authProviderName, signOut, signInWithPopup, signInWithEmailAndPassword, functions, httpsCallable, app, get } from '/firebase-config.js';
   import { encodeEmailForFirebase } from '/js/utils/email-sanitizer.js';
       import { SYSTEM_REQUIREMENTS } from '/js/config/system-requirements-config.js';
 
@@ -258,6 +258,7 @@ let user = null;
       let _layoutInitialized = false;
       let _authUnsubscribe = null;
       let requestAccessCallable = null;
+      let _freshLoginType = null;
 
       // Make Firebase modules available globally for debugging
       window.database = database;
@@ -293,8 +294,10 @@ let user = null;
       // OAuth authentication function
       async function authenticateWithOAuth() {
         try {
+          _freshLoginType = 'oauth';
           await signInWithPopup(auth, authProvider);
         } catch (error) {
+          _freshLoginType = null;
           console.error('[Auth] Authentication error:', error.code, error.message);
 
           // Detect OAuth provider configuration errors (expired credentials, invalid config)
@@ -524,8 +527,10 @@ let user = null;
         }
 
         try {
+          _freshLoginType = 'email';
           await signInWithEmailAndPassword(auth, email, password);
         } catch (error) {
+          _freshLoginType = null;
           const message = EMAIL_AUTH_ERROR_MESSAGES[error.code] || 'Ha ocurrido un error al iniciar sesión. Inténtalo de nuevo.';
           showEmailLoginError(message);
         }
@@ -637,6 +642,23 @@ let user = null;
         document.dispatchEvent(new CustomEvent('user-signed-out'));
       }
 
+      function _recordLoginEvent(user) {
+        const sessionKey = `loginRecorded_${user.uid}`;
+        if (sessionStorage.getItem(sessionKey)) return;
+        const encodedEmail = encodeEmailForFirebase((user.email || '').toLowerCase());
+        if (!encodedEmail) return;
+        push(ref(database, `/loginHistory/${encodedEmail}`), {
+          timestamp: new Date().toISOString(),
+          email: user.email,
+          displayName: user.displayName || '',
+          provider: user.providerData?.[0]?.providerId || 'unknown',
+          loginType: _freshLoginType || 'session-restore',
+          userAgent: navigator.userAgent,
+        }).then(() => sessionStorage.setItem(sessionKey, 'true'))
+          .catch(e => console.error('[Auth] Login event failed:', e));
+        _freshLoginType = null;
+      }
+
       function signedIn(user) {
         getDomElements();
         theUser = user;
@@ -671,6 +693,9 @@ let user = null;
         }));
 
         updateAppAdminAccess(user);
+
+        // Record login event for history tracking
+        _recordLoginEvent(user);
 
         // Initialize FCM for push notifications
         if (window.pushNotificationService) {
