@@ -112,6 +112,24 @@ export function validateBugStatusTransition(currentBug, updates) {
   if (!newStatus) return;
   if (currentBug.status === newStatus) return;
 
+  if (newStatus === 'Fixed') {
+    const finalBug = { ...currentBug, ...updates };
+    const missingFields = [];
+    if (!(Array.isArray(finalBug.commits) && finalBug.commits.length > 0)) {
+      missingFields.push('commits (list of commits that fixed the bug)');
+    }
+    const ps = finalBug.pipelineStatus;
+    if (!ps?.prCreated || !ps.prCreated.prUrl || !ps.prCreated.prNumber) {
+      missingFields.push('pipelineStatus.prCreated (with prUrl and prNumber — create a PR first)');
+    }
+    if (missingFields.length > 0) {
+      throw new Error(
+        `Cannot set bug to "Fixed": missing required fields: ${missingFields.join(', ')}. ` +
+        'When fixing a bug, you must include commits and PR information.'
+      );
+    }
+  }
+
   if (newStatus === 'Closed') {
     const finalBug = { ...currentBug, ...updates };
     const missingFields = [];
@@ -235,6 +253,12 @@ export function validateStatusTransition(currentCard, updates, type) {
     for (const field of REQUIRED_FIELDS_TO_LEAVE_TODO) {
       if (!hasValidValue(finalCard, field)) missingForValidate.push(FRIENDLY_FIELD_NAMES[field] || field);
     }
+    // pipelineStatus.prCreated is required for "To Validate"
+    const ps = finalCard.pipelineStatus;
+    if (!ps?.prCreated || !ps.prCreated.prUrl || !ps.prCreated.prNumber) {
+      missingForValidate.push('pipelineStatus.prCreated (with prUrl and prNumber — create a PR first)');
+    }
+
     if (missingForValidate.length > 0) {
       throw new Error(
         `Cannot change to "To Validate": missing required fields: ${missingForValidate.join(', ')}. ` +
@@ -300,6 +324,16 @@ export function collectValidationIssues(currentCard, updates, type) {
         result.valid = false; result.missingFields.push(field);
         result.errors.push({ code: 'MISSING_REQUIRED_FIELD', message: `Cannot change to "To Validate": ${field} is required.` });
       }
+    }
+    // pipelineStatus.prCreated is required
+    const ps = finalCard.pipelineStatus;
+    if (!ps?.prCreated || !ps.prCreated.prUrl || !ps.prCreated.prNumber) {
+      result.valid = false; result.missingFields.push('pipelineStatus');
+      result.requiredFields.pipelineStatus = {
+        required: true, currentValue: currentCard.pipelineStatus || null,
+        providedInUpdate: updates.pipelineStatus !== undefined, finalValue: finalCard.pipelineStatus || null, missing: true
+      };
+      result.errors.push({ code: 'MISSING_PIPELINE_STATUS', message: 'Cannot change to "To Validate": pipelineStatus.prCreated (with prUrl and prNumber) is required. Create a PR first.' });
     }
   }
 

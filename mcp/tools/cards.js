@@ -1253,7 +1253,7 @@ export async function getTransitionRules({ type = 'task' }) {
           mcpRestrictedNote: 'MCP cannot set tasks to "Done&Validated". Only validators can approve tasks.',
           transitionRules: TASK_TRANSITION_RULES,
           requiredFieldsToLeaveToDo: REQUIRED_FIELDS_TO_LEAVE_TODO,
-          requiredFieldsForToValidate: [...REQUIRED_FIELDS_TO_LEAVE_TODO, ...REQUIRED_FIELDS_FOR_TO_VALIDATE],
+          requiredFieldsForToValidate: [...REQUIRED_FIELDS_TO_LEAVE_TODO, ...REQUIRED_FIELDS_FOR_TO_VALIDATE, 'pipelineStatus.prCreated'],
           fieldDescriptions: {
             title: 'Task title',
             developer: 'Developer ID (must start with dev_)',
@@ -1264,12 +1264,14 @@ export async function getTransitionRules({ type = 'task' }) {
             businessPoints: 'Business points (numeric)',
             acceptanceCriteria: 'Acceptance criteria (text or acceptanceCriteriaStructured array)',
             startDate: 'Date work started (YYYY-MM-DD format)',
-            commits: 'Array of commits [{hash, message, date, author}]'
+            commits: 'Array of commits [{hash, message, date, author}]',
+            pipelineStatus: 'Pipeline tracking object with prCreated: {prUrl, prNumber, date}'
           },
           exampleValidUpdate: {
             status: 'To Validate',
             startDate: '2024-01-15',
-            commits: [{ hash: 'abc1234', message: 'feat: implement feature', date: '2024-01-20T10:00:00Z', author: 'dev@example.com' }]
+            commits: [{ hash: 'abc1234', message: 'feat: implement feature', date: '2024-01-20T10:00:00Z', author: 'dev@example.com' }],
+            pipelineStatus: { prCreated: { prUrl: 'https://github.com/org/repo/pull/42', prNumber: 42, date: '2024-01-20T10:30:00Z' } }
           }
         }, null, 2)
       }]
@@ -1333,6 +1335,11 @@ export function calculateAvailableTransitions(card) {
 
     if (targetStatus === 'To Validate') {
       requiredFields = [...REQUIRED_FIELDS_TO_LEAVE_TODO, ...REQUIRED_FIELDS_FOR_TO_VALIDATE];
+      // Check pipelineStatus.prCreated separately (nested field)
+      const ps = card.pipelineStatus;
+      if (!ps?.prCreated || !ps.prCreated.prUrl || !ps.prCreated.prNumber) {
+        transition.missing.push('pipelineStatus.prCreated');
+      }
     }
 
     if (targetStatus === 'Blocked') {

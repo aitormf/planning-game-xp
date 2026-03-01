@@ -121,10 +121,21 @@ describe('validateBugFields', () => {
 });
 
 describe('validateBugStatusTransition', () => {
-  it('should allow normal transitions', () => {
+  it('should allow Fixed with commits and pipelineStatus', () => {
     expect(() => validateBugStatusTransition(
       { status: 'Assigned' },
-      { status: 'Fixed' }
+      {
+        status: 'Fixed',
+        commits: [{ hash: 'abc', message: 'fix: bug', date: '2026-01-01', author: 'dev' }],
+        pipelineStatus: { prCreated: { prUrl: 'https://github.com/org/repo/pull/1', prNumber: 1 } }
+      }
+    )).not.toThrow();
+  });
+
+  it('should allow non-Fixed transitions without extra fields', () => {
+    expect(() => validateBugStatusTransition(
+      { status: 'Created' },
+      { status: 'Assigned' }
     )).not.toThrow();
   });
 
@@ -182,6 +193,83 @@ describe('validateStatusTransition (MCP context)', () => {
       'task'
     )).toThrow(/missing required fields/);
   });
+
+  it('should require pipelineStatus.prCreated for To Validate', () => {
+    const card = {
+      status: 'In Progress',
+      title: 'Test', developer: 'dev_001', validator: 'stk_001',
+      epic: 'PLN-PCS-0001', sprint: 'PLN-SPR-0001',
+      devPoints: 2, businessPoints: 3,
+      acceptanceCriteriaStructured: [{ given: 'x', when: 'y', then: 'z' }],
+      startDate: '2026-01-01',
+      commits: [{ hash: 'abc', message: 'feat: test', date: '2026-01-01', author: 'dev' }]
+    };
+    expect(() => validateStatusTransition(
+      card, { status: 'To Validate' }, 'task'
+    )).toThrow(/pipelineStatus\.prCreated/);
+  });
+
+  it('should accept To Validate with valid pipelineStatus.prCreated', () => {
+    const card = {
+      status: 'In Progress',
+      title: 'Test', developer: 'dev_001', validator: 'stk_001',
+      epic: 'PLN-PCS-0001', sprint: 'PLN-SPR-0001',
+      devPoints: 2, businessPoints: 3,
+      acceptanceCriteriaStructured: [{ given: 'x', when: 'y', then: 'z' }],
+      startDate: '2026-01-01',
+      commits: [{ hash: 'abc', message: 'feat: test', date: '2026-01-01', author: 'dev' }],
+      pipelineStatus: { prCreated: { prUrl: 'https://github.com/org/repo/pull/1', prNumber: 1, date: '2026-01-01' } }
+    };
+    expect(() => validateStatusTransition(
+      card, { status: 'To Validate' }, 'task'
+    )).not.toThrow();
+  });
+
+  it('should reject To Validate with incomplete pipelineStatus (missing prNumber)', () => {
+    const card = {
+      status: 'In Progress',
+      title: 'Test', developer: 'dev_001', validator: 'stk_001',
+      epic: 'PLN-PCS-0001', sprint: 'PLN-SPR-0001',
+      devPoints: 2, businessPoints: 3,
+      acceptanceCriteriaStructured: [{ given: 'x', when: 'y', then: 'z' }],
+      startDate: '2026-01-01',
+      commits: [{ hash: 'abc', message: 'feat: test', date: '2026-01-01', author: 'dev' }],
+      pipelineStatus: { prCreated: { prUrl: 'https://github.com/org/repo/pull/1' } }
+    };
+    expect(() => validateStatusTransition(
+      card, { status: 'To Validate' }, 'task'
+    )).toThrow(/pipelineStatus\.prCreated/);
+  });
+});
+
+describe('validateBugStatusTransition - Fixed requires pipelineStatus', () => {
+  it('should require commits and pipelineStatus.prCreated for Fixed', () => {
+    expect(() => validateBugStatusTransition(
+      { status: 'Assigned' },
+      { status: 'Fixed' }
+    )).toThrow(/commits.*pipelineStatus|pipelineStatus.*commits/);
+  });
+
+  it('should accept Fixed with commits and pipelineStatus.prCreated', () => {
+    expect(() => validateBugStatusTransition(
+      { status: 'Assigned' },
+      {
+        status: 'Fixed',
+        commits: [{ hash: 'abc', message: 'fix: bug', date: '2026-01-01', author: 'dev' }],
+        pipelineStatus: { prCreated: { prUrl: 'https://github.com/org/repo/pull/5', prNumber: 5, date: '2026-01-01' } }
+      }
+    )).not.toThrow();
+  });
+
+  it('should reject Fixed with commits but no pipelineStatus', () => {
+    expect(() => validateBugStatusTransition(
+      { status: 'Assigned' },
+      {
+        status: 'Fixed',
+        commits: [{ hash: 'abc', message: 'fix: bug', date: '2026-01-01', author: 'dev' }]
+      }
+    )).toThrow(/pipelineStatus\.prCreated/);
+  });
 });
 
 describe('validateCommitsField', () => {
@@ -225,6 +313,40 @@ describe('appendCommitsToCard', () => {
   it('should handle card without commits', () => {
     const result = appendCommitsToCard({}, [{ hash: 'abc' }]);
     expect(result).toHaveLength(1);
+  });
+});
+
+describe('collectValidationIssues - pipelineStatus', () => {
+  it('should report missing pipelineStatus for To Validate', () => {
+    const card = {
+      status: 'In Progress',
+      title: 'Test', developer: 'dev_001', validator: 'stk_001',
+      epic: 'PLN-PCS-0001', sprint: 'PLN-SPR-0001',
+      devPoints: 2, businessPoints: 3,
+      acceptanceCriteriaStructured: [{ given: 'x', when: 'y', then: 'z' }],
+      startDate: '2026-01-01',
+      commits: [{ hash: 'abc', message: 'feat: test', date: '2026-01-01', author: 'dev' }]
+    };
+    const result = collectValidationIssues(card, { status: 'To Validate' }, 'task');
+    expect(result.valid).toBe(false);
+    expect(result.missingFields).toContain('pipelineStatus');
+    expect(result.errors.some(e => e.code === 'MISSING_PIPELINE_STATUS')).toBe(true);
+  });
+
+  it('should accept To Validate with valid pipelineStatus', () => {
+    const card = {
+      status: 'In Progress',
+      title: 'Test', developer: 'dev_001', validator: 'stk_001',
+      epic: 'PLN-PCS-0001', sprint: 'PLN-SPR-0001',
+      devPoints: 2, businessPoints: 3,
+      acceptanceCriteriaStructured: [{ given: 'x', when: 'y', then: 'z' }],
+      startDate: '2026-01-01',
+      commits: [{ hash: 'abc', message: 'feat: test', date: '2026-01-01', author: 'dev' }],
+      pipelineStatus: { prCreated: { prUrl: 'https://github.com/org/repo/pull/1', prNumber: 1, date: '2026-01-01' } }
+    };
+    const result = collectValidationIssues(card, { status: 'To Validate' }, 'task');
+    expect(result.valid).toBe(true);
+    expect(result.missingFields).toHaveLength(0);
   });
 });
 
