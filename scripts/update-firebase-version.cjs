@@ -12,10 +12,24 @@ const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
 
-// Get version from package.json
+// Get version from version.json (source of truth, written by update-version.cjs)
+const versionJsonPath = path.join(__dirname, '../version.json');
 const packageJsonPath = path.join(__dirname, '../package.json');
+
+if (!fs.existsSync(versionJsonPath)) {
+  console.error('❌ version.json not found. Run "npm run build:all" first.');
+  process.exit(1);
+}
+
+const versionData = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
+const version = versionData.version;
+
+// Cross-check with package.json
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-const version = packageJson.version;
+if (packageJson.version !== version) {
+  console.warn(`⚠️  VERSION MISMATCH: package.json=${packageJson.version}, version.json=${version}`);
+  console.warn(`   Using version.json as source of truth`);
+}
 
 /**
  * Reads PUBLIC_FIREBASE_DATABASE_URL from .env.prod (symlinked to active instance).
@@ -30,15 +44,10 @@ function getDatabaseUrl() {
   if (!match) {
     throw new Error('PUBLIC_FIREBASE_DATABASE_URL not found in .env.prod');
   }
-  // Firebase Admin SDK requires firebaseio.com format, not firebasedatabase.app
-  // Convert: https://proj-default-rtdb.region.firebasedatabase.app
-  //      to: https://proj-default-rtdb.firebaseio.com
-  const url = match[1].trim();
-  const regionMatch = url.match(/^(https:\/\/[^.]+)\.[^.]+\.firebasedatabase\.app\/?$/);
-  if (regionMatch) {
-    return `${regionMatch[1]}.firebaseio.com`;
-  }
-  return url;
+  // Use the URL as-is (firebasedatabase.app format includes region info)
+  // Previously converted to firebaseio.com, but that drops region and causes
+  // connection hangs for databases outside us-central1
+  return match[1].trim();
 }
 
 const DATABASE_URL = getDatabaseUrl();
@@ -117,7 +126,23 @@ async function updateVersion() {
   try {
     // Update version
     await database.ref('/appConfig/currentVersion').set(version);
-    console.log(`✅ Firebase version updated to ${version}`);
+
+    // Verify write (with 10s timeout to avoid hanging)
+    const verifyPromise = database.ref('/appConfig/currentVersion').once('value');
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Read-back verification timed out after 10s')), 10000)
+    );
+
+    try {
+      const readBack = await Promise.race([verifyPromise, timeoutPromise]);
+      if (readBack.val() !== version) {
+        console.error(`❌ VERIFICATION FAILED: wrote ${version}, read back ${readBack.val()}`);
+        process.exit(1);
+      }
+      console.log(`✅ Firebase version updated and verified: ${version}`);
+    } catch (verifyErr) {
+      console.warn(`⚠️  ${verifyErr.message}. Version was written but could not be verified.`);
+    }
 
     // Update deploy timestamp
     await database.ref('/appConfig/lastDeployedAt').set(new Date().toISOString());
@@ -136,4 +161,14 @@ async function updateVersion() {
   }
 }
 
-updateVersion();
+// Global timeout: if the whole operation hangs (e.g. wrong region in database URL),
+// exit with a warning after 15 seconds instead of blocking indefinitely
+const GLOBAL_TIMEOUT = setTimeout(() => {
+  console.error('❌ Operation timed out after 15s.');
+  console.error('   This usually means the database URL region is incorrect.');
+  console.error(`   Current URL: ${DATABASE_URL}`);
+  console.error('   Check PUBLIC_FIREBASE_DATABASE_URL in this instance\'s .env.prod');
+  process.exit(1);
+}, 15000);
+
+updateVersion().finally(() => clearTimeout(GLOBAL_TIMEOUT));

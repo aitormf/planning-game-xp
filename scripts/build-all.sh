@@ -59,6 +59,10 @@ if FORCE_BUILD=1 npm run update-version --prefix "$ROOT_DIR" 2>&1; then
 else
   echo "  ⚠️  Version bump failed, continuing with current version"
 fi
+
+# ── Generate changelog (once, after version bump) ──
+log "Generating changelog..."
+npm run generate-changelog --prefix "$ROOT_DIR" 2>&1 || echo "  ⚠️  Changelog generation failed"
 echo ""
 
 for INSTANCE in $INSTANCES; do

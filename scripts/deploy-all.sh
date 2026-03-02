@@ -149,6 +149,27 @@ else
   echo ""
 fi
 
+# ── Pre-deploy: verify version consistency ──
+VJ_VERSION=$(node -e "console.log(require('$ROOT_DIR/version.json').version)" 2>/dev/null || echo "")
+PJ_VERSION=$(node -e "console.log(require('$ROOT_DIR/package.json').version)" 2>/dev/null || echo "")
+
+if [ -n "$VJ_VERSION" ] && [ -n "$PJ_VERSION" ] && [ "$VJ_VERSION" != "$PJ_VERSION" ]; then
+  echo ""
+  echo "  ❌ VERSION MISMATCH: version.json=$VJ_VERSION ≠ package.json=$PJ_VERSION"
+  echo "  Run 'npm run build:all' to sync versions."
+  echo ""
+  exit 1
+fi
+
+# Check changelog includes current version
+if [ -n "$VJ_VERSION" ] && [ -f "$ROOT_DIR/CHANGELOG.md" ]; then
+  if ! grep -q "\[$VJ_VERSION\]" "$ROOT_DIR/CHANGELOG.md"; then
+    echo "  ⚠️  WARNING: CHANGELOG.md does not include version $VJ_VERSION"
+    echo "  Consider running 'npm run build:all' to regenerate."
+    echo ""
+  fi
+fi
+
 for INSTANCE in $INSTANCES; do
   CURRENT=$((CURRENT + 1))
   LOGFILE="/tmp/deploy-all-${INSTANCE}.log"

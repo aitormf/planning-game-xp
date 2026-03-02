@@ -1,42 +1,46 @@
 /**
- * Tests for update-firebase-version.cjs URL normalization logic.
+ * Tests for update-firebase-version.cjs URL handling logic.
+ *
+ * The script now passes database URLs through as-is (no normalization).
+ * Previously it converted firebasedatabase.app URLs to firebaseio.com,
+ * which dropped region info and caused connection hangs for non-US databases.
  */
 import { describe, it, expect } from 'vitest';
 
 /**
- * Replicate the URL normalization logic from update-firebase-version.cjs
+ * Replicate the URL pass-through logic from update-firebase-version.cjs
+ * (getDatabaseUrl just returns the URL trimmed, no conversion)
  */
-function normalizeDatabaseUrl(url) {
-  const regionMatch = url.match(/^(https:\/\/[^.]+)\.[^.]+\.firebasedatabase\.app\/?$/);
-  if (regionMatch) {
-    return `${regionMatch[1]}.firebaseio.com`;
-  }
-  return url;
+function getDatabaseUrl(url) {
+  return url.trim();
 }
 
-describe('normalizeDatabaseUrl', () => {
-  it('should convert europe-west1 firebasedatabase.app URL to firebaseio.com', () => {
-    const input = 'https://pgamexp-demo-default-rtdb.europe-west1.firebasedatabase.app';
-    expect(normalizeDatabaseUrl(input)).toBe('https://pgamexp-demo-default-rtdb.firebaseio.com');
+describe('getDatabaseUrl (pass-through)', () => {
+  it('should preserve europe-west1 firebasedatabase.app URL as-is', () => {
+    const input = 'https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app';
+    expect(getDatabaseUrl(input)).toBe(input);
   });
 
-  it('should convert us-central1 firebasedatabase.app URL to firebaseio.com', () => {
+  it('should preserve us-central1 firebasedatabase.app URL as-is', () => {
     const input = 'https://my-project-default-rtdb.us-central1.firebasedatabase.app';
-    expect(normalizeDatabaseUrl(input)).toBe('https://my-project-default-rtdb.firebaseio.com');
+    expect(getDatabaseUrl(input)).toBe(input);
   });
 
-  it('should handle trailing slash', () => {
-    const input = 'https://pgamexp-demo-default-rtdb.europe-west1.firebasedatabase.app/';
-    expect(normalizeDatabaseUrl(input)).toBe('https://pgamexp-demo-default-rtdb.firebaseio.com');
+  it('should preserve firebaseio.com URL as-is', () => {
+    const input = 'https://pgamexp-demo-default-rtdb.firebaseio.com';
+    expect(getDatabaseUrl(input)).toBe(input);
   });
 
-  it('should leave firebaseio.com URLs unchanged', () => {
-    const input = 'https://planning-gamexp-default-rtdb.firebaseio.com';
-    expect(normalizeDatabaseUrl(input)).toBe(input);
+  it('should trim whitespace from URL', () => {
+    const input = '  https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app  ';
+    expect(getDatabaseUrl(input)).toBe('https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app');
   });
 
-  it('should leave already-correct URLs unchanged', () => {
-    const input = 'https://planning-game-xp-default-rtdb.firebaseio.com';
-    expect(normalizeDatabaseUrl(input)).toBe(input);
+  it('should not convert between URL formats', () => {
+    const appUrl = 'https://planning-gamexp-default-rtdb.europe-west1.firebasedatabase.app';
+    const ioUrl = 'https://planning-gamexp-default-rtdb.firebaseio.com';
+    // Each format should remain unchanged
+    expect(getDatabaseUrl(appUrl)).toBe(appUrl);
+    expect(getDatabaseUrl(ioUrl)).toBe(ioUrl);
   });
 });
