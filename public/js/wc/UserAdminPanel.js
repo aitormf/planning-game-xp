@@ -531,7 +531,7 @@ class UserAdminPanel extends LitElement {
       const deleteUserFn = httpsCallable(functions, 'deleteUser');
       await deleteUserFn({ email: user.email });
 
-      await this._loadUsers();
+      this.users = this.users.filter((u) => u.email !== user.email);
       this._notify(`User "${user.name}" deleted successfully`, 'success');
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -553,7 +553,11 @@ class UserAdminPanel extends LitElement {
         projectId,
       });
 
-      await this._loadUsers();
+      this.users = this.users.map((u) => {
+        if (u.email !== user.email) return u;
+        const { [projectId]: _, ...remainingProjects } = u.projects || {};
+        return { ...u, projects: remainingProjects };
+      });
       this._notify(`Project "${projectId}" removed from user`, 'success');
     } catch (error) {
       console.error('Error removing project from user:', error);
