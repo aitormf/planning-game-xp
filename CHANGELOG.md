@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Prevent saving overlay from getting stuck on errors (#78)
+
+## [1.158.4] - 2026-03-02
+
+### Fixed
+
 - Resolve demo instance errors (overlay, push, storage, firestore, filters) (#77)
 
 ## [1.158.3] - 2026-03-02
