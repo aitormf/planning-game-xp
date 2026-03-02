@@ -3,6 +3,59 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Fixed
+
+- Add version/changelog safeguards and fix Firebase RTDB URL handling
+
+## [1.156.0] - 2026-03-02
+
+### Added
+
+- Add login history frontend and admin UI
+- Add login history backend support
+- Add seed script for demo project data
+
+### Changed
+
+- Extract IA and admin handlers from index.js
+- Extract MS Graph and weekly-email from index.js
+- Extract auth-provisioning handlers from index.js
+- Extract push-notification and demo-cleanup handlers
+- Extract shared utilities from functions/index.js
+
+### Fixed
+
+- Grant demo users access to shared TaskFlow project
+
+## [1.155.1] - 2026-03-01
+
+### Fixed
+
+- Guard onPortalBugResolved behind DEMO_MODE check
+- Read DEMO_MODE from .env file as fallback
+- Skip defineSecret calls in DEMO_MODE
+- Move exports._test inside DEMO_MODE guard block
+- Guard exports._test behind DEMO_MODE check
+- Move DEMO_MODE declaration before first usage in functions
+- Skip secret-dependent functions in DEMO_MODE and normalize DB URL
+
+## [1.155.0] - 2026-03-01
+
+### Added
+
+- Add scheduled cleanup for inactive demo users
+- Auto-provision demo users with sample project and data on signup
+- Add demo mode limits for card and project creation
+- Add demo mode banner and feature-cap service (#64)
+
+## [1.154.0] - 2026-03-01
+
+### Added
+
+- Add demo-specific security rules and DEMO_MODE auto-provision (#63)
+
 ## [1.153.6] - 2026-03-01
 
 ### Fixed
