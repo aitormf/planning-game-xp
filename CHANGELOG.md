@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Sync /data/projectsByUser when admin assigns/removes user projects (#80)
+
+## [1.158.6] - 2026-03-02
+
+### Fixed
+
 - Block project and docs write operations in demo mode (#79)
 
 ## [1.158.5] - 2026-03-02
