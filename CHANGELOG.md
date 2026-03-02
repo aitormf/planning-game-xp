@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Modal overflow clipping MultiSelect and modalService.confirm error
+
+## [1.158.0] - 2026-03-02
+
 ### Added
 
 - Render user form in modal overlay instead of inline
