@@ -1560,13 +1560,14 @@ const notification = document.createElement('slide-notification');
   }
 
   /**
-   * Configura el modo de vista basado en los permisos del usuario
+   * Sets user role based on admin status (SuperAdmin or project admin).
+   * All authenticated users see all tabs; isResponsable determines admin-level permissions.
    */
   async setUserViewMode() {
     try {
       const userEmail = document.body.dataset.userEmail;
 
-      // SuperAdmin always gets management mode
+      // SuperAdmin always gets admin role
       const isSuperAdmin = await this._checkIsSuperAdmin();
       if (isSuperAdmin) {
         if (typeof window.setUserRole === 'function') {
@@ -1578,19 +1579,17 @@ const notification = document.createElement('slide-notification');
       const globalData = this.globalDataManager.getSimpleDataForCard();
       const userAdminEmails = globalData.userAdminEmails || [];
 
-      // FALLBACK: Si no hay userAdminEmails, intentar obtenerlos directamente
       let finalAdminEmails = userAdminEmails;
       if (!userAdminEmails || userAdminEmails.length === 0) {
         finalAdminEmails = window.userAdminEmails || [];
       }
-      // Determinar si el usuario es responsable (está en la lista de admins)
+
       const isResponsable = finalAdminEmails.includes(userEmail);
-      // Configurar el modo de vista si la función está disponible (página adminproject)
       if (typeof window.setUserRole === 'function') {
         window.setUserRole({ isResponsable });
       }
     } catch (error) {
-      // Silently ignore errors in view mode setup
+      // Silently ignore errors in role setup
     }
   }
 

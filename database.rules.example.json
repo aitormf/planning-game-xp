@@ -80,6 +80,18 @@
         }
       }
     },
+    "appMetadata": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.isAppAdmin === true"
+    },
+    "appDownloads": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "appDownloadEvents": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
     "history": {
       ".read": "auth != null",
       ".write": "auth != null",

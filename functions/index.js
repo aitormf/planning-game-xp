@@ -547,7 +547,7 @@ exports.onTaskStatusValidation = onValueUpdated({
     { projectId, section, cardId },
     event.data.before.val(),
     event.data.after.val(),
-    { db: getDatabase(), logger }
+    { db: getDatabase(), logger, auth: admin.auth() }
   );
 });
 

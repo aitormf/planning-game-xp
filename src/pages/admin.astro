@@ -262,6 +262,12 @@ import Layout from '../layouts/Layout.astro';
     <a href="/" class="link-primary">Volver al inicio</a>
   </div>
 
+  <div id="demoBlocked" class="access-denied" style="display: none;">
+    <h1>No disponible en demo</h1>
+    <p>La consola de administración no está disponible en la instancia de demostración.</p>
+    <a href="/" class="link-primary">Volver al inicio</a>
+  </div>
+
   <div id="loadingAuth" style="padding: 2rem; text-align: center;">
     <p>Verificando permisos...</p>
   </div>
@@ -1445,6 +1451,7 @@ import Layout from '../layouts/Layout.astro';
   import '/js/wc/ThemeEditor.js';
   import '/js/wc/UserAdminPanel.js';
   import { holidays, HOURS_PER_WORKDAY } from '/js/config/holidays-config.js';
+  import { demoModeService } from '/js/services/demo-mode-service.js';
 
   const auth = getAuth(app);
   const db = getDatabase(app);
@@ -1512,6 +1519,14 @@ import Layout from '../layouts/Layout.astro';
     if (userEmail !== envSuperAdmin) {
       loadingEl.style.display = 'none';
       deniedEl.style.display = 'block';
+      return;
+    }
+
+    // Block admin console in demo mode
+    if (demoModeService.isDemo()) {
+      loadingEl.style.display = 'none';
+      const demoBlockEl = document.getElementById('demoBlocked');
+      if (demoBlockEl) demoBlockEl.style.display = 'block';
       return;
     }
 
