@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Optimistic UI update after user delete and project removal
+
+## [1.158.2] - 2026-03-02
+
+### Fixed
+
 - Implement inline confirmation modal for delete/remove actions
 
 ## [1.158.1] - 2026-03-02
