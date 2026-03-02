@@ -550,8 +550,7 @@ export const UserAdminPanelStyles = css`
   .modal-form {
     width: 550px;
     max-width: 95vw;
-    max-height: 90vh;
-    overflow-y: auto;
+    overflow: visible;
   }
 
   /* Responsive */
