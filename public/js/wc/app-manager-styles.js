@@ -471,6 +471,24 @@ export const AppManagerStyles = css`
     text-align: left;
   }
 
+  .metadata-warning {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    background: var(--status-warning-bg, #fff3cd);
+    border: 1px solid var(--color-warning, #ffc107);
+    border-radius: 6px;
+    color: var(--color-warning, #856404);
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .metadata-warning code {
+    background: rgba(0,0,0,0.05);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+  }
+
   /* App badges */
   .app-badge {
     display: inline-block;

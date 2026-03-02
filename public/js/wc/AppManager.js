@@ -34,7 +34,9 @@ export class AppManager extends LitElement {
       changelogError: { type: Boolean },
       selectedFile: { type: Object },
       // Beta access control (per-project)
-      canSeeBeta: { type: Boolean }
+      canSeeBeta: { type: Boolean },
+      // Metadata loading status
+      metadataLoadFailed: { type: Boolean }
     };
   }
 
@@ -74,6 +76,9 @@ export class AppManager extends LitElement {
     this.selectedFile = null;
     // Beta access (per-project)
     this.canSeeBeta = false;
+    // Metadata loading status
+    this.metadataLoadFailed = false;
+    this._metadataLoadFailed = false;
   }
 
   connectedCallback() {
@@ -246,6 +251,7 @@ uploader.requestUpdate();
     try {
       // Load app metadata first
       await this._loadAppMetadata();
+      this.metadataLoadFailed = this._metadataLoadFailed;
 
       // Import Firebase storage and functions from the app's firebase config
       const { storage } = await import('../../firebase-config.js');
@@ -531,8 +537,11 @@ this.showMessage('Error al descargar el archivo', 'error');
     try {
       const metadataSnap = await get(ref(database, `/appMetadata/${this.projectId}`));
       this.appMetadata = metadataSnap.exists() ? metadataSnap.val() : {};
+      this._metadataLoadFailed = Object.keys(this.appMetadata).length === 0;
     } catch (error) {
+      console.warn(`[AppManager] Failed to load app metadata for project ${this.projectId}:`, error.message);
       this.appMetadata = {};
+      this._metadataLoadFailed = true;
     }
 
     // Subscribe to real-time updates
@@ -548,6 +557,11 @@ this.showMessage('Error al descargar el archivo', 'error');
 
     this._metadataUnsubscribe = onValue(ref(database, `/appMetadata/${this.projectId}`), (snapshot) => {
       this.appMetadata = snapshot.exists() ? snapshot.val() : {};
+      // Clear warning if metadata arrives via real-time update
+      if (Object.keys(this.appMetadata).length > 0) {
+        this._metadataLoadFailed = false;
+        this.metadataLoadFailed = false;
+      }
     });
   }
 
@@ -621,6 +635,13 @@ this.showMessage('Error al descargar el archivo', 'error');
 
     if (storedMetadata) {
       return storedMetadata;
+    }
+
+    // Log warning when metadata is missing for a file (helps diagnose beta display issues)
+    if (!this._metadataWarningsLogged) this._metadataWarningsLogged = new Set();
+    if (!this._metadataWarningsLogged.has(file.fileKey)) {
+      console.warn(`[AppManager] No metadata found for file "${file.name}" (key: ${file.fileKey}). Defaulting to type=release, status=approved.`);
+      this._metadataWarningsLogged.add(file.fileKey);
     }
 
     // Default metadata for legacy apps (retrocompatibility)
@@ -1896,6 +1917,12 @@ this.showMessage('No se pudo generar el link compartido', 'error');
         <div class="files-column">
           <div class="app-section">
             <h3 class="section-title">📂 Aplicaciones Disponibles</h3>
+            ${this.metadataLoadFailed && this.uploadedFiles.length > 0 ? html`
+              <div class="metadata-warning">
+                ⚠️ No se pudo cargar la metadata de las aplicaciones. Las versiones pueden mostrarse incorrectamente (ej: Beta como Release).
+                ${this.isAppAdmin ? html`<br>Revisa la ruta <code>/appMetadata/${this.projectId}</code> en la base de datos.` : ''}
+              </div>
+            ` : ''}
             <div class="files-list">
           ${this.loading ? html`
             <div class="loading">
