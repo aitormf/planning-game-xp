@@ -224,6 +224,19 @@ async function handleTaskStatusValidation(params, beforeData, afterData, deps) {
     return null;
   }
 
+  // Skip validation for CF revert writes (prevent infinite loops).
+  // When the CF reverts a change, it sets _validationReverted=true.
+  // That revert write triggers this function again — without this guard,
+  // the revert itself would fail validation and trigger another revert, ad infinitum.
+  if (afterData._validationReverted) {
+    logger.info('onTaskStatusValidation: Skipping validation for revert write', {
+      projectId,
+      cardId,
+      revertedTo: afterStatus
+    });
+    return null;
+  }
+
   logger.info('onTaskStatusValidation: Status change detected', {
     projectId,
     cardId,

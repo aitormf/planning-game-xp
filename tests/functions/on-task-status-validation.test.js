@@ -463,6 +463,61 @@ describe('onTaskStatusValidation', () => {
       expect(mockDbOnce).not.toHaveBeenCalled();
     });
 
+    describe('Revert loop prevention', () => {
+      it('should skip validation when afterData has _validationReverted flag', async () => {
+        const afterData = {
+          status: 'To Validate',
+          title: 'Test Task',
+          developer: 'dev_001',
+          startDate: '2026-01-25',
+          endDate: '2026-01-30',
+          validator: 'stk_001',
+          _validationReverted: true,
+          _validationError: 'Some previous error'
+        };
+
+        const result = await handleTaskStatusValidation(
+          { projectId: 'Test', section: 'TASKS_Test', cardId: 'card1' },
+          { status: 'Done&Validated', endDate: '2026-01-30' },
+          afterData,
+          { db: mockDb, logger: mockLogger }
+        );
+
+        expect(result).toBeNull();
+        expect(mockDbSet).not.toHaveBeenCalled();
+      });
+
+      it('should still validate normal writes without _validationReverted flag', async () => {
+        mockDbOnce.mockResolvedValue({ val: () => ({}) });
+        mockDbSet.mockResolvedValue();
+
+        const afterData = {
+          status: 'To Validate',
+          endDate: '2026-01-30',
+          title: 'Test Task',
+          developer: 'dev_001',
+          startDate: '2026-01-25',
+          validator: 'stk_001',
+          updatedBy: 'user@example.com'
+        };
+
+        const result = await handleTaskStatusValidation(
+          { projectId: 'Test', section: 'TASKS_Test', cardId: 'card1' },
+          { status: 'In Progress', endDate: '2026-01-30' },
+          afterData,
+          { db: mockDb, logger: mockLogger }
+        );
+
+        // endDate same as before -> should fail
+        expect(result).toEqual({
+          reverted: true,
+          error: expect.objectContaining({
+            type: 'missing-end-date-update'
+          })
+        });
+      });
+    });
+
     describe('Pausado status', () => {
       it('should allow transition from In Progress to Pausado when startDate exists', async () => {
         const afterData = {
