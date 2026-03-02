@@ -125,12 +125,14 @@ function validateLeavingToDo(afterData, toStatus) {
 }
 
 /**
- * Validate permission for "Done"/"Done&Validated" transition
+ * Validate permission for "Done"/"Done&Validated" transition.
+ * Allowed actors: validator, co-validator, SuperAdmin (isAppAdmin claim), system/MCP.
  * @param {Object} afterData - Card data after the change
  * @param {Object} stakeholdersData - Stakeholders data from Firebase
- * @returns {Object|null} - Error object or null if valid
+ * @param {Object} [options] - Optional { auth } for SuperAdmin check
+ * @returns {Promise<Object|null>} - Error object or null if valid
  */
-function validateDoneTransitionPermission(afterData, stakeholdersData) {
+async function validateDoneTransitionPermission(afterData, stakeholdersData, options = {}) {
   const { validator: validatorId, coValidator: coValidatorId, updatedBy, status: afterStatus } = afterData;
 
   // Skip validation for system users
@@ -141,16 +143,30 @@ function validateDoneTransitionPermission(afterData, stakeholdersData) {
   const isValidator = isEmailMatchingStakeholder(updatedBy, validatorId, stakeholdersData);
   const isCoValidator = coValidatorId && isEmailMatchingStakeholder(updatedBy, coValidatorId, stakeholdersData);
 
-  if (!isValidator && !isCoValidator) {
-    return {
-      type: 'permission-denied',
-      message: `Cannot change to "${afterStatus}": only the validator or co-validator can mark tasks as done`,
-      updatedBy,
-      validatorId,
-      coValidatorId
-    };
+  if (isValidator || isCoValidator) {
+    return null;
   }
-  return null;
+
+  // Check if user is SuperAdmin (isAppAdmin custom claim)
+  if (options.auth && updatedBy.includes('@')) {
+    try {
+      const userRecord = await options.auth.getUserByEmail(updatedBy);
+      const claims = userRecord.customClaims || {};
+      if (claims.isAppAdmin === true) {
+        return null;
+      }
+    } catch (_) {
+      // User not found in Auth — continue to reject
+    }
+  }
+
+  return {
+    type: 'permission-denied',
+    message: `Cannot change to "${afterStatus}": only the validator, co-validator, or SuperAdmin can mark tasks as done`,
+    updatedBy,
+    validatorId,
+    coValidatorId
+  };
 }
 
 /**
@@ -204,12 +220,12 @@ function validateStatusDateTransition(beforeData, afterData, afterStatus) {
  * @param {Object} params - { projectId, section, cardId }
  * @param {Object} beforeData - Card data before the change
  * @param {Object} afterData - Card data after the change
- * @param {Object} deps - Dependencies { db, logger }
+ * @param {Object} deps - Dependencies { db, logger, auth }
  * @returns {Object|null} - Result or null if no action needed
  */
 async function handleTaskStatusValidation(params, beforeData, afterData, deps) {
   const { projectId, section, cardId } = params;
-  const { db, logger } = deps;
+  const { db, logger, auth } = deps;
 
   // Only process tasks
   if (!section.toLowerCase().startsWith('tasks_')) {
@@ -271,7 +287,7 @@ async function handleTaskStatusValidation(params, beforeData, afterData, deps) {
     if (updatedBy && !updatedBy.includes('mcp') && !updatedBy.includes('system')) {
       const stakeholdersSnap = await db.ref('/data/stakeholders').once('value');
       const stakeholdersData = stakeholdersSnap.val() || {};
-      validationError = validateDoneTransitionPermission(afterData, stakeholdersData);
+      validationError = await validateDoneTransitionPermission(afterData, stakeholdersData, { auth });
     }
   }
 

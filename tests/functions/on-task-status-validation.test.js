@@ -442,6 +442,77 @@ describe('onTaskStatusValidation', () => {
       });
     });
 
+    it('should allow SuperAdmin (isAppAdmin claim) to change status to Done&Validated', async () => {
+      mockDbOnce.mockResolvedValue({
+        val: () => ({
+          stk_001: { email: 'validator@example.com', name: 'Validator' }
+        })
+      });
+
+      const mockAuth = {
+        getUserByEmail: vi.fn().mockResolvedValue({
+          customClaims: { isAppAdmin: true, allowed: true }
+        })
+      };
+
+      const afterData = {
+        status: 'Done&Validated',
+        title: 'Test Task',
+        developer: 'dev_001',
+        startDate: '2026-01-25',
+        validator: 'stk_001',
+        updatedBy: 'admin@example.com' // Not the validator, but is SuperAdmin
+      };
+
+      const result = await handleTaskStatusValidation(
+        { projectId: 'Test', section: 'TASKS_Test', cardId: 'card1' },
+        { status: 'To Validate' },
+        afterData,
+        { db: mockDb, logger: mockLogger, auth: mockAuth }
+      );
+
+      expect(result).toBeNull();
+      expect(mockAuth.getUserByEmail).toHaveBeenCalledWith('admin@example.com');
+    });
+
+    it('should reject non-validator non-admin changing status to Done&Validated', async () => {
+      mockDbOnce.mockResolvedValue({
+        val: () => ({
+          stk_001: { email: 'validator@example.com', name: 'Validator' }
+        })
+      });
+      mockDbSet.mockResolvedValue();
+
+      const mockAuth = {
+        getUserByEmail: vi.fn().mockResolvedValue({
+          customClaims: { allowed: true } // NOT isAppAdmin
+        })
+      };
+
+      const afterData = {
+        status: 'Done&Validated',
+        title: 'Test Task',
+        developer: 'dev_001',
+        startDate: '2026-01-25',
+        validator: 'stk_001',
+        updatedBy: 'regular@example.com'
+      };
+
+      const result = await handleTaskStatusValidation(
+        { projectId: 'Test', section: 'TASKS_Test', cardId: 'card1' },
+        { status: 'To Validate' },
+        afterData,
+        { db: mockDb, logger: mockLogger, auth: mockAuth }
+      );
+
+      expect(result).toEqual({
+        reverted: true,
+        error: expect.objectContaining({
+          type: 'permission-denied'
+        })
+      });
+    });
+
     it('should skip validator check for MCP updates', async () => {
       const afterData = {
         status: 'Done',
