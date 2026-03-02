@@ -8,7 +8,8 @@
  */
 import { LitElement, html, nothing } from 'https://cdn.jsdelivr.net/npm/lit@3.0.2/+esm';
 import { UserAdminPanelStyles } from './user-admin-panel-styles.js';
-import { functions, database, ref, get, httpsCallable } from '/firebase-config.js';
+import { functions, database, ref, get, query, orderByChild, limitToLast, httpsCallable } from '/firebase-config.js';
+import { encodeEmailForFirebase } from '/js/utils/email-sanitizer.js';
 import './MultiSelect.js';
 
 class UserAdminPanel extends LitElement {
@@ -31,6 +32,10 @@ class UserAdminPanel extends LitElement {
       _permissionsUser: { type: Object, state: true },
       _permissionsProject: { type: String, state: true },
       _permissionsData: { type: Object, state: true },
+      _showLoginHistoryModal: { type: Boolean, state: true },
+      _loginHistoryUser: { type: Object, state: true },
+      _loginHistoryEntries: { type: Array, state: true },
+      _loginHistoryLoading: { type: Boolean, state: true },
     };
   }
 
@@ -52,6 +57,10 @@ class UserAdminPanel extends LitElement {
     this._permissionsUser = null;
     this._permissionsProject = '';
     this._permissionsData = { view: false, download: false, upload: false, edit: false, approve: false };
+    this._showLoginHistoryModal = false;
+    this._loginHistoryUser = null;
+    this._loginHistoryEntries = [];
+    this._loginHistoryLoading = false;
     this._projectsWithApps = new Set();
     this._resetForm();
   }
@@ -365,6 +374,107 @@ class UserAdminPanel extends LitElement {
     `;
   }
 
+  // ==================== LOGIN HISTORY ====================
+
+  async _openLoginHistory(user) {
+    this._loginHistoryUser = user;
+    this._loginHistoryEntries = [];
+    this._loginHistoryLoading = true;
+    this._showLoginHistoryModal = true;
+
+    try {
+      const encodedEmail = encodeEmailForFirebase(user.email.toLowerCase());
+      const historyRef = query(
+        ref(database, `/loginHistory/${encodedEmail}`),
+        orderByChild('timestamp'),
+        limitToLast(50)
+      );
+      const snapshot = await get(historyRef);
+      if (snapshot.exists()) {
+        const entries = [];
+        snapshot.forEach((child) => {
+          entries.push({ id: child.key, ...child.val() });
+        });
+        this._loginHistoryEntries = entries.reverse();
+      }
+    } catch (error) {
+      console.error('Error loading login history:', error);
+      this._notify('Error loading login history', 'error');
+    } finally {
+      this._loginHistoryLoading = false;
+    }
+  }
+
+  _closeLoginHistory() {
+    this._showLoginHistoryModal = false;
+    this._loginHistoryUser = null;
+    this._loginHistoryEntries = [];
+  }
+
+  _formatLoginDate(isoString) {
+    if (!isoString) return '\u2014';
+    const date = new Date(isoString);
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  _getLoginTypeBadge(loginType) {
+    switch (loginType) {
+      case 'oauth': return 'OAuth';
+      case 'email': return 'Email';
+      case 'session-restore': return 'Session';
+      case 'first-login': return 'First Login';
+      default: return loginType || 'Unknown';
+    }
+  }
+
+  _renderLoginHistoryModal() {
+    if (!this._showLoginHistoryModal || !this._loginHistoryUser) return nothing;
+
+    return html`
+      <div class="modal-overlay" @click=${this._closeLoginHistory}>
+        <div class="modal-content modal-wide" @click=${(e) => e.stopPropagation()}>
+          <h4 class="modal-title">
+            Login History: ${this._loginHistoryUser.name} (${this._loginHistoryUser.email})
+          </h4>
+          ${this._loginHistoryLoading
+            ? html`<div class="loading-message">Loading login history...</div>`
+            : this._loginHistoryEntries.length === 0
+              ? html`<div class="empty-message">No login history found</div>`
+              : html`
+                <div class="table-container login-history-list">
+                  <table class="entity-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Provider</th>
+                        <th>User Agent</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${this._loginHistoryEntries.map((entry) => html`
+                        <tr>
+                          <td>${this._formatLoginDate(entry.timestamp)}</td>
+                          <td><span class="badge badge-login-type">${this._getLoginTypeBadge(entry.loginType)}</span></td>
+                          <td>${entry.provider || '\u2014'}</td>
+                          <td class="col-ua" title="${entry.userAgent || ''}">${(entry.userAgent || '').substring(0, 60)}${(entry.userAgent || '').length > 60 ? '...' : ''}</td>
+                        </tr>
+                      `)}
+                    </tbody>
+                  </table>
+                </div>
+              `}
+          <div class="form-actions">
+            <button class="btn btn-secondary" @click=${this._closeLoginHistory}>Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   // ==================== USER OPERATIONS ====================
 
   async _deleteUser(user) {
@@ -479,6 +589,7 @@ class UserAdminPanel extends LitElement {
         ${this._showForm ? this._renderForm() : nothing}
         ${this._renderTable(filteredUsers)}
         ${this._renderAppPermissionsModal()}
+        ${this._renderLoginHistoryModal()}
       </div>
     `;
   }
@@ -646,6 +757,7 @@ class UserAdminPanel extends LitElement {
               <th class="col-id">Stk ID</th>
               <th class="col-projects">Projects</th>
               <th>Auth Status</th>
+              <th class="col-lastlogin">Last Login</th>
               <th class="col-actions">Actions</th>
             </tr>
           </thead>
@@ -699,6 +811,15 @@ class UserAdminPanel extends LitElement {
           >
             ${this._getAuthStatusLabel(authStatus)}
           </span>
+        </td>
+        <td class="col-lastlogin">
+          <button
+            class="btn-link"
+            @click=${() => this._openLoginHistory(user)}
+            title="View login history"
+          >
+            ${user.lastLoginAt ? this._formatLoginDate(user.lastLoginAt) : '\u2014'}
+          </button>
         </td>
         <td class="col-actions">
           <div class="actions-cell">

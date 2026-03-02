@@ -574,5 +574,62 @@ export const UserAdminPanelStyles = css`
     .entity-table td {
       padding: 0.4rem 0.5rem;
     }
+
+    .col-lastlogin {
+      display: none;
+    }
+  }
+
+  /* Last Login column */
+  .col-lastlogin {
+    white-space: nowrap;
+    min-width: 120px;
+  }
+
+  .btn-link {
+    background: none;
+    border: none;
+    color: var(--color-primary, #0066cc);
+    cursor: pointer;
+    padding: 0;
+    font-size: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .btn-link:hover {
+    color: var(--color-primary-dark, #004499);
+  }
+
+  /* Login History Modal */
+  .modal-wide {
+    max-width: 750px;
+    width: 95vw;
+  }
+
+  .login-history-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .login-history-list .entity-table {
+    font-size: 0.85rem;
+  }
+
+  .col-ua {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary, #666);
+  }
+
+  .badge-login-type {
+    background: var(--color-bg-tertiary, #e8e8e8);
+    color: var(--color-text-primary, #333);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
   }
 `;
