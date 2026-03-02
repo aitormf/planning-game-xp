@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Implement inline confirmation modal for delete/remove actions
+
+## [1.158.1] - 2026-03-02
+
+### Fixed
+
 - Modal overflow clipping MultiSelect and modalService.confirm error
 
 ## [1.158.0] - 2026-03-02
