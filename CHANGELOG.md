@@ -5,6 +5,16 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Reorder build pipeline and add post-commit checklist hook (#72)
+
+### Fixed
+
+- Import modalService instead of using undefined window.modalService (#71)
+
+## [1.156.1] - 2026-03-02
+
 ### Fixed
 
 - Add version/changelog safeguards and fix Firebase RTDB URL handling
