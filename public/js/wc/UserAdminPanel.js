@@ -10,7 +10,6 @@ import { LitElement, html, nothing } from 'https://cdn.jsdelivr.net/npm/lit@3.0.
 import { UserAdminPanelStyles } from './user-admin-panel-styles.js';
 import { functions, database, ref, get, query, orderByChild, limitToLast, httpsCallable } from '/firebase-config.js';
 import { encodeEmailForFirebase } from '/js/utils/email-sanitizer.js';
-import { modalService } from '../services/modal-service.js';
 import './MultiSelect.js';
 
 class UserAdminPanel extends LitElement {
@@ -37,6 +36,9 @@ class UserAdminPanel extends LitElement {
       _loginHistoryUser: { type: Object, state: true },
       _loginHistoryEntries: { type: Array, state: true },
       _loginHistoryLoading: { type: Boolean, state: true },
+      _confirmTitle: { type: String, state: true },
+      _confirmMessage: { type: String, state: true },
+      _showConfirmModal: { type: Boolean, state: true },
     };
   }
 
@@ -63,6 +65,10 @@ class UserAdminPanel extends LitElement {
     this._loginHistoryEntries = [];
     this._loginHistoryLoading = false;
     this._projectsWithApps = new Set();
+    this._showConfirmModal = false;
+    this._confirmTitle = '';
+    this._confirmMessage = '';
+    this._confirmResolve = null;
     this._resetForm();
   }
 
@@ -476,13 +482,49 @@ class UserAdminPanel extends LitElement {
     `;
   }
 
+  // ==================== CONFIRMATION ====================
+
+  _confirm(title, message) {
+    this._confirmTitle = title;
+    this._confirmMessage = message;
+    this._showConfirmModal = true;
+    return new Promise((resolve) => {
+      this._confirmResolve = resolve;
+    });
+  }
+
+  _resolveConfirm(value) {
+    this._showConfirmModal = false;
+    if (this._confirmResolve) {
+      this._confirmResolve(value);
+      this._confirmResolve = null;
+    }
+  }
+
+  _renderConfirmModal() {
+    if (!this._showConfirmModal) return nothing;
+
+    return html`
+      <div class="modal-overlay">
+        <div class="modal-content" @click=${(e) => e.stopPropagation()}>
+          <h4 class="modal-title">${this._confirmTitle}</h4>
+          <p class="confirm-message">${this._confirmMessage}</p>
+          <div class="form-actions">
+            <button class="btn btn-secondary" @click=${() => this._resolveConfirm(false)}>Cancel</button>
+            <button class="btn btn-danger" @click=${() => this._resolveConfirm(true)}>Confirm</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   // ==================== USER OPERATIONS ====================
 
   async _deleteUser(user) {
-    const confirmed = await modalService.createConfirmationModal({
-      title: 'Delete user',
-      message: `Are you sure you want to delete "${user.name}" (${user.email})? This will remove all project assignments and revoke permissions.`,
-    });
+    const confirmed = await this._confirm(
+      'Delete user',
+      `Are you sure you want to delete "${user.name}" (${user.email})? This will remove all project assignments and revoke permissions.`
+    );
     if (!confirmed) return;
 
     try {
@@ -498,10 +540,10 @@ class UserAdminPanel extends LitElement {
   }
 
   async _removeProject(user, projectId) {
-    const confirmed = await modalService.createConfirmationModal({
-      title: 'Remove project assignment',
-      message: `Remove "${projectId}" from user "${user.name}" (${user.email})?`,
-    });
+    const confirmed = await this._confirm(
+      'Remove project assignment',
+      `Remove "${projectId}" from user "${user.name}" (${user.email})?`
+    );
     if (!confirmed) return;
 
     try {
@@ -591,6 +633,7 @@ class UserAdminPanel extends LitElement {
         ${this._renderAppPermissionsModal()}
         ${this._renderLoginHistoryModal()}
         ${this._showForm ? this._renderFormModal() : nothing}
+        ${this._renderConfirmModal()}
       </div>
     `;
   }
