@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Block project and docs write operations in demo mode (#79)
+
+## [1.158.5] - 2026-03-02
+
+### Fixed
+
 - Prevent saving overlay from getting stuck on errors (#78)
 
 ## [1.158.4] - 2026-03-02
