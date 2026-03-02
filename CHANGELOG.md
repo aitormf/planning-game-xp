@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Resolve demo instance errors (overlay, push, storage, firestore, filters) (#77)
+
+## [1.158.3] - 2026-03-02
+
+### Fixed
+
 - Optimistic UI update after user delete and project removal
 
 ## [1.158.2] - 2026-03-02
