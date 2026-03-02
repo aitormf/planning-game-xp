@@ -8,32 +8,29 @@ export class PermissionService {
   constructor() {
     this.currentUser = null;
     this.userRole = null;
-    this.viewMode = 'consultation';
     this.permissionCache = new Map();
     this.listeners = new Set();
     this.setupEventListeners();
   }
 
   /**
-   * Inicializa el servicio con la información del usuario
+   * Initializes the service with user information
+   * @param {Object} user - Current user object with email
+   * @param {Object} userRole - User role with isResponsable flag
+   * @param {string} _viewMode - DEPRECATED: kept for backward compatibility, ignored
    */
-  init(user, userRole, viewMode = 'consultation') {
+  init(user, userRole, _viewMode) {
     this.currentUser = user;
     this.userRole = userRole;
-    this.viewMode = viewMode;
     this.clearCache();
     this.notifyListeners();
   }
 
   /**
-   * Actualiza el modo de vista
+   * @deprecated viewMode no longer used. Kept for backward compatibility.
    */
-  setViewMode(mode) {
-    if (this.viewMode !== mode) {
-      this.viewMode = mode;
-      this.clearCache();
-      this.notifyListeners();
-    }
+  setViewMode(_mode) {
+    // No-op: viewMode concept removed
   }
 
   /**
@@ -91,147 +88,68 @@ export class PermissionService {
   }
 
   /**
-   * Permisos específicos para bugs
+   * Bug permissions: all users can create/edit, admins can delete any, owners can delete own
    */
   getBugPermissions(cardData, { isNewCard, isOwner, isAdmin }) {
-    const basePermissions = {
-      canView: true,
-      canEdit: false,
-      canSave: false,
-      canDelete: false,
-      canCreate: true // Todos pueden crear bugs
-    };
-
-    if (isNewCard) {
-      return {
-        ...basePermissions,
-        canEdit: true,
-        canSave: true
-      };
-    }
-
-    // En modo gestión, Admin puede hacer todo
-    if (isAdmin && this.viewMode === 'management') {
-      return {
-        ...basePermissions,
-        canEdit: true,
-        canSave: true,
-        canDelete: true
-      };
-    }
-
-    // En modo consulta (o usuario normal): puede editar cualquier bug, pero solo borrar los suyos
     return {
-      ...basePermissions,
+      canView: true,
       canEdit: true,
       canSave: true,
-      canDelete: isOwner
+      canDelete: isAdmin || isOwner,
+      canCreate: true
     };
   }
 
   /**
-   * Permisos específicos para tareas
+   * Task permissions: all users can create/edit, only admins can delete
    */
   getTaskPermissions(cardData, { isNewCard, isOwner, isAdmin }) {
-    const basePermissions = {
+    return {
       canView: true,
-      canEdit: false,
-      canSave: false,
-      canDelete: false,
-      canCreate: false
+      canEdit: true,
+      canSave: true,
+      canDelete: isAdmin,
+      canCreate: true
     };
-
-    // En modo gestión, Admin puede hacer todo
-    if (isAdmin && this.viewMode === 'management') {
-      return {
-        ...basePermissions,
-        canEdit: true,
-        canSave: true,
-        canDelete: true,
-        canCreate: true
-      };
-    }
-
-    // En modo consulta, solo puede ver (incluso Admin)
-    return basePermissions;
   }
 
   /**
-   * Permisos específicos para propuestas
+   * Proposal permissions: owners can edit/delete own, admins can edit/delete all
    */
   getProposalPermissions(cardData, { isNewCard, isOwner, isAdmin }) {
-    const basePermissions = {
-      canView: true,
-      canEdit: false,
-      canSave: false,
-      canDelete: false,
-      canCreate: true // Todos pueden crear propuestas
-    };
-
-    if (isNewCard) {
-      return {
-        ...basePermissions,
-        canEdit: true,
-        canSave: true
-      };
-    }
-
-    // En modo gestión, Admin puede hacer todo
-    if (isAdmin && this.viewMode === 'management') {
-      return {
-        ...basePermissions,
-        canEdit: true,
-        canSave: true,
-        canDelete: true
-      };
-    }
-
-    // En modo consulta: usuarios pueden editar sus propias propuestas (incluso Admin)
+    const canEdit = isAdmin || isOwner || isNewCard;
     return {
-      ...basePermissions,
-      canEdit: isOwner,
-      canSave: isOwner,
-      canDelete: isOwner
+      canView: true,
+      canEdit,
+      canSave: canEdit,
+      canDelete: isAdmin || isOwner,
+      canCreate: true
     };
   }
 
   /**
-   * Permisos específicos para épicas
+   * Epic permissions: admin only for create/edit/delete
    */
   getEpicPermissions(cardData, { isNewCard, isOwner, isAdmin }) {
-    const basePermissions = {
+    return {
       canView: true,
-      canEdit: false,
-      canSave: false,
-      canDelete: false,
-      canCreate: false
+      canEdit: isAdmin,
+      canSave: isAdmin,
+      canDelete: isAdmin,
+      canCreate: isAdmin
     };
-
-    // En modo gestión, Admin puede hacer todo
-    if (isAdmin && this.viewMode === 'management') {
-      return {
-        ...basePermissions,
-        canEdit: true,
-        canSave: true,
-        canDelete: true,
-        canCreate: true
-      };
-    }
-
-    // En modo consulta, solo puede ver (incluso Admin)
-    return basePermissions;
   }
 
   /**
-   * Permisos por defecto
+   * Default permissions: admin only
    */
   getDefaultPermissions(cardData, { isNewCard, isOwner, isAdmin }) {
     return {
       canView: true,
-      canEdit: isAdmin && this.viewMode === 'management',
-      canSave: isAdmin && this.viewMode === 'management',
-      canDelete: isAdmin && this.viewMode === 'management',
-      canCreate: isAdmin && this.viewMode === 'management'
+      canEdit: isAdmin,
+      canSave: isAdmin,
+      canDelete: isAdmin,
+      canCreate: isAdmin
     };
   }
 
@@ -298,7 +216,7 @@ export class PermissionService {
     const cardId = cardData.cardId || 'new';
     const createdBy = cardData.createdBy || 'none';
     
-    return `${userId}:${cardType}:${cardId}:${createdBy}:${this.viewMode}:${this.userRole?.isResponsable}`;
+    return `${userId}:${cardType}:${cardId}:${createdBy}:${this.userRole?.isResponsable}`;
   }
 
   /**
@@ -330,8 +248,7 @@ export class PermissionService {
       try {
         listener({
           user: this.currentUser,
-          userRole: this.userRole,
-          viewMode: this.viewMode
+          userRole: this.userRole
         });
       } catch (error) {
         console.error('Error notifying permission listener:', error);
@@ -418,16 +335,14 @@ try {
    * @returns {Object} - Permisos de QA
    */
   checkQAPermissions(cardId, userEmail, createdBy) {
-    // Lógica similar a otras funciones de permisos
     const isOwner = createdBy === userEmail;
     const isAdmin = this.isAdmin();
-    const canEditMode = this.viewMode !== 'consultation';
 
     return {
       canView: true,
-      canEdit: isAdmin || (canEditMode && isOwner),
-      canDelete: isAdmin || (canEditMode && isOwner),
-      canAssign: isAdmin || canEditMode
+      canEdit: isAdmin || isOwner,
+      canDelete: isAdmin || isOwner,
+      canAssign: true
     };
   }
 
@@ -439,15 +354,13 @@ try {
    * @returns {Object} - Permisos generales
    */
   checkCardPermissions(cardId, cardType, userEmail) {
-    // Lógica general para cualquier tipo de tarjeta
     const isAdmin = this.isAdmin();
-    const canEditMode = this.viewMode !== 'consultation';
 
     return {
       canView: true,
-      canEdit: isAdmin || canEditMode,
+      canEdit: isAdmin,
       canDelete: isAdmin,
-      canAssign: isAdmin || canEditMode
+      canAssign: isAdmin
     };
   }
 
@@ -524,7 +437,6 @@ try {
       cacheSize: this.permissionCache.size,
       listenersCount: this.listeners.size,
       currentUser: this.currentUser?.email || 'none',
-      viewMode: this.viewMode,
       isAdmin: this.isAdmin()
     };
   }

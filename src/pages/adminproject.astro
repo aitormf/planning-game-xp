@@ -20,12 +20,6 @@ import Layout from '../layouts/Layout.astro';
       <button id="appTab" data-section="app" class="tablinks app-tab" style="display:none;">App</button>
       <button id="trashTab" data-section="trash" class="tablinks trash-tab" style="display:none;">🗑️</button>
     </div>
-    <div class="mode-switch" id="modeSwitchContainer" style="display: none;">
-      <select id="viewModeSelect" onchange="switchViewMode(this.value)">
-        <option value="management">👨‍💼 Gestión</option>
-        <option value="consultation">👁️ Consulta</option>
-      </select>
-    </div>
   </div>
 
   <!-- Message when no project is selected -->
@@ -217,8 +211,7 @@ import Layout from '../layouts/Layout.astro';
   /* Hide tabs and content when no project */
   body.no-project-selected .header-tabs,
   body.no-project-selected .tabcontent,
-  body.no-project-selected #yearSelector,
-  body.no-project-selected #modeSwitchContainer {
+  body.no-project-selected #yearSelector {
     display: none !important;
   }
 
@@ -322,264 +315,195 @@ import Layout from '../layouts/Layout.astro';
 </script>
 
 <script>
-  // Variables globales para el modo de vista
-  let currentViewMode = 'management';
+  // Variables globales para permisos
   let isResponsable = false;
   let currentUserRole = { isResponsable: false };
   let isYearReadOnly = false; // Para años anteriores en modo solo lectura
 
-  // Tabs configuration - synced with APP_CONSTANTS.MANAGEMENT_TABS and APP_CONSTANTS.CONSULTATION_TABS
-  const MANAGEMENT_TABS = ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa', 'adrs', 'devPlans', 'users', 'app', 'trash'];
-  const CONSULTATION_TABS = ['sprints', 'epics', 'proposals', 'devPlans', 'app'];
+  // All tabs visible for authenticated users. Users/trash only for SuperAdmin, app only if projectHasApps.
+  const ALL_TABS = ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa', 'adrs', 'devPlans'];
+  const ADMIN_ONLY_TABS = ['users', 'trash'];
   let projectHasApps = false; // Controls App tab visibility
 
-  // Función para cambiar modo de vista
-  window.switchViewMode = function(mode) {
-    currentViewMode = mode;
-    window.currentViewMode = mode; // Hacer accesible globalmente
-
-    const visibleTabs = mode === 'consultation' ? CONSULTATION_TABS : MANAGEMENT_TABS;
-    
-    // Mostrar/ocultar tabs
-    const allTabs = document.querySelectorAll('.tablinks');
-    allTabs.forEach(tab => {
+  // Show/hide tabs based on user role
+  window.updateTabVisibility = function() {
+    const allTabButtons = document.querySelectorAll('.tablinks');
+    allTabButtons.forEach(tab => {
       const section = tab.dataset.section;
       // tasksGenerator visibility is managed by app-controller.js - don't override
       if (section === 'tasksGenerator') return;
-      // Users and trash visibility managed by app-controller.js (SuperAdmin only) - don't override
+      // Users and trash: SuperAdmin only (managed by app-controller.js)
       if (section === 'users' || section === 'trash') return;
       // App tab only visible if project has allowExecutables
       if (section === 'app') {
-        tab.style.display = (projectHasApps && visibleTabs.includes(section)) ? '' : 'none';
+        tab.style.display = projectHasApps ? '' : 'none';
       } else {
-        tab.style.display = visibleTabs.includes(section) ? '' : 'none';
+        tab.style.display = ALL_TABS.includes(section) ? '' : 'none';
       }
     });
-    
-    // Si el tab actual no es visible, cambiar a sprints
-    const activeTab = document.querySelector('.tablinks.active');
-    if (activeTab && !visibleTabs.includes(activeTab.dataset.section)) {
-      // Buscar el botón de sprints y hacer click
-      const sprintsTab = document.getElementById('sprintsTab');
-      if (sprintsTab) {
-        sprintsTab.click();
-      }
-    }
-    
+
     // Controlar visibilidad de botones de creación/edición
-    toggleEditButtons(mode === 'management');
-    
+    toggleEditButtons();
+
     // Notificar a todos los componentes sobre el cambio de permisos
     window.notifyPermissionsUpdate();
   };
 
-  // Función para mostrar/ocultar botones de edición
-  function toggleEditButtons(canEdit) {
-    // Si el año es de solo lectura, deshabilitar todos los botones de edición (excepto excepciones)
-    const effectiveCanEdit = canEdit && !isYearReadOnly;
+  // Show/hide edit buttons based on user role and year
+  function toggleEditButtons() {
+    if (isYearReadOnly) {
+      // Year is read-only: hide all edit buttons
+      const editButtons = document.querySelectorAll('.add-button, .add-plan-button, .edit-button, .delete-button');
+      editButtons.forEach(btn => { btn.style.display = 'none'; });
+      return;
+    }
 
     const editButtons = document.querySelectorAll('.add-button, .add-plan-button, .edit-button, .delete-button');
     editButtons.forEach(btn => {
-      // Excepciones especiales: empleados pueden añadir propuestas y QA
+      // Proposals and QA: always visible for all authenticated users
       if (btn.id === 'addProposalCard' || btn.id === 'addQACard') {
-        btn.style.display = ''; // Siempre visible para todos los usuarios
+        btn.style.display = '';
+      // Tasks and Bugs: visible for all authenticated users (developers can create)
+      } else if (btn.id === 'addTaskCard' || btn.id === 'addBugCard') {
+        btn.style.display = '';
+      // Epics, Sprints, delete buttons: admin only
+      } else if (btn.id === 'addEpicCard' || btn.id === 'addSprintCard') {
+        btn.style.display = isResponsable ? '' : 'none';
       } else {
-        btn.style.display = effectiveCanEdit ? '' : 'none';
+        // Other edit/delete buttons: admin only
+        btn.style.display = isResponsable ? '' : 'none';
       }
     });
   }
 
-  // Función para verificar si el usuario es responsable
+  // Set user role and update UI accordingly
   window.setUserRole = function(userRole) {
     isResponsable = userRole.isResponsable || false;
-    currentUserRole = userRole; // Guardar el rol completo
-    window.currentUserRole = userRole; // Hacer accesible globalmente
-    const modeSwitchContainer = document.getElementById('modeSwitchContainer');
-    
-    
-    if (modeSwitchContainer) {
-      modeSwitchContainer.style.display = isResponsable ? 'flex' : 'none';
-    }
-    
-    // Si no es responsable, forzar modo consulta
-    if (!isResponsable) {
-      currentViewMode = 'consultation';
-      const viewModeSelect = document.getElementById('viewModeSelect');
-      if (viewModeSelect) {
-        viewModeSelect.value = 'consultation';
-        switchViewMode('consultation');
-      }
-    } else {
-      // Si es responsable, asegurar que esté en modo management por defecto
-      currentViewMode = 'management';
-      const viewModeSelect = document.getElementById('viewModeSelect');
-      if (viewModeSelect) {
-        viewModeSelect.value = 'management';
-        switchViewMode('management');
-      }
-    }
-    
-    // Notificar cambios de permisos después de configurar el rol
-    window.notifyPermissionsUpdate();
-    
+    currentUserRole = userRole;
+    window.currentUserRole = userRole;
+
+    // Update tab visibility and buttons based on new role
+    window.updateTabVisibility();
   };
 
-  // Función para notificar cambios de permisos a todos los componentes
+  // Notify all components about permission changes
   window.notifyPermissionsUpdate = function() {
-    const canEdit = isResponsable && currentViewMode === 'management';
-    
-    // console.log('🔔 Notifying permissions update:', {
-    //   canEdit,
-    //   userRole: currentUserRole,
-    //   viewMode: currentViewMode,
-    //   isResponsable,
-    //   calculation: `${isResponsable} && ${currentViewMode === 'management'} = ${canEdit}`
-    // });
-    
-    // Emitir evento para todos los componentes BaseCard suscritos
     const permissionsEvent = new CustomEvent('permissions-updated', {
       detail: {
-        canEdit,
+        canEdit: true, // All authenticated users can edit (specific permissions checked per card type)
         userRole: currentUserRole,
-        viewMode: currentViewMode
+        isResponsable
       },
       bubbles: true
     });
-    
+
     document.dispatchEvent(permissionsEvent);
   };
 
-  // Handler para solicitudes de permisos de los componentes
+  // Handler for component permission requests
   document.addEventListener('request-user-permissions', function(e) {
     const { requestId, cardType, cardId } = e.detail;
-    
-    // Calcular si puede editar basándose en el estado actual
-    const canEdit = isResponsable && currentViewMode === 'management';
-    
-    // Enviar respuesta de vuelta al componente
+
     const responseEvent = new CustomEvent('user-permissions-response', {
       detail: {
         requestId,
-        canEdit,
+        canEdit: true, // All authenticated users can edit (card-level permissions checked separately)
         userRole: currentUserRole,
-        viewMode: currentViewMode
+        isResponsable
       },
       bubbles: true
     });
-    
-    // Despachar la respuesta inmediatamente
+
     setTimeout(() => document.dispatchEvent(responseEvent), 0);
   });
 
-  // Handler específico para permisos de TaskCard
+  // Handler for TaskCard permissions
   document.addEventListener('request-task-permissions', function(e) {
     const { cardId, cardType, userEmail, createdBy, callback } = e.detail;
 
-    // Para TaskCards: Los admins pueden editar cualquier task
-    // Si es año de solo lectura, no se puede editar
-    const baseCanEdit = isResponsable && currentViewMode === 'management';
-    const canEdit = baseCanEdit && !isYearReadOnly;
+    // All authenticated users can edit tasks; admins can also delete
+    const canEdit = !isYearReadOnly;
+    const canDelete = isResponsable && !isYearReadOnly;
 
     const permissions = {
       canEdit,
-      canSave: canEdit, // Solo puede guardar si puede editar
-      canDelete: canEdit, // Solo puede eliminar si puede editar
+      canSave: canEdit,
+      canDelete,
       userRole: currentUserRole,
-      viewMode: currentViewMode,
+      isResponsable,
       isYearReadOnly
     };
 
-    // Llamar al callback inmediatamente
     if (callback && typeof callback === 'function') {
       callback(permissions);
     }
   });
 
-  // Handler específico para permisos de BugCard
+  // Handler for BugCard permissions
   document.addEventListener('request-bug-permissions', function(e) {
     const { cardId, cardType, userEmail, createdBy, callback } = e.detail;
 
-    // Para BugCards: Los admins pueden editar cualquier bug
-    // Excepción: las tarjetas nuevas (sin cardId o cardId temporal) siempre se pueden editar
-    // Si es año de solo lectura, no se puede editar
-    const isNewCard = !cardId || cardId.startsWith('temp_') || cardId === '';
-    const baseCanEdit = isNewCard ? true : (isResponsable && currentViewMode === 'management');
-    const canEdit = baseCanEdit && !isYearReadOnly;
+    // All authenticated users can edit bugs; admins can delete any, owners can delete own
+    const currentUserEmail = document.body.dataset.userEmail;
+    const isOwner = createdBy && currentUserEmail && createdBy === currentUserEmail;
+    const canEdit = !isYearReadOnly;
+    const canDelete = (isResponsable || isOwner) && !isYearReadOnly;
 
     const permissions = {
       canEdit,
       canSave: canEdit,
-      canDelete: canEdit,
+      canDelete,
       userRole: currentUserRole,
-      viewMode: currentViewMode,
+      isResponsable,
       isYearReadOnly
     };
 
-    // Llamar al callback inmediatamente
     if (callback && typeof callback === 'function') {
       callback(permissions);
     }
   });
 
-  // Handler unificado para cards con lógica de ownership (ProposalCard y QACard)
+  // Handler for cards with ownership logic (ProposalCard and QACard)
   document.addEventListener('request-ownership-permissions', function(e) {
     const { cardId, cardType, userEmail, createdBy, callback } = e.detail;
-    
-    
-    // Para cards con lógica de ownership (ProposalCard y QACard): 
-    // - Los admins pueden editar cualquier card
-    // - Los empleados pueden crear y editar sus propias cards
+
     const currentUserEmail = document.body.dataset.userEmail;
-    const isAdmin = isResponsable && currentViewMode === 'management';
     const isOwner = createdBy && currentUserEmail && createdBy === currentUserEmail;
-    
-    const canEdit = isAdmin || isOwner;
-    
-    // Configurar mensajes específicos por tipo de card
-    const cardTypeNames = {
-      'proposal-card': 'propuesta',
-      'qa-card': 'QA'
-    };
-    
-    const cardTypeName = cardTypeNames[cardType] || 'card';
-    
+
+    // All authenticated users can edit their own proposals/QA; admins can edit all
+    const canEdit = isResponsable || isOwner;
+
     const permissions = {
       canEdit,
       canSave: canEdit,
-      canDelete: isAdmin, // Solo admins pueden eliminar
-      canConvertToTask: canEdit, // Puede convertir a task si puede editar
+      canDelete: isResponsable || isOwner, // Owners can delete their own, admins can delete any
+      canConvertToTask: canEdit,
       userRole: currentUserRole,
-      viewMode: currentViewMode,
       isOwner,
-      isAdmin
+      isAdmin: isResponsable
     };
-    
-    
-    // Llamar al callback inmediatamente
+
     if (callback && typeof callback === 'function') {
       callback(permissions);
     }
   });
 
-  // Handler genérico para otros tipos de cards (Sprint, Epic)
+  // Handler for other card types (Sprint, Epic) - admin only
   document.addEventListener('request-card-permissions', function(e) {
     const { cardId, cardType, userEmail, createdBy, callback } = e.detail;
 
-    // Para otros tipos de cards: Solo admins pueden editar
-    // Si es año de solo lectura, no se puede editar
-    const baseCanEdit = isResponsable && currentViewMode === 'management';
-    const canEdit = baseCanEdit && !isYearReadOnly;
+    // Epics and Sprints: only admins can edit
+    const canEdit = isResponsable && !isYearReadOnly;
 
     const permissions = {
       canEdit,
       canSave: canEdit,
       canDelete: canEdit,
       userRole: currentUserRole,
-      viewMode: currentViewMode,
+      isResponsable,
       isYearReadOnly
     };
 
-    // Llamar al callback inmediatamente
     if (callback && typeof callback === 'function') {
       callback(permissions);
     }
@@ -1181,7 +1105,7 @@ return;
         window.updateDocButtons(projectData);
         // Update App tab visibility based on project config
         projectHasApps = Boolean(projectData.allowExecutables);
-        switchViewMode(currentViewMode);
+        window.updateTabVisibility();
       }
       // Update ADR list with new projectId
       const adrList = document.getElementById('adrList');
@@ -1203,7 +1127,7 @@ return;
         window.updateDocButtons(projectData);
         // Update App tab visibility
         projectHasApps = Boolean(projectData.allowExecutables);
-        switchViewMode(currentViewMode);
+        window.updateTabVisibility();
         // Initialize ADR list with projectId
         const adrList = document.getElementById('adrList');
         if (adrList) {
@@ -1220,28 +1144,19 @@ return;
       }
     };
     setTimeout(checkAndUpdateDocButtons, 100);
-    
-    // TEMPORAL: Mostrar siempre el switch para depurar
-    const modeSwitchContainer = document.getElementById('modeSwitchContainer');
-    if (modeSwitchContainer) {
-      modeSwitchContainer.style.display = 'flex';
-}
-    
-    // TEMPORAL: Forzar modo management por defecto
-    switchViewMode('management');
-    
-    // Notificar estado inicial de permisos
-    window.notifyPermissionsUpdate();
 
-    // Listener para cambios de permisos basados en el año seleccionado
+    // Initial tab visibility and permissions
+    window.updateTabVisibility();
+
+    // Listener for year-based permission changes
     document.addEventListener('year-permissions-updated', function(e) {
       const { year, isPastYear, isYearReadOnly: yearReadOnly } = e.detail;
-isYearReadOnly = yearReadOnly;
+      isYearReadOnly = yearReadOnly;
 
-      // Actualizar visibilidad de botones según el nuevo estado del año
-      toggleEditButtons(currentViewMode === 'management');
+      // Update button visibility based on new year state
+      toggleEditButtons();
 
-      // Notificar a componentes sobre el cambio de permisos
+      // Notify components about permission changes
       window.notifyPermissionsUpdate();
     });
   });
@@ -1882,25 +1797,6 @@ document.addEventListener('astro:page-load', () => {
     padding: 0.45rem 0.85rem;
   }
 
-  .mode-switch {
-    display: flex;
-    align-items: center;
-  }
-
-  .mode-switch select {
-    padding: 0.375rem 0.75rem;
-    border: 1px solid var(--border-default, #ced4da);
-    border-radius: 0.375rem;
-    background-color: var(--bg-primary, white);
-    font-size: 0.9rem;
-    cursor: pointer;
-  }
-
-  .mode-switch select:focus {
-    border-color: var(--brand-primary, #6366f1);
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
-  }
 
   .subheader-hint {
     margin: 0;

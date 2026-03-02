@@ -29,9 +29,11 @@ export const APP_CONSTANTS = {
   SECTIONS: ['Sprints', 'Epics', 'Tasks', 'Bugs', 'Proposals', 'QA'],
   DEFAULT_USER_PROJECTS: [],
 
-  // Tabs visible in each view mode
-  MANAGEMENT_TABS: ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa', 'adrs', 'app'],
-  CONSULTATION_TABS: ['sprints', 'epics', 'proposals', 'app'],
+  // Tabs visible for all authenticated users (users/trash managed separately for SuperAdmin)
+  ALL_TABS: ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa', 'adrs', 'devPlans', 'app'],
+  // DEPRECATED: kept for backward compatibility
+  MANAGEMENT_TABS: ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa', 'adrs', 'devPlans', 'app'],
+  CONSULTATION_TABS: ['sprints', 'epics', 'tasks', 'bugs', 'proposals', 'qa', 'adrs', 'devPlans', 'app'],
   
   WELCOME_MESSAGES: {
     TITLE: _win.appName || 'Planning GameXP',
