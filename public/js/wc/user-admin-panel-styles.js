@@ -535,6 +535,13 @@ export const UserAdminPanelStyles = css`
     color: var(--text-primary, #333);
   }
 
+  .confirm-message {
+    margin: 0 0 1rem 0;
+    font-size: 0.88rem;
+    color: var(--text-primary, #333);
+    line-height: 1.5;
+  }
+
   .permissions-checkboxes {
     display: flex;
     flex-direction: column;
