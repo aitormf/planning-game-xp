@@ -479,10 +479,10 @@ class UserAdminPanel extends LitElement {
   // ==================== USER OPERATIONS ====================
 
   async _deleteUser(user) {
-    const confirmed = await modalService.confirm(
-      'Delete user',
-      `Are you sure you want to delete "${user.name}" (${user.email})? This will remove all project assignments and revoke permissions.`
-    );
+    const confirmed = await modalService.createConfirmationModal({
+      title: 'Delete user',
+      message: `Are you sure you want to delete "${user.name}" (${user.email})? This will remove all project assignments and revoke permissions.`,
+    });
     if (!confirmed) return;
 
     try {
@@ -498,10 +498,10 @@ class UserAdminPanel extends LitElement {
   }
 
   async _removeProject(user, projectId) {
-    const confirmed = await modalService.confirm(
-      'Remove project assignment',
-      `Remove "${projectId}" from user "${user.name}" (${user.email})?`
-    );
+    const confirmed = await modalService.createConfirmationModal({
+      title: 'Remove project assignment',
+      message: `Remove "${projectId}" from user "${user.name}" (${user.email})?`,
+    });
     if (!confirmed) return;
 
     try {
