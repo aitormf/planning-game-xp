@@ -5,6 +5,17 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Block admin console in demo mode and add custom 404 page
+- Replace management/consultation toggle with role-based permissions
+
+### Fixed
+
+- Add RTDB security rules for appMetadata to fix beta display bug
+
+## [1.158.7] - 2026-03-02
+
 ### Fixed
 
 - Sync /data/projectsByUser when admin assigns/removes user projects (#80)
