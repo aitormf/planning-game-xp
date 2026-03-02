@@ -1,7 +1,7 @@
 {
   "name": "planning-game",
   "type": "module",
-  "version": "1.155.1",
+  "version": "1.156.0",
   "private": true,
   "scripts": {
     "generate-sw": "node scripts/generate-sw.js",
