@@ -1,0 +1,305 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="404 - Page Not Found">
+  <div class="error-page">
+    <div class="error-content">
+      <div class="error-illustration">
+        <div class="card-stack">
+          <div class="floating-card card-1">
+            <div class="card-dot"></div>
+            <div class="card-line short"></div>
+            <div class="card-line"></div>
+          </div>
+          <div class="floating-card card-2">
+            <div class="card-dot accent"></div>
+            <div class="card-line short"></div>
+            <div class="card-line"></div>
+          </div>
+          <div class="floating-card card-3">
+            <div class="card-dot warn"></div>
+            <div class="card-line short"></div>
+            <div class="card-line"></div>
+          </div>
+        </div>
+        <div class="error-code">404</div>
+      </div>
+
+      <h1 class="error-title">Sprint not found</h1>
+      <p class="error-description">
+        Parece que esta tarea se ha perdido en el backlog.
+        <br>La URL que buscas no existe o ha sido movida.
+      </p>
+
+      <div class="error-actions">
+        <a href="/" class="btn-primary">Volver al inicio</a>
+        <a href="/adminproject" class="btn-secondary">Ir a proyectos</a>
+      </div>
+
+      <div class="error-hint">
+        <span class="hint-icon">?</span>
+        Si crees que esto es un error, revisa la URL o contacta con tu admin.
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .error-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .error-content {
+    max-width: 520px;
+  }
+
+  /* Illustration: floating cards */
+  .error-illustration {
+    position: relative;
+    height: 220px;
+    margin-bottom: 1.5rem;
+  }
+
+  .error-code {
+    font-size: 8rem;
+    font-weight: 700;
+    line-height: 1;
+    background: linear-gradient(
+      135deg,
+      var(--brand-primary, #6366f1) 0%,
+      var(--brand-secondary, #10b981) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0.12;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    user-select: none;
+  }
+
+  .card-stack {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .floating-card {
+    position: absolute;
+    width: 140px;
+    padding: 1rem;
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-subtle, #e2e8f0);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease;
+  }
+
+  .floating-card:hover {
+    transform: translateY(-4px) !important;
+  }
+
+  .card-1 {
+    transform: rotate(-12deg) translateX(-80px) translateY(-10px);
+    animation: float1 4s ease-in-out infinite;
+  }
+
+  .card-2 {
+    transform: rotate(3deg) translateY(10px);
+    animation: float2 4.5s ease-in-out infinite;
+    z-index: 2;
+  }
+
+  .card-3 {
+    transform: rotate(8deg) translateX(80px) translateY(-5px);
+    animation: float3 5s ease-in-out infinite;
+  }
+
+  @keyframes float1 {
+    0%, 100% { transform: rotate(-12deg) translateX(-80px) translateY(-10px); }
+    50% { transform: rotate(-12deg) translateX(-80px) translateY(-20px); }
+  }
+
+  @keyframes float2 {
+    0%, 100% { transform: rotate(3deg) translateY(10px); }
+    50% { transform: rotate(3deg) translateY(0px); }
+  }
+
+  @keyframes float3 {
+    0%, 100% { transform: rotate(8deg) translateX(80px) translateY(-5px); }
+    50% { transform: rotate(8deg) translateX(80px) translateY(-15px); }
+  }
+
+  .card-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--status-to-do, #94a3b8);
+    margin-bottom: 0.6rem;
+  }
+
+  .card-dot.accent {
+    background: var(--status-in-progress, #3b82f6);
+  }
+
+  .card-dot.warn {
+    background: var(--status-blocked, #f43f5e);
+  }
+
+  .card-line {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border-subtle, #e2e8f0);
+    margin-bottom: 0.4rem;
+  }
+
+  .card-line.short {
+    width: 60%;
+  }
+
+  /* Text */
+  .error-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .error-description {
+    font-size: 1rem;
+    color: var(--text-secondary, #64748b);
+    line-height: 1.6;
+    margin: 0 0 2rem 0;
+  }
+
+  /* Buttons */
+  .error-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.65rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background: var(--brand-primary, #6366f1);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: var(--brand-primary-hover, #4f46e5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--brand-primary, #6366f1);
+    border: 1px solid var(--border-default, #cbd5e1);
+  }
+
+  .btn-secondary:hover {
+    background: var(--bg-secondary, #f8fafc);
+    border-color: var(--brand-primary, #6366f1);
+    transform: translateY(-1px);
+  }
+
+  /* Hint */
+  .error-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted, #94a3b8);
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary, #f8fafc);
+    border-radius: 6px;
+  }
+
+  .hint-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--brand-primary, #6366f1);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .error-code {
+      font-size: 5rem;
+    }
+
+    .floating-card {
+      width: 100px;
+      padding: 0.75rem;
+    }
+
+    .card-1 {
+      animation-name: float1-mobile;
+    }
+    .card-3 {
+      animation-name: float3-mobile;
+    }
+
+    @keyframes float1-mobile {
+      0%, 100% { transform: rotate(-12deg) translateX(-55px) translateY(-10px); }
+      50% { transform: rotate(-12deg) translateX(-55px) translateY(-20px); }
+    }
+    @keyframes float3-mobile {
+      0%, 100% { transform: rotate(8deg) translateX(55px) translateY(-5px); }
+      50% { transform: rotate(8deg) translateX(55px) translateY(-15px); }
+    }
+
+    .error-title {
+      font-size: 1.4rem;
+    }
+
+    .error-actions {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  // Hide loading spinner — this page is self-contained
+  const loader = document.getElementById('mainLoader');
+  if (loader) loader.classList.add('hidden');
+</script>
