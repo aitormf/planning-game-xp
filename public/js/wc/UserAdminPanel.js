@@ -587,10 +587,10 @@ class UserAdminPanel extends LitElement {
     return html`
       <div class="user-admin-container">
         ${this._renderHeader(filteredUsers)}
-        ${this._showForm ? this._renderForm() : nothing}
         ${this._renderTable(filteredUsers)}
         ${this._renderAppPermissionsModal()}
         ${this._renderLoginHistoryModal()}
+        ${this._showForm ? this._renderFormModal() : nothing}
       </div>
     `;
   }
@@ -620,97 +620,104 @@ class UserAdminPanel extends LitElement {
     `;
   }
 
+  _renderFormModal() {
+    return html`
+      <div class="modal-overlay" @click=${this._cancelForm}>
+        <div class="modal-content modal-form" @click=${(e) => e.stopPropagation()}>
+          ${this._renderForm()}
+        </div>
+      </div>
+    `;
+  }
+
   _renderForm() {
     const isEditing = Boolean(this._editingEmail);
     const existingUser = this._checkExistingUser();
-    const existingProjectIds = existingUser ? Object.keys(existingUser.projects || {}) : [];
 
     return html`
-      <div class="entity-form">
-        <h4 class="form-title">${isEditing ? `Add project to: ${this._editingEmail}` : 'Onboard User'}</h4>
+      <h4 class="modal-title">${isEditing ? `Add project to: ${this._editingEmail}` : 'Onboard User'}</h4>
 
-        ${existingUser && !isEditing ? html`
-          <div class="existing-user-notice">
-            User "${existingUser.name}" already exists.
-            ${existingUser.developerId ? html`Dev: <strong>${existingUser.developerId}</strong>` : nothing}
-            ${existingUser.stakeholderId ? html`Stk: <strong>${existingUser.stakeholderId}</strong>` : nothing}
-            — Select additional projects to assign.
-          </div>
-        ` : nothing}
+      ${existingUser && !isEditing ? html`
+        <div class="existing-user-notice">
+          User "${existingUser.name}" already exists.
+          ${existingUser.developerId ? html`Dev: <strong>${existingUser.developerId}</strong>` : nothing}
+          ${existingUser.stakeholderId ? html`Stk: <strong>${existingUser.stakeholderId}</strong>` : nothing}
+          — Select additional projects to assign.
+        </div>
+      ` : nothing}
 
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="userName">Name *</label>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="userName">Name *</label>
+          <input
+            type="text"
+            id="userName"
+            .value=${this._formName}
+            @input=${(e) => { this._formName = e.target.value; }}
+            placeholder="Full name"
+            ?disabled=${isEditing || this._onboardingActive}
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="userEmail">Email *</label>
+          <input
+            type="email"
+            id="userEmail"
+            .value=${this._formEmail}
+            @input=${(e) => { this._formEmail = e.target.value; }}
+            placeholder="email@example.com"
+            ?disabled=${isEditing || this._onboardingActive}
+            required
+          />
+        </div>
+        <div class="form-group form-group-full">
+          <label>Projects * (select one or more)</label>
+          <multi-select
+            .options=${this.projects
+              .sort((a, b) => a.localeCompare(b))
+              .map((p) => ({ value: p, label: p }))}
+            .selectedValues=${this._formProjectIds}
+            placeholder="Select projects..."
+            ?disabled=${this._onboardingActive}
+            @change=${(e) => { this._formProjectIds = [...e.detail.selectedValues]; }}
+          ></multi-select>
+        </div>
+        <div class="form-row-checkboxes">
+          <div class="form-checkbox">
             <input
-              type="text"
-              id="userName"
-              .value=${this._formName}
-              @input=${(e) => { this._formName = e.target.value; }}
-              placeholder="Full name"
-              ?disabled=${isEditing || this._onboardingActive}
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="userEmail">Email *</label>
-            <input
-              type="email"
-              id="userEmail"
-              .value=${this._formEmail}
-              @input=${(e) => { this._formEmail = e.target.value; }}
-              placeholder="email@example.com"
-              ?disabled=${isEditing || this._onboardingActive}
-              required
-            />
-          </div>
-          <div class="form-group form-group-full">
-            <label>Projects * (select one or more)</label>
-            <multi-select
-              .options=${this.projects
-                .sort((a, b) => a.localeCompare(b))
-                .map((p) => ({ value: p, label: p }))}
-              .selectedValues=${this._formProjectIds}
-              placeholder="Select projects..."
+              type="checkbox"
+              id="userDeveloper"
+              .checked=${this._formDeveloper}
               ?disabled=${this._onboardingActive}
-              @change=${(e) => { this._formProjectIds = [...e.detail.selectedValues]; }}
-            ></multi-select>
+              @change=${(e) => { this._formDeveloper = e.target.checked; }}
+            />
+            <label for="userDeveloper">Developer</label>
           </div>
-          <div class="form-row-checkboxes">
-            <div class="form-checkbox">
-              <input
-                type="checkbox"
-                id="userDeveloper"
-                .checked=${this._formDeveloper}
-                ?disabled=${this._onboardingActive}
-                @change=${(e) => { this._formDeveloper = e.target.checked; }}
-              />
-              <label for="userDeveloper">Developer</label>
-            </div>
-            <div class="form-checkbox">
-              <input
-                type="checkbox"
-                id="userStakeholder"
-                .checked=${this._formStakeholder}
-                ?disabled=${this._onboardingActive}
-                @change=${(e) => { this._formStakeholder = e.target.checked; }}
-              />
-              <label for="userStakeholder">Stakeholder</label>
-            </div>
+          <div class="form-checkbox">
+            <input
+              type="checkbox"
+              id="userStakeholder"
+              .checked=${this._formStakeholder}
+              ?disabled=${this._onboardingActive}
+              @change=${(e) => { this._formStakeholder = e.target.checked; }}
+            />
+            <label for="userStakeholder">Stakeholder</label>
           </div>
         </div>
+      </div>
 
-        ${this._onboardingSteps.length > 0 ? this._renderOnboardingChecklist() : nothing}
+      ${this._onboardingSteps.length > 0 ? this._renderOnboardingChecklist() : nothing}
 
-        <div class="form-actions">
-          <button class="btn btn-secondary" @click=${this._cancelForm} ?disabled=${this._onboardingActive}>Cancel</button>
-          <button
-            class="btn btn-primary"
-            @click=${this._saveUser}
-            ?disabled=${!this._formName.trim() || !this._formEmail.trim() || this._formProjectIds.length === 0 || this._onboardingActive}
-          >
-            ${this._onboardingActive ? 'Processing...' : (isEditing ? 'Add Projects' : 'Onboard User')}
-          </button>
-        </div>
+      <div class="form-actions">
+        <button class="btn btn-secondary" @click=${this._cancelForm} ?disabled=${this._onboardingActive}>Cancel</button>
+        <button
+          class="btn btn-primary"
+          @click=${this._saveUser}
+          ?disabled=${!this._formName.trim() || !this._formEmail.trim() || this._formProjectIds.length === 0 || this._onboardingActive}
+        >
+          ${this._onboardingActive ? 'Processing...' : (isEditing ? 'Add Projects' : 'Onboard User')}
+        </button>
       </div>
     `;
   }

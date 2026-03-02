@@ -546,6 +546,14 @@ export const UserAdminPanelStyles = css`
     font-size: 0.85rem;
   }
 
+  /* Form modal */
+  .modal-form {
+    width: 550px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
   /* Responsive */
   @media (max-width: 768px) {
     .user-admin-header {
