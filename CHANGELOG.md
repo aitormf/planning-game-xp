@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Render user form in modal overlay instead of inline
+
+## [1.157.0] - 2026-03-02
+
+### Added
+
 - Reorder build pipeline and add post-commit checklist hook (#72)
 
 ### Fixed
