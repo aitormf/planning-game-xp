@@ -5,6 +5,14 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Replace full logo with icon to remove 'de GENIOVA' branding
+- Allow SuperAdmin to mark tasks as Done/Done&Validated
+- Prevent infinite loop in task status validation CF revert
+
+## [1.159.0] - 2026-03-02
+
 ### Added
 
 - Block admin console in demo mode and add custom 404 page
