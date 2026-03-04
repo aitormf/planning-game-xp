@@ -1436,7 +1436,7 @@ const style = {
       }
 
       actionsTd.appendChild(iconBtn('🔗', 'Copiar enlace', async () => {
-        const url = `${globalThis.location.origin}/adminproject/?projectId=${encodeURIComponent(config.projectId)}&cardId=${card.cardId || firebaseId}#tasks`;
+        const url = `${globalThis.location.origin}/cleanview/?projectId=${encodeURIComponent(config.projectId)}&cardId=${card.cardId || firebaseId}`;
         try {
           await navigator.clipboard.writeText(url);
           document.dispatchEvent(new CustomEvent('show-slide-notification', {

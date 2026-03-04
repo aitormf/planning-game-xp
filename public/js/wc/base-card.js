@@ -388,7 +388,7 @@ this.canEditPermission = permissions.canEdit || false;
       'sprint': 'sprints'
     };
     const section = sectionMap[cardType] || cardType;
-    return `${baseUrl}/adminproject/?projectId=${encodeURIComponent(this.projectId)}&cardId=${this.cardId}#${section}`;
+    return `${baseUrl}/cleanview/?projectId=${encodeURIComponent(this.projectId)}&cardId=${this.cardId}`;
   }
 
   /**

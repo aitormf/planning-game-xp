@@ -524,7 +524,7 @@ describe('BaseCard', () => {
 
         const url = card.generateCardUrl();
 
-        expect(url).toBe('https://example.com/adminproject/?projectId=MyProject&cardId=MP-TSK-001#tasks');
+        expect(url).toBe('https://example.com/cleanview/?projectId=MyProject&cardId=MP-TSK-001');
       });
 
       it('generates correct URL for bug-card', () => {
@@ -534,7 +534,7 @@ describe('BaseCard', () => {
 
         const url = card.generateCardUrl();
 
-        expect(url).toBe('https://example.com/adminproject/?projectId=MyProject&cardId=MP-BUG-001#bugs');
+        expect(url).toBe('https://example.com/cleanview/?projectId=MyProject&cardId=MP-BUG-001');
       });
 
       it('generates correct URL for epic-card', () => {
@@ -544,7 +544,7 @@ describe('BaseCard', () => {
 
         const url = card.generateCardUrl();
 
-        expect(url).toBe('https://example.com/adminproject/?projectId=MyProject&cardId=MP-EPC-001#epics');
+        expect(url).toBe('https://example.com/cleanview/?projectId=MyProject&cardId=MP-EPC-001');
       });
 
       it('encodes projectId with special characters', () => {
