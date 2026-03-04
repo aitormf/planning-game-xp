@@ -12,9 +12,13 @@ import Layout from '../layouts/Layout.astro';
     </div>
 
     <div class="summary-cards" id="summaryCards">
+      <div class="summary-card summary-validate" id="summaryValidate">
+        <span class="summary-count" id="validateCount">0</span>
+        <span class="summary-label">A Validar</span>
+      </div>
       <div class="summary-card summary-mine" id="summaryMine">
         <span class="summary-count" id="myTasksCount">0</span>
-        <span class="summary-label">Mis Tareas</span>
+        <span class="summary-label">En Vuelo</span>
       </div>
       <div class="summary-card summary-pending" id="summaryPending">
         <span class="summary-count" id="pendingCount">0</span>
@@ -23,11 +27,15 @@ import Layout from '../layouts/Layout.astro';
     </div>
 
     <div class="cleanview-tabs">
-      <button class="cv-tab-button active" data-tab="mine">Mis Tareas</button>
-      <button class="cv-tab-button" data-tab="all">Todas las Tareas</button>
+      <button class="cv-tab-button active" data-tab="validate">A Validar</button>
+      <button class="cv-tab-button" data-tab="mine">Mis Tareas</button>
+      <button class="cv-tab-button" data-tab="all">Todas</button>
     </div>
 
-    <div id="tab-mine" class="cv-tab-panel">
+    <div id="tab-validate" class="cv-tab-panel">
+      <div id="validateList" class="card-list">Cargando...</div>
+    </div>
+    <div id="tab-mine" class="cv-tab-panel hidden">
       <div id="myTasksList" class="card-list">Cargando...</div>
     </div>
     <div id="tab-all" class="cv-tab-panel hidden">
@@ -52,11 +60,14 @@ import Layout from '../layouts/Layout.astro';
 
   // DOM elements
   const projectSelector = document.getElementById('projectSelector');
+  const validateList = document.getElementById('validateList');
   const myTasksList = document.getElementById('myTasksList');
   const allTasksList = document.getElementById('allTasksList');
+  const validateCount = document.getElementById('validateCount');
   const myTasksCount = document.getElementById('myTasksCount');
   const pendingCount = document.getElementById('pendingCount');
   const tabButtons = Array.from(document.querySelectorAll('.cv-tab-button'));
+  const tabValidate = document.getElementById('tab-validate');
   const tabMine = document.getElementById('tab-mine');
   const tabAll = document.getElementById('tab-all');
   const fabCreate = document.getElementById('fabCreate');
@@ -67,7 +78,7 @@ import Layout from '../layouts/Layout.astro';
   let currentStakeholderId = '';
   let currentDeveloperId = '';
   let currentProject = localStorage.getItem('cleanview-project') || '';
-  let activeTab = 'mine';
+  let activeTab = 'validate';
   let allCards = []; // Flat array of all cards for current project
   let activeListeners = []; // Firebase listener unsubscribers
 
@@ -88,12 +99,14 @@ import Layout from '../layouts/Layout.astro';
   };
 
   // Tab switching
+  const tabPanels = { validate: tabValidate, mine: tabMine, all: tabAll };
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       activeTab = btn.dataset.tab;
       tabButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === activeTab));
-      tabMine.classList.toggle('hidden', activeTab !== 'mine');
-      tabAll.classList.toggle('hidden', activeTab !== 'all');
+      Object.entries(tabPanels).forEach(([key, panel]) => {
+        panel.classList.toggle('hidden', key !== activeTab);
+      });
     });
   });
 
@@ -172,45 +185,57 @@ import Layout from '../layouts/Layout.astro';
 
   // ===== Rendering =====
 
-  function getMyTasks() {
+  const VALIDATE_STATUSES = ['tovalidate', 'fixed'];
+  const FINISHED_STATUSES = ['done', 'donevalidated', 'closed', 'verified'];
+
+  function _isMyCard(card) {
+    return card.validator === currentStakeholderId
+      || card.developer === currentDeveloperId
+      || card.codeveloper === currentDeveloperId;
+  }
+
+  function _normalizeStatus(status) {
+    return (status || '').toLowerCase().replace(/[\s&]+/g, '');
+  }
+
+  function getMyToValidate() {
     return allCards.filter(card => {
-      const isValidator = card.validator === currentStakeholderId;
-      const isDeveloper = card.developer === currentDeveloperId;
-      const isCodev = card.codeveloper === currentDeveloperId;
-      const isAssignee = isValidator || isDeveloper || isCodev;
-      // Exclude done/closed statuses
-      const status = (card.status || '').toLowerCase().replace(/[\s&]+/g, '');
-      const isFinished = ['done', 'donevalidated', 'closed', 'verified'].includes(status);
-      return isAssignee && !isFinished;
+      if (!_isMyCard(card)) return false;
+      return VALIDATE_STATUSES.includes(_normalizeStatus(card.status));
+    }).sort((a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99));
+  }
+
+  function getMyInFlight() {
+    return allCards.filter(card => {
+      if (!_isMyCard(card)) return false;
+      const norm = _normalizeStatus(card.status);
+      return !VALIDATE_STATUSES.includes(norm) && !FINISHED_STATUSES.includes(norm);
     }).sort((a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99));
   }
 
   function getAllActiveCards() {
     return allCards
-      .filter(card => {
-        const status = (card.status || '').toLowerCase().replace(/[\s&]+/g, '');
-        return !['done', 'donevalidated', 'closed', 'verified'].includes(status);
-      })
+      .filter(card => !FINISHED_STATUSES.includes(_normalizeStatus(card.status)))
       .sort((a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99));
   }
 
   function renderCards() {
-    const myTasks = getMyTasks();
+    const toValidate = getMyToValidate();
+    const inFlight = getMyInFlight();
     const allActive = getAllActiveCards();
 
-    // Update counters
-    myTasksCount.textContent = myTasks.length;
+    validateCount.textContent = toValidate.length;
+    myTasksCount.textContent = inFlight.length;
     pendingCount.textContent = allActive.length;
 
-    // Render my tasks
-    renderCardList(myTasksList, myTasks, true);
-    // Render all tasks
-    renderCardList(allTasksList, allActive, false);
+    renderCardList(validateList, toValidate, 'No tienes tareas pendientes de validar');
+    renderCardList(myTasksList, inFlight, 'No tienes tareas en vuelo');
+    renderCardList(allTasksList, allActive, 'No hay tareas activas');
   }
 
-  function renderCardList(container, cards, isMyList) {
+  function renderCardList(container, cards, emptyMessage) {
     if (cards.length === 0) {
-      container.innerHTML = `<div class="empty-state">${isMyList ? 'No tienes tareas pendientes' : 'No hay tareas activas'}</div>`;
+      container.innerHTML = `<div class="empty-state">${emptyMessage}</div>`;
       return;
     }
 
@@ -225,8 +250,7 @@ import Layout from '../layouts/Layout.astro';
       el.status = card.status || '';
       el.priority = card.priority || '';
       el.endDate = card.endDate || '';
-      el.isMyTask = isMyList;
-      // Resolve developer name
+      el.isMyTask = _isMyCard(card);
       const devId = card.developer || '';
       el.developerName = devId ? entityDirectoryService.getDeveloperDisplayName(devId) || devId : '';
       container.append(el);
@@ -470,7 +494,7 @@ import Layout from '../layouts/Layout.astro';
 
   .summary-cards {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 12px;
     margin-bottom: 20px;
   }
@@ -483,12 +507,16 @@ import Layout from '../layouts/Layout.astro';
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 
+  .summary-validate {
+    border-top: 3px solid var(--status-to-validate, #f59e0b);
+  }
+
   .summary-mine {
     border-top: 3px solid var(--brand-primary, #6366f1);
   }
 
   .summary-pending {
-    border-top: 3px solid var(--status-to-validate, #f59e0b);
+    border-top: 3px solid var(--text-muted, #94a3b8);
   }
 
   .summary-count {
