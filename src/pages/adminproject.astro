@@ -6,6 +6,7 @@ import Layout from '../layouts/Layout.astro';
   <div class="header-controls">
     <project-selector id="projectSelector"></project-selector>
     <button id="editProjectBtn" class="edit-project-btn" title="Editar proyecto" style="display:none;">✏️</button>
+    <a href="/cleanview/" class="cleanview-link" title="Vista simplificada para stakeholders">📋 Clean View</a>
     <year-selector id="yearSelector"></year-selector>
     <div class="tabs header-tabs">
       <button id="sprintsTab" data-section="sprints" class="tablinks">Sprints</button>
@@ -213,6 +214,28 @@ import Layout from '../layouts/Layout.astro';
   body.no-project-selected .tabcontent,
   body.no-project-selected #yearSelector {
     display: none !important;
+  }
+
+  .cleanview-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--brand-primary, #6366f1);
+    background: var(--bg-secondary, #f1f5f9);
+    border: 1px solid var(--border-default, #e2e8f0);
+    transition: background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+
+  .cleanview-link:hover {
+    background: var(--brand-primary, #6366f1);
+    color: #fff;
+    border-color: var(--brand-primary, #6366f1);
   }
 
   .trash-table {
