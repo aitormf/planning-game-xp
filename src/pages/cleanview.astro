@@ -412,17 +412,20 @@ import Layout from '../layouts/Layout.astro';
     // Import CleanCardItem component
     await import('/js/wc/CleanCardItem.js');
 
-    // Load user projects
+    // Load user projects (exclude archived)
+    await FirebaseService.loadProjects(currentUserEmail);
+    const allProjects = window.projects || {};
     const userProjects = await FirebaseService.getUserProjects(currentUserEmail);
-    let projectNames = [];
 
+    let projectNames = [];
     if (userProjects === null) {
-      // User has access to all projects
-      await FirebaseService.loadProjects(currentUserEmail);
-      projectNames = Object.keys(window.projects || {});
+      projectNames = Object.keys(allProjects);
     } else {
       projectNames = userProjects;
     }
+
+    // Filter out archived projects
+    projectNames = projectNames.filter(name => !allProjects[name]?.archived);
 
     // Populate project selector
     projectSelector.innerHTML = '';
