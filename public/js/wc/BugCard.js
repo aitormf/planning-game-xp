@@ -2005,7 +2005,7 @@ this.attachment = '';
    * Copia la URL del bug al portapapeles y muestra una notificación.
    */
   _copyBugUrl() {
-    const baseUrl = `${window.location.origin}/adminproject/?projectId=${encodeURIComponent(this.projectId)}&cardId=${this.cardId}#bugs`;
+    const baseUrl = `${window.location.origin}/cleanview/?projectId=${encodeURIComponent(this.projectId)}&cardId=${this.cardId}`;
     navigator.clipboard.writeText(baseUrl).then(() => {
       const notification = document.createElement('slide-notification');
       notification.message = 'Enlace del bug copiado al portapapeles';

@@ -1162,7 +1162,7 @@ return;
   }
 
   _copyProposalUrl() {
-    const baseUrl = `${window.location.origin}/adminproject/?projectId=${encodeURIComponent(this.projectId)}&cardId=${this.cardId}#proposals`;
+    const baseUrl = `${window.location.origin}/cleanview/?projectId=${encodeURIComponent(this.projectId)}&cardId=${this.cardId}`;
     navigator.clipboard.writeText(baseUrl).then(() => {
       const notification = document.createElement('slide-notification');
       notification.message = 'Enlace de la propuesta copiado al portapapeles';

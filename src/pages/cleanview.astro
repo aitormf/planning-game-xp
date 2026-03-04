@@ -451,6 +451,40 @@ import Layout from '../layouts/Layout.astro';
     }
 
     loadProjectData();
+
+    // Handle deep link: ?projectId=X&cardId=Y
+    const urlParams = new URLSearchParams(window.location.search);
+    const deepLinkProjectId = urlParams.get('projectId');
+    const deepLinkCardId = urlParams.get('cardId');
+
+    if (deepLinkProjectId && projectNames.includes(deepLinkProjectId)) {
+      currentProject = deepLinkProjectId;
+      projectSelector.value = deepLinkProjectId;
+      localStorage.setItem('cleanview-project', deepLinkProjectId);
+      loadProjectData();
+    }
+
+    if (deepLinkCardId) {
+      // Wait for data to load, then open the card
+      const waitForCard = () => {
+        const card = allCards.find(c => c.cardId === deepLinkCardId);
+        if (card) {
+          openCardInModal(card._section, card.projectId, card.firebaseId, card.cardId);
+          // Clean URL without reloading
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, '', cleanUrl);
+        } else if (allCards.length === 0) {
+          // Data not loaded yet, retry
+          setTimeout(waitForCard, 300);
+        } else {
+          document.dispatchEvent(new CustomEvent('show-slide-notification', {
+            detail: { options: { message: `No se encontró la card ${deepLinkCardId}`, type: 'warning' } }
+          }));
+        }
+      };
+      // Small delay to let Firebase listeners populate allCards
+      setTimeout(waitForCard, 500);
+    }
   }
 
   // Auth flow
