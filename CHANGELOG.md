@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Split cleanview into 3 tabs (A Validar, Mis Tareas, Todas)
+
+## [1.161.0] - 2026-03-04
+
+### Added
+
 - Add cleanview link in adminproject header
 
 ## [1.160.0] - 2026-03-04
