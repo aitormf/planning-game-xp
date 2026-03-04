@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Sync Equipo tab team assignments to /users/ path
+
+## [1.163.1] - 2026-03-04
+
 ### Fixed
 
 - Add copy-link button to bugs table and fix horizontal scroll
