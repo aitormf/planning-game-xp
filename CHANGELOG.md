@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Guard firebase messaging init for unsupported browsers
+
+## [1.164.0] - 2026-03-04
+
 ### Added
 
 - Sync Equipo tab team assignments to /users/ path
