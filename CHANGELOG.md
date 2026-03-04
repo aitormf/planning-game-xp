@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Add copy-link button to bugs table and fix horizontal scroll
+
+## [1.163.0] - 2026-03-04
+
 ### Added
 
 - Add deep links and cleanview URLs for card sharing
