@@ -1656,6 +1656,37 @@ const style = {
       });
       actionsTd.appendChild(viewBtn);
 
+      // Botón copiar enlace
+      const copyBtn = UIUtils.createElement('button', {
+        type: 'button',
+        title: 'Copiar enlace',
+        style: {
+          padding: '0.4rem',
+          borderRadius: '4px',
+          border: '1px solid var(--brand-primary, #4a9eff)',
+          background: 'var(--bg-primary, #fff)',
+          color: 'var(--brand-primary, #4a9eff)',
+          cursor: 'pointer',
+          marginRight: '0.5rem',
+          fontSize: '1rem'
+        }
+      });
+      copyBtn.innerHTML = '🔗';
+      copyBtn.addEventListener('click', async () => {
+        const url = `${globalThis.location.origin}/cleanview/?projectId=${encodeURIComponent(config.projectId)}&cardId=${card.cardId || id}`;
+        try {
+          await navigator.clipboard.writeText(url);
+          document.dispatchEvent(new CustomEvent('show-slide-notification', {
+            detail: { options: { message: 'Enlace copiado al portapapeles', type: 'success' } }
+          }));
+        } catch (error) {
+          document.dispatchEvent(new CustomEvent('show-slide-notification', {
+            detail: { options: { message: 'Error al copiar enlace', type: 'error' } }
+          }));
+        }
+      });
+      actionsTd.appendChild(copyBtn);
+
       // Botón borrar (papelera) - solo si el año NO es de solo lectura
       if (!this._isYearReadOnly()) {
         const deleteBtn = UIUtils.createElement('button', {
