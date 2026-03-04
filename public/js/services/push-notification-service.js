@@ -1,5 +1,5 @@
 import { ref, push, set, onValue, serverTimestamp, query, orderByChild, get } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
-import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
+import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
 import { database, app, vapidKey } from '../../firebase-config.js';
 import { sanitizeEmailForFirebase } from '../utils/email-sanitizer.js';
 import { entityDirectoryService } from './entity-directory-service.js';
@@ -25,6 +25,9 @@ class PushNotificationService {
             // Skip push notifications in demo mode
             const { demoModeService } = await import('./demo-mode-service.js');
             if (demoModeService.isDemo()) return;
+
+            const supported = await isMessagingSupported();
+            if (!supported) return;
 
             this.messaging = getMessaging(app);
 
@@ -64,11 +67,14 @@ class PushNotificationService {
 
     async setupFCMToken() {
         try {
-            // vapidKey importado desde firebase-config.js
+            if (!vapidKey || vapidKey === 'undefined') {
+                console.warn('FCM vapidKey not configured, skipping token setup');
+                return null;
+            }
+
             const token = await getToken(this.messaging, { vapidKey });
 
             if (token) {
-                // Guardar token en la base de datos para el usuario actual
                 if (window.currentUser?.email) {
                     await this.saveUserToken(window.currentUser.email, token);
                 }

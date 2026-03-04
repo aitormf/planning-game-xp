@@ -25,7 +25,7 @@ import { getDatabase, ref, onValue, push, set, get, update, remove, connectDatab
 import { getAuth, OAuthProvider, GoogleAuthProvider, signOut, signInWithPopup, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { getFirestore, doc, runTransaction, setDoc, getDoc, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { getMessaging } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
+import { getMessaging, isSupported as isMessagingSupported } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
 import { getStorage, connectStorageEmulator } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 
@@ -81,7 +81,7 @@ function _createAuthProvider() {
 export const authProvider = _createAuthProvider();
 export const authProviderName = '${env.PUBLIC_AUTH_PROVIDER || 'google'}';
 export const databaseFirestore = getFirestore(app);
-export const messaging = getMessaging(app);
+export const messaging = await isMessagingSupported() ? getMessaging(app) : null;
 export const storage = getStorage(app);
 export const functions = getFunctions(app, functionsRegion);
 
