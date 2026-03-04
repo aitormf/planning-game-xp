@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Add cleanview stakeholder page with CleanCardDetail (PLN-TSK-0279)
+
+## [1.159.1] - 2026-03-02
+
 ### Fixed
 
 - Replace full logo with icon to remove 'de GENIOVA' branding
