@@ -7,6 +7,16 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Add deep links and cleanview URLs for card sharing
+
+### Fixed
+
+- Exclude archived projects from cleanview selector
+
+## [1.162.0] - 2026-03-04
+
+### Added
+
 - Split cleanview into 3 tabs (A Validar, Mis Tareas, Todas)
 
 ## [1.161.0] - 2026-03-04
