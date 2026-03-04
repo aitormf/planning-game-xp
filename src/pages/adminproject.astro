@@ -1223,8 +1223,9 @@ return;
 // Edit Project functionality
 import { showModal } from '@manufosela/app-modal';
 import 'https://esm.sh/@manufosela/md-renderer';
-import { database, ref, get, set, auth, superAdminEmail } from '/firebase-config.js';
+import { database, ref, get, set, update, auth, superAdminEmail } from '/firebase-config.js';
 import { FirebaseService } from '/js/services/firebase-service.js';
+import { encodeEmailForFirebase } from '/js/utils/email-sanitizer.js';
 import '/js/wc/ProjectForm.js';
 import '/js/wc/CardSearch.js';
 
@@ -1380,6 +1381,44 @@ async function showEditProjectModal(projectName) {
   }
 }
 
+/**
+ * Sync project team assignments to /users/{email}/projects/{projectId}
+ * so entityDirectoryService sees them (single source of truth).
+ * Only updates users that already exist in /users/.
+ */
+async function syncProjectTeamToUsers(projectName, developers, stakeholders) {
+  const devEmails = new Set();
+  const stkEmails = new Set();
+
+  for (const dev of developers) {
+    if (dev.email) devEmails.add(dev.email.toLowerCase().trim());
+  }
+  for (const stk of stakeholders) {
+    if (stk.email) stkEmails.add(stk.email.toLowerCase().trim());
+  }
+
+  const allEmails = new Set([...devEmails, ...stkEmails]);
+  const updates = {};
+
+  for (const email of allEmails) {
+    const encodedEmail = encodeEmailForFirebase(email);
+    if (!encodedEmail) continue;
+
+    // Only sync if user exists in /users/
+    const userSnap = await get(ref(database, `/users/${encodedEmail}`));
+    if (!userSnap.exists()) continue;
+
+    const isDev = devEmails.has(email);
+    const isStk = stkEmails.has(email);
+    updates[`/users/${encodedEmail}/projects/${projectName}/developer`] = isDev;
+    updates[`/users/${encodedEmail}/projects/${projectName}/stakeholder`] = isStk;
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await update(ref(database), updates);
+  }
+}
+
 async function updateProject(projectForm, originalProjectName, originalData) {
   const formData = projectForm.getFormData();
 
@@ -1420,6 +1459,10 @@ async function updateProject(projectForm, originalProjectName, originalData) {
     } else {
       await set(ref(database, `/projects/${originalProjectName}`), projectData);
     }
+
+    // Sync team assignments to /users/ for entityDirectoryService consistency
+    const targetProjectName = formData.projectName || originalProjectName;
+    await syncProjectTeamToUsers(targetProjectName, formData.developers || [], formData.stakeholders || []);
 
     document.dispatchEvent(new CustomEvent('show-slide-notification', {
       detail: { options: { message: 'Proyecto actualizado exitosamente!' } }
