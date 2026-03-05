@@ -5,9 +5,12 @@ import AppFooter from '../components/AppFooter.astro';
 
 interface Props {
   title: string;
+  shellRoute?: string;
+  shellPartial?: string;
+  shellRoutes?: Record<string, string | { partial?: string; partialUrl?: string; cache?: boolean }>;
 }
 
-const { title } = Astro.props;
+const { title, shellRoute = '', shellPartial = '', shellRoutes } = Astro.props;
 let user = null;
 ---
 
@@ -94,7 +97,13 @@ let user = null;
     <!-- System Capabilities Lit Components - UMD Bundle para SSG -->
     <script src="https://cdn.jsdelivr.net/npm/@system-capabilities/lit@1.1.1/dist/system-capabilities-lit.umd.min.js"></script>
   </head>
-  <body data-user-email={user || ''} data-authenticated="false">
+  <body
+    data-user-email={user || ''}
+    data-authenticated="false"
+    data-shell-route={shellRoute}
+    data-shell-partial={shellPartial}
+    data-shell-routes={shellRoutes ? JSON.stringify(shellRoutes) : undefined}
+  >
     <header transition:animate="none">
       <a href="/" class="header-logos" data-astro-reload>
         <img src="/images/icono_PGame.png" alt="Planning Game" class="planning-game-icon" />
@@ -158,6 +167,8 @@ let user = null;
 
     <MenuNav currentPath={Astro.url.pathname} />
 
+    <div id="subNavContainer"></div>
+
     <div id="welcomeMessage" class="welcome-container hidden">
       <div class="welcome-content">
         <img src="/images/icono_PGame.png" alt="Planning Game Logo" class="welcome-logo" />
@@ -203,10 +214,11 @@ let user = null;
       import { LazyLoader } from '/js/utils/lazy-loader.js';
       import { UserDisplayUtils } from '/js/utils/user-display-utils.js';
       import { APP_CONSTANTS } from '/js/constants/app-constants.js';
-  import '/js/services/notification-service.js';
-  import '/js/debug-notifications.js';
-  import { database, ref, push, onValue, auth, authProvider, authProviderName, signOut, signInWithPopup, signInWithEmailAndPassword, functions, httpsCallable, app, get } from '/firebase-config.js';
-  import { encodeEmailForFirebase } from '/js/utils/email-sanitizer.js';
+      import '/js/services/notification-service.js';
+      import '/js/debug-notifications.js';
+      import { database, ref, push, onValue, auth, authProvider, authProviderName, signOut, signInWithPopup, signInWithEmailAndPassword, functions, httpsCallable, app, get } from '/firebase-config.js';
+      import { encodeEmailForFirebase } from '/js/utils/email-sanitizer.js';
+      import { initAppShellRouterFromDataset } from '/js/core/app-shell-router.js';
       import { SYSTEM_REQUIREMENTS } from '/js/config/system-requirements-config.js';
 
       // Theme system - initialize on every page via Layout
@@ -827,7 +839,14 @@ let user = null;
           _layoutInitialized = true;
         }
 
+        if (auth.currentUser && document.body.dataset.authenticated !== 'true') {
+          signedIn(auth.currentUser);
+        }
+
         await getProjectIdFromURLparamProjectId();
+        if (document.body.dataset.authenticated === 'true' && projectSelected) {
+          addProjectToLinks(projectSelected);
+        }
 
         // Set welcome messages from constants
         const welcomeTitle = document.querySelector('.welcome-title');
@@ -852,6 +871,13 @@ let user = null;
         // Load page-specific components with lazy loading
         const currentPage = pagePath.split('/')[1] || 'index';
         LazyLoader.loadPageComponents(currentPage);
+
+        if (!window.appShellRouter) {
+          const router = initAppShellRouterFromDataset();
+          if (router) {
+            window.appShellRouter = router;
+          }
+        }
 
         DOMisLoaded = true;
       }
@@ -959,6 +985,17 @@ let user = null;
 
       .main-loader.hidden {
         display: none;
+      }
+
+      #subNavContainer:empty {
+        display: none;
+      }
+
+      #subNavContainer {
+        display: block;
+        width: 100%;
+        background: var(--bg-secondary, #f8fafc);
+        border-bottom: 1px solid var(--border-default, #e2e8f0);
       }
 
       * {

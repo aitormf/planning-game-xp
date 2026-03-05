@@ -219,7 +219,7 @@ export class TableRenderer {
         case 'Developer': return this.getDeveloperDisplay(card.developer);
         case 'Validator': return this.getValidatorDisplay(card.validator);
         case 'Épica': return this._getEpicDisplay(card.epic);
-        case 'Fecha registro': return UIUtils.formatDate(card.registerDate);
+        case 'Fecha registro': return UIUtils.formatDateFriendly(card.registerDate, { forceTime: true });
         case 'Fecha inicio': return card.startDate || '';
         case 'Fecha fin': return card.endDate || '';
         case 'BP': return card.businessPoints || 0;
@@ -660,12 +660,14 @@ include = false;
     if (!Array.isArray(developerDirectory)) return null;
 
     for (const entry of developerDirectory) {
+      const entryId = (entry.id || '').toLowerCase();
       const primaryEmail = (entry.primaryEmail || '').toLowerCase();
       const emails = new Set((entry.emails || []).map(e => (e || '').toLowerCase()));
       const aliases = new Set((entry.aliases || []).map(a => (a || '').toLowerCase()));
       const name = entry.name || '';
 
       if (
+        (entryId && (entryId === raw || entryId === normalized)) ||
         (primaryEmail && (primaryEmail === raw || primaryEmail === normalized)) ||
         emails.has(raw?.toLowerCase?.()) || emails.has(normalized) ||
         aliases.has(normalized) ||
@@ -1398,9 +1400,9 @@ const style = {
       const epicName = this._getEpicDisplay(card.epic);
       row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, epicName));
       // Fecha inicio
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.startDate)));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.startDate, { forceTime: true })));
       // Fecha fin
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.endDate)));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.endDate, { forceTime: true })));
       // Acciones: editar, eliminar, copiar, IA
       const actionsTd = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', textAlign: 'left', whiteSpace: 'nowrap' } });
       const firebaseId = card.id || id;
@@ -1626,11 +1628,11 @@ const style = {
       row.dataset.createdbyDisplay = bugCreatedByDisplay;
       row.appendChild(bugCreatedByCell);
       // Fecha registro
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDate(card.registerDate)));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.registerDate, { forceTime: true })));
       // Fecha inicio
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.startDate)));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.startDate, { forceTime: true })));
       // Fecha fin
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.endDate)));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.endDate, { forceTime: true })));
       // Columna Acciones - iconos ver y borrar
       const actionsTd = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', textAlign: 'center', whiteSpace: 'nowrap' } });
 
@@ -1828,7 +1830,7 @@ const style = {
       row.dataset.stakeholderValue = stakeholderValue;
       row.appendChild(stakeholderCell);
       // Fecha registro
-      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDate(card.registerDate)));
+      row.appendChild(UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem' } }, UIUtils.formatDateFriendly(card.registerDate, { forceTime: true })));
       // Columna Acciones - iconos ver y borrar
       const actionsTd = UIUtils.createElement('td', { style: { border: '1px solid var(--border-default, #ddd)', padding: '0.5rem', textAlign: 'center', whiteSpace: 'nowrap' } });
 

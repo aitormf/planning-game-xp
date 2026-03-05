@@ -84,10 +84,13 @@ function prompt(question) {
 // Resolve the database URL for an instance
 // ---------------------------------------------------------------------------
 
-function getDatabaseURL(instanceDir) {
+function getDatabaseURL(instanceDir, envFiles) {
   // Try multiple env files in priority order
-  const envFiles = ['.env.prod', '.env.dev', '.env.pre', '.env'];
-  for (const envFile of envFiles) {
+  const defaultEnvFiles = ['.env.prod', '.env.dev', '.env.pre', '.env'];
+  const targetEnvFiles = Array.isArray(envFiles) && envFiles.length > 0
+    ? [...envFiles, ...defaultEnvFiles]
+    : defaultEnvFiles;
+  for (const envFile of targetEnvFiles) {
     const url = getEnvVar(instanceDir, envFile, 'PUBLIC_FIREBASE_DATABASE_URL');
     if (url) return url;
   }
@@ -106,7 +109,7 @@ function getDatabaseURL(instanceDir) {
  * @param {boolean} [options.silent] - Suppress console output.
  * @returns {Promise<{app: admin.app.App, db: admin.database.Database, projectId: string, instanceName: string}>}
  */
-async function initFirebase({ instanceName, silent = false } = {}) {
+async function initFirebase({ instanceName, silent = false, databaseURL, envFiles } = {}) {
   // 1. Resolve instance name
   let resolvedName = instanceName || getLastInstance();
   const instances = listInstanceNames();
@@ -164,8 +167,8 @@ async function initFirebase({ instanceName, silent = false } = {}) {
     );
   }
 
-  const databaseURL = getDatabaseURL(instanceDir);
-  if (!databaseURL) {
+  const resolvedDatabaseURL = databaseURL || getDatabaseURL(instanceDir, envFiles);
+  if (!resolvedDatabaseURL) {
     throw new Error(
       `PUBLIC_FIREBASE_DATABASE_URL not found in any .env file for instance "${resolvedName}".`
     );
@@ -176,14 +179,14 @@ async function initFirebase({ instanceName, silent = false } = {}) {
 
   const app = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL,
+    databaseURL: resolvedDatabaseURL,
   });
 
   const db = admin.database();
 
   if (!silent) {
     console.log(`Firebase initialized: instance="${resolvedName}", project="${projectId}"`);
-    console.log(`  databaseURL: ${databaseURL}`);
+    console.log(`  databaseURL: ${resolvedDatabaseURL}`);
   }
 
   return { app, db, projectId, instanceName: resolvedName };

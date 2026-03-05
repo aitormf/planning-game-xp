@@ -338,8 +338,8 @@ export function updateTableRow(row, cardData) {
       // Épica
       cells[TASK_COLS.EPIC].textContent = _resolveEpicDisplayName(cardData.epic);
 
-      cells[TASK_COLS.START_DATE].textContent = UIUtils.formatDateFriendly(cardData.startDate);
-      cells[TASK_COLS.END_DATE].textContent = UIUtils.formatDateFriendly(cardData.endDate);
+      cells[TASK_COLS.START_DATE].textContent = UIUtils.formatDateFriendly(cardData.startDate, { forceTime: true });
+      cells[TASK_COLS.END_DATE].textContent = UIUtils.formatDateFriendly(cardData.endDate, { forceTime: true });
       // ACTIONS column is not updated
     }
   } else if (isBugTable) {
@@ -386,9 +386,9 @@ export function updateTableRow(row, cardData) {
       }
       cells[4].textContent = developerDisplay;
       cells[5].textContent = cardData.createdBy || ''; // Creado por (email)
-      cells[6].textContent = UIUtils.formatDateFriendly(cardData.registerDate); // Fecha registro
-      cells[7].textContent = UIUtils.formatDateFriendly(cardData.startDate); // Fecha inicio
-      cells[8].textContent = UIUtils.formatDateFriendly(cardData.endDate); // Fecha fin
+      cells[6].textContent = UIUtils.formatDateFriendly(cardData.registerDate, { forceTime: true }); // Fecha registro
+      cells[7].textContent = UIUtils.formatDateFriendly(cardData.startDate, { forceTime: true }); // Fecha inicio
+      cells[8].textContent = UIUtils.formatDateFriendly(cardData.endDate, { forceTime: true }); // Fecha fin
       // cells[9] es el botón detalle, no se actualiza
     }
   }

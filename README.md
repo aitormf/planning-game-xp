@@ -42,6 +42,22 @@ v1.2.0 - Refactoring arquitectónico con servicios centralizados para mejorar la
 
 ---
 
+## App Shell (partials)
+
+La navegación interna usa un App Shell que carga parciales y ejecuta sus scripts al navegar.
+Las rutas se configuran en `src/lib/app-shell-routes.js`. Por defecto, las parciales se cachean
+en memoria. Si una ruta necesita HTML server-side dependiente de query/usuario, puedes desactivar
+el cache por ruta:
+
+```js
+export const appShellRoutes = {
+  '/projects/': { partial: '/partials/projects', cache: false },
+  '/dashboard/': '/partials/dashboard'
+};
+```
+
+---
+
 ## Requisitos Previos
 
 Antes de empezar, asegurate de tener instalado:

@@ -11,9 +11,14 @@
  */
 
 import { database, ref, get, set, onValue } from '../../firebase-config.js';
+import { developerDirectory } from '../config/developer-directory.js';
+import { decodeEmailFromFirebase } from '../utils/email-sanitizer.js';
 
 const normalizeEmail = (email) => (email || '').toString().trim().toLowerCase();
 const normalizeName = (name) => (name || '').toString().trim();
+const legacyDeveloperDirectory = new Map(
+  (developerDirectory || []).map(entry => [entry.id, entry.name || entry.primaryEmail || ''])
+);
 
 /**
  * Encodes email for Firebase RTDB keys: @ → |, . → !, # → -
@@ -65,8 +70,13 @@ class EntityDirectoryService {
   /**
    * Inicializa el servicio cargando datos de Firebase
    */
-  async init() {
-    if (this._initialized) return;
+  async init({ refreshIfEmpty = false } = {}) {
+    if (this._initialized) {
+      if (refreshIfEmpty && this._users.size === 0 && this._developers.size === 0 && this._stakeholders.size === 0) {
+        await this._loadFromFirebase();
+      }
+      return;
+    }
     if (this._initPromise) return this._initPromise;
 
     this._initPromise = this._loadFromFirebase();
@@ -77,9 +87,12 @@ class EntityDirectoryService {
 
   async _loadFromFirebase() {
     try {
-      const [usersSnap, teamsSnap] = await Promise.all([
+      const [usersSnap, teamsSnap, legacyDevSnap, legacyStkSnap, trashSnap] = await Promise.all([
         get(ref(database, '/users')),
-        get(ref(database, '/data/teams'))
+        get(ref(database, '/data/teams')),
+        get(ref(database, '/data/developers')).catch(() => null),
+        get(ref(database, '/data/stakeholders')).catch(() => null),
+        get(ref(database, '/trash/users')).catch(() => null)
       ]);
 
       // Teams must be processed first so stakeholders can reference them
@@ -90,9 +103,168 @@ class EntityDirectoryService {
       if (usersSnap.exists()) {
         this._processUsers(usersSnap.val());
       }
+
+      const legacyDevelopers = legacyDevSnap?.exists?.() ? legacyDevSnap.val() : null;
+      const legacyStakeholders = legacyStkSnap?.exists?.() ? legacyStkSnap.val() : null;
+      this._mergeLegacyDevelopers(legacyDevelopers);
+      this._mergeLegacyStakeholders(legacyStakeholders);
+
+      const trashData = trashSnap?.exists?.() ? trashSnap.val() : null;
+      this._mergeTrashUsers(trashData);
     } catch (error) {
       // Silently ignore initialization errors
     }
+  }
+
+  _decodeTrashEmail(value) {
+    if (!value) return '';
+    if (value.includes('|') || value.includes('!') || value.includes('-')) {
+      try {
+        return decodeEmailFromFirebase(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  }
+
+  _mergeTrashUsers(data) {
+    if (!data || typeof data !== 'object') return;
+
+    Object.entries(data).forEach(([key, raw]) => {
+      if (!raw) return;
+      const candidate = raw.data || raw.user || raw.original || raw;
+      if (!candidate || typeof candidate !== 'object') return;
+
+      const email = normalizeEmail(candidate.email || this._decodeTrashEmail(key));
+      const name = normalizeName(candidate.name || raw.name || '');
+      const active = candidate.active !== false;
+      const developerId = candidate.developerId || candidate.devId || '';
+      const stakeholderId = candidate.stakeholderId || candidate.stkId || '';
+
+      if (developerId && developerId.startsWith('dev_')) {
+        const existing = this._developers.get(developerId);
+        if (existing) {
+          if (!existing.name && name) existing.name = name;
+          if (!existing.email && email) existing.email = email;
+          if (!existing.emails?.length && email) existing.emails = [email];
+          if (existing.active === undefined) existing.active = active;
+        } else {
+          this._developers.set(developerId, {
+            id: developerId,
+            name,
+            email,
+            emails: email ? [email] : [],
+            active
+          });
+        }
+
+        if (email) this._developersByEmail.set(email, developerId);
+        if (name) this._developersByName.set(name.toLowerCase(), developerId);
+        this._nextDeveloperId = updateNextIdCounter(developerId, 'dev_', this._nextDeveloperId);
+      }
+
+      if (stakeholderId && stakeholderId.startsWith('stk_')) {
+        const existing = this._stakeholders.get(stakeholderId);
+        if (existing) {
+          if (!existing.name && name) existing.name = name;
+          if (!existing.email && email) existing.email = email;
+          if (existing.active === undefined) existing.active = active;
+        } else {
+          this._stakeholders.set(stakeholderId, {
+            id: stakeholderId,
+            name,
+            email,
+            active,
+            teamId: candidate.teamId || null
+          });
+        }
+
+        if (email) this._stakeholdersByEmail.set(email, stakeholderId);
+        if (name) this._stakeholdersByName.set(name.toLowerCase(), stakeholderId);
+        this._nextStakeholderId = updateNextIdCounter(stakeholderId, 'stk_', this._nextStakeholderId);
+      }
+    });
+  }
+
+  _coerceLegacyEntries(data) {
+    if (!data) return [];
+    if (Array.isArray(data)) {
+      return data.map(entry => ({ id: entry?.id || entry?.devId || entry?.stakeholderId || '', info: entry }));
+    }
+    if (typeof data === 'object') {
+      return Object.entries(data).map(([id, info]) => ({ id, info }));
+    }
+    return [];
+  }
+
+  _mergeLegacyDevelopers(data) {
+    const entries = this._coerceLegacyEntries(data);
+    entries.forEach(({ id, info }) => {
+      const resolvedId = id || info?.id || '';
+      if (!resolvedId || !resolvedId.startsWith('dev_')) return;
+
+      const name = typeof info === 'string' ? info : (info?.name || info?.displayName || '');
+      const email = typeof info === 'string' ? '' : (info?.email || info?.mail || '');
+      const active = typeof info === 'object' ? info?.active !== false : true;
+      const normalizedEmail = normalizeEmail(email);
+      const normalizedName = normalizeName(name);
+
+      const existing = this._developers.get(resolvedId);
+      if (existing) {
+        if (!existing.name && name) existing.name = name;
+        if (!existing.email && normalizedEmail) existing.email = normalizedEmail;
+        if (!existing.emails?.length && normalizedEmail) existing.emails = [normalizedEmail];
+        if (existing.active === undefined) existing.active = active;
+      } else {
+        this._developers.set(resolvedId, {
+          id: resolvedId,
+          name,
+          email: normalizedEmail,
+          emails: normalizedEmail ? [normalizedEmail] : [],
+          active
+        });
+      }
+
+      if (normalizedEmail) this._developersByEmail.set(normalizedEmail, resolvedId);
+      if (normalizedName) this._developersByName.set(normalizedName.toLowerCase(), resolvedId);
+      this._nextDeveloperId = updateNextIdCounter(resolvedId, 'dev_', this._nextDeveloperId);
+    });
+  }
+
+  _mergeLegacyStakeholders(data) {
+    const entries = this._coerceLegacyEntries(data);
+    entries.forEach(({ id, info }) => {
+      const resolvedId = id || info?.id || '';
+      if (!resolvedId || !resolvedId.startsWith('stk_')) return;
+
+      const name = typeof info === 'string' ? info : (info?.name || info?.displayName || '');
+      const email = typeof info === 'string' ? '' : (info?.email || info?.mail || '');
+      const active = typeof info === 'object' ? info?.active !== false : true;
+      const teamId = typeof info === 'object' ? info?.teamId || null : null;
+      const normalizedEmail = normalizeEmail(email);
+      const normalizedName = normalizeName(name);
+
+      const existing = this._stakeholders.get(resolvedId);
+      if (existing) {
+        if (!existing.name && name) existing.name = name;
+        if (!existing.email && normalizedEmail) existing.email = normalizedEmail;
+        if (existing.active === undefined) existing.active = active;
+        if (!existing.teamId && teamId) existing.teamId = teamId;
+      } else {
+        this._stakeholders.set(resolvedId, {
+          id: resolvedId,
+          name,
+          email: normalizedEmail,
+          active,
+          teamId
+        });
+      }
+
+      if (normalizedEmail) this._stakeholdersByEmail.set(normalizedEmail, resolvedId);
+      if (normalizedName) this._stakeholdersByName.set(normalizedName.toLowerCase(), resolvedId);
+      this._nextStakeholderId = updateNextIdCounter(resolvedId, 'stk_', this._nextStakeholderId);
+    });
   }
 
   _processTeams(data) {
@@ -290,6 +462,11 @@ class EntityDirectoryService {
   getDeveloperDisplayName(reference) {
     const name = this.resolveDeveloperName(reference);
     if (name) return name;
+
+    if (reference?.startsWith?.('dev_')) {
+      const fallbackName = legacyDeveloperDirectory.get(reference);
+      if (fallbackName) return fallbackName;
+    }
 
     // Fallback: derivar nombre del email si parece email
     if (reference?.includes('@')) {

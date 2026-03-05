@@ -46,19 +46,38 @@ export class UIUtils {
    * If the value has no time component (date-only), omits the time.
    * Returns empty string for falsy or invalid values.
    */
-  static formatDateFriendly(value) {
+  static formatDateFriendly(value, { forceTime = false } = {}) {
     if (!value) return '';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
+    let date = null;
+    let hasTime = false;
 
-    const hasTime = typeof value === 'string' && /T\d{2}:\d{2}/.test(value);
-
-    const options = { day: 'numeric', month: 'short', year: 'numeric' };
-    if (hasTime) {
-      options.hour = '2-digit';
-      options.minute = '2-digit';
-      options.hour12 = false;
+    if (typeof value === 'string') {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [year, month, day] = value.split('-').map(Number);
+        date = new Date(year, month - 1, day);
+        hasTime = false;
+      } else {
+        date = new Date(value);
+        hasTime = /T\d{2}:\d{2}/.test(value);
+      }
+    } else {
+      date = new Date(value);
     }
+
+    if (!date || Number.isNaN(date.getTime())) return '';
+
+    const shouldIncludeTime = forceTime || hasTime;
+    const options = { day: 'numeric', month: 'short', year: 'numeric' };
+
+    if (shouldIncludeTime) {
+      return date.toLocaleString('es-ES', {
+        ...options,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    }
+
     return date.toLocaleDateString('es-ES', options);
   }
 }

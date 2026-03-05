@@ -49,7 +49,7 @@ async function initializeServices() {
   historyService.init();
   stateTransitionService.init();
   dataBus.init();
-  await entityDirectoryService.init();
+  await entityDirectoryService.init({ refreshIfEmpty: true });
 
   versionCheckService.init(APP_VERSION);
   if (!document.querySelector('version-update-modal')) {
@@ -76,3 +76,7 @@ async function initializeApplication() {
 
 // astro:page-load fires on every navigation (initial + View Transitions)
 document.addEventListener('astro:page-load', initializeApplication);
+
+document.addEventListener('user-authenticated', () => {
+  entityDirectoryService.init({ refreshIfEmpty: true }).catch(() => {});
+});

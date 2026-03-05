@@ -100,6 +100,7 @@ function isActiveLink(href: string, currentPath: string): boolean {
       this.navLinks = [];
       this.indicatorTop = null;
       this.indicatorBottom = null;
+      this.authObserver = null;
       this.init();
     }
 
@@ -126,7 +127,8 @@ function isActiveLink(href: string, currentPath: string): boolean {
       });
 
       // Initial auth state check (hide by default)
-      this.updateAuthLinks(false);
+      const isAuthenticated = document.body.getAttribute('data-authenticated') === 'true';
+      this.updateAuthLinks(isAuthenticated);
 
       // Hide super admin and stakeholder-only links by default
       this.navLinks.forEach(link => {
@@ -139,50 +141,80 @@ function isActiveLink(href: string, currentPath: string): boolean {
 
       // Check super admin status after a delay
       setTimeout(() => this.updateSuperAdminLinks(), 500);
+      if (isAuthenticated) {
+        setTimeout(() => this.updateStakeholderOnlyLinks(), 200);
+      }
+
+      if (!this.authObserver) {
+        this.authObserver = new MutationObserver((mutations) => {
+          let authChanged = false;
+          let emailChanged = false;
+
+          mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-authenticated') {
+              authChanged = true;
+            }
+            if (mutation.attributeName === 'data-user-email') {
+              emailChanged = true;
+            }
+          });
+
+          if (authChanged) {
+            const authenticatedNow = document.body.getAttribute('data-authenticated') === 'true';
+            this.updateAuthLinks(authenticatedNow);
+            if (authenticatedNow) {
+              setTimeout(() => this.updateSuperAdminLinks(), 100);
+              setTimeout(() => this.updateStakeholderOnlyLinks(), 200);
+            }
+          }
+
+          if (emailChanged) {
+            setTimeout(() => this.updateSuperAdminLinks(), 100);
+            setTimeout(() => this.updateStakeholderOnlyLinks(), 200);
+          }
+        });
+
+        this.authObserver.observe(document.body, {
+          attributes: true,
+          attributeFilter: ['data-authenticated', 'data-user-email']
+        });
+      }
     }
 
     updateNavLinks() {
-      const currentPath = window.location.pathname;
+      const normalizePath = (value) => {
+        const cleaned = (value || '/').toString().split('?')[0].split('#')[0];
+        const trimmed = cleaned.replace(/\/$/, '');
+        return trimmed || '/';
+      };
+      const getLinkPath = (href) => {
+        if (!href) return '';
+        try {
+          return new URL(href, window.location.origin).pathname;
+        } catch (error) {
+          return href;
+        }
+      };
 
-      // Show/hide links based on path (original logic - without super admin logic)
-      // Root "/" and "/projects" show the same limited set of links
-      if (currentPath === '/' || currentPath === '/projects' || currentPath === '/projects/') {
-        const rootVisibleLinks = new Set(['/projects', '/dashboard/', '/proposals/', '/wip/', '/cleanview/', '/doc/']);
-        // Note: Development link visibility is handled by updateSuperAdminLinks
-
-        this.navLinks.forEach(link => {
-          const href = link.getAttribute('href');
-          const requiresSuperAdmin = link.getAttribute('data-requires-super-admin') === 'true';
-          const requiresStakeholderOnly = link.getAttribute('data-requires-stakeholder-only') === 'true';
-          const isDocLink = link.classList.contains('doc-link');
-
-          // Skip super admin and stakeholder-only links - they're handled separately
-          if (requiresSuperAdmin || requiresStakeholderOnly) return;
-
-          // Doc link is always visible
-          if (isDocLink) {
-            link.classList.remove('hidden');
-            return;
-          }
-
-          link.classList.toggle('hidden', !rootVisibleLinks.has(href));
-        });
-      } else {
-        this.navLinks.forEach(link => {
-          const requiresSuperAdmin = link.getAttribute('data-requires-super-admin') === 'true';
-          const requiresStakeholderOnly = link.getAttribute('data-requires-stakeholder-only') === 'true';
-          // Skip super admin and stakeholder-only links - they're handled separately
-          if (!requiresSuperAdmin && !requiresStakeholderOnly) {
-            link.classList.remove('hidden');
-          }
-        });
-      }
+      this.navLinks.forEach(link => {
+        const requiresSuperAdmin = link.getAttribute('data-requires-super-admin') === 'true';
+        const requiresStakeholderOnly = link.getAttribute('data-requires-stakeholder-only') === 'true';
+        if (!requiresSuperAdmin && !requiresStakeholderOnly) {
+          link.classList.remove('hidden');
+        }
+      });
 
       // Add event listeners for interactivity
       this.navLinks.forEach((link) => {
         link.addEventListener('click', (event) => {
-          event.preventDefault();
-          window.location.href = link.href;
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+          }
+          const router = window.appShellRouter;
+          if (router?.canHandle?.(link.href)) {
+            event.preventDefault();
+            router.navigate(link.href);
+          }
         });
 
         link.addEventListener('mouseenter', (event) => this.moveIndicators(event.target));
@@ -194,8 +226,9 @@ function isActiveLink(href: string, currentPath: string): boolean {
       const path = new URL(window.location).pathname;
       const matchingLink = this.navLinks.find(link => {
         const href = link.getAttribute('href');
+        const linkPath = href ? new URL(href, window.location.origin).pathname : '';
         // Clean paths by removing trailing slashes
-        const cleanHref = href === "/" ? "/" : href.replace(/\/$/, "");
+        const cleanHref = linkPath === "/" ? "/" : linkPath.replace(/\/$/, "");
         const cleanPath = path.replace(/\/$/, "") || "/";
         
         // Exact match for root path
@@ -320,6 +353,11 @@ function isActiveLink(href: string, currentPath: string): boolean {
 
   // Initialize on every page load (View Transitions compatible)
   document.addEventListener('astro:page-load', () => {
+    if (window.menuNavSSR) {
+      window.menuNavSSR.updateNavLinksPublic();
+      window.menuNavSSR.markActiveLinkByURLPublic();
+      return;
+    }
     window.menuNavSSR = new MenuNavSSR();
 
     // Make methods available globally for backward compatibility
