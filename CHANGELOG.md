@@ -7,6 +7,20 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Replace hardcoded white text with --text-on-primary CSS variable
+
+### Documentation
+
+- Add pending geniova deploy notes
+
+### Other
+
+- Sync lastBuildCommit
+
+## [1.164.3] - 2026-03-05
+
+### Fixed
+
 - Stabilize app shell routing and nav
 
 ## [1.164.2] - 2026-03-05
