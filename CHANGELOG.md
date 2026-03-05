@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Stabilize app shell routing and nav
+
+## [1.164.2] - 2026-03-05
+
+### Fixed
+
 - Force full page reload on navigation to prevent blank pages
 
 ## [1.164.1] - 2026-03-05
