@@ -21,6 +21,26 @@ describe('extractShellParts', () => {
     expect(result.subnavHtml).not.toContain('<script');
     expect(result.mainHtml).not.toContain('<script');
     expect(result.scripts).toHaveLength(2);
+    expect(result.stylesheets).toHaveLength(0);
+  });
+
+  it('should extract stylesheets from partial HTML', () => {
+    const html = `
+      <link rel="stylesheet" href="/_astro/projects.abc123.css">
+      <style>.custom { color: red; }</style>
+      <div data-main>
+        <div id="main">Main</div>
+      </div>
+    `;
+
+    const result = extractShellParts(html);
+
+    expect(result.stylesheets).toHaveLength(2);
+    expect(result.stylesheets[0].getAttribute('href')).toBe('/_astro/projects.abc123.css');
+    expect(result.stylesheets[1].textContent).toContain('.custom');
+    expect(result.mainHtml).toContain('id="main"');
+    expect(result.mainHtml).not.toContain('<link');
+    expect(result.mainHtml).not.toContain('<style');
   });
 });
 

@@ -48,13 +48,17 @@ export function extractShellParts(html) {
   const scripts = Array.from(fragment.querySelectorAll('script'));
   scripts.forEach(script => script.remove());
 
+  const stylesheets = Array.from(fragment.querySelectorAll('link[rel="stylesheet"], style'));
+  stylesheets.forEach(node => node.remove());
+
   const subnavNode = fragment.querySelector(DEFAULT_SHELL_CONFIG.subnavSelector);
   const mainNode = fragment.querySelector(DEFAULT_SHELL_CONFIG.mainSelector);
 
   return {
     subnavHtml: subnavNode ? subnavNode.innerHTML : '',
     mainHtml: mainNode ? mainNode.innerHTML : '',
-    scripts
+    scripts,
+    stylesheets
   };
 }
 
@@ -206,8 +210,9 @@ export class AppShellRouter {
         }
       }
 
-      const { subnavHtml, mainHtml, scripts } = extractShellParts(html);
+      const { subnavHtml, mainHtml, scripts, stylesheets } = extractShellParts(html);
 
+      this._injectStylesheets(stylesheets);
       this.subnavContainer.innerHTML = subnavHtml;
       this.mainContainer.innerHTML = mainHtml;
 
@@ -230,6 +235,7 @@ export class AppShellRouter {
   destroy() {
     window.removeEventListener('popstate', this._onPopState);
     this._clearShellScripts();
+    document.querySelectorAll('[data-shell-style]').forEach(el => el.remove());
   }
 
   async _executeScripts(scripts) {
@@ -246,6 +252,15 @@ export class AppShellRouter {
     document.querySelectorAll(`script[${DEFAULT_SHELL_CONFIG.scriptMarker}]`).forEach(script => {
       script.remove();
     });
+  }
+
+  _injectStylesheets(stylesheets) {
+    document.querySelectorAll('[data-shell-style]').forEach(el => el.remove());
+    for (const node of stylesheets) {
+      const clone = node.cloneNode(true);
+      clone.setAttribute('data-shell-style', '');
+      document.head.append(clone);
+    }
   }
 
   _normalizePartialUrl(partialUrl) {
