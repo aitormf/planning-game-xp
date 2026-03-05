@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Inject partial stylesheets in app-shell-router
+
+## [1.164.4] - 2026-03-05
+
+### Fixed
+
 - Replace hardcoded white text with --text-on-primary CSS variable
 
 ### Documentation
