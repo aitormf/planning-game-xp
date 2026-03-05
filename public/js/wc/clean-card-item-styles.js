@@ -101,9 +101,9 @@ export const CleanCardItemStyles = css`
   .status-donevalidated { background: var(--status-done, #10b981); color: var(--status-done-text, #fff); }
   .status-blocked { background: var(--status-blocked, #f43f5e); color: var(--status-blocked-text, #fff); }
   .status-reopened { background: var(--status-blocked, #f43f5e); color: var(--status-blocked-text, #fff); }
-  .status-created { background: #64748b; color: #fff; }
-  .status-assigned { background: var(--brand-primary, #6366f1); color: #fff; }
-  .status-fixed { background: #10b981; color: #fff; }
-  .status-verified { background: #34d399; color: #fff; }
-  .status-closed { background: #14532d; color: #fff; }
+  .status-created { background: #64748b; color: var(--text-on-primary, #fff); }
+  .status-assigned { background: var(--brand-primary, #6366f1); color: var(--text-on-primary, #fff); }
+  .status-fixed { background: #10b981; color: var(--text-on-primary, #fff); }
+  .status-verified { background: #34d399; color: var(--text-on-primary, #fff); }
+  .status-closed { background: #14532d; color: var(--text-on-primary, #fff); }
 `;

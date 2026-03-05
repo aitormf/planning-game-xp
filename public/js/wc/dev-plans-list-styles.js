@@ -129,12 +129,12 @@ export const DevPlansListStyles = css`
 
   .plan-status-accepted {
     background: var(--brand-primary, #3b82f6);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .plan-status-rejected {
     background: var(--color-error, #dc3545);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   /* Buttons */
@@ -157,7 +157,7 @@ export const DevPlansListStyles = css`
 
   .plans-btn-primary {
     background: var(--brand-primary, #007bff);
-    color: white;
+    color: var(--text-on-primary, #fff);
     padding: 0.5rem 1.25rem;
     font-size: 0.95rem;
   }
@@ -178,21 +178,21 @@ export const DevPlansListStyles = css`
 
   .plans-btn-danger {
     background: var(--color-error, #dc3545);
-    color: white;
+    color: var(--text-on-primary, #fff);
     padding: 0.5rem 1.25rem;
     font-size: 0.95rem;
   }
 
   .plans-btn-accept {
     background: var(--color-success, #4caf50);
-    color: white;
+    color: var(--text-on-primary, #fff);
     padding: 0.5rem 1.25rem;
     font-size: 0.95rem;
   }
 
   .plans-btn-generate {
     background: var(--brand-secondary, #ec3e95);
-    color: white;
+    color: var(--text-on-secondary, #fff);
     padding: 0.5rem 1.25rem;
     font-size: 0.95rem;
   }
@@ -326,7 +326,7 @@ export const DevPlansListStyles = css`
 
   .phase-badge.phase-status-completed {
     background: var(--color-success, #4caf50);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .phase-description-text {

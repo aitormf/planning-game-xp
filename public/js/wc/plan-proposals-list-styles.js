@@ -56,7 +56,7 @@ export const PlanProposalsListStyles = css`
     gap: 0.4rem;
     padding: 0.45rem 1rem;
     background: var(--brand-primary, #3b82f6);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: none;
     border-radius: 6px;
     font-size: 0.9rem;
@@ -90,7 +90,7 @@ export const PlanProposalsListStyles = css`
 
   .btn-danger {
     background: var(--color-error, #dc3545);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .btn-small {
@@ -100,7 +100,7 @@ export const PlanProposalsListStyles = css`
 
   .btn-generate {
     background: var(--brand-secondary, #ec3e95);
-    color: white;
+    color: var(--text-on-secondary, #fff);
   }
 
   /* Table */
@@ -193,12 +193,12 @@ export const PlanProposalsListStyles = css`
 
   .status-planned {
     background: var(--brand-primary, #3b82f6);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .status-rejected {
     background: var(--color-error, #dc3545);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   /* Tag */
@@ -320,7 +320,7 @@ export const PlanProposalsListStyles = css`
     align-items: center;
     gap: 0.25rem;
     background: var(--brand-primary, #3b82f6);
-    color: white;
+    color: var(--text-on-primary, #fff);
     font-size: 0.8rem;
     padding: 0.15rem 0.5rem;
     border-radius: 10px;
@@ -332,7 +332,7 @@ export const PlanProposalsListStyles = css`
     opacity: 0.8;
     background: none;
     border: none;
-    color: white;
+    color: var(--text-on-primary, #fff);
     padding: 0;
     line-height: 1;
   }

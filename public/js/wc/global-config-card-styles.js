@@ -188,7 +188,7 @@ export const GlobalConfigCardStyles = css`
 
   .config-btn-primary {
     background: var(--color-blue-500, #4a9eff);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .config-btn-primary:hover {

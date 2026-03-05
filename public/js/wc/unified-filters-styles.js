@@ -137,7 +137,7 @@ export const unifiedFiltersStyles = css`
     padding: 0 5px;
     font-size: 0.7rem;
     font-weight: 600;
-    color: white;
+    color: var(--text-on-primary, #fff);
     background: #0d6efd;
     border-radius: 9px;
     margin-left: 0.5rem;

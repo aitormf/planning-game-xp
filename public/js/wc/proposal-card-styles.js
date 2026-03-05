@@ -92,7 +92,7 @@ const ProposalCardSpecificStyles = css`
 
   .business-points {
     background: #4caf50;
-    color: white;
+    color: var(--text-on-primary, #fff);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 1rem;
@@ -100,7 +100,7 @@ const ProposalCardSpecificStyles = css`
 
   .dev-points {
     background: #ff9800;
-    color: white;
+    color: var(--text-on-primary, #fff);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 1rem;
@@ -155,7 +155,7 @@ const ProposalCardSpecificStyles = css`
 
   button {
     background: #4a9eff;
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: none;
     padding: 8px 16px;
     border-radius: 4px;
@@ -341,7 +341,7 @@ const ProposalCardSpecificStyles = css`
 
   .todo {
     background: #ec3e95;
-    color: #fff;
+    color: var(--text-on-secondary, #fff);
   }
 
 
@@ -352,7 +352,7 @@ const ProposalCardSpecificStyles = css`
   }
   .expedit {
     background: #ec3e95;
-    color: #fff;
+    color: var(--text-on-secondary, #fff);
     border-radius: 8px;
   }
   .expedit span:first-child {
@@ -363,7 +363,7 @@ const ProposalCardSpecificStyles = css`
 
   .sprint {
     background-color: #151efb;
-    color: white;
+    color: var(--text-on-primary, #fff);
     padding: 3px;
     border-radius: 4px;
   }
@@ -381,7 +381,7 @@ const ProposalCardSpecificStyles = css`
     font-size: 1.2rem;
   }
   .tab-button.active {
-    color: white;
+    color: var(--text-on-primary, #fff);
     font-weight: bold;
   }
   .tab-button:hover {
@@ -514,7 +514,7 @@ const ProposalCardSpecificStyles = css`
 
   .convert-ia-btn:hover:not(.disabled) {
     background: rgba(230, 0, 126, 1);
-    color: white;
+    color: var(--text-on-secondary, #fff);
     text-shadow: 1px 0px #000;
   }
 
@@ -528,7 +528,7 @@ const ProposalCardSpecificStyles = css`
     margin-top: 0.75rem;
     padding: 0.5rem 1rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: none;
     border-radius: 6px;
     font-size: 0.9rem;

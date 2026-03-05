@@ -75,7 +75,7 @@ export const CommitsListStyles = css`
 
   .commits-count-badge {
     background: var(--color-blue-500, #4a9eff);
-    color: white;
+    color: var(--text-on-primary, #fff);
     font-size: 0.75rem;
     padding: 0.1rem 0.4rem;
     border-radius: 10px;

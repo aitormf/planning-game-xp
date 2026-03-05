@@ -51,7 +51,7 @@ export const ThemeEditorStyles = css`
 
   .btn-primary {
     background-color: var(--brand-primary, #4a9eff);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .btn-primary:hover:not(:disabled) {
@@ -70,7 +70,7 @@ export const ThemeEditorStyles = css`
 
   .btn-danger {
     background-color: #dc3545;
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .btn-danger:hover:not(:disabled) {
@@ -313,7 +313,7 @@ export const ThemeEditorStyles = css`
 
   .btn-auto:hover {
     background: var(--brand-primary, #4a9eff);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border-color: var(--brand-primary, #4a9eff);
   }
 

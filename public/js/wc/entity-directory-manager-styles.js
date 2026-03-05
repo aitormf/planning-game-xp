@@ -42,12 +42,12 @@ export const EntityDirectoryManagerStyles = css`
 
   .btn-primary {
     background: var(--brand-primary, #3b82f6);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .btn-danger {
     background: var(--color-error, #ef4444);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .btn-secondary {

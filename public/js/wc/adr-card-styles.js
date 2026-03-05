@@ -168,7 +168,7 @@ export const AdrCardStyles = css`
 
   .adr-btn-primary {
     background: var(--color-blue-500, #4a9eff);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .adr-btn-primary:hover {

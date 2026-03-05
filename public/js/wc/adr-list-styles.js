@@ -57,7 +57,7 @@ export const AdrListStyles = css`
     gap: 0.5rem;
     padding: 0.5rem 1rem;
     background: var(--color-blue-500, #4a9eff);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: none;
     border-radius: 4px;
     font-size: 0.9rem;

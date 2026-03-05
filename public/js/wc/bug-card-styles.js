@@ -7,7 +7,7 @@ const BugCardSpecificStyles = css`
     display: inline-block;
     font-size: 0.65em;
     font-weight: 600;
-    color: white;
+    color: var(--text-on-primary, #fff);
     padding: 0.1em 0.4em;
     border-radius: 3px;
     margin-left: 0.4em;
@@ -431,7 +431,7 @@ const BugCardSpecificStyles = css`
     margin-top: 0.5rem;
     padding: 0.5rem 1rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: none;
     border-radius: 6px;
     font-size: 0.85rem;

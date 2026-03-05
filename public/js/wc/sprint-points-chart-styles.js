@@ -48,7 +48,7 @@ export const sprintPointsChartStyles = css`
 
   .toggle-btn.active {
     background: #2196F3;
-    color: white;
+    color: var(--text-on-primary, #fff);
     border-color: #2196F3;
   }
 

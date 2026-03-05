@@ -494,7 +494,7 @@ const EpicCardSpecificStyles = css`
     font-size: 1.2rem;
   }
   .tab-button.active {
-    color: white;
+    color: var(--text-on-primary, #fff);
     font-weight: bold;
   }
   .tab-button:hover {
@@ -596,7 +596,7 @@ const EpicCardSpecificStyles = css`
   /* Stakeholder tags */
   .stakeholder-tag {
     background: var(--secondary-color);
-    color: white;
+    color: var(--text-on-secondary, #fff);
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     font-size: 0.8em;

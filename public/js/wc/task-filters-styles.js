@@ -180,7 +180,7 @@ export const taskFiltersStyles = css`
   .clear-button {
     padding: 6px 10px;
     background: #dc3545;
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: none;
     border-radius: 4px;
     cursor: pointer;

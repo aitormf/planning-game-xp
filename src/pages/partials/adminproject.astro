@@ -232,7 +232,7 @@
 
   .cleanview-link:hover {
     background: var(--brand-primary, #6366f1);
-    color: #fff;
+    color: var(--text-on-primary, #fff);
     border-color: var(--brand-primary, #6366f1);
   }
 
@@ -676,7 +676,7 @@ const notification = document.createElement('slide-notification');
             title: `Tareas de la épica: ${epicTitle}`,
             message: `<p>No hay tareas asignadas a esta épica.</p>`,
             button1Text: 'Cerrar',
-            button1css: 'background-color: green; color: white;',
+            button1css: 'background-color: green; color: var(--text-on-primary, white);',
             button1Action: () => { },
             maxWidth: '80vw',
             maxHeight: '80vh',
@@ -798,7 +798,7 @@ const notification = document.createElement('slide-notification');
         }
         .epic-tasks-table th {
           background-color: var(--brand-primary, #6366f1);
-          color: #ffffff;
+          color: var(--text-on-primary, #ffffff);
           font-weight: bold;
           font-size: 1em;
         }
@@ -821,17 +821,17 @@ const notification = document.createElement('slide-notification');
           font-size: 0.85em;
           font-weight: 500;
         }
-        .status-todo { background-color: var(--status-todo, #94a3b8); color: #ffffff; }
-        .status-inprogress { background-color: var(--status-in-progress, #3b82f6); color: #ffffff; }
-        .status-done { background-color: var(--status-done, #10b981); color: #ffffff; }
-        .status-blocked { background-color: var(--status-blocked, #f43f5e); color: #ffffff; }
-        .status-inreview { background-color: var(--status-expedited, #8b5cf6); color: #ffffff; }
-        .status-testing { background-color: var(--status-in-progress, #3b82f6); color: #ffffff; }
-        .status-tovalidate { background-color: var(--status-to-validate, #f59e0b); color: #ffffff; }
-        .status-cancelled { background-color: var(--status-blocked, #f43f5e); color: #ffffff; }
+        .status-todo { background-color: var(--status-todo, #94a3b8); color: var(--status-todo-text, #ffffff); }
+        .status-inprogress { background-color: var(--status-in-progress, #3b82f6); color: var(--status-in-progress-text, #ffffff); }
+        .status-done { background-color: var(--status-done, #10b981); color: var(--status-done-text, #ffffff); }
+        .status-blocked { background-color: var(--status-blocked, #f43f5e); color: var(--status-blocked-text, #ffffff); }
+        .status-inreview { background-color: var(--status-expedited, #8b5cf6); color: var(--status-expedited-text, #ffffff); }
+        .status-testing { background-color: var(--status-in-progress, #3b82f6); color: var(--status-in-progress-text, #ffffff); }
+        .status-tovalidate { background-color: var(--status-to-validate, #f59e0b); color: var(--status-to-validate-text, #ffffff); }
+        .status-cancelled { background-color: var(--status-blocked, #f43f5e); color: var(--status-blocked-text, #ffffff); }
         .view-task-btn {
           background: var(--brand-primary, #6366f1);
-          color: #ffffff;
+          color: var(--text-on-primary, #ffffff);
           border: none;
           padding: 6px 10px;
           border-radius: 4px;
@@ -1072,7 +1072,7 @@ return;
                 title: 'Seleccionar repositorio',
                 message: `<div style="padding: 0.5rem;">${repoLinks}</div>`,
                 button1Text: 'Cerrar',
-                button1css: 'background-color: var(--brand-primary, #6366f1); color: white;',
+                button1css: 'background-color: var(--brand-primary, #6366f1); color: var(--text-on-primary, white);',
                 button1Action: () => {},
                 maxWidth: '500px',
                 showHeader: true
@@ -1102,7 +1102,7 @@ return;
               title: `Documentación: ${projectData.name || 'Proyecto'}`,
               message: `<md-renderer style="display: block; text-align: left; padding: 1rem;">${escapedDescription}</md-renderer>`,
               button1Text: 'Cerrar',
-              button1css: 'background-color: var(--brand-primary, #6366f1); color: white;',
+              button1css: 'background-color: var(--brand-primary, #6366f1); color: var(--text-on-primary, white);',
               button1Action: () => {},
               maxWidth: '700px',
               maxHeight: '80vh',
@@ -1756,7 +1756,7 @@ document.addEventListener('astro:page-load', () => {
             title: 'Guía de Tasks',
             message: `${taskGuideStyles}<div class="task-guide-content">${html}</div>`,
             button1Text: 'Cerrar',
-            button1css: 'background-color: var(--brand-primary, #6366f1); color: white;',
+            button1css: 'background-color: var(--brand-primary, #6366f1); color: var(--text-on-primary, white);',
             button1Action: () => {},
             maxWidth: '800px',
             maxHeight: '85vh',
@@ -1895,7 +1895,7 @@ document.addEventListener('astro:page-load', () => {
     font-weight: bold;
     font-size: 1.2rem;
     background: var(--brand-primary, #6366f1);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border-radius: 8px 8px 0 0;
     user-select: none;
     display: block;
@@ -1986,7 +1986,7 @@ document.addEventListener('astro:page-load', () => {
     width: 12rem;
     padding: 12px;
     background: var(--brand-primary, #6366f1);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: 3px solid var(--brand-secondary);
     border-radius: 8px;
     cursor: pointer;
@@ -2010,7 +2010,7 @@ document.addEventListener('astro:page-load', () => {
     padding: 0;
     margin-left: 0.5rem;
     background: var(--text-muted, #64748b);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -2076,7 +2076,7 @@ document.addEventListener('astro:page-load', () => {
 
   .tablinks.active {
       background-color: var(--brand-primary, #6366f1) !important;
-      color: white !important;
+      color: var(--text-on-primary, #fff) !important;
       border-color: var(--brand-primary, #6366f1) !important;
       font-weight: bold !important;
       box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3) !important;
@@ -2172,7 +2172,7 @@ document.addEventListener('astro:page-load', () => {
 
   .view-button.active {
     background: var(--brand-primary, #6366f1);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border-color: var(--brand-primary, #6366f1);
   }
 
@@ -2241,7 +2241,7 @@ document.addEventListener('astro:page-load', () => {
   .kanban-column h4 {
     margin: 0;
     padding: 0.5rem;
-    color: white;
+    color: var(--text-on-primary, #fff);
     border-radius: 6px;
     text-align: center;
     font-size: 0.9rem;
@@ -2280,7 +2280,7 @@ document.addEventListener('astro:page-load', () => {
 
   .backlog-column {
     background: linear-gradient(135deg, #6c757d, #495057);
-    color: white;
+    color: var(--text-on-primary, #fff);
     position: sticky;
     left: 0;
     z-index: 2;
@@ -2296,7 +2296,7 @@ document.addEventListener('astro:page-load', () => {
   .backlog-column h4 {
     margin: 0;
     padding: 1rem;
-    color: white;
+    color: var(--text-on-primary, #fff);
     background: linear-gradient(135deg, #6c757d, #495057);
     border-radius: 8px;
     text-align: center;
@@ -2313,7 +2313,7 @@ document.addEventListener('astro:page-load', () => {
     margin: 0.5rem 0;
     padding: 0.5rem 1rem;
     background: linear-gradient(135deg, #f39c12, #e67e22);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -2345,7 +2345,7 @@ document.addEventListener('astro:page-load', () => {
   .sprint-column h4 {
     margin: 0;
     padding: 0.5rem;
-    color: white !important;
+    color: var(--text-on-primary, #fff) !important;
     border-radius: 6px;
     text-align: center;
     font-size: 0.9rem;
@@ -2572,7 +2572,7 @@ document.addEventListener('astro:page-load', () => {
   #tasksFilters .clear-button {
     padding: 0.5rem;
     background: var(--color-error, #f43f5e);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: none;
     border-radius: 4px;
     cursor: pointer;

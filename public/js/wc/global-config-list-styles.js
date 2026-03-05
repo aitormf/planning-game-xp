@@ -68,7 +68,7 @@ export const GlobalConfigListStyles = css`
 
   .type-tab.active {
     background: var(--brand-primary, #6366f1);
-    color: white;
+    color: var(--text-on-primary, #fff);
   }
 
   .type-count {
@@ -127,7 +127,7 @@ export const GlobalConfigListStyles = css`
     gap: 0.4rem;
     padding: 0.4rem 0.8rem;
     background: var(--brand-primary, #6366f1);
-    color: white;
+    color: var(--text-on-primary, #fff);
     border: none;
     border-radius: 4px;
     font-size: 0.9rem;
