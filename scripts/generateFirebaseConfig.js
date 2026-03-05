@@ -81,7 +81,9 @@ function _createAuthProvider() {
 export const authProvider = _createAuthProvider();
 export const authProviderName = '${env.PUBLIC_AUTH_PROVIDER || 'google'}';
 export const databaseFirestore = getFirestore(app);
-export const messaging = await isMessagingSupported() ? getMessaging(app) : null;
+let _messaging = null;
+try { _messaging = getMessaging(app); } catch (e) { /* unsupported browser */ }
+export const messaging = _messaging;
 export const storage = getStorage(app);
 export const functions = getFunctions(app, functionsRegion);
 
