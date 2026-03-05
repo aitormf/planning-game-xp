@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Force full page reload on navigation to prevent blank pages
+
+## [1.164.1] - 2026-03-05
+
+### Fixed
+
 - Guard firebase messaging init for unsupported browsers
 
 ## [1.164.0] - 2026-03-04
