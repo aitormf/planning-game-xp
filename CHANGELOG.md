@@ -7,6 +7,19 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Read project developers from project node when entityDirectoryService returns empty (#87)
+- Clean validation revert flags from Firebase to prevent repeated toast on reload
+- Update endDate when WIP moves to To Validate
+
+### Documentation
+
+- Major documentation cleanup and new guides
+- Log WIP to validate endDate fix
+
+## [1.164.5] - 2026-03-05
+
+### Fixed
+
 - Inject partial stylesheets in app-shell-router
 
 ## [1.164.4] - 2026-03-05
