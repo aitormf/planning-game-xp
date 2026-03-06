@@ -38,7 +38,7 @@ npm audit fix
 
 ### 🔧 Configuración
 
-El script de verificación (`scripts/security-check.js`) puede configurarse para:
+El script de verificación (`scripts/security-check-and-fix.js`) puede configurarse para:
 
 - **Nivel de severidad**: Por defecto bloquea TODAS las vulnerabilidades
 - **Excepciones**: Se pueden añadir excepciones para vulnerabilidades específicas si es necesario

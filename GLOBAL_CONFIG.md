@@ -383,8 +383,6 @@ Si tu proyecto usaba el campo `agentsGuidelines` (texto libre), puedes migrar a 
 | `public/js/services/global-config-service.js` | Servicio CRUD para configs globales |
 | `public/js/wc/GlobalConfigList.js` | Componente lista de configs |
 | `public/js/wc/GlobalConfigCard.js` | Componente individual |
-| `public/js/wc/GlobalConfigSelector.js` | Selector múltiple para proyectos |
 | `src/pages/global-config.astro` | Página de gestión |
-| `mcp-server/src/tools/global-config.js` | Tools MCP |
 | `scripts/seed-global-config.js` | Script de seed |
 | `scripts/seed-adrs.js` | Script de seed ADRs |

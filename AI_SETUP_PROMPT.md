@@ -13,7 +13,7 @@ El repositorio está en: https://github.com/AgilePlanning-io/planning-game-xp
 
 Por favor, guíame paso a paso a través del proceso de instalación. Necesito:
 
-1. **Clonar e instalar dependencias**
+1. **Hacer fork del repositorio, clonar mi fork e instalar dependencias**
 
 2. **Crear un proyecto en Firebase** con los siguientes servicios:
    - Authentication (con Microsoft provider)
@@ -80,9 +80,12 @@ Antes de empezar, ten preparada esta información:
 Durante la instalación, la IA te pedirá que ejecutes comandos como:
 
 ```bash
-# Clonar repositorio
-git clone https://github.com/AgilePlanning-io/planning-game-xp.git
+# Hacer fork en GitHub y clonar tu fork
+git clone https://github.com/TU-USUARIO/planning-game-xp.git
 cd planning-game-xp
+
+# (Opcional) Configurar upstream para recibir actualizaciones
+git remote add upstream https://github.com/AgilePlanning-io/planning-game-xp.git
 
 # Instalar dependencias
 npm install
@@ -97,7 +100,7 @@ firebase use tu-proyecto
 # Desplegar
 npm run deploy:rules
 npm run deploy:functions
-npm run build
+npm run build:no-bump    # Sin version bump (recomendado para forks)
 npm run deploy
 
 # Setup de admin
@@ -132,6 +135,31 @@ Al finalizar, tendrás:
 3. ✅ Cloud Functions desplegadas
 4. ✅ Tu usuario configurado como Super Admin y App Admin
 5. ✅ (Opcional) Notificaciones por email funcionando
+
+---
+
+---
+
+## Prompt para instalar solo el MCP (sin la app web)
+
+Si ya tienes un Planning Game desplegado y solo necesitas conectar tu IA para gestionar tareas:
+
+```
+Necesito instalar el MCP server de Planning Game XP para que puedas
+leer y gestionar mis tareas directamente. No necesito instalar la app web,
+solo el conector MCP.
+
+Guíame paso a paso para:
+1. Instalar planning-game-mcp con npm
+2. Registrarlo en Claude Code con "claude mcp add"
+3. Configurar mi identidad con setup_mcp_user
+
+Mi proyecto Firebase se llama: [TU_PROYECTO_FIREBASE]
+Tengo el serviceAccountKey.json en: [RUTA_AL_ARCHIVO]
+La URL de mi base de datos es: [URL_DATABASE o "no la sé"]
+
+Si no sé la URL de la base de datos, ayúdame a encontrarla en Firebase Console.
+```
 
 ---
 

@@ -73,15 +73,9 @@ PUBLIC_GITLAB_ISSUER_URL=https://gitlab.com
 ```bash
 # Activar emuladores
 USE_FIREBASE_EMULATOR=true
-
-# Puertos de emuladores
-FIREBASE_EMULATOR_MESSAGING_PORT=5001
-FIREBASE_EMULATOR_MESSAGING_HOST=localhost
-FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
-FIRESTORE_EMULATOR_HOST=localhost:8081
-FIREBASE_DATABASE_EMULATOR_HOST=localhost:9000
-FIREBASE_STORAGE_EMULATOR_HOST=localhost:9199
 ```
+
+> **Nota**: Los puertos de los emuladores (Firestore: 8080, Database: 9000, Storage: 9199, Auth: 9099) se detectan automaticamente desde el codigo. No es necesario definir variables `*_EMULATOR_HOST` en los archivos `.env`.
 
 ### Testing (SOLO para tests E2E)
 
@@ -97,32 +91,48 @@ TEST_USER_PASSWORD=contraseña_segura
 
 Archivo: `functions/.env`
 
-### Microsoft Graph API (para envío de emails)
+### Azure AD (para SharePoint/OneDrive integration)
 
 ```bash
-# Credenciales de Azure AD para envío de emails
-MS_CLIENT_ID=922ad4eb-...
-MS_CLIENT_SECRET=wvk8Q~...
-MS_TENANT_ID=73e4694f-...
-MS_FROM_EMAIL=noreply@tudominio.com
+# Credenciales de Azure AD
+AZURE_TENANT_ID=73e4694f-...
+AZURE_CLIENT_ID=93f86082-...
+AZURE_CLIENT_SECRET=u518Q~...
+
+# SharePoint (para integracion de documentos)
+SHAREPOINT_SITE_ID=tu-sharepoint-site-id
+SHAREPOINT_DRIVE_ID=tu-sharepoint-drive-id
+```
+
+### Microsoft Graph API (para envio de emails)
+
+Las credenciales de envio de email se almacenan como **Firebase Secrets**, no en `functions/.env`:
+
+```bash
+# Configurar con:
+firebase functions:secrets:set MS_CLIENT_ID
+firebase functions:secrets:set MS_CLIENT_SECRET
+firebase functions:secrets:set MS_TENANT_ID
+firebase functions:secrets:set MS_FROM_EMAIL
+firebase functions:secrets:set MS_ALERT_EMAIL
 ```
 
 ### Application URL (REQUERIDA)
 
 ```bash
-# URL base de la aplicación (usada en emails de notificación)
+# URL base de la aplicacion (usada en emails de notificacion)
 # NUNCA debe apuntar a localhost
 PUBLIC_APP_URL=https://planning-gamexp.web.app
 ```
 
-### Portal de Soporte (REQUERIDA si se usa portal de incidencias)
+### Portal de Soporte (OPCIONAL - si se usa portal de incidencias)
 
 ```bash
 # URL del portal de soporte para notificaciones de bugs resueltos
 PORTAL_SOPORTE_URL=https://portal.tudominio.com
 ```
 
-### Super Admin
+### Super Admin (OPCIONAL)
 
 ```bash
 # Email del Super Admin (mismo que en cliente)
@@ -185,7 +195,7 @@ gcloud auth application-default login
 npm run setup:app-admin -- admin@tudominio.com
 
 # O directamente:
-node scripts/setup-app-admin.js admin@tudominio.com
+node scripts/setup-app-admin.cjs admin@tudominio.com
 ```
 
 > Este paso solo es necesario la primera vez. Después, los App Admins pueden añadir más desde la UI.
@@ -248,14 +258,20 @@ Para el envío de emails vía Microsoft Graph:
 
 ### Cloud Functions (functions/.env)
 
+- [ ] `AZURE_TENANT_ID`
+- [ ] `AZURE_CLIENT_ID`
+- [ ] `AZURE_CLIENT_SECRET`
+- [ ] `SHAREPOINT_SITE_ID` (si se usa integracion SharePoint)
+- [ ] `SHAREPOINT_DRIVE_ID` (si se usa integracion SharePoint)
 - [ ] `PUBLIC_APP_URL`
-- [ ] `PORTAL_SOPORTE_URL`
-- [ ] `PUBLIC_SUPER_ADMIN_EMAIL`
+- [ ] `PORTAL_SOPORTE_URL` (opcional)
+- [ ] `PUBLIC_SUPER_ADMIN_EMAIL` (opcional)
+
+### Secrets (Firebase Secret Manager)
+
 - [ ] `MS_CLIENT_ID`
 - [ ] `MS_CLIENT_SECRET`
 - [ ] `MS_TENANT_ID`
 - [ ] `MS_FROM_EMAIL`
-
-### Secrets (Firebase Secret Manager)
-
+- [ ] `MS_ALERT_EMAIL`
 - [ ] `OPENAI_API_KEY`

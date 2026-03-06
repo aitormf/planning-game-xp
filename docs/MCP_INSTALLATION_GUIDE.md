@@ -202,14 +202,16 @@ claude mcp add planning-game --scope user \
 **Opción C: Desde el código fuente**
 
 ```bash
-git clone https://github.com/manufosela/planning-game-xp.git
-cd planning-game-xp/mcp && npm install
+git clone https://github.com/AnotherPlanningGame/planning-game-mcp.git
+cd planning-game-mcp && npm install
 
 claude mcp add planning-game --scope user \
   -e GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/planning-game/serviceAccountKey.json \
   -e FIREBASE_DATABASE_URL=https://tu-proyecto-default-rtdb.europe-west1.firebasedatabase.app \
-  -- node /ruta/absoluta/planning-game-xp/mcp/index.js
+  -- node /ruta/absoluta/planning-game-mcp/index.js
 ```
+
+> **Nota:** El MCP server es un paquete independiente (`planning-game-mcp`), no un subdirectorio de este repositorio.
 
 #### Paso 4: Configurar identidad (primera vez)
 
@@ -219,7 +221,7 @@ Al arrancar Claude Code con el MCP conectado:
 > Use setup_mcp_user to configure my identity
 ```
 
-Esto crea un `mcp.user.json` con tu ID de developer, usado para tracking de quién crea/actualiza cards.
+Esto crea un `.mcp-user.json` con tu ID de developer, usado para tracking de quién crea/actualiza cards.
 
 #### Multi-instancia
 
@@ -241,7 +243,7 @@ claude mcp add planning-game-teamB --scope user \
   -- planning-game-mcp
 ```
 
-Cada instancia mantiene su propio `mcp.user.json` en su `MCP_INSTANCE_DIR`.
+Cada instancia mantiene su propio `.mcp-user.json` en su `MCP_INSTANCE_DIR`.
 
 #### Variables de entorno
 
@@ -424,4 +426,4 @@ claude
 ## Referencias
 
 - [Documentación oficial de Claude Code](https://docs.anthropic.com/en/docs/claude-code)
-- [MCP Workflow para Planning Game](./MCP_WORKFLOW.md)
+- [MCP Workflow para Planning Game](../MCP_WORKFLOW.md)

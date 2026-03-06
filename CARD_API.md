@@ -111,7 +111,7 @@ Header `x-api-key` con el valor del secret `CREATE_CARD_API_KEY`.
 | `role` | string | ✅* | "Como [rol]..." - Quién experimenta el bug |
 | `goal` | string | ✅* | "Quiero [comportamiento esperado]..." - Qué debería pasar |
 | `benefit` | string | ✅* | "Para [impacto]..." - Por qué es importante |
-| `priority` | string | ❌ | `"low"`, `"medium"`, `"high"` (default: `"Not Evaluated"`) |
+| `priority` | string | ❌ | `"APPLICATION BLOCKER"`, `"DEPARTMENT BLOCKER"`, `"INDIVIDUAL BLOCKER"`, `"USER EXPERIENCE ISSUE"`, `"WORKFLOW IMPROVEMENT"`, `"WORKAROUND AVAILABLE ISSUE"` (default: `"Not Evaluated"`) |
 
 > *Los campos `role`, `goal`, `benefit` son el formato preferido también para bugs.
 
@@ -162,7 +162,7 @@ curl -X POST https://europe-west1-planning-gamexp.cloudfunctions.net/createCard 
     "role": "usuario de ATC/comercial",
     "goal": "que las fechas de envío se muestren correctamente actualizadas en casos anteriores a 29/09/2025",
     "benefit": "reducir el alto volumen de llamadas a ATC y comercial por información incorrecta",
-    "priority": "high",
+    "priority": "USER EXPERIENCE ISSUE",
     "createdBy": "admin@example.com"
   }'
 ```
@@ -197,6 +197,6 @@ curl -X POST https://europe-west1-planning-gamexp.cloudfunctions.net/createCard 
 ### Notas importantes
 
 - El `cardId` se genera automáticamente con formato `{ABBR}-{TYPE}-{NUMBER}`
-- El campo `createdBy` se establece automáticamente como `"API"`
-- El `status` inicial es `"Backlog"` para tasks y `"Open"` para bugs
+- El campo `createdBy` se establece automaticamente como `"api@planning-game.local"` si no se proporciona
+- El `status` inicial es `"To Do"` para tasks y `"Created"` para bugs
 - Las cards creadas aparecen inmediatamente en Planning GameXP

@@ -25,8 +25,26 @@ filters/
 │   ├── qa-filters.js           # Filtros para QA/Test
 │   ├── proposal-filters.js     # Filtros para propuestas
 │   └── log-filters.js          # Filtros para logs
-├── bug-filters.js             # LEGACY - Mantener por compatibilidad
-└── task-filters.js            # LEGACY - Mantener por compatibilidad
+├── core/                       # Motor de filtrado
+│   ├── index.js                # Exports del módulo core
+│   ├── filter-engine.js        # Motor principal de aplicación de filtros
+│   └── filter-state.js         # Gestión del estado de filtros activos
+├── configs/                    # Configuraciones de filtros por tipo
+│   ├── index.js                # Exports del módulo configs
+│   ├── bug-filter-config.js    # Configuración de filtros de bugs
+│   └── task-filter-config.js   # Configuración de filtros de tasks
+├── matchers/                   # Matchers individuales para cada criterio de filtro
+│   ├── index.js                # Exports del módulo matchers
+│   ├── base-matcher.js         # Clase base para matchers
+│   ├── status-matcher.js       # Matcher por estado
+│   ├── developer-matcher.js    # Matcher por developer
+│   ├── sprint-matcher.js       # Matcher por sprint
+│   ├── epic-matcher.js         # Matcher por épica
+│   ├── priority-matcher.js     # Matcher por prioridad
+│   ├── created-by-matcher.js   # Matcher por creador
+│   └── repository-matcher.js   # Matcher por repositorio
+├── bug-filters.js              # Filtros de bugs (raíz)
+└── task-filters.js             # Filtros de tasks (raíz)
 ```
 
 ## Uso Básico

@@ -183,7 +183,6 @@ eventSystem.eventBus.setDebugMode(true);
 
 ## Notas de Compatibilidad
 
-- Los archivos antiguos están marcados como `@deprecated` pero siguen funcionando
-- El sistema unificado es compatible con toda la funcionalidad existente
-- Se recomienda migrar gradualmente, archivo por archivo
-- Los archivos deprecados se eliminarán en versiones futuras
+- Los archivos antiguos (`event-bus.js`, `event-handlers.js`, `lib/eventHandlers.js`, `lib/data-cards.js`) han sido **eliminados**
+- El sistema unificado contiene toda la funcionalidad migrada
+- Si algún import falla, actualizar a las rutas indicadas en la sección "Migración desde Sistema Anterior"

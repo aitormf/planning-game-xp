@@ -1,10 +1,10 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `src/` hosts Astro pages, layouts, shared utilities, and client helpers under `src/js/`.
+- `src/` hosts Astro pages, layouts, and shared utilities under `src/lib/`.
 - Static assets and Firebase-aware web components live in `public/`, notably `public/js/wc/`.
 - Backend automation resides in `functions/`, while release helpers (for example `scripts/generate-sw.js`) sit in `scripts/`.
-- Tests belong in `tests/` and `playwright/tests/`; Firebase configs and seeds live in `firebase/`.
+- Tests belong in `tests/` and `playwright/tests/`; emulator seed data lives in `emulator-data/`.
 
 ## Frontend Runtime
 - La aplicación es Astro SSG; toda la interactividad se delega a JavaScript vanilla y componentes Lit que se renderizan en cliente.
@@ -78,6 +78,6 @@ npm run test:coverage                           # 3. Verify coverage
 - Pull requests should summarize the change, list verification steps (commands or emulator runs), include screenshots for UI updates, and wait for CI/emulator green lights before merge.
 
 ## Security & Configuration Tips
-- Keep `.env.dev`, `.env.pre`, and `.env.pro` aligned; `npm run build` assumes production credentials.
+- Keep `.env.dev`, `.env.pre`, and `.env.prod` aligned; `npm run build` assumes production credentials.
 - Regenerate the service worker with `npm run generate-sw` whenever offline behavior changes.
 - Run `firebase use planning-gamexp` before emulating, and seed test data from `emulator-data/` when tests depend on fixtures.

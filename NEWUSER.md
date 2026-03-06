@@ -20,13 +20,13 @@ El sistema usa autenticación OAuth con el proveedor configurado en `PUBLIC_AUTH
 - **GitHub**: El usuario necesita una cuenta de GitHub
 - **GitLab**: El usuario necesita una cuenta en la instancia GitLab configurada
 
-**Nota:** El email del usuario debe pertenecer a los dominios permitidos configurados en `PUBLIC_ALLOWED_EMAIL_DOMAINS`
+**Nota:** Si se ha configurado `PUBLIC_ALLOWED_EMAIL_DOMAINS` en las variables de entorno, el email del usuario debe pertenecer a uno de los dominios permitidos.
 
 ---
 
 ## 2. Configuración en Realtime Database
 
-### 3.1 Codificación del Email
+### 2.1 Codificación del Email
 
 Los emails se codifican para usarse como claves en Firebase:
 - `@` → `|`
@@ -35,7 +35,7 @@ Los emails se codifican para usarse como claves en Firebase:
 
 **Ejemplo:** `usuario@example.com` → `usuario|example!com`
 
-### 3.2 Rutas a Configurar
+### 2.2 Rutas a Configurar
 
 #### A) Acceso a Proyectos (REQUERIDO)
 **Ruta:** `/data/projectsByUser/{emailCodificado}`

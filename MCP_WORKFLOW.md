@@ -431,9 +431,9 @@ To Do → In Progress → To Validate → Done/Done&Validated
 
 ### Bugs
 ```
-New → Assigned → Fixed → Verified/Closed
-      ^^^^^^^^   ^^^^^
-      (MCP asigna) (MCP asigna)  (Validador asigna)
+Created → Assigned → Fixed → Verified → Closed
+           ^^^^^^^^   ^^^^^
+           (MCP asigna) (MCP asigna)  (Validador asigna)
 ```
 
 ## IDs de Developer
@@ -919,9 +919,9 @@ To Do → In Progress → To Validate → Done/Done&Validated
 
 ### Bugs
 ```
-New → Assigned → Fixed → Verified/Closed
-      ^^^^^^^^   ^^^^^
-      (MCP sets) (MCP sets)  (Validator sets)
+Created → Assigned → Fixed → Verified → Closed
+           ^^^^^^^^   ^^^^^
+           (MCP sets) (MCP sets)  (Validator sets)
 ```
 
 ## Developer IDs

@@ -6,7 +6,7 @@ Este documento describe la implementación arquitectónica actual de Planning Ga
 
 ## Stack Tecnológico
 
-- **Framework Frontend**: Astro (v5.10.0) con web components Lit
+- **Framework Frontend**: Astro (v5.x) con web components Lit
 - **Servicios Backend**: Firebase (Realtime Database, Firestore, Auth, Cloud Functions, Storage, FCM)
 - **Testing**: Vitest (tests unitarios), Playwright (tests E2E)
 - **Sistema de Build**: Astro con generación personalizada de service worker
@@ -290,7 +290,7 @@ Todos los componentes extienden de clases base con funcionalidad compartida:
 - **Lazy Loader** (`lazy-loader.js`): Utilidades de carga dinámica
 - **Email Sanitizer** (`email-sanitizer.js`): Utilidades de procesamiento de email
 - **User Display Utils** (`user-display-utils.js`): Utilidades de presentación de usuario
-- **Sinsole** (`config/sinsole-config.js` + `utils/sinsole-log.js`): Wrapper de sistema de logging personalizado
+- **Logging**: Se usa `console.error` / `console.warn` para errores y advertencias. `console.log` solo para debugging temporal. `sinsole` esta DEPRECATED.
 
 ## Tematización y Estilos
 
@@ -501,7 +501,7 @@ This document describes the current architectural implementation of Planning Gam
 
 ## Tech Stack
 
-- **Frontend Framework**: Astro (v5.10.0) with Lit web components
+- **Frontend Framework**: Astro (v5.x) with Lit web components
 - **Backend Services**: Firebase (Realtime Database, Firestore, Auth, Cloud Functions, Storage, FCM)
 - **Testing**: Vitest (unit tests), Playwright (E2E tests)
 - **Build System**: Astro with custom service worker generation
@@ -785,7 +785,7 @@ All components extend from base classes with shared functionality:
 - **Lazy Loader** (`lazy-loader.js`): Dynamic loading utilities
 - **Email Sanitizer** (`email-sanitizer.js`): Email processing utilities
 - **User Display Utils** (`user-display-utils.js`): User presentation utilities
-- **Sinsole** (`config/sinsole-config.js` + `utils/sinsole-log.js`): Custom logging system wrapper
+- **Logging**: Uses `console.error` / `console.warn` for persistent errors and warnings. `console.log` only for temporary debugging. `sinsole` is DEPRECATED.
 
 ## Theming and Styling
 

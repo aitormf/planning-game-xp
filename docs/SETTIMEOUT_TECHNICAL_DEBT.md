@@ -2,7 +2,7 @@
 
 ## Resumen Ejecutivo
 
-El código actual usa `setTimeout` como mecanismo de sincronización en **103 lugares**, lo cual es una práctica incorrecta que:
+El código actual usa `setTimeout` como mecanismo de sincronización en **~85 lugares** (reducido desde 103 originales), lo cual es una práctica incorrecta que:
 - Crea condiciones de carrera impredecibles
 - Hace el código frágil y difícil de depurar
 - Introduce latencia artificial innecesaria
@@ -41,68 +41,13 @@ await this.tableViewManager.renderTasksTableView(container, config);
 this.showFilters('tasks');
 ```
 
-### 2. **CRÍTICO: Inicialización de Filtros (BaseFilters.js)**
+### 2. **RESUELTO: Inicialización de Filtros (BaseFilters.js)**
 
-**Problema:**
-```javascript
-// BaseFilters.js:59-63
-connectedCallback() {
-  super.connectedCallback();
-  setTimeout(async () => {
-    this._loadFilterOptions();
-  }, 0);
-}
-```
+> Este caso ya fue corregido. `BaseFilters.js` ya no usa `setTimeout` para inicialización.
 
-**Por qué está mal:**
-- `setTimeout(fn, 0)` pone el código al final de la cola de eventos
-- No garantiza que los datos globales estén disponibles
-- Se llama múltiples veces cuando se crean componentes duplicados
+### 3. **RESUELTO: Setup de Filtros (app-controller.js)**
 
-**Solución correcta:**
-```javascript
-async connectedCallback() {
-  super.connectedCallback();
-  await this.updateComplete; // Esperar render de Lit
-  await GlobalDataManager.ready(); // Esperar datos globales
-  this._loadFilterOptions();
-}
-```
-
-### 3. **CRÍTICO: Setup de Filtros (app-controller.js)**
-
-**Problema:**
-```javascript
-// app-controller.js:647
-if (view === 'list') {
-  setTimeout(() => this.setupTaskFilters(), 100);
-}
-```
-
-**Por qué está mal:**
-- Cada `toggleTaskView` programa un nuevo timeout
-- Si se llama varias veces rápidamente, se crean múltiples filtros
-- 100ms es arbitrario
-
-**Solución correcta:**
-```javascript
-// Usar un flag o cancelar timeouts anteriores
-toggleTaskView(view) {
-  // Cancelar setup anterior si existe
-  if (this._filterSetupPending) {
-    clearTimeout(this._filterSetupPending);
-  }
-
-  this.viewFactory.switchView(view, 'tasks', this.config);
-
-  if (view === 'list') {
-    // Mejor: usar evento
-    document.addEventListener('view-ready', () => {
-      this.setupTaskFilters();
-    }, { once: true });
-  }
-}
-```
+> La mayoría de los `setTimeout` en `app-controller.js` han sido eliminados o reemplazados por eventos. Solo quedan usos marginales comentados como referencia.
 
 ### 4. **MEDIO: Restaurar Estado de URL (app-controller.js)**
 
@@ -142,99 +87,15 @@ this._debounceTimer = setTimeout(() => {
 }, 300);
 ```
 
-## Inventario Completo de setTimeout Problemáticos
+## Inventario de setTimeout (estado actual)
 
-### view-factory.js (11 usos)
-| Línea | Delay | Propósito | Severidad |
-|-------|-------|-----------|-----------|
-| 297 | 100ms | Mostrar filtros de proposals | CRÍTICO |
-| 816 | 100ms | Mostrar filtros de tasks | CRÍTICO |
-| 849 | 100ms | Mostrar filtros de bugs | CRÍTICO |
-| 882 | 100ms | Mostrar filtros de tickets | CRÍTICO |
-| 939 | 100ms | Crear filtros de proposals | CRÍTICO |
-| 1053 | 100ms | Crear filtros de tasks | CRÍTICO |
-| 1079 | 200ms | Forzar aplicar filtros | CRÍTICO |
-| 1188 | 100ms | Crear filtros de epics | MEDIO |
-| 1226 | 200ms | Forzar aplicar filtros epics | MEDIO |
-| 1291 | 100ms | Crear filtros de bugs | CRÍTICO |
-| 1317 | 200ms | Forzar aplicar filtros bugs | CRÍTICO |
-
-### app-controller.js (12 usos)
-| Línea | Delay | Propósito | Severidad |
-|-------|-------|-----------|-----------|
-| 138 | 500ms | Restaurar filtros de URL | MEDIO |
-| 570 | ? | Render section | MEDIO |
-| 647 | 100ms | Setup task filters | CRÍTICO |
-| 662 | 100ms | Setup bug filters | CRÍTICO |
-| 678 | 100ms | Setup ticket filters | CRÍTICO |
-| 735 | 100ms | Create bug filters | CRÍTICO |
-| 794 | 100ms | Create ticket filters | CRÍTICO |
-| 853 | 100ms | Create task filters | CRÍTICO |
-| 1015 | ? | ? | MEDIO |
-| 1211 | 100ms | Setup bug filters | CRÍTICO |
-| 1213 | 100ms | Setup ticket filters | CRÍTICO |
-| 1215 | 100ms | Setup task filters | CRÍTICO |
-
-### BaseFilters.js (1 uso)
-| Línea | Delay | Propósito | Severidad |
-|-------|-------|-----------|-----------|
-| 59 | 0ms | Load filter options | CRÍTICO |
-
-### table-view-manager.js (3 usos)
-| Línea | Delay | Propósito | Severidad |
-|-------|-------|-----------|-----------|
-| 122 | ? | ? | MEDIO |
-| 282 | ? | ? | MEDIO |
-| 434 | ? | ? | MEDIO |
+> **Nota**: Las tablas detalladas originales de este documento tenian numeros de linea y conteos que ya no son precisos. Los archivos `app-controller.js` y `BaseFilters.js` ya fueron corregidos en su mayoria. El foco principal de deuda restante esta en `view-factory.js` (actualmente en `public/js/factories/view-factory.js`) y en varios componentes Lit.
 
 ## Plan de Refactorización
 
-### Fase 1: Infraestructura de Eventos (Prioridad ALTA)
+### Fase 1: Infraestructura de Eventos (COMPLETADA)
 
-1. **Crear sistema de eventos centralizado**
-   ```javascript
-   // services/app-event-bus.js
-   export const AppEvents = {
-     TABLE_RENDERED: 'app:table-rendered',
-     CARDS_LOADED: 'app:cards-loaded',
-     FILTERS_READY: 'app:filters-ready',
-     VIEW_CHANGED: 'app:view-changed',
-     GLOBAL_DATA_READY: 'app:global-data-ready'
-   };
-
-   export class AppEventBus {
-     static emit(event, detail = {}) {
-       document.dispatchEvent(new CustomEvent(event, { detail }));
-     }
-
-     static once(event, callback) {
-       document.addEventListener(event, callback, { once: true });
-     }
-
-     static waitFor(event, timeout = 5000) {
-       return new Promise((resolve, reject) => {
-         const timer = setTimeout(() => {
-           reject(new Error(`Timeout waiting for ${event}`));
-         }, timeout);
-
-         document.addEventListener(event, (e) => {
-           clearTimeout(timer);
-           resolve(e.detail);
-         }, { once: true });
-       });
-     }
-   }
-   ```
-
-2. **Modificar GlobalDataManager para emitir eventos**
-   ```javascript
-   // Cuando los datos globales estén listos
-   AppEventBus.emit(AppEvents.GLOBAL_DATA_READY, {
-     developers: globalDeveloperList,
-     sprints: globalSprintList,
-     epics: globalEpicList
-   });
-   ```
+`AppEventBus` ya fue creado en `public/js/services/app-event-bus.js` con metodos `emit()`, `once()` y `waitFor()`. Se usa activamente en el proyecto.
 
 ### Fase 2: Refactorizar ViewFactory (Prioridad ALTA)
 
@@ -300,8 +161,9 @@ this._debounceTimer = setTimeout(() => {
 
 ## Métricas de Éxito
 
-- **Antes:** 103 usos de setTimeout
-- **Objetivo Fase 1-3:** Reducir a < 30 (eliminar los CRÍTICOS)
+- **Inicio:** 103 usos de setTimeout
+- **Estado actual:** ~85 usos (app-controller y BaseFilters ya corregidos)
+- **Objetivo Fase 2-3:** Reducir a < 30 (eliminar los CRITICOS restantes en view-factory)
 - **Objetivo Final:** < 15 (solo para animaciones y debounce legítimos)
 
 ## Riesgos

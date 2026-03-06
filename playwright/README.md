@@ -2,71 +2,44 @@
 
 Este directorio contiene los tests end-to-end para Planning Game XP usando Playwright.
 
-## Configuración
+## Configuracion
 
-### 1. Variables de Entorno
+### Variables de Entorno
 
-Copia el archivo `.env.example` como `.env` y configura las credenciales de test:
-
-```bash
-cp .env.example .env
-```
-
-Edita `.env` y configura:
+Las credenciales de test se configuran en `.env.dev` o `.env.test`:
 
 ```env
-# Test credentials for E2E testing
 TEST_USER_EMAIL=tu_usuario_de_test@ejemplo.com
 TEST_USER_PASSWORD=tu_password_de_test
 ```
 
-### 2. Instalación
-
-Los tests ya están configurados en el proyecto principal. Si necesitas reinstalar Playwright:
+### Instalacion
 
 ```bash
 npm install
 npx playwright install
 ```
 
-## Ejecución de Tests
-
-### Tests Principales
+## Ejecucion de Tests
 
 ```bash
 # Ejecutar todos los tests E2E
 npm run test:e2e
 
-# Ejecutar test principal funcional
-npx playwright test production-ready.spec.js --headed
+# Con navegador visible
+npm run test:e2e:headed
 
-# Ejecutar tests específicos
-npx playwright test auth.setup.spec.js
-npx playwright test project-management.spec.js
-npx playwright test task-management.spec.js
-```
-
-### Debugging
-
-```bash
-# Ejecutar con navegador visible
-npx playwright test --headed
-
-# Ejecutar con interfaz de debugging
-npx playwright test --ui
+# Con interfaz de debugging
+npm run test:e2e:ui
 
 # Modo debug paso a paso
-npx playwright test --debug
-```
+npm run test:e2e:debug
 
-### Reportes
+# Ver ultimo reporte
+npm run test:e2e:report
 
-```bash
-# Ver último reporte
-npx playwright show-report
-
-# Generar reporte nuevo
-npx playwright test --reporter=html
+# Ejecutar un archivo especifico
+npx playwright test playwright/tests/e2e/01-auth.spec.js
 ```
 
 ## Estructura de Tests
@@ -74,99 +47,43 @@ npx playwright test --reporter=html
 ```
 playwright/
 ├── tests/
-│   ├── production-ready.spec.js    # Test principal completo
-│   ├── auth.setup.spec.js         # Configuración de autenticación
-│   ├── project-management.spec.js # Tests de gestión de proyectos
-│   ├── task-management.spec.js    # Tests de gestión de tareas
-│   ├── bug-management.spec.js     # Tests de gestión de bugs
-│   └── integration-workflow.spec.js # Tests de workflow completo
-├── utils/
-│   └── test-helpers.js            # Utilidades y helpers
-├── auth/
-│   └── user.json                  # Estado de autenticación (generado)
-└── README.md                      # Esta documentación
+│   └── e2e/
+│       ├── 01-auth.spec.js           # Autenticacion y login
+│       ├── 02-projects.spec.js       # Gestion de proyectos
+│       ├── 03-full-workflow.spec.js   # Workflow completo (crear proyecto, tareas, bugs)
+│       ├── 04-card-interactions.spec.js # Interacciones con cards
+│       └── 05-dark-theme.spec.js     # Tests de tema oscuro
+├── helpers/
+│   └── test-user-setup.js           # Setup de usuario de test y helpers
+└── README.md                        # Esta documentacion
 ```
 
 ## Tests Disponibles
 
-### `production-ready.spec.js`
-Test principal que ejecuta un workflow completo:
-- Login automático con Microsoft OAuth
-- Creación de proyecto
-- Creación de tareas
-- Verificación de persistencia
+### `01-auth.spec.js`
+Login automatico con Microsoft OAuth + 2FA flow.
 
-### `project-management.spec.js`
-Tests específicos de proyectos:
-- Creación de proyectos
-- Edición de proyectos
-- Eliminación con confirmación
-- Validación de formularios
+### `02-projects.spec.js`
+Creacion, edicion y eliminacion de proyectos.
 
-### `task-management.spec.js`
-Tests específicos de tareas:
-- Creación de tareas/historias
-- Cambio de estados
-- Asignación de usuarios
-- Eliminación de tareas
+### `03-full-workflow.spec.js`
+Workflow completo: crear proyecto, crear tareas, verificar persistencia.
 
-### `bug-management.spec.js`
-Tests específicos de bugs:
-- Creación de bugs
-- Gestión de prioridades
-- Cambio de estados
-- Resolución de bugs
+### `04-card-interactions.spec.js`
+Interacciones con cards: cambio de estados, asignacion, edicion.
 
-## Configuración Avanzada
+### `05-dark-theme.spec.js`
+Verificacion del tema oscuro en componentes.
 
-### Configuración del Navegador
+## Prerequisitos
 
-En `playwright.config.js`:
+- Servidor de desarrollo corriendo en `http://localhost:4321` (`npm run dev`)
+- Credenciales de test configuradas en variables de entorno
 
-```javascript
-use: {
-  headless: false,  // Ver navegador durante tests
-  screenshot: 'only-on-failure',
-  video: 'retain-on-failure',
-}
-```
+## Mejores Practicas
 
-### Variables de Entorno Adicionales
-
-```env
-# Configuración de timeouts (opcional)
-PLAYWRIGHT_TIMEOUT=30000
-
-# Configuración de CI/CD
-CI=true  # Automáticamente detectado en CI
-```
-
-## Solución de Problemas
-
-### Error de Autenticación
-- Verifica que las credenciales en `.env` sean correctas
-- Asegúrate de que el usuario de test tenga acceso a la aplicación
-
-### Timeouts
-- Los tests están configurados para esperar Firebase Auth
-- Si hay problemas de red, aumenta los timeouts en la configuración
-
-### Tests Fallan en CI
-- Asegúrate de que las variables de entorno estén configuradas en CI
-- Verifica que el servidor de desarrollo esté ejecutándose
-
-## Mejores Prácticas
-
-1. **Datos de Test**: Usa nombres únicos con timestamp para evitar conflictos
-2. **Limpieza**: Los tests limpian automáticamente los datos creados
+1. **Datos de Test**: Usa nombres unicos con timestamp para evitar conflictos
+2. **Limpieza**: Los tests limpian automaticamente los datos creados
 3. **Aislamiento**: Cada test es independiente y puede ejecutarse solo
-4. **Screenshots**: Se capturan automáticamente en fallos
-5. **Variables de Entorno**: Nunca hardcodees credenciales en el código
-
-## Contribuir
-
-1. Añade nuevos tests en el directorio `tests/`
-2. Usa las utilidades en `test-helpers.js`
-3. Sigue el patrón de nombres: `feature-name.spec.js`
-4. Documenta tests complejos con comentarios
-5. Asegúrate de que los tests pasen antes de hacer commit
+4. **Screenshots**: Se capturan automaticamente en fallos
+5. **Variables de Entorno**: Nunca hardcodees credenciales en el codigo

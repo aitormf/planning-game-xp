@@ -28,7 +28,8 @@ npm run deploy       # Deploy to this instance's Firebase project
 | `npm run instance:create -- <name>` | Create a new instance from templates |
 | `npm run instance:use -- <name>` | Activate an instance (creates symlinks from root) |
 | `npm run instance:list` | List all instances (active marked with `*`) |
-| `npm run instance:current` | Show active instance info and validate links |
+| `npm run instance:select` | Interactive instance selection prompt |
+| `npm run instance:verify` | Validate active instance links and config |
 
 ## Instance Structure
 

@@ -1,153 +1,186 @@
-# Firebase Functions - Weekly Task Summary
+# Firebase Cloud Functions
 
-Esta función envía un resumen semanal de tareas pendientes todos los lunes a los equipos de cada proyecto.
+Cloud Functions de PlanningGameXP. Todas desplegadas en la region `europe-west1`.
 
-## Configuración Requerida
+## Configuracion Requerida
 
-### 1. Secrets Configuration (Firebase Functions v2)
-
-Configura los secrets usando Firebase CLI:
+### Firebase Secrets
 
 ```bash
-# Azure AD App Registration secrets
 firebase functions:secrets:set MS_CLIENT_ID
 firebase functions:secrets:set MS_CLIENT_SECRET
 firebase functions:secrets:set MS_TENANT_ID
 firebase functions:secrets:set MS_FROM_EMAIL
-firebase functions:secrets:set MS_ALERT_EMAIL  # Optional: email for system alerts (defaults to MS_FROM_EMAIL)
+firebase functions:secrets:set MS_ALERT_EMAIL
+firebase functions:secrets:set IA_GLOBAL_ENABLE
+firebase functions:secrets:set IA_API_KEY
+firebase functions:secrets:set CREATE_CARD_API_KEY
 ```
 
-O usa el script automatizado que lee desde `.env`:
-```bash
-./scripts/set-firebase-credentials.sh
+### Azure AD App Registration
+
+Necesario para el envio de emails via Microsoft Graph:
+
+1. Crear App Registration en Azure AD
+2. Permisos API: Microsoft Graph > Application permissions > `Mail.Send`
+3. Generar Client Secret
+4. Configurar los secrets `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `MS_TENANT_ID`
+
+### Variables de entorno (functions/.env)
+
+Variables locales no-secret: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `SHAREPOINT_*`, `DEMO_MODE`, etc. Ver `ENV_VARIABLES.md` para la lista completa.
+
+## Funciones Disponibles
+
+### Emails Programados (requieren MS Graph, desactivadas en DEMO_MODE)
+
+| Funcion | Tipo | Schedule | Descripcion |
+|---------|------|----------|-------------|
+| `weeklyTaskSummary` | Scheduled | Lunes 9:00 | Resumen semanal de tareas pendientes por proyecto |
+| `testWeeklyTaskSummary` | HTTP GET | Manual | Test del resumen semanal. Soporta `?email=` para filtrar |
+| `hourlyValidationDigest` | Scheduled | Cada hora | Digest consolidado de tareas movidas a "To Validate" |
+| `testHourlyDigest` | HTTP GET | Manual | Test del digest horario. Soporta `?email=` para filtrar |
+
+### Limpieza
+
+| Funcion | Tipo | Schedule | Descripcion |
+|---------|------|----------|-------------|
+| `cleanupDemoUsers` | Scheduled | 3:00 AM diario | Elimina usuarios demo inactivos y sus datos |
+| `testCleanupDemoUsers` | HTTP GET | Manual | Test manual de la limpieza de demos |
+
+### Notificaciones Push
+
+| Funcion | Tipo | Trigger | Descripcion |
+|---------|------|---------|-------------|
+| `sendPushNotification` | DB Trigger | `/notifications/{userId}/{notificationId}` created | Envia push notification via FCM al crear una notificacion |
+
+### Autenticacion y Provisioning
+
+| Funcion | Tipo | Descripcion |
+|---------|------|-------------|
+| `requestEmailAccess` | Callable | Solicitud de acceso por email (valida dominio permitido) |
+| `setEncodedEmailClaim` | Auth Trigger (onCreate) | Asigna custom claim `encodedEmail` al crear usuario. En DEMO_MODE provisiona datos demo |
+
+### IA (requieren IA_API_KEY, desactivadas en DEMO_MODE)
+
+| Funcion | Tipo | Descripcion |
+|---------|------|-------------|
+| `generateAcceptanceCriteria` | Callable | Genera criterios de aceptacion (Given/When/Then) para una tarea |
+| `analyzeBugDescription` | Callable | Analiza descripcion de bug: reproducibilidad, causa raiz, severidad |
+| `getIaContext` | HTTP | Obtiene contexto del proyecto para prompts de IA |
+| `createCard` | HTTP | API para crear cards externamente (requiere `CREATE_CARD_API_KEY`) |
+| `createTasksFromPlan` | Callable | Crea tareas a partir de un plan de desarrollo |
+| `regenerateTasksFromPlan` | Callable | Regenera tareas de un plan existente |
+| `parseDocumentForCards` | Callable | Parsea un documento y genera cards automaticamente |
+| `generateDevPlan` | Callable | Genera un plan de desarrollo a partir de una descripcion |
+| `convertDescriptionToUserStory` | Callable | Convierte descripcion libre a formato user story (Como/Quiero/Para) |
+| `getProjectEpics` | HTTP | API que devuelve las epicas de un proyecto (requiere `CREATE_CARD_API_KEY`) |
+
+### Database Triggers (cards)
+
+| Funcion | Trigger | Descripcion |
+|---------|---------|-------------|
+| `onCardToValidate` | `/cards/{projectId}/{section}/{cardId}` updated | Crea notificacion push y encola email cuando tarea pasa a "To Validate" |
+| `onBugFixed` | `/cards/{projectId}/{section}/{cardId}` updated | Crea notificacion push y encola email cuando bug pasa a "Fixed" |
+| `onPortalBugResolved` | `/cards/{projectId}/{section}/{cardId}` updated | Notifica al Portal de Incidencias cuando bug pasa a "Fixed"/"Verified" (no DEMO_MODE) |
+| `onTaskStatusValidation` | `/cards/{projectId}/{section}/{cardId}` updated | Valida transiciones de estado y revierte cambios invalidos |
+| `syncCardViews` | `/cards/{projectId}/{section}/{cardId}` written | Sincroniza datos a `/views` optimizadas (reduce transferencia ~70-80%) |
+
+### Admin: Vistas
+
+| Funcion | Tipo | Descripcion |
+|---------|------|-------------|
+| `resyncAllViews` | Callable | Regenera todas las entradas de `/views` desde `/cards` |
+
+### Admin: Permisos de Apps
+
+| Funcion | Tipo | Descripcion |
+|---------|------|-------------|
+| `syncAllAppAdminClaims` | Callable | Sincroniza custom claim `isAppAdmin` para todos los appAdmins |
+| `addAppAdmin` | Callable | Anade un appAdmin a `/data/appAdmins` |
+| `removeAppAdmin` | Callable | Elimina un appAdmin de `/data/appAdmins` |
+| `addAppUploader` | Callable | Anade un app uploader a un proyecto |
+| `removeAppUploader` | Callable | Elimina un app uploader de un proyecto |
+| `updateAppPermissions` | Callable | Actualiza permisos de apps de un usuario en un proyecto |
+| `syncAppAdminClaim` | DB Trigger | Sincroniza claim `isAppAdmin` al cambiar `/data/appAdmins/{email}` |
+| `syncUserAllowedClaim` | DB Trigger | Sincroniza claim `allowed` al cambiar `/users/{email}/projects/{projectId}` |
+| `syncAppPermissionsClaim` | DB Trigger | Reconstruye claim `appPerms` al cambiar `/users/{email}/projects` |
+
+### Admin: Usuarios
+
+| Funcion | Tipo | Descripcion |
+|---------|------|-------------|
+| `listUsers` | Callable | Lista usuarios de `/users/` enriquecidos con estado de Auth |
+| `createOrUpdateUser` | Callable | Crea o actualiza usuario en `/users/{encodedEmail}` |
+| `removeUserFromProject` | Callable | Desasigna un usuario de un proyecto |
+| `deleteUser` | Callable | Elimina usuario de `/users/` y limpia rutas legacy |
+
+## Estructura de Handlers
+
+```
+functions/
+├── index.js                          # Entry point, exports todas las funciones
+├── handlers/
+│   ├── weekly-email.js               # Resumen semanal
+│   ├── hourly-validation-digest.js   # Digest horario
+│   ├── push-notification.js          # Push notifications
+│   ├── demo-cleanup.js               # Limpieza de demos
+│   ├── auth-provisioning.js          # Auth + provisioning
+│   ├── on-card-to-validate.js        # Trigger: card → To Validate
+│   ├── on-bug-fixed.js               # Trigger: bug → Fixed
+│   ├── on-portal-bug-resolved.js     # Trigger: notificar Portal
+│   ├── on-task-status-validation.js  # Trigger: validar transiciones
+│   ├── sync-card-views.js            # Trigger: sync views
+│   ├── admin-views.js                # Admin: resync views
+│   ├── admin-permissions.js          # Admin: permisos de apps
+│   ├── admin-users.js                # Admin: gestion de usuarios
+│   ├── ia-acceptance-criteria.js     # IA: criterios de aceptacion
+│   ├── ia-bug-analysis.js            # IA: analisis de bugs
+│   ├── ia-context.js                 # IA: contexto del proyecto
+│   ├── ia-create-card.js             # IA: crear card via API
+│   ├── ia-plan-tasks.js              # IA: tareas desde plan
+│   ├── ia-document-parser.js         # IA: parseo de documentos
+│   ├── ia-dev-plan.js                # IA: generar plan
+│   ├── ia-user-story.js              # IA: convertir a user story
+│   └── ia-epics-api.js               # IA: API de epicas
+├── shared/
+│   ├── ms-graph.cjs                  # Microsoft Graph (auth + send email)
+│   └── email-utils.cjs               # Utilidades de email
+└── package.json
 ```
 
-### 2. Azure AD App Registration
+## DEMO_MODE
 
-1. Ve al portal de Azure AD
-2. Crea un nuevo App Registration
-3. Configura los permisos API:
-   - Microsoft Graph API
-   - Application permissions: `Mail.Send`
-4. Genera un Client Secret
-5. Anota el Client ID, Client Secret y Tenant ID
+Cuando `DEMO_MODE=true` en `functions/.env`:
 
-### 3. Estructura de Datos en Firebase
-
-#### /data y /projects (IDs + directorio)
-```json
-{
-  "data": {
-    "developers": {
-      "dev_001": { "email": "dev1@empresa.com", "name": "Dev Uno", "active": true }
-    },
-    "stakeholders": {
-      "stk_001": { "email": "stakeholder1@empresa.com", "name": "Stake Uno", "active": true }
-    }
-  },
-  "projects": {
-    "Cinema4D": {
-      "developers": ["dev_001"],
-      "stakeholders": ["stk_001"]
-    }
-  }
-}
-```
-
-## Funcionalidad
-
-### Análisis de Tareas
-
-La función analiza tareas de **sprints anteriores** (ya terminados) y categoriza:
-
-1. **Tareas Sin Comenzar (TODO)**: Estado "To Do", "Todo", "Pending"
-2. **Tareas En Progreso**: Estado "In Progress", "Working" 
-3. **Tareas "Completadas" Incompletas**: Estado "Done" pero faltan campos obligatorios
-4. **Tareas Bloqueadas**: Estado "Blocked" con razón del bloqueo
-5. **Tareas Para Validar**: Estado "To Validate", "Validation", "Review"
-
-### Campos Obligatorios Verificados
-
-Para tareas en estado "Done":
-- `startDate`: Fecha de inicio
-- `endDate`: Fecha de fin
-- `epic`: Épica asociada
-- `developer`: Desarrollador asignado
-
-### Envío de Correos
-
-- **Developers**: Reciben resumen completo excepto tareas "To Validate"
-- **Stakeholders**: Reciben solo tareas "To Validate" en correo separado
-- **Admin**: Recibe notificación si falta configuración de un proyecto
+- Se desactivan funciones que requieren MS Graph (emails)
+- Se desactivan funciones de IA (requieren API keys)
+- `setEncodedEmailClaim` provisiona datos demo automaticamente
+- `cleanupDemoUsers` limpia usuarios demo inactivos
 
 ## Despliegue
 
-### 1. Instalar Dependencias
 ```bash
-cd functions
-npm install
-```
-
-### 2. Desplegar Function
-```bash
+cd functions && npm install
 firebase deploy --only functions
 ```
 
-### 3. Verificar Despliegue
+## Logs
+
 ```bash
-firebase functions:log
+firebase functions:log                              # Todos los logs
+firebase functions:log --only weeklyTaskSummary     # Funcion especifica
 ```
 
-## Testing
+## Testing Manual
 
-### Función de Prueba Manual
 ```bash
-# Llama a la función de prueba (región europea)
-curl -X GET https://europe-west1-tu-proyecto.cloudfunctions.net/testWeeklyTaskSummary
+# Resumen semanal (filtrado por email)
+curl https://europe-west1-tu-proyecto.cloudfunctions.net/testWeeklyTaskSummary?email=dev@example.com
+
+# Digest horario
+curl https://europe-west1-tu-proyecto.cloudfunctions.net/testHourlyDigest
+
+# Limpieza de demos
+curl https://europe-west1-tu-proyecto.cloudfunctions.net/testCleanupDemoUsers
 ```
-
-### Schedule Automático
-- Se ejecuta **todos los lunes a las 9:00 AM** (Europe/Madrid)
-- Ejecutándose en región **europe-west1** (Bélgica)
-- Configurado con Cloud Scheduler automáticamente
-
-## Logs y Monitoreo
-
-Ver logs en tiempo real:
-```bash
-firebase functions:log --only weeklyTaskSummary
-```
-
-Ver logs específicos:
-```bash
-firebase functions:log --only testWeeklyTaskSummary
-```
-
-## Troubleshooting
-
-### Error de Autenticación MS Graph
-- Verifica que las credenciales de Azure AD sean correctas
-- Asegúrate que el App Registration tenga permisos `Mail.Send`
-- Verifica que el email emisor tenga licencia de Office 365
-
-### No se Envían Correos
-- Verifica `/projects/{projectId}/developers` y `/projects/{projectId}/stakeholders` (IDs)
-- Verifica `/data/developers` y `/data/stakeholders` para resolver emails
-- Revisa los logs para errores específicos
-- Asegúrate que los sprints tengan fechas de fin configuradas
-
-### Proyectos Sin Configuración
-- Se enviará correo al email configurado en `MS_ALERT_EMAIL` automáticamente
-- Agrega la configuración en `/projects/{projectId}` para el proyecto
-
-## Estructura del Email
-
-El email incluye:
-- Header con nombre del proyecto y fecha
-- Resumen de sprints analizados
-- Secciones organizadas por tipo de tarea
-- Lista de campos faltantes para tareas "Done"
-- Razones de bloqueo para tareas bloqueadas
-- Footer con información del sistema
-
-Los emails están formateados en HTML con estilos responsive y colores distintivos para cada categoría.

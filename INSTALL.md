@@ -31,7 +31,7 @@ Esta guía te llevará paso a paso a través de la instalación completa de Plan
 | Software | Propósito | Verificar con |
 |----------|-----------|---------------|
 | gcloud CLI | Setup de App Admin | `gcloud --version` |
-| Docker | Emuladores locales | `docker --version` |
+| Docker | SonarQube (análisis de calidad) | `docker --version` |
 
 ### Instalación de Requisitos
 
@@ -55,24 +55,27 @@ npm install -g firebase-tools
 La forma más fácil de instalar es usando el asistente interactivo:
 
 ```bash
-# 1. Clonar el repositorio
-
-Por https:
-git clone https://github.com/AgilePlanning-io/planning-game-xp.git
-O por ssh:
-git clone git@github.com:AgilePlanning-io/planning-game-xp.git
+# 1. Hacer fork del repositorio en GitHub:
+#    https://github.com/AgilePlanning-io/planning-game-xp → "Fork"
+#
+# 2. Clonar tu fork:
+git clone https://github.com/TU-USUARIO/planning-game-xp.git
+# O por ssh:
+git clone git@github.com:TU-USUARIO/planning-game-xp.git
 
 cd planning-game-xp
 
-# 2. Instalar dependencias
+# 3. Instalar dependencias
 npm install
 cd functions && npm install && cd ..
 
-# 3. Ejecutar el asistente de configuración
+# 4. Ejecutar el asistente de configuración
 npm run setup
 ```
 
 El asistente te guiará a través de toda la configuración.
+
+> **¿Por qué fork y no clone?** El fork te permite tener tu propio repositorio donde puedes hacer push libremente y configurar tu propio CI/CD. Si solo clonas el repo original, no podrás hacer push a menos que seas colaborador. Además, podrás recibir actualizaciones del repositorio original haciendo `git pull upstream main`.
 
 ---
 
@@ -80,13 +83,17 @@ El asistente te guiará a través de toda la configuración.
 
 Si prefieres configurar manualmente:
 
-### 1. Clonar y preparar
+### 1. Hacer fork, clonar y preparar
 
 ```bash
-git clone https://github.com/AgilePlanning-io/planning-game-xp.git
+# Hacer fork en GitHub, luego clonar tu fork:
+git clone https://github.com/TU-USUARIO/planning-game-xp.git
 cd planning-game-xp
 npm install
 cd functions && npm install && cd ..
+
+# (Opcional) Configurar el upstream para recibir actualizaciones:
+git remote add upstream https://github.com/AgilePlanning-io/planning-game-xp.git
 ```
 
 ### 2. Crear archivos de entorno
@@ -249,6 +256,22 @@ MS_FROM_EMAIL=noreply@tudominio.com
 
 ---
 
+## Builds con y sin Version Bump
+
+Por defecto, los scripts de build (`npm run build`, `build-prod`, `build-preview`) incrementan automaticamente la version del proyecto segun los mensajes de commit (conventional commits), generan el CHANGELOG y hacen commit+push de los archivos de version.
+
+Si trabajas en un **fork** y no necesitas este comportamiento (por ejemplo, manejas tu propia version), usa las variantes sin bump:
+
+| Con version bump (por defecto) | Sin version bump |
+|-------------------------------|------------------|
+| `npm run build` | `npm run build:no-bump` |
+| `npm run build-prod` | `npm run build-prod:no-bump` |
+| `npm run build-preview` | `npm run build-preview:no-bump` |
+
+Las variantes `:no-bump` ejecutan: syntax check, security check, generacion del service worker y la build de Astro. No modifican `version.json`, `package.json` ni `CHANGELOG.md`.
+
+---
+
 ## Primer Despliegue
 
 ### Desplegar Reglas
@@ -276,7 +299,13 @@ npm run setup:app-admin -- tu-email@dominio.com
 ### Construir y Desplegar Aplicación
 
 ```bash
+# Con version bump (repo original):
 npm run build
+
+# Sin version bump (forks):
+npm run build:no-bump
+
+# Desplegar
 npm run deploy
 ```
 
@@ -305,8 +334,8 @@ npm run verify-setup
    - Ejecutar: `console.log(window.isAppAdmin)`
    - Debe mostrar `true`
 
-4. **Probar funcionalidad de Apps**
-   - Ir a un proyecto → Sección Apps
+4. **Probar funcionalidad de Apps** (solo en proyectos con la opción "app" activada en su configuración)
+   - Ir a un proyecto que tenga habilitada la sección Apps
    - Debe poder subir y gestionar aplicaciones
 
 ---

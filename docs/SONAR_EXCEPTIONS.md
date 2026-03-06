@@ -6,7 +6,7 @@ Este documento explica las reglas de SonarQube que han sido deshabilitadas inten
 - **Framework**: Astro
 - **Web Components**: Lit Element
 - **Backend**: Firebase (Realtime Database, Firestore, Auth, Cloud Functions)
-- **JavaScript**: ES2021+ (Vanilla)
+- **JavaScript**: ES2018+ (Vanilla)
 - **Testing**: Vitest + Playwright
 
 ## Excepciones Configuradas
@@ -28,9 +28,9 @@ import '../../../wc/TaskCard.js';
 ### 2. Console API (javascript:S2228)
 **Regla**: "Console logging should not be used"
 
-**Archivos afectados**: `utils/sinsole-log.js`
+**Archivos afectados**: Servicios y componentes que usan `console.error` / `console.warn`
 
-**Razón**: Usamos `sinsole` como wrapper controlado que se desactiva en producción automáticamente.
+**Razón**: Se usa `console.error` y `console.warn` para errores y advertencias que deben persistir. `console.log` solo se usa temporalmente para debugging y se elimina antes de commit.
 
 ### 3. "this" en Templates de Lit (javascript:S4328)
 **Regla**: "Dependencies should be explicit"
@@ -93,9 +93,9 @@ Es preferible mantenerlos juntos para cohesión.
 ### 9. Alert/Confirm Nativos (javascript:S2755)
 **Regla**: "Alert should not be used"
 
-**Archivos afectados**: `services/notification-*.js`
+**Archivos afectados**: Ningun archivo activo debe usar `alert()`, `confirm()` ni `prompt()`.
 
-**Razón**: Usamos componentes de notificación personalizados, pero mantenemos fallbacks nativos para casos edge.
+**Razón**: Siempre se usa el sistema de modales de la aplicacion (`ModalService`, `AppModal`) y notificaciones (`SlideNotification`). Ver CLAUDE.md para las normas de UI/UX.
 
 ### 10. Duplicación en Estilos (CPD)
 **Archivos excluidos**: `*-styles.js`
@@ -124,7 +124,7 @@ Es preferible mantenerlos juntos para cohesión.
 
 ## Mejores Prácticas del Proyecto
 
-1. **Usar `sinsole`** en lugar de `console` directamente
+1. **Usar `console.error` / `console.warn`** para errores y advertencias persistentes
 2. **Preferir importaciones absolutas** desde `/public`
 3. **Mantener Web Components cohesivos** aunque sean grandes
 4. **Documentar decisiones arquitecturales** que puedan parecer code smells

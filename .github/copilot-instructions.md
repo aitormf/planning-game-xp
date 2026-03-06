@@ -19,7 +19,7 @@ Every task and bug MUST follow this delivery pipeline. The Planning Game MCP ser
    - `endDate`: today
    - `commits`: `[{hash, message, date, author}]`
    - `pipelineStatus`: `{ prCreated: { date, prUrl, prNumber } }` (REQUIRED)
-   - `aiUsage`: `[{sessionId, timestamp, model, inputTokens, outputTokens, totalTokens, estimatedCostUSD}]` (REQUIRED if AI-assisted)
+   - `aiUsage`: `[{sessionId, timestamp, model, inputTokens, outputTokens, totalTokens, estimatedCostUSD, durationMinutes, action}]` (REQUIRED if AI-assisted)
 
 ### Rules
 

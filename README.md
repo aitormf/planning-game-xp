@@ -4,23 +4,50 @@ Aplicación web para la gestión ágil de proyectos, siguiendo las prácticas de
 
 ## 🚀 Instalación Rápida
 
-```bash
-# 1. Clonar
-git clone https://github.com/AgilePlanning-io/planning-game-xp.git
-cd PlanningGameXP
+### Tu propia instancia (fork)
 
-# 2. Instalar dependencias
+Si quieres montar **tu propio Planning Game XP** con tu Firebase, haz un fork:
+
+1. Haz **fork** en GitHub: https://github.com/AgilePlanning-io/planning-game-xp
+2. Clona tu fork:
+
+```bash
+git clone https://github.com/TU-USUARIO/planning-game-xp.git
+cd planning-game-xp
+
+# Instalar dependencias
 npm install && cd functions && npm install && cd ..
 
-# 3. Ejecutar asistente de configuración (guía interactiva)
+# Ejecutar asistente de configuración (guía interactiva)
 npm run setup
 ```
 
 El asistente te guiará paso a paso. Ver [INSTALL.md](./INSTALL.md) para instrucciones detalladas.
 
+> **Builds sin subida de versión:** Los scripts `build`, `build-prod` y `build-preview` suben automaticamente la versión del proyecto (patch/minor/major según conventional commits). Si trabajas en un fork y no necesitas este comportamiento, usa las variantes `build:no-bump`, `build-prod:no-bump` o `build-preview:no-bump`. Ver la sección [Scripts de Build](#build) para más detalles.
+
+### Contribuir al proyecto original
+
+Si quieres **contribuir** con cambios al repositorio original, consulta [CONTRIBUTING.md](./CONTRIBUTING.md). El flujo es: fork → rama → PR contra el repo original.
+
 ### 🤖 Instalación con IA
 
 ¿Prefieres que una IA te guíe? Copia el prompt de [AI_SETUP_PROMPT.md](./AI_SETUP_PROMPT.md) y dáselo a Claude.
+
+### Solo MCP (sin instalar la app)
+
+Si ya tienes un Planning Game desplegado y solo quieres que tu IA (Claude Code, Cursor) gestione las tareas:
+
+```bash
+npm install -g planning-game-mcp
+
+claude mcp add planning-game -s user \
+  -e GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/planning-game/serviceAccountKey.json \
+  -e FIREBASE_DATABASE_URL=https://TU-PROYECTO-default-rtdb.europe-west1.firebasedatabase.app \
+  -- planning-game-mcp
+```
+
+Solo necesitas el `serviceAccountKey.json` de tu proyecto Firebase. Ver [guía completa de instalación MCP](./docs/MCP_INSTALLATION_GUIDE.md).
 
 ---
 
@@ -33,12 +60,13 @@ El asistente te guiará paso a paso. Ver [INSTALL.md](./INSTALL.md) para instruc
 | [NEWUSER.md](./NEWUSER.md) | Cómo añadir nuevos usuarios |
 | [AI_SETUP_PROMPT.md](./AI_SETUP_PROMPT.md) | Prompt para instalación asistida por IA |
 | [CLAUDE.md](./CLAUDE.md) | Instrucciones para desarrollo con IA |
+| [docs/MCP_INSTALLATION_GUIDE.md](./docs/MCP_INSTALLATION_GUIDE.md) | Instalar solo el MCP Server |
 
 ---
 
 ## Versión Actual
 
-v1.2.0 - Refactoring arquitectónico con servicios centralizados para mejorar la mantenibilidad y reducir el acoplamiento.
+Ver `package.json` para la versión actual. La versión se incrementa automaticamente en cada build segun conventional commits.
 
 ---
 
@@ -79,12 +107,17 @@ npm install -g firebase-tools
 
 ## Instalacion paso a paso
 
-### 1. Clonar el repositorio
+### 1. Hacer fork y clonar
+
+1. Ve a https://github.com/AgilePlanning-io/planning-game-xp y haz click en **Fork**.
+2. Clona tu fork:
 
 ```bash
-git clone https://github.com/AgilePlanning-io/planning-game-xp.git
-cd PlanningGameXP
+git clone https://github.com/TU-USUARIO/planning-game-xp.git
+cd planning-game-xp
 ```
+
+> Si solo quieres contribuir al proyecto original sin montar tu propia instancia, también puedes clonar directamente y enviar PRs desde tu fork. Ver [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ### 2. Instalar dependencias del proyecto
 
@@ -105,7 +138,7 @@ Copiar estos archivos a la raiz del proyecto:
 | `.env` | Variables base |
 | `.env.dev` | Desarrollo local (emuladores) |
 | `.env.pre` | Preproduccion |
-| `.env.pro` | Produccion |
+| `.env.prod` | Produccion |
 
 **Si vas a crear un proyecto Firebase nuevo** (no usar el existente), ver la seccion [Crear un proyecto Firebase nuevo](#crear-un-proyecto-firebase-nuevo).
 
@@ -234,7 +267,7 @@ MS_FROM_EMAIL=tu-email@dominio.com
 PUBLIC_SUPER_ADMIN_EMAIL=tu-admin@dominio.com
 ```
 
-Para `.env.pro`, es lo mismo pero con `USE_FIREBASE_EMULATOR=false` y sin las lineas de emulador.
+Para `.env.prod`, es lo mismo pero con `USE_FIREBASE_EMULATOR=false` y sin las lineas de emulador.
 
 ### 6. Actualizar `.firebaserc`
 
@@ -357,13 +390,15 @@ Una vez activo, puedes pedirle a la IA cosas como:
 
 | Tool | Descripcion |
 |------|-------------|
-| `list_projects` | Lista todos los proyectos |
-| `list_cards` | Cards de un proyecto filtradas por tipo/status/sprint/developer/year |
-| `get_card` | Detalle completo de una card |
-| `create_card` | Crear task/bug/epic/proposal con ID auto-generado |
-| `update_card` | Actualizar campos de una card existente |
-| `list_sprints` | Sprints de un proyecto |
-| `list_developers` | Todos los developers del sistema |
+| `list_projects` / `get_project` | Consultar proyectos |
+| `list_cards` / `get_card` / `create_card` / `update_card` | Gestionar cards (tasks, bugs, epics, proposals, QA) |
+| `relate_cards` | Crear relaciones entre cards |
+| `get_transition_rules` | Ver reglas de transicion de estados |
+| `list_sprints` / `get_sprint` / `create_sprint` | Gestionar sprints |
+| `list_developers` / `list_stakeholders` | Consultar equipo |
+| `list_adrs` / `get_adr` / `create_adr` | Architecture Decision Records |
+| `list_global_config` / `get_global_config` | Configuraciones globales |
+| `get_mcp_status` / `update_mcp` / `setup_mcp_user` | Estado y configuracion del MCP |
 
 ### Seguridad del MCP
 
@@ -391,10 +426,15 @@ Una vez activo, puedes pedirle a la IA cosas como:
 
 | Comando | Descripcion |
 |---------|-------------|
-| `npm run build` | Build de produccion (con security check) |
-| `npm run build-preview` | Build de preproduccion |
-| `npm run build-prod` | Build de produccion explicita |
+| `npm run build` | Build de produccion (con version bump automatico) |
+| `npm run build-prod` | Build de produccion explicita (con version bump) |
+| `npm run build-preview` | Build de preproduccion (con version bump) |
+| `npm run build:no-bump` | Build de produccion **sin subir version** |
+| `npm run build-prod:no-bump` | Build de produccion explicita **sin subir version** |
+| `npm run build-preview:no-bump` | Build de preproduccion **sin subir version** |
 | `npm run generate-sw` | Regenerar service worker |
+
+> **Version bump automatico:** Los scripts `build`, `build-prod` y `build-preview` analizan los mensajes de commit (conventional commits) para decidir si suben major, minor o patch. Ademas, generan el CHANGELOG y hacen commit+push de los archivos de version. Si trabajas en un **fork** o no necesitas este comportamiento, usa las variantes `:no-bump` que solo ejecutan syntax check, security check, generacion del service worker y la build de Astro.
 
 ### Testing
 
@@ -490,8 +530,11 @@ Para mas detalles, consulta [ARCHITECTURE.md](./ARCHITECTURE.md).
 ## Despliegue a Produccion
 
 ```bash
-# 1. Build (incluye security check automatico)
+# 1. Build (incluye security check automatico + version bump)
 npm run build
+
+# O sin version bump (recomendado para forks):
+npm run build:no-bump
 
 # 2. Desplegar
 npm run deploy
@@ -555,7 +598,7 @@ npm run deploy
 
 | Documento | Contenido |
 |-----------|-----------|
-| [README-PLAYWRIGHT.md](./README-PLAYWRIGHT.md) | Tests E2E con Playwright |
+| [playwright/README.md](./playwright/README.md) | Tests E2E con Playwright |
 | [FIREBASE_REALTIME_DATABASE_STRUCTURE.md](./FIREBASE_REALTIME_DATABASE_STRUCTURE.md) | Estructura de la base de datos |
 | [functions/README.md](./functions/README.md) | Cloud Functions |
 | [CHANGELOG.md](./CHANGELOG.md) | Registro de cambios |

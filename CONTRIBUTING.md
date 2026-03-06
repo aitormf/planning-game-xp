@@ -56,10 +56,11 @@ A la gente le *encantan* los reportes de bugs detallados. No es broma.
 
 ### Instalación
 
-1. Clona el repositorio:
+1. Haz fork y clona tu fork:
 ```bash
-git clone https://github.com/AgilePlanning-io/planning-game-xp.git
-cd PlanningGameXP
+git clone https://github.com/TU-USUARIO/planning-game-xp.git
+cd planning-game-xp
+git remote add upstream https://github.com/AgilePlanning-io/planning-game-xp.git
 ```
 
 2. Instala las dependencias:
@@ -103,7 +104,7 @@ npm run dev
 - **Base de Datos**: Firebase Realtime Database
 - **Autenticación**: Firebase Auth (Proveedor Microsoft)
 - **Almacenamiento**: Firebase Storage
-- **Testing**: Vitest + jsdom
+- **Testing**: Vitest + jsdom (unit), Playwright (E2E)
 - **Herramienta de Build**: Vite (vía Astro)
 
 ### Estilo de Código
@@ -156,7 +157,7 @@ Cada entorno tiene su propio archivo `.env` y scripts de npm.
 - Extiende `LitElement` para todos los web components
 - Usa `static properties` para propiedades de componentes
 - Implementa los métodos de ciclo de vida apropiados
-- Usa CSS-in-JS para estilos
+- Separa los estilos en archivos `*-styles.js` independientes
 - Sigue la convención de nombres: `kebab-case` para nombres de elementos
 
 ### Integración con Firebase
@@ -289,10 +290,11 @@ People *love* thorough bug reports. I'm not even kidding.
 
 ### Installation
 
-1. Clone the repository:
+1. Fork and clone your fork:
 ```bash
-git clone https://github.com/AgilePlanning-io/planning-game-xp.git
-cd PlanningGameXP
+git clone https://github.com/YOUR-USER/planning-game-xp.git
+cd planning-game-xp
+git remote add upstream https://github.com/AgilePlanning-io/planning-game-xp.git
 ```
 
 2. Install dependencies:
@@ -336,7 +338,7 @@ npm run dev
 - **Database**: Firebase Realtime Database
 - **Authentication**: Firebase Auth (Microsoft Provider)
 - **Storage**: Firebase Storage
-- **Testing**: Vitest + jsdom
+- **Testing**: Vitest + jsdom (unit), Playwright (E2E)
 - **Build Tool**: Vite (via Astro)
 
 ### Code Style

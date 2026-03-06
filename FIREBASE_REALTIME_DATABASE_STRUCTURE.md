@@ -455,7 +455,7 @@ Para probar el sistema:
 1. Asignar/desasignar usuarios en tasks/bugs
 2. Verificar que aparecen las notificaciones en tiempo real
 3. Probar el modal de notificaciones
-4. Verificar los logs en consola (`sinsole.log`)
+4. Verificar los logs en consola del navegador
 
 ## 7. Colección: `wip`
 
@@ -746,5 +746,37 @@ adr-history/
 │   │   │   ├── changes: object
 │   │   │   └── previousValues: object
 ```
+
+## 13. Colección: `developerBacklogs`
+
+Contiene el backlog personal de cada developer: las tareas asignadas en estado "To Do" ordenadas por prioridad.
+
+### Estructura:
+
+```
+developerBacklogs/
+├── {developerId}/
+│   ├── order: string[]          # Array de cardKeys ordenados
+│   └── items/
+│       ├── {cardKey}/
+│       │   ├── cardId: string
+│       │   ├── projectId: string
+│       │   ├── cardType: string
+│       │   ├── title: string
+│       │   └── status: string
+```
+
+### Actualización automática:
+
+- Tarea "To Do" asignada a developer → se añade a su backlog
+- Tarea pasa a "In Progress" → se elimina del backlog (se muestra en WIP)
+- Tarea completada ("Done") → se elimina del backlog
+- Developer desasignado de tarea → se elimina de su backlog
+
+### Sincronización manual:
+
+SuperAdmin puede ejecutar "Sincronizar Backlogs" desde `/wip` para reconstruir los backlogs escaneando todas las tareas "To Do" con developer asignado.
+
+---
 
 > Para más información sobre el sistema de configuración global y ADRs, ver [GLOBAL_CONFIG.md](./GLOBAL_CONFIG.md)

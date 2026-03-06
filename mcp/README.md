@@ -79,7 +79,7 @@ Once Claude Code starts with the MCP connected, run:
 > Use setup_mcp_user to configure my identity
 ```
 
-This creates a `mcp.user.json` file with your developer ID, used to track who creates/updates cards.
+This creates a `.mcp-user.json` file with your developer ID, used to track who creates/updates cards.
 
 ## Environment Variables
 
@@ -168,7 +168,7 @@ claude mcp add planning-game-teamB \
   -- node /path/to/index.js
 ```
 
-Each instance maintains its own `mcp.user.json` in its `MCP_INSTANCE_DIR`.
+Each instance maintains its own `.mcp-user.json` in its `MCP_INSTANCE_DIR`.
 
 ## Docker
 
