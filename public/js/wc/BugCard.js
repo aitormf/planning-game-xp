@@ -559,15 +559,13 @@ document.dispatchEvent(new CustomEvent('request-bugcard-data', {
         if (Array.isArray(repoUrl) && repoUrl.length > 1) {
           repositories = repoUrl; // [{url, label}, ...]
         }
-
-        // If entityDirectoryService returned empty, read from project node directly
-        // This handles cases where /users/ entries lack projects/{projectId} assignments
-        // Firebase RTDB may store arrays as objects, so handle both formats
-        if (normalizedList.length === 0 && projectData.developers) {
-          normalizedList = this._extractEntitiesFromProjectData(projectData.developers);
-        }
       }
       this.projectRepositories = repositories;
+
+      // Warn if entityDirectoryService returned empty — data in /users/ may need sync
+      if (normalizedList.length === 0) {
+        console.warn(`[BugCard] No developers found for project "${this.projectId}". Run sync-users-project-roles.js to fix /users/ data.`);
+      }
 
       // Cache the result
       if (normalizedList.length > 0) {
@@ -584,25 +582,6 @@ document.dispatchEvent(new CustomEvent('request-bugcard-data', {
     } catch (error) {
 return [];
     }
-  }
-
-  /**
-   * Extract entities (developers/stakeholders) from project data.
-   * Handles both array and object formats from Firebase RTDB.
-   */
-  _extractEntitiesFromProjectData(entities) {
-    if (!entities) return [];
-    if (Array.isArray(entities)) {
-      return entities
-        .filter(e => e && (e.id || e.name || e.email))
-        .map(e => ({ id: e.id || '', name: e.name || '', email: e.email || '' }));
-    }
-    if (typeof entities === 'object') {
-      return Object.entries(entities)
-        .filter(([, v]) => v && typeof v === 'object')
-        .map(([key, v]) => ({ id: v.id || '', name: v.name || key, email: v.email || '' }));
-    }
-    return [];
   }
 
   disconnectedCallback() {

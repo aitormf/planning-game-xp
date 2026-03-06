@@ -1159,48 +1159,20 @@ this.stakeholders = [];
         if (Array.isArray(repoUrl) && repoUrl.length > 1) {
           repositories = repoUrl; // [{url, label}, ...]
         }
-
-        // If entityDirectoryService returned empty, read from project node directly
-        // This handles cases where /users/ entries lack projects/{projectId} assignments
-        // Firebase RTDB may store arrays as objects, so handle both formats
-        if (developers.length === 0 && projectData.developers) {
-          developers = this._extractEntitiesFromProjectData(projectData.developers);
-        }
-        if (stakeholders.length === 0 && projectData.stakeholders) {
-          stakeholders = this._extractEntitiesFromProjectData(projectData.stakeholders);
-        }
       }
 
-      const result = {
-        stakeholders,
-        developers,
-        scoringSystem,
-        repositories
-      };
-return result;
+      // Warn if entityDirectoryService returned empty — data in /users/ may need sync
+      if (developers.length === 0) {
+        console.warn(`[TaskCard] No developers found for project "${this.projectId}". Run sync-users-project-roles.js to fix /users/ data.`);
+      }
+      if (stakeholders.length === 0) {
+        console.warn(`[TaskCard] No stakeholders found for project "${this.projectId}". Run sync-users-project-roles.js to fix /users/ data.`);
+      }
+
+      return { stakeholders, developers, scoringSystem, repositories };
     } catch (error) {
 return { stakeholders: [], developers: [], scoringSystem: '1-5', repositories: [] };
     }
-  }
-
-  /**
-   * Extract entities (developers/stakeholders) from project data.
-   * Handles both array and object formats from Firebase RTDB.
-   */
-  _extractEntitiesFromProjectData(entities) {
-    if (!entities) return [];
-    if (Array.isArray(entities)) {
-      return entities
-        .filter(e => e && (e.id || e.name || e.email))
-        .map(e => ({ id: e.id || '', name: e.name || '', email: e.email || '' }));
-    }
-    // Object/map format from Firebase RTDB
-    if (typeof entities === 'object') {
-      return Object.entries(entities)
-        .filter(([, v]) => v && typeof v === 'object')
-        .map(([key, v]) => ({ id: v.id || '', name: v.name || key, email: v.email || '' }));
-    }
-    return [];
   }
 
   /**
