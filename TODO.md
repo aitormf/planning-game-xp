@@ -219,6 +219,13 @@ Implementado en:
 - ✅ Page objects: fillCardFields evita trigger IA, saveCard maneja "Cambios sin guardar"
 - ✅ 01-auth (4 tests), 02-projects (3 tests), 03-full-workflow (4 tests), 04-card-interactions (7 tests)
 
+### 23. ~~WIP: To Validate debe actualizar endDate~~
+- ✅ Evita el toast: `Cannot change to "To Validate": endDate must be updated in the same status change.`
+- ✅ WIP ahora setea `endDate` al mover a "To Validate"
+
+Implementado en:
+- `/src/pages/partials/wip.astro` - Añade `endDate` en la accion `tovalidate`
+
 ## Pendientes
 
 ### Tests E2E pendientes de crear
