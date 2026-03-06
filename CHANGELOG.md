@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Handle object format for developers in project data fallback
+
+## [1.164.6] - 2026-03-06
+
+### Fixed
+
 - Read project developers from project node when entityDirectoryService returns empty (#87)
 - Clean validation revert flags from Firebase to prevent repeated toast on reload
 - Update endDate when WIP moves to To Validate
