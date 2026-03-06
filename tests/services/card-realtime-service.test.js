@@ -29,7 +29,8 @@ describe('CardRealtimeService', () => {
 
   beforeEach(() => {
     mockFirebaseService = {
-      subscribeToPath: vi.fn(() => vi.fn()) // returns unsubscribe function
+      subscribeToPath: vi.fn(() => vi.fn()), // returns unsubscribe function
+      updateCard: vi.fn()
     };
     service = new CardRealtimeService(mockFirebaseService);
     dispatchEventSpy.mockClear();
@@ -278,6 +279,33 @@ describe('CardRealtimeService', () => {
       // The flags should be removed from cardData
       expect(cardData._validationReverted).toBeUndefined();
       expect(cardData._validationError).toBeUndefined();
+    });
+
+    it('should clean up transient flags from Firebase when cardPath is provided', () => {
+      const cardKey = 'TestProject_TSK-001';
+      const cardPath = '/cards/TestProject/TASKS_TestProject/-abc123';
+      const mockElement = {
+        status: 'In Progress',
+        constructor: { properties: { status: {} } },
+        requestUpdate: vi.fn()
+      };
+      service.subscribedCards.set(cardKey, new Set([mockElement]));
+
+      const snapshot = {
+        exists: () => true,
+        val: () => ({
+          status: 'To Do',
+          _validationReverted: true,
+          _validationError: 'Some error'
+        })
+      };
+
+      service.handleCardDataUpdate(cardKey, snapshot, cardPath);
+
+      expect(mockFirebaseService.updateCard).toHaveBeenCalledWith(
+        'TestProject', 'TASKS', '-abc123',
+        { _validationReverted: null, _validationError: null }
+      );
     });
   });
 

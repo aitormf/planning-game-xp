@@ -49,8 +49,8 @@ return;
       // Solo log si hay problemas
       if (!snapshot.exists()) {
 }
-      
-      this.handleCardDataUpdate(cardKey, snapshot);
+
+      this.handleCardDataUpdate(cardKey, snapshot, cardPath);
     });
 
     // Guardar función de cleanup
@@ -92,7 +92,7 @@ return;
    * @param {string} cardKey - Clave de la card
    * @param {Object} snapshot - Snapshot de Firebase
    */
-  handleCardDataUpdate(cardKey, snapshot) {
+  handleCardDataUpdate(cardKey, snapshot, cardPath) {
     const subscribedElements = this.subscribedCards.get(cardKey);
     if (!subscribedElements || subscribedElements.size === 0) {
       return;
@@ -108,7 +108,20 @@ return;
         document.dispatchEvent(new CustomEvent('show-slide-notification', {
           detail: { options: { message: errorMessage, type: 'error' } }
         }));
-        // Clean up the transient flags so they don't trigger again
+        // Clean up the transient flags in Firebase so they don't trigger again on reload
+        if (cardPath && this.firebaseService) {
+          const pathParts = cardPath.split('/');
+          // Path format: /cards/{projectId}/{SECTION_projectId}/{firebaseKey}
+          if (pathParts.length >= 5) {
+            const projectId = pathParts[2];
+            const section = pathParts[3].split('_')[0];
+            const firebaseKey = pathParts[4];
+            this.firebaseService.updateCard(projectId, section, firebaseKey, {
+              _validationReverted: null,
+              _validationError: null
+            });
+          }
+        }
         delete cardData._validationReverted;
         delete cardData._validationError;
       }
