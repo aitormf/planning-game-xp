@@ -562,10 +562,9 @@ document.dispatchEvent(new CustomEvent('request-bugcard-data', {
 
         // If entityDirectoryService returned empty, read from project node directly
         // This handles cases where /users/ entries lack projects/{projectId} assignments
-        if (normalizedList.length === 0 && Array.isArray(projectData.developers)) {
-          normalizedList = projectData.developers
-            .filter(d => d && (d.id || d.name || d.email))
-            .map(d => ({ id: d.id || '', name: d.name || '', email: d.email || '' }));
+        // Firebase RTDB may store arrays as objects, so handle both formats
+        if (normalizedList.length === 0 && projectData.developers) {
+          normalizedList = this._extractEntitiesFromProjectData(projectData.developers);
         }
       }
       this.projectRepositories = repositories;
@@ -585,6 +584,25 @@ document.dispatchEvent(new CustomEvent('request-bugcard-data', {
     } catch (error) {
 return [];
     }
+  }
+
+  /**
+   * Extract entities (developers/stakeholders) from project data.
+   * Handles both array and object formats from Firebase RTDB.
+   */
+  _extractEntitiesFromProjectData(entities) {
+    if (!entities) return [];
+    if (Array.isArray(entities)) {
+      return entities
+        .filter(e => e && (e.id || e.name || e.email))
+        .map(e => ({ id: e.id || '', name: e.name || '', email: e.email || '' }));
+    }
+    if (typeof entities === 'object') {
+      return Object.entries(entities)
+        .filter(([, v]) => v && typeof v === 'object')
+        .map(([key, v]) => ({ id: v.id || '', name: v.name || key, email: v.email || '' }));
+    }
+    return [];
   }
 
   disconnectedCallback() {
