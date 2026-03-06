@@ -32,6 +32,7 @@ import BacklogStyles from '../../components/BacklogStyles.astro';
   import { FirebaseService } from '/js/services/firebase-service.js';
   import { CardRealtimeService } from '/js/services/card-realtime-service.js';
   import { URLStateManager } from '/js/utils/url-utils.js';
+  import { generateTimestamp } from '/js/utils/timestamp-utils.js';
   import '/js/core/app-initializer.js';
   import 'https://cdn.jsdelivr.net/npm/@manufosela/loading-layer@2.0.1/+esm';
 
@@ -845,6 +846,7 @@ import BacklogStyles from '../../components/BacklogStyles.astro';
       }
 
       task.status = 'To Validate';
+      task.endDate = generateTimestamp(new Date(), 'end');
     } else if (action === 'unassign') {
       task.status = 'To Do';
       task.developer = '';
