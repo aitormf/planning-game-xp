@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Fixed
+
+- Remove project node fallbacks, add sync-users-project-roles script
+
 ## [1.164.7] - 2026-03-06
 
 ### Fixed
