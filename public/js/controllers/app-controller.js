@@ -134,7 +134,7 @@ export class AppController {
    * Reuses existing services and subscriptions, only updates project/section context.
    */
   async onPageNavigated() {
-    const newProjectId = URLUtils.getProjectIdFromUrl();
+    const newProjectId = URLUtils.getProjectIdFromUrl() || this.projectId;
     const newSection = URLUtils.getSectionFromUrl();
 
     if (newProjectId !== this.projectId) {
@@ -146,6 +146,9 @@ export class AppController {
     } else {
       this.section = newSection;
     }
+
+    // Re-attach DOM-bound listeners after partial HTML injection replaces elements
+    this.setupDomBoundListeners();
 
     this.tabController.openInitialTab();
     this._restoreViewStateFromUrl();
@@ -317,9 +320,27 @@ export class AppController {
   }
 
   setupEventListeners() {
+    // DOM-bound listeners (re-attached on SPA navigation)
+    this.setupDomBoundListeners();
+
+    // Document-level listeners (registered once, persist across navigation)
+    this._setupDocumentListeners();
+  }
+
+  /**
+   * DOM-bound listeners that target elements replaced by partial HTML injection.
+   * Must be re-called after SPA navigation via onPageNavigated().
+   */
+  setupDomBoundListeners() {
+    // Bind handlers once and store references for cleanup
+    if (!this._boundHandleAddButtonClick) {
+      this._boundHandleAddButtonClick = this.handleAddButtonClick.bind(this);
+    }
+
     // Add card buttons
     document.querySelectorAll('.add-button').forEach(button => {
-      button.addEventListener('click', this.handleAddButtonClick.bind(this));
+      button.removeEventListener('click', this._boundHandleAddButtonClick);
+      button.addEventListener('click', this._boundHandleAddButtonClick);
     });
 
     // View toggle buttons
@@ -330,7 +351,13 @@ export class AppController {
 
     // Sprint chart button
     this.setupSprintChartButton();
+  }
 
+  /**
+   * Document-level listeners that persist across SPA navigation.
+   * Registered once during init().
+   */
+  _setupDocumentListeners() {
     // Auto-open card from URL
     document.addEventListener('cards-rendered', this.handleCardsRenderedEvent.bind(this));
 
@@ -345,17 +372,6 @@ export class AppController {
 
     // Listen for filter events from the TaskFilters component
     this.setupFilterEventListeners();
-
-    // COMMENTED OUT - causing infinite reloads
-    // Listen for project changes to update app tab visibility
-    // document.addEventListener('project-changed', (e) => {
-    //   const newProjectId = e.detail.projectId;
-    //   if (newProjectId !== this.projectId) {
-    //     this.projectId = newProjectId;
-    //     // Update app tab visibility after project change
-    //     setTimeout(() => this.updateAppTabVisibility(), 100);
-    //   }
-    // });
 
     // Listen for project change reload (partial reload instead of full page reload)
     document.addEventListener('project-change-reload', this.handleProjectChangeReload.bind(this));
@@ -372,18 +388,16 @@ export class AppController {
 
         let taskList;
         if (fullData) {
-          // Devolver toda la información de las tareas
           taskList = Object.entries(tasks || {}).map(([id, task]) => ({
             id,
             ...task
           }));
         } else {
-          // Devolver solo información básica (comportamiento original)
           taskList = Object.entries(tasks || {}).map(([id, task]) => ({
             id,
             cardId: task.cardId,
             title: task.title || 'Sin título'
-          })).filter(task => task.cardId !== currentTaskId); // Excluir la tarea actual
+          })).filter(task => task.cardId !== currentTaskId);
         }
 
         if (callback && typeof callback === 'function') {
@@ -1076,7 +1090,6 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
   setupAppAccessListener() {
     this.hasAppAccess = Boolean(window.isAppAdmin);
     this.updateTrashTabVisibility();
-    this.updateUsersTabVisibility();
     document.addEventListener('app-admin-status-changed', this.handleAppAdminStatusChange);
   }
 
@@ -1086,14 +1099,6 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
 
     const isSuperAdmin = await this._checkIsSuperAdmin();
     trashTab.style.display = isSuperAdmin ? 'block' : 'none';
-  }
-
-  async updateUsersTabVisibility() {
-    const usersTab = document.getElementById('usersTab');
-    if (!usersTab) return;
-
-    const isSuperAdmin = await this._checkIsSuperAdmin();
-    usersTab.style.display = isSuperAdmin ? 'block' : 'none';
   }
 
   handleAppAdminStatusChange(event) {
