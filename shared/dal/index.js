@@ -34,3 +34,12 @@ export {
   createAdminCounterAdapter,
   createClientCounterAdapter
 } from './rtdb/index.js';
+
+// Firestore backend
+export {
+  FirestoreBaseRepository,
+  createAdminFirestoreAdapter,
+  createClientFirestoreAdapter,
+  FirestoreCardRepository,
+  FirestoreProjectRepository
+} from './firestore/index.js';
