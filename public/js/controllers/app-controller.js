@@ -1076,7 +1076,6 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
   setupAppAccessListener() {
     this.hasAppAccess = Boolean(window.isAppAdmin);
     this.updateTrashTabVisibility();
-    this.updateUsersTabVisibility();
     document.addEventListener('app-admin-status-changed', this.handleAppAdminStatusChange);
   }
 
@@ -1086,14 +1085,6 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
 
     const isSuperAdmin = await this._checkIsSuperAdmin();
     trashTab.style.display = isSuperAdmin ? 'block' : 'none';
-  }
-
-  async updateUsersTabVisibility() {
-    const usersTab = document.getElementById('usersTab');
-    if (!usersTab) return;
-
-    const isSuperAdmin = await this._checkIsSuperAdmin();
-    usersTab.style.display = isSuperAdmin ? 'block' : 'none';
   }
 
   handleAppAdminStatusChange(event) {
