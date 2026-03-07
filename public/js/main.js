@@ -34,6 +34,7 @@ import { demoModeService } from './services/demo-mode-service.js';
 import { version as APP_VERSION } from './version.js';
 
 let servicesInitialized = false;
+let controllerCreating = false;
 
 async function initializeServices() {
   if (servicesInitialized) return;
@@ -57,15 +58,34 @@ async function initializeServices() {
   }
 }
 
+/**
+ * Show the initial tab content immediately so users don't see a blank screen
+ * while services are still initializing.
+ */
+function showInitialTabEarly() {
+  const hash = window.location.hash.replace('#', '');
+  const section = hash || 'tasks';
+  const tabContent = document.getElementById(`${section}TabContent`);
+  if (tabContent && getComputedStyle(tabContent).display === 'none') {
+    tabContent.style.display = 'block';
+  }
+}
+
 async function initializeApplication() {
   try {
+    // Show tab content as soon as DOM has the partial HTML,
+    // before waiting for slow service initialization
+    showInitialTabEarly();
+
     await initializeServices();
-    if (!window.appController) {
+    if (!window.appController && !controllerCreating) {
+      controllerCreating = true;
       window.appController = await AppController.create();
-    } else {
+    } else if (window.appController) {
       window.appController.onPageNavigated();
     }
   } catch (error) {
+    controllerCreating = false;
     console.error('Error initializing application:', error);
     const notification = document.createElement('slide-notification');
     notification.message = 'Error al inicializar la aplicación. Por favor, recarga la página.';
