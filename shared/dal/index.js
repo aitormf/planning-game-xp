@@ -21,12 +21,17 @@ export {
   createCounterService,
   createRepositories,
   createDualWriteRepositories,
+  createReadSwitchRepositories,
   clearRegisteredBackends
 } from './repository-factory.js';
 
 // Dual-write wrappers
 export { DualWriteCardRepository } from './dual-write-card-repository.js';
 export { DualWriteProjectRepository } from './dual-write-project-repository.js';
+
+// Read-switch wrappers (Firestore primary, RTDB fallback)
+export { ReadSwitchCardRepository } from './read-switch-card-repository.js';
+export { ReadSwitchProjectRepository } from './read-switch-project-repository.js';
 
 // RTDB backend
 export {
