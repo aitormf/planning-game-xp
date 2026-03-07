@@ -163,6 +163,83 @@ export const HoursReportTabStyles = css`
     opacity: 0.5;
   }
 
+  /* Developer name clickable */
+  .dev-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .dev-name--clickable {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .dev-name--clickable:hover {
+    color: var(--primary-color, #4a90d9);
+  }
+
+  .expand-icon {
+    font-size: 0.7rem;
+    width: 1em;
+    display: inline-block;
+  }
+
+  /* Detail rows */
+  .detail-row td {
+    padding: 0;
+    background: var(--bg-secondary, #f8f8f8);
+  }
+
+  .detail-container {
+    padding: 0.75rem 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+
+  .detail-table th {
+    background: var(--bg-tertiary, #eee);
+    padding: 0.35rem 0.5rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color, #ddd);
+    position: static;
+  }
+
+  .detail-table td {
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--border-color, #eee);
+    text-align: left;
+    white-space: normal;
+  }
+
+  .detail-card-id {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--primary-color, #4a90d9);
+  }
+
+  .detail-title {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .detail-item--development td:nth-child(5) {
+    color: var(--status-in-progress, #2196F3);
+  }
+
+  .detail-item--maintenance td:nth-child(5) {
+    color: var(--status-blocked, #f44336);
+  }
+
   /* Empty state */
   .empty-state {
     text-align: center;
@@ -191,5 +268,13 @@ export const HoursReportTabStyles = css`
 
   :host-context(.dark-theme) .grand-total-row td {
     background: var(--bg-tertiary, #333);
+  }
+
+  :host-context(.dark-theme) .detail-row td {
+    background: var(--bg-secondary, #1e1e1e);
+  }
+
+  :host-context(.dark-theme) .detail-table th {
+    background: var(--bg-tertiary, #2a2a2a);
   }
 `;

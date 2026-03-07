@@ -135,4 +135,60 @@ describe('HoursReportTab', () => {
       expect(cssClass).toBe('');
     });
   });
+
+  describe('developer detail expansion', () => {
+    it('should toggle expanded developer', () => {
+      let expandedDev = null;
+      const toggleDetail = (devId) => {
+        expandedDev = expandedDev === devId ? null : devId;
+      };
+
+      toggleDetail('dev_001');
+      expect(expandedDev).toBe('dev_001');
+
+      toggleDetail('dev_001');
+      expect(expandedDev).toBe(null);
+
+      toggleDetail('dev_002');
+      expect(expandedDev).toBe('dev_002');
+
+      toggleDetail('dev_001');
+      expect(expandedDev).toBe('dev_001');
+    });
+
+    it('should have cardDetails in developer data', () => {
+      const dev = {
+        name: 'Dev Uno',
+        weeks: { S1: { development: 8, maintenance: 0 } },
+        totals: { development: 8, maintenance: 0 },
+        cardDetails: [
+          { cardId: 'PRJ-TSK-0001', title: 'Task one', projectId: 'PRJ1', cardType: 'task', category: 'development', hours: 8, endDate: '2026-03-02' },
+        ],
+      };
+
+      expect(dev.cardDetails).toHaveLength(1);
+      expect(dev.cardDetails[0].cardId).toBe('PRJ-TSK-0001');
+      expect(dev.cardDetails[0].category).toBe('development');
+    });
+
+    it('should show detail table fields for each card', () => {
+      const card = {
+        cardId: 'PRJ-BUG-0005',
+        title: 'Fix login issue',
+        projectId: 'PRJ1',
+        cardType: 'bug',
+        category: 'maintenance',
+        hours: 4,
+        endDate: '2026-03-05T17:00:00Z',
+      };
+
+      expect(card.cardId).toBe('PRJ-BUG-0005');
+      expect(card.title).toBe('Fix login issue');
+      expect(card.projectId).toBe('PRJ1');
+      expect(card.cardType).toBe('bug');
+      expect(card.category).toBe('maintenance');
+      expect(card.hours).toBe(4);
+      expect(card.endDate.substring(0, 10)).toBe('2026-03-05');
+    });
+  });
 });

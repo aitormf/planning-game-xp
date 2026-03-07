@@ -9,6 +9,7 @@ class HoursReportTab extends LitElement {
       _selectedYear: { type: Number, state: true },
       _loading: { type: Boolean, state: true },
       _report: { type: Object, state: true },
+      _expandedDev: { type: String, state: true },
     };
   }
 
@@ -23,6 +24,7 @@ class HoursReportTab extends LitElement {
     this._selectedYear = now.getFullYear();
     this._loading = false;
     this._report = null;
+    this._expandedDev = null;
   }
 
   render() {
@@ -130,9 +132,12 @@ class HoursReportTab extends LitElement {
       `);
 
       // Developer rows
-      for (const [, dev] of devEntries) {
-        rendered.push(this._renderDevRow(dev, weeks, 'development', 'Desarrollo SW'));
-        rendered.push(this._renderDevRow(dev, weeks, 'maintenance', 'Mantenimiento'));
+      for (const [devId, dev] of devEntries) {
+        rendered.push(this._renderDevRow(dev, devId, weeks, 'development', 'Desarrollo SW'));
+        rendered.push(this._renderDevRow(dev, devId, weeks, 'maintenance', 'Mantenimiento'));
+        if (this._expandedDev === devId && dev.cardDetails?.length > 0) {
+          rendered.push(this._renderDetailRows(dev, weeks));
+        }
       }
 
       if (devEntries.length === 0) {
@@ -152,13 +157,21 @@ class HoursReportTab extends LitElement {
     return rendered;
   }
 
-  _renderDevRow(dev, weeks, category, categoryLabel) {
+  _renderDevRow(dev, devId, weeks, category, categoryLabel) {
     const isFirst = category === 'development';
     const rowClass = category === 'development' ? 'row-development' : 'row-maintenance';
+    const isExpanded = this._expandedDev === devId;
+    const hasDetails = dev.cardDetails?.length > 0;
 
     return html`
       <tr class=${rowClass}>
-        <td>${isFirst ? dev.name : ''}</td>
+        <td>${isFirst
+          ? html`<span class="dev-name ${hasDetails ? 'dev-name--clickable' : ''}"
+                       @click=${hasDetails ? () => this._toggleDetail(devId) : null}>
+                  ${hasDetails ? html`<span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>` : nothing}
+                  ${dev.name}
+                </span>`
+          : ''}</td>
         <td>${categoryLabel}</td>
         ${weeks.map(w => {
           const val = dev.weeks[w]?.[category] || 0;
@@ -213,6 +226,48 @@ class HoursReportTab extends LitElement {
         <td>${this._formatHours(grandTotals.development + grandTotals.maintenance)}</td>
       </tr>
     `;
+  }
+
+  _renderDetailRows(dev, weeks) {
+    const colSpan = weeks.length + 3;
+    return html`
+      <tr class="detail-row">
+        <td colspan=${colSpan}>
+          <div class="detail-container">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>Card ID</th>
+                  <th>Titulo</th>
+                  <th>Proyecto</th>
+                  <th>Tipo</th>
+                  <th>Categoria</th>
+                  <th>Horas</th>
+                  <th>Fin</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${dev.cardDetails.map(card => html`
+                  <tr class="detail-item detail-item--${card.category}">
+                    <td class="detail-card-id">${card.cardId}</td>
+                    <td class="detail-title">${card.title}</td>
+                    <td>${card.projectId}</td>
+                    <td>${card.cardType === 'bug' ? 'Bug' : 'Task'}</td>
+                    <td>${card.category === 'development' ? 'Desarrollo' : 'Mantenimiento'}</td>
+                    <td>${this._formatHours(card.hours)}</td>
+                    <td>${card.endDate ? card.endDate.substring(0, 10) : ''}</td>
+                  </tr>
+                `)}
+              </tbody>
+            </table>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  _toggleDetail(devId) {
+    this._expandedDev = this._expandedDev === devId ? null : devId;
   }
 
   _formatHours(val) {
