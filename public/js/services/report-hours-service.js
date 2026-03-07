@@ -53,7 +53,7 @@ export class ReportHoursService {
       const weekDistribution = this._distributeHoursAcrossWeeks(card, weeks, hours, monthStart, monthEnd);
 
       if (!devHours[devId]) {
-        devHours[devId] = { weeks: {}, totals: { development: 0, maintenance: 0 } };
+        devHours[devId] = { weeks: {}, totals: { development: 0, maintenance: 0 }, cardDetails: [] };
       }
 
       for (const [weekLabel, weekHours] of Object.entries(weekDistribution)) {
@@ -63,6 +63,17 @@ export class ReportHoursService {
         devHours[devId].weeks[weekLabel][category] += weekHours;
       }
       devHours[devId].totals[category] += hours;
+
+      devHours[devId].cardDetails.push({
+        cardId: card.cardId || '',
+        title: card.title || '',
+        projectId: card.projectId || '',
+        cardType: card.cardType === 'bug' ? 'bug' : 'task',
+        category,
+        hours,
+        endDate: card.endDate || '',
+        weekDistribution,
+      });
     }
 
     return this._buildReport(weeks, groups, devHours, developerNames);
@@ -347,10 +358,17 @@ export class ReportHoursService {
       }
 
       const group = reportGroups[groupKey];
+      const sortedDetails = (data.cardDetails || []).slice().sort((a, b) => {
+        if (a.endDate < b.endDate) return -1;
+        if (a.endDate > b.endDate) return 1;
+        return 0;
+      });
+
       group.developers[devId] = {
         name: devName,
         weeks: data.weeks,
         totals: data.totals,
+        cardDetails: sortedDetails,
       };
 
       group.subtotals.development += data.totals.development;

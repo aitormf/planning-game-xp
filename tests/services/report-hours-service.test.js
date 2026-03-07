@@ -530,4 +530,123 @@ describe('ReportHoursService', () => {
       expect(dev.totals.development).toBe(25);
     });
   });
+
+  describe('cardDetails per developer', () => {
+    it('should include cardDetails array for each developer', async () => {
+      const taskCard = makeCard({
+        cardId: 'PRJ1-TSK-0001',
+        title: 'Implement feature X',
+        projectId: 'PRJ1',
+        startDate: '2026-03-02T09:00:00Z',
+        endDate: '2026-03-02T17:00:00Z',
+        developer: 'dev_001',
+      });
+
+      setupMocks({
+        cardsByProject: {
+          PRJ1: { 'card-1': taskCard },
+        },
+        epicsByProject: {
+          PRJ1: { 'PRJ1-EPC-0001': makeEpic('Feature Epic') },
+        },
+      });
+
+      const service = new ReportHoursService();
+      const report = await service.calculateMonthlyReport(2026, 3);
+
+      const dev = report.groups.internal.developers['dev_001'];
+      expect(dev.cardDetails).toBeDefined();
+      expect(dev.cardDetails).toHaveLength(1);
+      expect(dev.cardDetails[0].cardId).toBe('PRJ1-TSK-0001');
+      expect(dev.cardDetails[0].title).toBe('Implement feature X');
+      expect(dev.cardDetails[0].projectId).toBe('PRJ1');
+      expect(dev.cardDetails[0].category).toBe('development');
+      expect(dev.cardDetails[0].hours).toBe(8);
+    });
+
+    it('should include bug cardType and maintenance category', async () => {
+      const bugCard = makeCard({
+        cardId: 'PRJ1-BUG-0001',
+        cardType: 'bug',
+        title: 'Fix critical issue',
+        projectId: 'PRJ1',
+        startDate: '2026-03-03T09:00:00Z',
+        endDate: '2026-03-03T17:00:00Z',
+        developer: 'dev_001',
+        status: 'Done',
+      });
+
+      setupMocks({
+        cardsByProject: {
+          PRJ1: { 'card-1': bugCard },
+        },
+        epicsByProject: {},
+      });
+
+      const service = new ReportHoursService();
+      const report = await service.calculateMonthlyReport(2026, 3);
+
+      const dev = report.groups.internal.developers['dev_001'];
+      expect(dev.cardDetails[0].cardType).toBe('bug');
+      expect(dev.cardDetails[0].category).toBe('maintenance');
+    });
+
+    it('should sort cardDetails by endDate ascending', async () => {
+      const card1 = makeCard({
+        cardId: 'PRJ1-TSK-0010',
+        title: 'Later task',
+        startDate: '2026-03-10T09:00:00Z',
+        endDate: '2026-03-10T17:00:00Z',
+        developer: 'dev_001',
+      });
+      const card2 = makeCard({
+        cardId: 'PRJ1-TSK-0005',
+        title: 'Earlier task',
+        startDate: '2026-03-03T09:00:00Z',
+        endDate: '2026-03-03T17:00:00Z',
+        developer: 'dev_001',
+      });
+
+      setupMocks({
+        cardsByProject: {
+          PRJ1: { 'card-1': card1, 'card-2': card2 },
+        },
+        epicsByProject: {
+          PRJ1: { 'PRJ1-EPC-0001': makeEpic('Feature Epic') },
+        },
+      });
+
+      const service = new ReportHoursService();
+      const report = await service.calculateMonthlyReport(2026, 3);
+
+      const dev = report.groups.internal.developers['dev_001'];
+      expect(dev.cardDetails).toHaveLength(2);
+      expect(dev.cardDetails[0].cardId).toBe('PRJ1-TSK-0005');
+      expect(dev.cardDetails[1].cardId).toBe('PRJ1-TSK-0010');
+    });
+
+    it('should include weekDistribution in cardDetails', async () => {
+      const taskCard = makeCard({
+        startDate: '2026-03-02T09:00:00Z',
+        endDate: '2026-03-06T17:00:00Z',
+        developer: 'dev_001',
+      });
+
+      setupMocks({
+        cardsByProject: {
+          PRJ1: { 'card-1': taskCard },
+        },
+        epicsByProject: {
+          PRJ1: { 'PRJ1-EPC-0001': makeEpic('Feature') },
+        },
+      });
+
+      const service = new ReportHoursService();
+      const report = await service.calculateMonthlyReport(2026, 3);
+
+      const dev = report.groups.internal.developers['dev_001'];
+      expect(dev.cardDetails[0].weekDistribution).toBeDefined();
+      expect(typeof dev.cardDetails[0].weekDistribution).toBe('object');
+    });
+  });
 });
