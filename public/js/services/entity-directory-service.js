@@ -87,11 +87,10 @@ class EntityDirectoryService {
 
   async _loadFromFirebase() {
     try {
-      const [usersSnap, teamsSnap, legacyDevSnap, legacyStkSnap, trashSnap] = await Promise.all([
+      // /data/developers and /data/stakeholders are deprecated — only read /users and /data/teams
+      const [usersSnap, teamsSnap, trashSnap] = await Promise.all([
         get(ref(database, '/users')),
         get(ref(database, '/data/teams')),
-        get(ref(database, '/data/developers')).catch(() => null),
-        get(ref(database, '/data/stakeholders')).catch(() => null),
         get(ref(database, '/trash/users')).catch(() => null)
       ]);
 
@@ -103,11 +102,6 @@ class EntityDirectoryService {
       if (usersSnap.exists()) {
         this._processUsers(usersSnap.val());
       }
-
-      const legacyDevelopers = legacyDevSnap?.exists?.() ? legacyDevSnap.val() : null;
-      const legacyStakeholders = legacyStkSnap?.exists?.() ? legacyStkSnap.val() : null;
-      this._mergeLegacyDevelopers(legacyDevelopers);
-      this._mergeLegacyStakeholders(legacyStakeholders);
 
       const trashData = trashSnap?.exists?.() ? trashSnap.val() : null;
       this._mergeTrashUsers(trashData);

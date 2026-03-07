@@ -30,8 +30,6 @@ describe('entityDirectoryService init refresh', () => {
     const store = {
       '/users': null,
       '/data/teams': null,
-      '/data/developers': null,
-      '/data/stakeholders': null,
       '/trash/users': null
     };
 
@@ -40,10 +38,12 @@ describe('entityDirectoryService init refresh', () => {
     await entityDirectoryService.init();
     expect(entityDirectoryService.getDeveloper('dev_001')).toBeNull();
 
-    store['/data/developers'] = {
-      dev_001: {
+    // Simulate user appearing in /users (the centralized model)
+    store['/users'] = {
+      'user|example!com': {
         email: 'user@example.com',
-        name: 'User Example'
+        name: 'User Example',
+        developerId: 'dev_001'
       }
     };
 

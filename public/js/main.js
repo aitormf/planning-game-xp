@@ -40,8 +40,8 @@ async function initializeServices() {
   if (servicesInitialized) return;
   servicesInitialized = true;
 
-  // Load theme from RTDB (blocking script in <head> already applied cached tokens)
-  await ThemeLoaderService.loadAndApply();
+  // Theme: cached tokens already applied by <head> script — RTDB refresh is non-blocking
+  ThemeLoaderService.loadAndApply().catch(() => {});
   ThemeManagerService.init();
   demoModeService.init();
 
@@ -50,7 +50,7 @@ async function initializeServices() {
   historyService.init();
   stateTransitionService.init();
   dataBus.init();
-  await entityDirectoryService.init({ refreshIfEmpty: true });
+  entityDirectoryService.init({ refreshIfEmpty: true }).catch(() => {});
 
   versionCheckService.init(APP_VERSION);
   if (!document.querySelector('version-update-modal')) {
