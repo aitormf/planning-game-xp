@@ -24,6 +24,7 @@ const { handleBugFixed } = require("./handlers/on-bug-fixed");
 const { handleHourlyDigest } = require("./handlers/hourly-validation-digest");
 const { handleTaskStatusValidation } = require("./handlers/on-task-status-validation");
 const { handleSyncCardViews } = require("./handlers/sync-card-views");
+const { handleSyncCardToFirestore, handleSyncProjectToFirestore } = require("./handlers/sync-rtdb-to-firestore");
 const { handlePortalBugResolved } = require("./handlers/on-portal-bug-resolved");
 const { handleTaskReopen } = require("./handlers/on-task-reopen");
 const { handleTaskDoneValidated } = require("./handlers/on-task-done-validated");
@@ -625,6 +626,48 @@ exports.syncCardViews = onValueWritten({
     event.data.before?.val() || null,
     event.data.after?.val() || null,
     { db: getDatabase(), logger }
+  );
+});
+
+// ============================================================================
+// RTDB → FIRESTORE SYNC (DAL Migration Mirror)
+// ============================================================================
+
+/**
+ * Cloud Function: syncCardToFirestore
+ * Mirrors card changes from RTDB to Firestore for gradual migration.
+ * RTDB: /cards/{projectId}/{section}/{cardId}
+ * Firestore: projects/{projectId}/{cardType}/{cardId}
+ */
+exports.syncCardToFirestore = onValueWritten({
+  ref: "/cards/{projectId}/{section}/{cardId}",
+  region: "europe-west1"
+}, async (event) => {
+  const { projectId, section, cardId } = event.params;
+  return handleSyncCardToFirestore(
+    { projectId, section, cardId },
+    event.data.before?.val() || null,
+    event.data.after?.val() || null,
+    { firestore, logger }
+  );
+});
+
+/**
+ * Cloud Function: syncProjectToFirestore
+ * Mirrors project changes from RTDB to Firestore.
+ * RTDB: /projects/{projectId}
+ * Firestore: projects/{projectId}
+ */
+exports.syncProjectToFirestore = onValueWritten({
+  ref: "/projects/{projectId}",
+  region: "europe-west1"
+}, async (event) => {
+  const { projectId } = event.params;
+  return handleSyncProjectToFirestore(
+    { projectId },
+    event.data.before?.val() || null,
+    event.data.after?.val() || null,
+    { firestore, logger }
   );
 });
 
