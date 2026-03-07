@@ -36,6 +36,8 @@ export class GlobalDataManager {
 
     // Cache de listeners para evitar duplicados
     this.eventListeners = new Set();
+    // Store handler references for proper removeEventListener cleanup
+    this._handlerRefs = new Map();
 
     GlobalDataManager.instance = this;
   }
@@ -324,7 +326,19 @@ document.dispatchEvent(new CustomEvent('provide-bugcard-data', {
     if (!this.eventListeners.has(eventName)) {
       document.addEventListener(eventName, handler);
       this.eventListeners.add(eventName);
+      this._handlerRefs.set(eventName, handler);
     }
+  }
+
+  /**
+   * Removes all registered document event listeners
+   */
+  _removeAllEventListeners() {
+    for (const [eventName, handler] of this._handlerRefs) {
+      document.removeEventListener(eventName, handler);
+    }
+    this.eventListeners.clear();
+    this._handlerRefs.clear();
   }
 
   /**
@@ -362,6 +376,7 @@ document.dispatchEvent(new CustomEvent('provide-bugcard-data', {
    * Limpia el cache y reinicia el manager
    */
   reset() {
+    this._removeAllEventListeners();
     this.isLoaded = false;
     this.loadPromise = null;
     this.complexData = {

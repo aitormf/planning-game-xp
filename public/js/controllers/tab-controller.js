@@ -3,6 +3,8 @@ export class TabController {
   constructor() {
     this.currentTab = null;
     this.tabClickHandler = this.handleTabClick.bind(this);
+    this._tabObserver = null;
+    this._ensureObserver = null;
     this.setupTabListeners();
   }
 
@@ -20,19 +22,36 @@ export class TabController {
   }
 
   setupTabButtons() {
+    // Disconnect any previous observer
+    if (this._tabObserver) {
+      this._tabObserver.disconnect();
+      this._tabObserver = null;
+    }
+
     const tabButtons = document.querySelectorAll('.tablinks');
 
     if (tabButtons.length > 0) {
-tabButtons.forEach(button => {
-// Remove any existing listeners to avoid duplicates
+      tabButtons.forEach(button => {
+        // Remove any existing listeners to avoid duplicates
         button.removeEventListener('click', this.tabClickHandler);
 
         // Add new listener
         button.addEventListener('click', this.tabClickHandler);
       });
     } else {
-// If buttons not found, try again later
-      setTimeout(() => this.setupTabButtons(), 500);
+      // Use MutationObserver to wait for .tablinks elements instead of setTimeout
+      this._tabObserver = new MutationObserver((mutations, observer) => {
+        const buttons = document.querySelectorAll('.tablinks');
+        if (buttons.length > 0) {
+          observer.disconnect();
+          this._tabObserver = null;
+          buttons.forEach(button => {
+            button.removeEventListener('click', this.tabClickHandler);
+            button.addEventListener('click', this.tabClickHandler);
+          });
+        }
+      });
+      this._tabObserver.observe(document.body, { childList: true, subtree: true });
     }
   }
 
@@ -67,12 +86,11 @@ if (section) {
     this.switchToTab(targetSection);
   }
 
-  ensureTabButtonUpdate(sectionName, attempt = 0) {
-    const maxAttempts = 10;
-    const delay = 100;
-
-    if (attempt >= maxAttempts) {
-return;
+  ensureTabButtonUpdate(sectionName) {
+    // Disconnect any previous observer
+    if (this._ensureObserver) {
+      this._ensureObserver.disconnect();
+      this._ensureObserver = null;
     }
 
     const tabButtons = document.querySelectorAll('.tablinks');
@@ -80,10 +98,18 @@ return;
 
     if (tabButtons.length > 0 && targetButton) {
       this.updateTabButtonStates(sectionName);
-} else {
-      setTimeout(() => {
-        this.ensureTabButtonUpdate(sectionName, attempt + 1);
-      }, delay);
+    } else {
+      // Use MutationObserver instead of setTimeout polling
+      this._ensureObserver = new MutationObserver((mutations, observer) => {
+        const buttons = document.querySelectorAll('.tablinks');
+        const target = document.querySelector(`[data-section="${sectionName}"]`);
+        if (buttons.length > 0 && target) {
+          observer.disconnect();
+          this._ensureObserver = null;
+          this.updateTabButtonStates(sectionName);
+        }
+      });
+      this._ensureObserver.observe(document.body, { childList: true, subtree: true });
     }
   }
 
@@ -188,5 +214,19 @@ tabButtons.forEach(button => {
 
   getCurrentTab() {
     return this.currentTab;
+  }
+
+  /**
+   * Cleanup observers and listeners for safe teardown
+   */
+  cleanup() {
+    if (this._tabObserver) {
+      this._tabObserver.disconnect();
+      this._tabObserver = null;
+    }
+    if (this._ensureObserver) {
+      this._ensureObserver.disconnect();
+      this._ensureObserver = null;
+    }
   }
 }
