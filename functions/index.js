@@ -25,6 +25,7 @@ const { handleHourlyDigest } = require("./handlers/hourly-validation-digest");
 const { handleTaskStatusValidation } = require("./handlers/on-task-status-validation");
 const { handleSyncCardViews } = require("./handlers/sync-card-views");
 const { handlePortalBugResolved } = require("./handlers/on-portal-bug-resolved");
+const { handleTaskReopen } = require("./handlers/on-task-reopen");
 const { handleTaskDoneValidated } = require("./handlers/on-task-done-validated");
 
 // Shared utilities — used by handlers, imported here only for re-export if needed
@@ -563,6 +564,24 @@ exports.onTaskDoneValidated = onValueUpdated({
 }, async (event) => {
   const { projectId, section, cardId } = event.params;
   return handleTaskDoneValidated(
+    { projectId, section, cardId },
+    event.data.before.val(),
+    event.data.after.val(),
+    { db: getDatabase(), logger }
+  );
+});
+
+/**
+ * Cloud Function: onTaskReopen
+ * Manages time accumulation when tasks are reopened.
+ * Archives work periods and calculates total effective hours.
+ */
+exports.onTaskReopen = onValueUpdated({
+  ref: "/cards/{projectId}/{section}/{cardId}",
+  region: "europe-west1"
+}, async (event) => {
+  const { projectId, section, cardId } = event.params;
+  return handleTaskReopen(
     { projectId, section, cardId },
     event.data.before.val(),
     event.data.after.val(),
