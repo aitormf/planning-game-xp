@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Show default tab immediately after partial HTML injection
+
+## [1.164.9] - 2026-03-07
+
+### Fixed
+
 - Resolve blank screen on cold page load
 
 ## [1.164.8] - 2026-03-07
