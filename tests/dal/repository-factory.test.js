@@ -7,8 +7,11 @@ import {
   createProjectRepository,
   createCounterService,
   createRepositories,
+  createDualWriteRepositories,
   clearRegisteredBackends
 } from '../../shared/dal/repository-factory.js';
+import { DualWriteCardRepository } from '../../shared/dal/dual-write-card-repository.js';
+import { DualWriteProjectRepository } from '../../shared/dal/dual-write-project-repository.js';
 import { CardRepository } from '../../shared/dal/card-repository.js';
 import { ProjectRepository } from '../../shared/dal/project-repository.js';
 import { CounterService } from '../../shared/dal/counter-service.js';
@@ -89,6 +92,34 @@ describe('repository-factory', () => {
       // counters not registered
 
       expect(() => createRepositories('stub', {}, 'stub')).toThrow('No CounterService registered');
+    });
+  });
+
+  describe('createDualWriteRepositories', () => {
+    it('should create dual-write wrappers', () => {
+      registerCardBackend('rtdb', StubCardRepo);
+      registerProjectBackend('rtdb', StubProjectRepo);
+      registerCardBackend('firestore', StubCardRepo);
+      registerProjectBackend('firestore', StubProjectRepo);
+      registerCounterBackend('firestore', StubCounterService);
+
+      const repos = createDualWriteRepositories(
+        { backend: 'rtdb', options: {} },
+        { backend: 'firestore', options: {} }
+      );
+      expect(repos.cards).toBeInstanceOf(DualWriteCardRepository);
+      expect(repos.projects).toBeInstanceOf(DualWriteProjectRepository);
+      expect(repos.counters).toBeInstanceOf(CounterService);
+    });
+
+    it('should throw if primary backend is not registered', () => {
+      registerCardBackend('firestore', StubCardRepo);
+      registerProjectBackend('firestore', StubProjectRepo);
+
+      expect(() => createDualWriteRepositories(
+        { backend: 'rtdb', options: {} },
+        { backend: 'firestore', options: {} }
+      )).toThrow('No CardRepository registered for backend "rtdb"');
     });
   });
 

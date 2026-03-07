@@ -20,8 +20,13 @@ export {
   createProjectRepository,
   createCounterService,
   createRepositories,
+  createDualWriteRepositories,
   clearRegisteredBackends
 } from './repository-factory.js';
+
+// Dual-write wrappers
+export { DualWriteCardRepository } from './dual-write-card-repository.js';
+export { DualWriteProjectRepository } from './dual-write-project-repository.js';
 
 // RTDB backend
 export {
