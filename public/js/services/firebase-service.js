@@ -1979,32 +1979,33 @@ return {};
    * @param {string} userEmail - Current user email (optional)
    */
   async loadProjects(userEmail = null) {
-    const projectsRef = ref(database, '/projects');
-    const projectsSnap = await get(projectsRef);
-    const allProjects = projectsSnap.exists() ? projectsSnap.val() : {};
-
-    // If no email, isAppAdmin, or superAdmin email, return all projects
     const isSuperAdmin = superAdminEmail && normalizeEmail(userEmail) === normalizeEmail(superAdminEmail);
+
+    // Admins need all projects
     if (!userEmail || window.isAppAdmin || isSuperAdmin) {
-      window.projects = allProjects;
+      const projectsSnap = await get(ref(database, '/projects'));
+      window.projects = projectsSnap.exists() ? projectsSnap.val() : {};
       return;
     }
 
-    // Get user's assigned projects
+    // Get user project list first — avoids downloading all projects for non-admins
     const userProjects = await this.getUserProjects(userEmail);
 
     // null = access to all (value "All" in Firebase)
     if (userProjects === null) {
-      window.projects = allProjects;
+      const projectsSnap = await get(ref(database, '/projects'));
+      window.projects = projectsSnap.exists() ? projectsSnap.val() : {};
       return;
     }
 
-    // Filter projects by user assignment
-    window.projects = Object.fromEntries(
-      Object.entries(allProjects).filter(([projectId]) =>
-        userProjects.includes(projectId)
-      )
+    // Load only the user's specific projects in parallel
+    const entries = await Promise.all(
+      userProjects.map(async (projectId) => {
+        const snap = await get(ref(database, `/projects/${projectId}`));
+        return snap.exists() ? [projectId, snap.val()] : null;
+      })
     );
+    window.projects = Object.fromEntries(entries.filter(Boolean));
   },
 
   /**
@@ -2012,30 +2013,20 @@ return {};
    * OPTIMIZADO: Carga en paralelo para mejor rendimiento
    */
   async loadGlobalData() {
-    // OPTIMIZACIÓN: Cargar datos independientes en paralelo
-    const [directoryResult, prioResult] = await Promise.all([
-      // Users directory (unificado)
-      userDirectoryService.load().catch(e => {
-return {};
-      }),
-      // Bug Priority List
-      get(ref(database, '/data/bugpriorityList')).catch(e => {
-return null;
-      })
-    ]);
-
-    // Asignar resultados a variables globales
-    window.usersDirectory = directoryResult || {};
     window.globalDeveloperList = null;
     window.globalStakeholders = null;
+    window.globalRelEmailUser = {};
 
+    // Only bug priority list is needed on the critical path
+    const prioResult = await get(ref(database, '/data/bugpriorityList')).catch(() => null);
     const bugPriorityObj = prioResult?.exists() ? prioResult.val() : {};
     window.globalBugPriorityList = Object.entries(bugPriorityObj)
       .sort((a, b) => a[1] - b[1])
       .map(entry => entry[0]);
 
-    // Email-User relation (depende de usersDirectory)
-    try {
+    // User directory loaded in background — populates globalRelEmailUser when ready
+    userDirectoryService.load().then(directoryResult => {
+      window.usersDirectory = directoryResult || {};
       if (window.usersDirectory && Object.keys(window.usersDirectory).length > 0) {
         const relDecoded = {};
         Object.values(window.usersDirectory).forEach(entry => {
@@ -2051,31 +2042,15 @@ return null;
                   const decodedAlias = decodeEmailFromFirebase(alias);
                   relDecoded[decodedAlias.toLowerCase()] = entry.name || entry.email;
                 } catch (err) {
-                  // Ignorar errores de decodificación
+                  // Ignore decoding errors
                 }
               }
             });
           }
         });
         window.globalRelEmailUser = relDecoded;
-      } else {
-        const relRef = ref(database, '/data/relEmailUser');
-        const relSnap = await get(relRef);
-        if (relSnap.exists()) {
-          const relRaw = relSnap.val();
-          const relDecoded = {};
-          Object.entries(relRaw).forEach(([key, value]) => {
-            const email = decodeEmailFromFirebase(key);
-            relDecoded[email] = value;
-          });
-          window.globalRelEmailUser = relDecoded;
-        } else {
-          window.globalRelEmailUser = {};
-        }
       }
-    } catch (e) {
-      window.globalRelEmailUser = {};
-}
+    }).catch(() => {});
   },
 
   /**

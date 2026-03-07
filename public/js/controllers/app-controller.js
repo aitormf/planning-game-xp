@@ -1,28 +1,53 @@
-// Cargar todos los Web Components primero
-import '../wc/TaskCard.js';
-import '../wc/BugCard.js';
-import '../wc/SprintCard.js';
-import '../wc/EpicCard.js';
-import '../wc/ProposalCard.js';
-import '../wc/QACard.js';
+// Shared WCs loaded upfront (used on every page)
 import '../wc/MenuNav.js';
-import '../wc/SlideNotification.js';
 import '../wc/PushNotification.js';
-import '../wc/GanttChart.js';
-import '../wc/SprintPointsChart.js';
-import '../wc/FirebaseStorageUploader.js';
-import '../wc/ProjectSelector.js';
 import '../wc/AppManager.js';
 
-// Cargar componentes de filtros
-import '../wc/TaskFilters.js'; // El nuevo componente
-import '@manufosela/multi-select'; // Componente npm
-
-// Cargar librerías comunes (TUS ARCHIVOS EXISTENTES)
 import '../core/app-initializer.js';
-// import '/js/lib/eventHandlers.js'; // REEMPLAZADO POR SISTEMA UNIFICADO
 
-// Importar servicios y controladores (NUEVOS DE LA REFACTORIZACIÓN)
+// Lazy WC loader — imports only what the active section needs
+const _wcLoaded = {};
+export function loadSectionWCs(section) {
+  if (_wcLoaded[section]) return _wcLoaded[section];
+  switch (section) {
+    case 'tasks':
+      _wcLoaded[section] = Promise.all([
+        import('../wc/TaskCard.js'),
+        import('../wc/TaskFilters.js'),
+        import('@manufosela/multi-select'),
+      ]);
+      break;
+    case 'bugs':
+      _wcLoaded[section] = import('../wc/BugCard.js');
+      break;
+    case 'sprints':
+      _wcLoaded[section] = Promise.all([
+        import('../wc/SprintCard.js'),
+        import('../wc/SprintPointsChart.js'),
+      ]);
+      break;
+    case 'epics':
+      _wcLoaded[section] = Promise.all([
+        import('../wc/EpicCard.js'),
+        import('../wc/GanttChart.js'),
+      ]);
+      break;
+    case 'proposals':
+      _wcLoaded[section] = import('../wc/ProposalCard.js');
+      break;
+    case 'qa':
+      _wcLoaded[section] = import('../wc/QACard.js');
+      break;
+    default:
+      _wcLoaded[section] = Promise.resolve();
+  }
+  if (!_wcLoaded._shared) {
+    _wcLoaded._shared = import('../wc/FirebaseStorageUploader.js');
+  }
+  return _wcLoaded[section];
+}
+
+// Importar servicios y controladores
 import { FirebaseDataService } from '../services/firebase-service.js';
 import { CardService } from '../services/card-service.js';
 import { CardRenderer } from '../renderers/card-renderer.js';
@@ -96,16 +121,13 @@ export class AppController {
     this.projectId = URLUtils.getProjectIdFromUrl();
     this.section = URLUtils.getSectionFromUrl();
 
-    await this.loadInitialData();
-    await this.initializeProjectSelector();
-    this.setupAppAccessListener();
+    // Setup events and show tab BEFORE waiting for data
     this.setupEventListeners();
     this.tabController.openInitialTab();
+    this._restoreViewStateFromUrl();
+    this._setupPopStateListener();
 
-    // Exponer el servicio de reactividad globalmente para que las cards puedan acceder
     window.cardRealtimeService = this.cardRealtimeService;
-
-    // Exponer función de sincronización de contadores para uso manual desde consola
     window.syncProjectCounters = async (projectId, options) => {
       const pid = projectId || this.projectId;
       if (!pid) {
@@ -119,14 +141,13 @@ export class AppController {
       return result;
     };
 
-    // Initialize year-based permissions (important for page load with past year selected)
-    await this._initializeYearPermissions();
+    // Load data after UI is visible
+    await this.loadInitialData();
 
-    // Restore view state from URL
-    this._restoreViewStateFromUrl();
-
-    // Listen for browser back/forward navigation
-    this._setupPopStateListener();
+    // Non-blocking post-load tasks
+    this.initializeProjectSelector().catch(() => {});
+    this.setupAppAccessListener();
+    this._initializeYearPermissions().catch(() => {});
   }
 
   /**
@@ -248,44 +269,33 @@ export class AppController {
     try {
       const userEmail = document.body.dataset.userEmail;
 
-      // Register user if new (creates entry with default projects)
+      // Register user in background (fire-and-forget)
       if (userEmail) {
-        await this.firebaseService.registerUserLogin(userEmail);
+        this.firebaseService.registerUserLogin(userEmail).catch(() => {});
       }
 
-      // OPTIMIZACIÓN: Cargar datos globales y proyectos en paralelo
-      // Projects are filtered by user assignment
+      // Load global data and projects in parallel
       await Promise.all([
         this.firebaseService.loadGlobalData(),
         this.firebaseService.loadProjects(userEmail)
       ]);
 
-      // Initialize GlobalDataManager (necesita projects cargados)
+      // Initialize GlobalDataManager (needs projects loaded)
       this.globalDataManager.init(this.firebaseService, this.projectId);
 
-      // OPTIMIZACIÓN: Cargar datos del manager y puntos de sprint en paralelo
+      // Load GDM data; sprint list and points are non-blocking
       const [globalData] = await Promise.all([
         this.globalDataManager.loadAll(),
-        updateGlobalSprintList(this.projectId).catch(err => {
-}),
-        FirebaseService.updateSprintPoints({ projectId: this.projectId }).catch(err => {
-})
+        updateGlobalSprintList(this.projectId).catch(() => {}),
+        FirebaseService.updateSprintPoints({ projectId: this.projectId }).catch(() => {})
       ]);
 
-      // Sincronizar contadores en segundo plano (no bloquea la carga)
-      // Esto previene cardIds duplicados cuando los contadores se desfasan
-      // Skip in demo mode: Firestore is not enabled
+      // Sync counters in background
       if (this.projectId && !demoModeService.isDemo()) {
-        FirebaseService.syncProjectCounters(this.projectId).then(result => {
-          if (result.synced > 0) {
-            console.log(`[AppController] Contadores sincronizados para ${this.projectId}:`, result);
-          }
-        }).catch(err => {
-          console.warn('[AppController] Error sincronizando contadores:', err);
-        });
+        FirebaseService.syncProjectCounters(this.projectId).catch(() => {});
       }
 
-      // Build config object with simplified structure
+      // Build config object
       this.config = {
         projectId: this.projectId,
         userEmail: document.body.dataset.userEmail,
@@ -298,7 +308,6 @@ export class AppController {
           proposals: 'proposal-card',
           qa: 'qa-card'
         },
-        // Include only essential data in config (GlobalDataManager handles the rest)
         statusTasksList: globalData.statusLists['task-card'] || {},
         statusBugList: globalData.statusLists['bug-card'] || {},
         developerList: globalData.developerList || [],
@@ -310,9 +319,9 @@ export class AppController {
 
       this.reloadActiveSection();
 
-      // OPTIMIZACIÓN: Estas no bloquean la carga de cards
+      // Non-blocking post-load
       this.updateAppTabVisibility();
-      await this.setUserViewMode();
+      this.setUserViewMode().catch(() => {});
     } catch (error) {
       console.error('[AppController] loadInitialData failed:', error);
       this.showNotification('Error loading application data', 'error');
@@ -617,10 +626,37 @@ return filters;
     });
   }
 
+  /**
+   * Ensure card web component elements exist in the DOM for a section.
+   * Called on-demand when switching from table to list/kanban view.
+   */
+  async _ensureCardElements(section) {
+    const container = document.querySelector(`#${section}CardsList`);
+    if (container && container.children.length > 0) return;
+    const cards = await this.firebaseService.getCards(this.projectId, section);
+    const filtered = this._filterCardsByYear(cards, section);
+    const updatedConfig = { ...this.config, section };
+    if (section === 'qa') {
+      this.cardRenderer.renderCollapsedQACards(filtered, section, updatedConfig);
+    } else {
+      this.cardRenderer.renderCollapsedCards(filtered, section, updatedConfig);
+    }
+  }
+
+  /**
+   * Check if the active view for a section is 'table' (reads URL state).
+   * Table views have their own Firebase subscription and don't need card elements.
+   */
+  _isTableViewActive(section) {
+    const urlState = URLStateManager.getState();
+    const view = urlState.view || 'table';
+    return (section === 'tasks' || section === 'bugs' || section === 'proposals') && view === 'table';
+  }
+
   async reloadCards(section, preserveFilters = false) {
     try {
-if (this._shouldSkipReload(section, preserveFilters)) {
-this.applyInitialView(section);
+      if (this._shouldSkipReload(section, preserveFilters)) {
+        this.applyInitialView(section);
         return;
       }
 
@@ -634,11 +670,23 @@ this.applyInitialView(section);
         return;
       }
 
+      // Table view has its own Firebase subscription — skip getCards + card element rendering
+      if (this._isTableViewActive(section)) {
+        loadSectionWCs(section); // fire-and-forget preload for when user switches view
+        this.applyInitialView(section);
+        this.sectionsLoaded[section] = true;
+        this.sectionsNeedReload[section] = false;
+        return;
+      }
+
       const currentFilters = this._getPreservedFilters(section, preserveFilters);
+
+      // Load section-specific WCs before rendering cards
+      await loadSectionWCs(section);
 
       const dataSection = section;
       let cards = await this.firebaseService.getCards(this.projectId, dataSection);
-cards = this._filterCardsByYear(cards, section);
+      cards = this._filterCardsByYear(cards, section);
 
       const updatedConfig = { ...this.config, section };
 
@@ -654,7 +702,7 @@ cards = this._filterCardsByYear(cards, section);
       this.sectionsNeedReload[section] = false;
 
     } catch (error) {
-this.showNotification(`Error loading ${section}: ${error.message}`, 'error');
+      this.showNotification(`Error loading ${section}: ${error.message}`, 'error');
     }
   }
 
@@ -679,33 +727,30 @@ this.showNotification(`Error loading ${section}: ${error.message}`, 'error');
     }
   }
 
-  toggleTaskView(view) {
+  async toggleTaskView(view) {
+    if (view !== 'table') {
+      await loadSectionWCs('tasks');
+      await this._ensureCardElements('tasks');
+    }
     this.viewFactory.switchView(view, 'tasks', this.config);
-
-    // Update URL with new view (use pushState for navigation history)
     URLStateManager.updateState({ view });
-
-    // Setup filters when switching to list view
     if (view === 'list') {
-      // Use requestAnimationFrame to wait for next render frame
       requestAnimationFrame(() => this.setupTaskFilters());
     } else {
-      // Reset filters when switching away from list view
       this.resetTaskFilters();
     }
   }
 
-  toggleBugsView(view) {
+  async toggleBugsView(view) {
+    if (view !== 'table') {
+      await loadSectionWCs('bugs');
+      await this._ensureCardElements('bugs');
+    }
     this.viewFactory.switchView(view, 'bugs', this.config);
-
-    // Update URL with new view
     URLStateManager.updateState({ view });
-
-    // Setup filters when switching to list view
     if (view === 'list') {
       requestAnimationFrame(() => this.setupBugFilters());
     } else {
-      // Reset filters when switching away from list view
       this.resetBugFilters();
     }
   }
@@ -717,10 +762,12 @@ this.showNotification(`Error loading ${section}: ${error.message}`, 'error');
     URLStateManager.updateState({ view });
   }
 
-  toggleProposalsView(view) {
+  async toggleProposalsView(view) {
+    if (view !== 'table') {
+      await loadSectionWCs('proposals');
+      await this._ensureCardElements('proposals');
+    }
     this.viewFactory.switchView(view, 'proposals', this.config);
-
-    // Update URL with new view
     URLStateManager.updateState({ view });
   }
 

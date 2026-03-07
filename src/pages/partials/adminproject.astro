@@ -88,7 +88,16 @@
       <div id="tasksFilters" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;"></div>
     </section>
     <section class="cards-container list-view" id="tasksCardsList" style="display:none"></section>
-    <section class="table-view" id="tasksTableView"></section>
+    <section class="table-view" id="tasksTableView">
+      <div class="table-skeleton" data-placeholder>
+        <div class="skeleton-header"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:90px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:90px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:90px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:90px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:90px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:90px"></div></div>
+      </div>
+    </section>
     <section class="kanban-view" id="tasksKanbanView" style="display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; left: -9999px !important;">
       <div class="kanban-columns" id="kanbanColumns"></div>
     </section>
@@ -129,7 +138,15 @@
       <div id="bugsFilters" style="width: 100%; margin-bottom: 1rem;"></div>
       <div class="cards-list"></div>
     </div>
-    <section class="table-view" id="bugsTableView"></section>
+    <section class="table-view" id="bugsTableView">
+      <div class="table-skeleton" data-placeholder>
+        <div class="skeleton-header"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:100px"></div></div>
+      </div>
+    </section>
     <section class="kanban-view" id="bugsStatusKanbanView" style="display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; left: -9999px !important;">
       <div class="kanban-columns" id="bugsStatusKanbanColumns"></div>
     </section>
@@ -150,7 +167,15 @@
       </div>
     </section>
     <section class="cards-container" id="proposalsCardsList" style="display:none"></section>
-    <section class="table-view" id="proposalsTableView"></section>
+    <section class="table-view" id="proposalsTableView">
+      <div class="table-skeleton" data-placeholder>
+        <div class="skeleton-header"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-cell" style="width:60px"></div><div class="skeleton-cell" style="width:40px"></div><div class="skeleton-cell" style="width:200px"></div><div class="skeleton-cell" style="width:100px"></div><div class="skeleton-cell" style="width:80px"></div><div class="skeleton-cell" style="width:120px"></div><div class="skeleton-cell" style="width:120px"></div></div>
+      </div>
+    </section>
   </div>
   <div id="qaTabContent" class="tabcontent">
     <section class="subheader">
@@ -182,6 +207,39 @@
   </div>
 
 <style>
+  /* Skeleton loader for table views — visible immediately on page load */
+  @keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .table-skeleton {
+    border: 1px solid var(--border-default, #dee2e6);
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 1rem;
+  }
+  .skeleton-header, .skeleton-row {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+  .skeleton-header {
+    border-bottom: 1px solid var(--border-default, #dee2e6);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+  .skeleton-cell {
+    height: 18px;
+    background: linear-gradient(90deg, var(--border-default, #e0e0e0) 25%, var(--bg-secondary, #f0f0f0) 50%, var(--border-default, #e0e0e0) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .skeleton-header .skeleton-cell {
+    height: 20px;
+  }
+
   .no-project-message {
     display: flex;
     justify-content: center;
