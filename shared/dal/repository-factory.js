@@ -5,8 +5,14 @@
  *   import { createRepositories } from 'shared/dal/repository-factory.js';
  *   const { cards, projects, counters } = createRepositories('rtdb', { db });
  *
+ * Dual-write mode:
+ *   const repos = createDualWriteRepositories(primaryOpts, secondaryOpts);
+ *
  * @module shared/dal/repository-factory
  */
+
+import { DualWriteCardRepository } from './dual-write-card-repository.js';
+import { DualWriteProjectRepository } from './dual-write-project-repository.js';
 
 /** @type {Object<string, Function>} Registry of backend constructors for CardRepository */
 const _cardBackends = {};
@@ -107,6 +113,30 @@ export function createRepositories(backend, options = {}, counterBackend = 'fire
     cards: createCardRepository(backend, options),
     projects: createProjectRepository(backend, options),
     counters: createCounterService(counterBackend, options)
+  };
+}
+
+/**
+ * Create dual-write repositories that write to both primary and secondary backends.
+ * Reads come from the primary; secondary receives shadow writes.
+ *
+ * @param {Object} primaryConfig - { backend: 'rtdb', options: {...} }
+ * @param {Object} secondaryConfig - { backend: 'firestore', options: {...} }
+ * @param {Object} [dualOptions] - Options passed to DualWrite constructors (e.g. onShadowError)
+ * @param {string} [counterBackend='firestore'] - Backend for counters
+ * @returns {{cards: DualWriteCardRepository, projects: DualWriteProjectRepository, counters: import('./counter-service.js').CounterService}}
+ */
+export function createDualWriteRepositories(primaryConfig, secondaryConfig, dualOptions = {}, counterBackend = 'firestore') {
+  const primaryCards = createCardRepository(primaryConfig.backend, primaryConfig.options);
+  const secondaryCards = createCardRepository(secondaryConfig.backend, secondaryConfig.options);
+
+  const primaryProjects = createProjectRepository(primaryConfig.backend, primaryConfig.options);
+  const secondaryProjects = createProjectRepository(secondaryConfig.backend, secondaryConfig.options);
+
+  return {
+    cards: new DualWriteCardRepository(primaryCards, secondaryCards, dualOptions),
+    projects: new DualWriteProjectRepository(primaryProjects, secondaryProjects, dualOptions),
+    counters: createCounterService(counterBackend, primaryConfig.options)
   };
 }
 
