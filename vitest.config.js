@@ -35,7 +35,8 @@ export default defineConfig({
       { find: '@', replacement: '/public/js' },
       { find: '@mcp', replacement: path.join(process.env.HOME, 'mcp-servers/planning-game') },
       { find: /^\/firebase-config\.js$/, replacement: path.join(rootDir, 'tests/mocks/firebase-config.js') },
-      { find: 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+esm', replacement: path.join(rootDir, 'tests/mocks/lit.js') }
+      { find: 'https://cdn.jsdelivr.net/npm/lit@3.1.0/+esm', replacement: path.join(rootDir, 'tests/mocks/lit.js') },
+      { find: 'https://cdn.jsdelivr.net/npm/lit@3.0.2/+esm', replacement: path.join(rootDir, 'tests/mocks/lit.js') }
     ]
   }
 });

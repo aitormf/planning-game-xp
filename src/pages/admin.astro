@@ -12,6 +12,7 @@ import Layout from '../layouts/Layout.astro';
       <button id="firebaseTab" data-section="firebase" class="admin-tablink active">🔥 Firebase</button>
       <button id="reportsTab" data-section="reports" class="admin-tablink">📊 Informes</button>
       <button id="isoTab" data-section="iso" class="admin-tablink">📋 Informes ISO</button>
+      <button id="hoursTab" data-section="hours" class="admin-tablink">⏱ Informe de Horas</button>
       <button id="configTab" data-section="config" class="admin-tablink">⚙️ Configuración</button>
       <button id="usersTab" data-section="users" class="admin-tablink">👥 Usuarios</button>
       <button id="trashTab" data-section="trash" class="admin-tablink">🗑️ Papelera</button>
@@ -172,6 +173,15 @@ import Layout from '../layouts/Layout.astro';
       </div>
 
       <div id="isoResults" style="display: none;"></div>
+    </div>
+
+    <!-- Hours Report Section -->
+    <div id="hoursTabContent" class="admin-tabcontent">
+      <div class="admin-section">
+        <h2>Informe Mensual de Horas</h2>
+        <p class="section-description">Desglose semanal de horas por developer, clasificadas en desarrollo y mantenimiento.</p>
+        <hours-report-tab></hours-report-tab>
+      </div>
     </div>
 
     <!-- Config Section -->
@@ -1450,6 +1460,7 @@ import Layout from '../layouts/Layout.astro';
   import { app, superAdminEmail } from '/firebase-config.js';
   import '/js/wc/ThemeEditor.js';
   import '/js/wc/UserAdminPanel.js';
+  import '/js/wc/HoursReportTab.js';
   import { holidays, HOURS_PER_WORKDAY } from '/js/config/holidays-config.js';
   import { demoModeService } from '/js/services/demo-mode-service.js';
 
