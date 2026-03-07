@@ -22,3 +22,15 @@ export {
   createRepositories,
   clearRegisteredBackends
 } from './repository-factory.js';
+
+// RTDB backend
+export {
+  RtdbBaseRepository,
+  createAdminAdapter,
+  createClientAdapter,
+  RtdbCardRepository,
+  RtdbProjectRepository,
+  RtdbCounterService,
+  createAdminCounterAdapter,
+  createClientCounterAdapter
+} from './rtdb/index.js';
