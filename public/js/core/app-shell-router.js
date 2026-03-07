@@ -216,6 +216,9 @@ export class AppShellRouter {
       this.subnavContainer.innerHTML = subnavHtml;
       this.mainContainer.innerHTML = mainHtml;
 
+      // Show initial tab immediately to prevent blank screen while scripts load
+      this._showDefaultTabContent();
+
       this._clearShellScripts();
       await this._executeScripts(scripts);
       await new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -260,6 +263,15 @@ export class AppShellRouter {
       const clone = node.cloneNode(true);
       clone.setAttribute('data-shell-style', '');
       document.head.append(clone);
+    }
+  }
+
+  _showDefaultTabContent() {
+    const hash = window.location.hash.replace('#', '');
+    const section = hash || 'tasks';
+    const tabContent = this.mainContainer.querySelector(`#${section}TabContent`);
+    if (tabContent) {
+      tabContent.style.display = 'block';
     }
   }
 
