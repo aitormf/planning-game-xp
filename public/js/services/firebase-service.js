@@ -1979,32 +1979,33 @@ return {};
    * @param {string} userEmail - Current user email (optional)
    */
   async loadProjects(userEmail = null) {
-    const projectsRef = ref(database, '/projects');
-    const projectsSnap = await get(projectsRef);
-    const allProjects = projectsSnap.exists() ? projectsSnap.val() : {};
-
-    // If no email, isAppAdmin, or superAdmin email, return all projects
     const isSuperAdmin = superAdminEmail && normalizeEmail(userEmail) === normalizeEmail(superAdminEmail);
+
+    // Admins need all projects
     if (!userEmail || window.isAppAdmin || isSuperAdmin) {
-      window.projects = allProjects;
+      const projectsSnap = await get(ref(database, '/projects'));
+      window.projects = projectsSnap.exists() ? projectsSnap.val() : {};
       return;
     }
 
-    // Get user's assigned projects
+    // Get user project list first — avoids downloading all projects for non-admins
     const userProjects = await this.getUserProjects(userEmail);
 
     // null = access to all (value "All" in Firebase)
     if (userProjects === null) {
-      window.projects = allProjects;
+      const projectsSnap = await get(ref(database, '/projects'));
+      window.projects = projectsSnap.exists() ? projectsSnap.val() : {};
       return;
     }
 
-    // Filter projects by user assignment
-    window.projects = Object.fromEntries(
-      Object.entries(allProjects).filter(([projectId]) =>
-        userProjects.includes(projectId)
-      )
+    // Load only the user's specific projects in parallel
+    const entries = await Promise.all(
+      userProjects.map(async (projectId) => {
+        const snap = await get(ref(database, `/projects/${projectId}`));
+        return snap.exists() ? [projectId, snap.val()] : null;
+      })
     );
+    window.projects = Object.fromEntries(entries.filter(Boolean));
   },
 
   /**

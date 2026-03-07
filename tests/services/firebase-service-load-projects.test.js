@@ -119,10 +119,11 @@ describe('FirebaseService.loadProjects', () => {
   });
 
   it('should return filtered projects for regular user with specific assignments', async () => {
-    // First call: get all projects
-    mockGet.mockResolvedValueOnce({ exists: () => true, val: () => allProjects });
-    // Second call: get user's project assignments
+    // First call: getUserProjects (returns user's project list)
     mockGet.mockResolvedValueOnce({ exists: () => true, val: () => 'project-a,project-c' });
+    // Next calls: individual project loads
+    mockGet.mockResolvedValueOnce({ exists: () => true, val: () => allProjects['project-a'] });
+    mockGet.mockResolvedValueOnce({ exists: () => true, val: () => allProjects['project-c'] });
 
     await FirebaseService.loadProjects('regular@example.com');
 
@@ -133,8 +134,10 @@ describe('FirebaseService.loadProjects', () => {
   });
 
   it('should return all projects for regular user with "All" assignment', async () => {
-    mockGet.mockResolvedValueOnce({ exists: () => true, val: () => allProjects });
+    // First call: getUserProjects (returns "All")
     mockGet.mockResolvedValueOnce({ exists: () => true, val: () => 'All' });
+    // Second call: load all projects
+    mockGet.mockResolvedValueOnce({ exists: () => true, val: () => allProjects });
 
     await FirebaseService.loadProjects('regular@example.com');
 
