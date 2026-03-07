@@ -444,6 +444,15 @@ this.canEditPermission = permissions.canEdit || false;
    * @param {string} message - Mensaje a mostrar
    * @param {string} type - Tipo de notificación ('success', 'error', 'info')
    */
+  /**
+   * Validates that endDate is not before startDate
+   * @returns {boolean} true if dates are valid
+   */
+  _validateDates() {
+    if (!this.startDate || !this.endDate) return true;
+    return new Date(this.endDate) >= new Date(this.startDate);
+  }
+
   _showNotification(message, type = 'info') {
     const notification = document.createElement('slide-notification');
     notification.message = message;
@@ -593,6 +602,13 @@ this.canEditPermission = permissions.canEdit || false;
         isSaving: this.isSaving
       });
       this._showNotification('No se puede guardar: datos inválidos o sin permisos', 'error');
+      this._hideSavingOverlay();
+      return;
+    }
+
+    // Validate endDate >= startDate
+    if (!this._validateDates()) {
+      this._showNotification('La fecha de fin no puede ser anterior a la fecha de inicio', 'error');
       this._hideSavingOverlay();
       return;
     }
