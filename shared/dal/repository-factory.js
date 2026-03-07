@@ -13,6 +13,8 @@
 
 import { DualWriteCardRepository } from './dual-write-card-repository.js';
 import { DualWriteProjectRepository } from './dual-write-project-repository.js';
+import { ReadSwitchCardRepository } from './read-switch-card-repository.js';
+import { ReadSwitchProjectRepository } from './read-switch-project-repository.js';
 
 /** @type {Object<string, Function>} Registry of backend constructors for CardRepository */
 const _cardBackends = {};
@@ -137,6 +139,34 @@ export function createDualWriteRepositories(primaryConfig, secondaryConfig, dual
     cards: new DualWriteCardRepository(primaryCards, secondaryCards, dualOptions),
     projects: new DualWriteProjectRepository(primaryProjects, secondaryProjects, dualOptions),
     counters: createCounterService(counterBackend, primaryConfig.options)
+  };
+}
+
+/**
+ * Create read-switch repositories: reads from Firestore, writes to both, optional RTDB fallback.
+ *
+ * This is the final migration mode: Firestore is the primary read source.
+ * Set migrationFallback=true only during active migration to catch unsynced data.
+ *
+ * @param {Object} rtdbConfig - { backend: 'rtdb', options: {...} }
+ * @param {Object} firestoreConfig - { backend: 'firestore', options: {...} }
+ * @param {Object} [switchOptions] - { migrationFallback, onFallback, onShadowError }
+ * @param {string} [counterBackend='firestore']
+ * @returns {{cards: ReadSwitchCardRepository, projects: ReadSwitchProjectRepository, counters: import('./counter-service.js').CounterService}}
+ */
+export function createReadSwitchRepositories(rtdbConfig, firestoreConfig, switchOptions = {}, counterBackend = 'firestore') {
+  const rtdbCards = createCardRepository(rtdbConfig.backend, rtdbConfig.options);
+  const firestoreCards = createCardRepository(firestoreConfig.backend, firestoreConfig.options);
+  const dualCards = new DualWriteCardRepository(rtdbCards, firestoreCards, switchOptions);
+
+  const rtdbProjects = createProjectRepository(rtdbConfig.backend, rtdbConfig.options);
+  const firestoreProjects = createProjectRepository(firestoreConfig.backend, firestoreConfig.options);
+  const dualProjects = new DualWriteProjectRepository(rtdbProjects, firestoreProjects, switchOptions);
+
+  return {
+    cards: new ReadSwitchCardRepository(firestoreCards, rtdbCards, dualCards, switchOptions),
+    projects: new ReadSwitchProjectRepository(firestoreProjects, rtdbProjects, dualProjects, switchOptions),
+    counters: createCounterService(counterBackend, firestoreConfig.options)
   };
 }
 
