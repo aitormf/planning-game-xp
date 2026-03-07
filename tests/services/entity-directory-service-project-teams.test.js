@@ -1095,3 +1095,200 @@ describe('entityDirectoryService - Project Teams (integration scenarios)', () =>
     expect(ids).toEqual(['dev_001']);
   });
 });
+
+describe('entityDirectoryService - Project-level fallback (when /users/ has no project assignments)', () => {
+  beforeEach(() => {
+    resetService();
+  });
+
+  describe('getProjectDeveloperIds - fallback to /projects/{projectId}/developers', () => {
+    it('should read from /projects/{projectId}/developers when /users/ returns empty developer list', async () => {
+      // Users exist but none have projects sub-structure for this project
+      const usersData = buildUsersData([
+        { email: 'alice@example.com', name: 'Alice', developerId: 'dev_001' },
+        { email: 'bob@example.com', name: 'Bob', developerId: 'dev_002' }
+      ]);
+      entityDirectoryService._processUsers(usersData);
+
+      // Mock Firebase read for project-level developers
+      get.mockImplementation(async (refObj) => {
+        if (refObj.path === '/projects/PlanningGame/developers') {
+          return createSnapshot(['dev_001', 'dev_002']);
+        }
+        return createSnapshot(null);
+      });
+
+      const ids = await entityDirectoryService.getProjectDeveloperIds('PlanningGame');
+      expect(ids).toContain('dev_001');
+      expect(ids).toContain('dev_002');
+      expect(ids).toHaveLength(2);
+    });
+
+    it('should NOT call project-level fallback when /users/ already has results', async () => {
+      const usersData = buildUsersData([
+        {
+          email: 'alice@example.com', name: 'Alice', developerId: 'dev_001',
+          projects: { PlanningGame: { developer: true } }
+        }
+      ]);
+      entityDirectoryService._processUsers(usersData);
+
+      const ids = await entityDirectoryService.getProjectDeveloperIds('PlanningGame');
+      expect(ids).toEqual(['dev_001']);
+      // get should NOT have been called since /users/ had results
+      expect(get).not.toHaveBeenCalled();
+    });
+
+    it('should return empty array when both /users/ and project-level have no developers', async () => {
+      entityDirectoryService._processUsers({});
+
+      get.mockImplementation(async () => createSnapshot(null));
+
+      const ids = await entityDirectoryService.getProjectDeveloperIds('PlanningGame');
+      expect(ids).toEqual([]);
+    });
+
+    it('should handle project-level developers as object (map format)', async () => {
+      const usersData = buildUsersData([
+        { email: 'alice@example.com', name: 'Alice', developerId: 'dev_001' }
+      ]);
+      entityDirectoryService._processUsers(usersData);
+
+      get.mockImplementation(async (refObj) => {
+        if (refObj.path === '/projects/PlanningGame/developers') {
+          return createSnapshot({ dev_001: 'Alice', dev_003: 'Charlie' });
+        }
+        return createSnapshot(null);
+      });
+
+      const ids = await entityDirectoryService.getProjectDeveloperIds('PlanningGame');
+      expect(ids).toContain('dev_001');
+      expect(ids).toContain('dev_003');
+    });
+
+    it('should log a warning when falling back to project-level developers', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const usersData = buildUsersData([
+        { email: 'alice@example.com', name: 'Alice', developerId: 'dev_001' }
+      ]);
+      entityDirectoryService._processUsers(usersData);
+
+      get.mockImplementation(async (refObj) => {
+        if (refObj.path === '/projects/PlanningGame/developers') {
+          return createSnapshot(['dev_001']);
+        }
+        return createSnapshot(null);
+      });
+
+      await entityDirectoryService.getProjectDeveloperIds('PlanningGame');
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('PlanningGame'),
+      );
+
+      warnSpy.mockRestore();
+    });
+
+    it('should not call fallback when projectId is falsy', async () => {
+      entityDirectoryService._processUsers({});
+
+      const ids = await entityDirectoryService.getProjectDeveloperIds('');
+      expect(ids).toEqual([]);
+      expect(get).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getProjectStakeholderIds - fallback to /projects/{projectId}/stakeholders', () => {
+    it('should read from /projects/{projectId}/stakeholders when /users/ returns empty stakeholder list', async () => {
+      const usersData = buildUsersData([
+        { email: 'alice@example.com', name: 'Alice', stakeholderId: 'stk_001' },
+        { email: 'bob@example.com', name: 'Bob', stakeholderId: 'stk_002' }
+      ]);
+      entityDirectoryService._processUsers(usersData);
+
+      get.mockImplementation(async (refObj) => {
+        if (refObj.path === '/projects/PlanningGame/stakeholders') {
+          return createSnapshot(['stk_001', 'stk_002']);
+        }
+        return createSnapshot(null);
+      });
+
+      const ids = await entityDirectoryService.getProjectStakeholderIds('PlanningGame');
+      expect(ids).toContain('stk_001');
+      expect(ids).toContain('stk_002');
+      expect(ids).toHaveLength(2);
+    });
+
+    it('should NOT call project-level fallback when /users/ already has stakeholder results', async () => {
+      const usersData = buildUsersData([
+        {
+          email: 'alice@example.com', name: 'Alice', stakeholderId: 'stk_001',
+          projects: { PlanningGame: { stakeholder: true } }
+        }
+      ]);
+      entityDirectoryService._processUsers(usersData);
+
+      const ids = await entityDirectoryService.getProjectStakeholderIds('PlanningGame');
+      expect(ids).toEqual(['stk_001']);
+      expect(get).not.toHaveBeenCalled();
+    });
+
+    it('should return empty array when both /users/ and project-level have no stakeholders', async () => {
+      entityDirectoryService._processUsers({});
+
+      get.mockImplementation(async () => createSnapshot(null));
+
+      const ids = await entityDirectoryService.getProjectStakeholderIds('PlanningGame');
+      expect(ids).toEqual([]);
+    });
+
+    it('should handle project-level stakeholders as object (map format)', async () => {
+      const usersData = buildUsersData([
+        { email: 'alice@example.com', name: 'Alice', stakeholderId: 'stk_001' }
+      ]);
+      entityDirectoryService._processUsers(usersData);
+
+      get.mockImplementation(async (refObj) => {
+        if (refObj.path === '/projects/PlanningGame/stakeholders') {
+          return createSnapshot({ stk_001: 'Alice', stk_003: 'Charlie' });
+        }
+        return createSnapshot(null);
+      });
+
+      const ids = await entityDirectoryService.getProjectStakeholderIds('PlanningGame');
+      expect(ids).toContain('stk_001');
+      expect(ids).toContain('stk_003');
+    });
+
+    it('should log a warning when falling back to project-level stakeholders', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const usersData = buildUsersData([
+        { email: 'alice@example.com', name: 'Alice', stakeholderId: 'stk_001' }
+      ]);
+      entityDirectoryService._processUsers(usersData);
+
+      get.mockImplementation(async (refObj) => {
+        if (refObj.path === '/projects/PlanningGame/stakeholders') {
+          return createSnapshot(['stk_001']);
+        }
+        return createSnapshot(null);
+      });
+
+      await entityDirectoryService.getProjectStakeholderIds('PlanningGame');
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('PlanningGame'),
+      );
+
+      warnSpy.mockRestore();
+    });
+
+    it('should not call fallback when projectId is falsy', async () => {
+      entityDirectoryService._processUsers({});
+
+      const ids = await entityDirectoryService.getProjectStakeholderIds(null);
+      expect(ids).toEqual([]);
+      expect(get).not.toHaveBeenCalled();
+    });
+  });
+});
