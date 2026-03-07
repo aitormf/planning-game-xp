@@ -871,15 +871,34 @@ class EntityDirectoryService {
 
   /**
    * Obtiene los IDs de developers de un proyecto (from /users/ projects assignments)
+   * Falls back to /projects/{projectId}/developers when /users/ has no project assignments
    */
   async getProjectDeveloperIds(projectId) {
+    if (!projectId) return [];
+
     const ids = [];
     for (const user of this._users.values()) {
       if (user.developerId && user.projects?.[projectId]?.developer === true) {
         ids.push(user.developerId);
       }
     }
-    return ids;
+
+    if (ids.length > 0) return ids;
+
+    // Fallback: read from /projects/{projectId}/developers (project-level array)
+    try {
+      const snapshot = await get(ref(database, `/projects/${projectId}/developers`));
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const projectIds = Array.isArray(data) ? data : Object.keys(data);
+        console.warn(`[EntityDirectoryService] No /users/ project assignments found for "${projectId}" developers. Using /projects/${projectId}/developers as source.`);
+        return projectIds.filter(id => typeof id === 'string' && id.startsWith('dev_'));
+      }
+    } catch (error) {
+      console.warn(`[EntityDirectoryService] Failed to read /projects/${projectId}/developers:`, error.message);
+    }
+
+    return [];
   }
 
   /**
@@ -897,15 +916,34 @@ class EntityDirectoryService {
 
   /**
    * Obtiene los IDs de stakeholders de un proyecto (from /users/ projects assignments)
+   * Falls back to /projects/{projectId}/stakeholders when /users/ has no project assignments
    */
   async getProjectStakeholderIds(projectId) {
+    if (!projectId) return [];
+
     const ids = [];
     for (const user of this._users.values()) {
       if (user.stakeholderId && user.projects?.[projectId]?.stakeholder === true) {
         ids.push(user.stakeholderId);
       }
     }
-    return ids;
+
+    if (ids.length > 0) return ids;
+
+    // Fallback: read from /projects/{projectId}/stakeholders (project-level array)
+    try {
+      const snapshot = await get(ref(database, `/projects/${projectId}/stakeholders`));
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const projectIds = Array.isArray(data) ? data : Object.keys(data);
+        console.warn(`[EntityDirectoryService] No /users/ project assignments found for "${projectId}" stakeholders. Using /projects/${projectId}/stakeholders as source.`);
+        return projectIds.filter(id => typeof id === 'string' && id.startsWith('stk_'));
+      }
+    } catch (error) {
+      console.warn(`[EntityDirectoryService] Failed to read /projects/${projectId}/stakeholders:`, error.message);
+    }
+
+    return [];
   }
 
   /**
