@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Resolve blank screen on cold page load
+
+## [1.164.8] - 2026-03-07
+
+### Fixed
+
 - Remove project node fallbacks, add sync-users-project-roles script
 
 ## [1.164.7] - 2026-03-06
