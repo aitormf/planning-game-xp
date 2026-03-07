@@ -22,6 +22,7 @@ export {
   createRepositories,
   createDualWriteRepositories,
   createReadSwitchRepositories,
+  createFirestoreOnlyRepositories,
   clearRegisteredBackends
 } from './repository-factory.js';
 
@@ -33,7 +34,7 @@ export { DualWriteProjectRepository } from './dual-write-project-repository.js';
 export { ReadSwitchCardRepository } from './read-switch-card-repository.js';
 export { ReadSwitchProjectRepository } from './read-switch-project-repository.js';
 
-// RTDB backend
+// RTDB backend (DEPRECATED — will be removed after Firestore migration is verified)
 export {
   RtdbBaseRepository,
   createAdminAdapter,

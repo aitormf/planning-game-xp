@@ -8,6 +8,7 @@ import {
   createCounterService,
   createRepositories,
   createDualWriteRepositories,
+  createFirestoreOnlyRepositories,
   clearRegisteredBackends
 } from '../../shared/dal/repository-factory.js';
 import { DualWriteCardRepository } from '../../shared/dal/dual-write-card-repository.js';
@@ -120,6 +121,24 @@ describe('repository-factory', () => {
         { backend: 'rtdb', options: {} },
         { backend: 'firestore', options: {} }
       )).toThrow('No CardRepository registered for backend "rtdb"');
+    });
+  });
+
+  describe('createFirestoreOnlyRepositories', () => {
+    it('should create Firestore-only repositories', () => {
+      registerCardBackend('firestore', StubCardRepo);
+      registerProjectBackend('firestore', StubProjectRepo);
+      registerCounterBackend('firestore', StubCounterService);
+
+      const repos = createFirestoreOnlyRepositories({});
+      expect(repos.cards).toBeInstanceOf(CardRepository);
+      expect(repos.projects).toBeInstanceOf(ProjectRepository);
+      expect(repos.counters).toBeInstanceOf(CounterService);
+    });
+
+    it('should throw if firestore backend not registered', () => {
+      expect(() => createFirestoreOnlyRepositories({}))
+        .toThrow('No CardRepository registered for backend "firestore"');
     });
   });
 

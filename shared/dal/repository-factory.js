@@ -171,6 +171,24 @@ export function createReadSwitchRepositories(rtdbConfig, firestoreConfig, switch
 }
 
 /**
+ * Create Firestore-only repositories (post-migration target state).
+ *
+ * Use this after migration is verified and RTDB can be decommissioned.
+ * No RTDB dependency, no dual-write, no fallback — pure Firestore.
+ *
+ * @param {Object} firestoreOptions - Backend options for Firestore
+ * @param {string} [counterBackend='firestore']
+ * @returns {{cards: import('./card-repository.js').CardRepository, projects: import('./project-repository.js').ProjectRepository, counters: import('./counter-service.js').CounterService}}
+ */
+export function createFirestoreOnlyRepositories(firestoreOptions = {}, counterBackend = 'firestore') {
+  return {
+    cards: createCardRepository('firestore', firestoreOptions),
+    projects: createProjectRepository('firestore', firestoreOptions),
+    counters: createCounterService(counterBackend, firestoreOptions)
+  };
+}
+
+/**
  * Clear all registered backends (useful for testing).
  */
 export function clearRegisteredBackends() {
