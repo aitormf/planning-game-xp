@@ -26,9 +26,12 @@ export function getLocalVersion() {
 async function getRemoteVersionFromFirebase() {
   try {
     const db = getDatabase();
-    const snapshot = await db.ref(`${MCP_VERSION_PATH}/latestVersion`).once('value');
+    const snapshot = await Promise.race([
+      db.ref(`${MCP_VERSION_PATH}/latestVersion`).once('value'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase query timeout')), 5000))
+    ]);
     return snapshot.val() || null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -36,12 +39,15 @@ async function getRemoteVersionFromFirebase() {
 export async function setLatestVersionInFirebase(version) {
   try {
     const db = getDatabase();
-    await db.ref(MCP_VERSION_PATH).update({
-      latestVersion: version,
-      updatedAt: new Date().toISOString()
-    });
+    await Promise.race([
+      db.ref(MCP_VERSION_PATH).update({
+        latestVersion: version,
+        updatedAt: new Date().toISOString()
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase write timeout')), 5000))
+    ]);
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

@@ -137,7 +137,10 @@ function checkServiceAccountKey() {
 async function checkFirebaseConnectivity() {
   try {
     const db = getDatabase();
-    const snapshot = await db.ref('/projects').once('value');
+    const snapshot = await Promise.race([
+      db.ref('/projects').once('value'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout after 10s')), 10000))
+    ]);
     const data = snapshot.val();
 
     if (!data || typeof data !== 'object') {

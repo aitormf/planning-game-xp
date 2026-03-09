@@ -24,8 +24,8 @@ try {
   process.exit(1);
 }
 
-// Check for updates at startup (logs to stderr if update available)
-checkVersionAtStartup();
+// Check for updates at startup (non-blocking, logs to stderr if update available)
+checkVersionAtStartup().catch(() => {});
 
 // Derive server name from instance directory
 const instanceName = getInstanceName();
