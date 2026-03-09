@@ -91,7 +91,7 @@ This creates a `.mcp-user.json` file with your developer ID, used to track who c
 
 \* Either this env var or a `serviceAccountKey.json` file in the MCP directory.
 
-## Available Tools (34)
+## Available Tools (36)
 
 ### Project Management
 | Tool | Description |
@@ -140,6 +140,12 @@ This creates a `.mcp-user.json` file with your developer ID, used to track who c
 | Tool | Description |
 |------|-------------|
 | `list_global_config` / `get_global_config` / `create_global_config` / `update_global_config` / `delete_global_config` | Shared instructions, prompts, agent configs |
+
+### Diagnostics
+| Tool | Description |
+|------|-------------|
+| `pg_doctor` | Run comprehensive diagnostics (credentials, connectivity, dependencies, config) |
+| `pg_config` | View MCP configuration (instance, Firebase project, env vars, user) |
 
 ### System
 | Tool | Description |

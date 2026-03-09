@@ -267,6 +267,7 @@ Cada instancia mantiene su propio `.mcp-user.json` en su `MCP_INSTANCE_DIR`.
 | Planes | `list_plans`, `get_plan`, `create_plan`, `update_plan`, `delete_plan` |
 | Proposals | `list_plan_proposals`, `get_plan_proposal`, `create_plan_proposal`, `update_plan_proposal`, `delete_plan_proposal` |
 | Config Global | `list_global_config`, `get_global_config`, `create_global_config`, `update_global_config`, `delete_global_config` |
+| Diagnóstico | `pg_doctor`, `pg_config` |
 | Sistema | `setup_mcp_user`, `get_mcp_status`, `update_mcp` |
 
 **Uso**: Claude puede leer/crear/actualizar tarjetas del proyecto desde cualquier directorio.
