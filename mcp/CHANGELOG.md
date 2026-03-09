@@ -2,6 +2,12 @@
 
 All notable changes to the Planning Game MCP server will be documented in this file.
 
+## [1.14.1] - 2026-03-10
+
+### Fixed
+- **Firebase query timeouts**: All Firebase RTDB queries during startup and in diagnostic tools now have timeouts (5s for version checks, 10s for doctor). Prevents the MCP from hanging indefinitely when the database URL is incorrect or unreachable.
+- **Non-blocking startup**: `checkVersionAtStartup()` no longer blocks MCP startup — runs as fire-and-forget so the server connects even if version check is slow.
+
 ## [1.14.0] - 2026-03-10
 
 ### Added
