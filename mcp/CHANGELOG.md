@@ -2,6 +2,12 @@
 
 All notable changes to the Planning Game MCP server will be documented in this file.
 
+## [1.14.2] - 2026-03-10
+
+### Added
+- **CLI flags**: `planning-game-mcp --version` and `planning-game-mcp --help` now work when installed globally via npm.
+- **Shebang**: `index.js` includes `#!/usr/bin/env node` for proper execution as a CLI binary.
+
 ## [1.14.1] - 2026-03-10
 
 ### Fixed

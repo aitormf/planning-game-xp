@@ -1,8 +1,32 @@
+#!/usr/bin/env node
+
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { basename } from 'path';
 import { initFirebase } from './firebase-adapter.js';
 import { createMcpServer } from './register-tools.js';
-import { checkVersionAtStartup } from './version-check.js';
+import { checkVersionAtStartup, getLocalVersion } from './version-check.js';
+
+// ── CLI flags ──
+const arg = process.argv[2];
+if (arg === '--version' || arg === '-v') {
+  console.log(getLocalVersion());
+  process.exit(0);
+}
+if (arg === '--help' || arg === '-h') {
+  console.log(`planning-game-mcp v${getLocalVersion()}`);
+  console.log('');
+  console.log('Usage: planning-game-mcp [options]');
+  console.log('');
+  console.log('Options:');
+  console.log('  -v, --version  Show version');
+  console.log('  -h, --help     Show this help');
+  console.log('');
+  console.log('Environment variables:');
+  console.log('  GOOGLE_APPLICATION_CREDENTIALS  Path to serviceAccountKey.json');
+  console.log('  FIREBASE_DATABASE_URL           Firebase RTDB URL (optional)');
+  console.log('  MCP_INSTANCE_DIR                Instance directory (multi-instance)');
+  process.exit(0);
+}
 
 /**
  * Derive instance name from MCP_INSTANCE_DIR (last path segment).
