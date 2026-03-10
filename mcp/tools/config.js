@@ -1,13 +1,14 @@
 import { z } from 'zod';
-import { resolveCredentialsPath, getFirebaseProjectId } from '../firebase-adapter.js';
+import { resolveCredentialsPath } from '../firebase-adapter.js';
 import { resolveUserConfigPath, getMcpUser, isMcpUserConfigured } from '../user.js';
 import { getLocalVersion } from '../version-check.js';
+import { getInstanceMetadata } from '../instance-metadata.js';
 
 export const pgConfigSchema = z.object({
   action: z.enum(['view', 'get']).default('view')
     .describe('Action: "view" shows all config, "get" shows a specific key'),
   key: z.string().optional()
-    .describe('Config key to get (for action "get"). Keys: instanceDir, instanceName, firebaseProjectId, credentialsPath, userConfigPath, user, version, databaseUrl, env')
+    .describe('Config key to get (for action "get"). Keys: instanceDir, instanceName, description, firebaseProjectId, credentialsPath, userConfigPath, user, version, databaseUrl, env')
 });
 
 /**
@@ -50,14 +51,15 @@ export async function pgConfig(params) {
 }
 
 function buildFullConfig() {
+  const instance = getInstanceMetadata();
   const instanceDir = process.env.MCP_INSTANCE_DIR || null;
-  const instanceName = instanceDir ? instanceDir.split('/').pop() : null;
 
   const config = {
     version: getLocalVersion(),
-    instanceName,
+    instanceName: instance.name,
     instanceDir,
-    firebaseProjectId: getFirebaseProjectId(),
+    description: instance.description,
+    firebaseProjectId: instance.firebaseProjectId,
     credentialsPath: resolveCredentialsPath(),
     userConfigPath: resolveUserConfigPath(),
     userConfigured: isMcpUserConfigured(),

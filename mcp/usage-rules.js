@@ -79,4 +79,30 @@ The mapping depends on the project's scoring system (\`scoringSystem\`):
 - MCP CANNOT set tasks to "Done&Validated"
 - Only validators can approve tasks
 - Use "To Validate" to request validation
+
+## Multi-Instance Awareness
+
+Multiple instances of Planning Game MCP may be connected simultaneously, each pointing to a different Firebase project. Every tool response includes an \`_instance\` block with \`name\`, \`firebaseProjectId\`, and \`description\` so you can identify which instance responded.
+
+### How to select the correct instance
+1. Call \`get_mcp_status\` on each available instance to see its \`firebaseProjectId\` and \`description\`
+2. Match the \`firebaseProjectId\` to the project you are working on
+3. Use ONLY that instance for the rest of the session
+4. If unsure which instance to use, ask the user
+
+### Example
+If you see instances \`planning-game-pro\` (firebaseProjectId: "planning-gamexp") and \`planning-game-personal\` (firebaseProjectId: "planning-game-xp"), use the one whose Firebase project matches your target project.
+
+### Instance identification in responses
+Every JSON response from any tool includes:
+\`\`\`json
+{
+  "_instance": {
+    "name": "personal",
+    "firebaseProjectId": "planning-game-xp",
+    "description": "Personal/manufosela projects"
+  }
+}
+\`\`\`
+Use this to confirm you are talking to the right instance.
 `;

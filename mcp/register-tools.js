@@ -19,6 +19,7 @@ import { USAGE_RULES_CONTENT } from './usage-rules.js';
 import { isMcpUserConfigured } from './user.js';
 import { pgDoctorSchema, pgDoctor } from './tools/doctor.js';
 import { pgConfigSchema, pgConfig } from './tools/config.js';
+import { getInstanceMetadata } from './instance-metadata.js';
 
 // Track calls for periodic update checks
 let callCount = 0;
@@ -69,6 +70,15 @@ function wrapWithUpdateNotice(handler) {
           code: 'USER_NOT_CONFIGURED',
           message: 'MCP user is not configured. Run setup_mcp_user to configure your identity. This enables auto-assignment of validator, correct createdBy/updatedBy tracking, and more.'
         });
+        result.content[0] = { type: 'text', text: JSON.stringify(parsed, null, 2) };
+      }
+    }
+
+    // Inject _instance metadata into every JSON response
+    if (result.content && result.content.length > 0) {
+      const parsed = safeJsonParse(result.content[0].text);
+      if (parsed) {
+        parsed._instance = getInstanceMetadata();
         result.content[0] = { type: 'text', text: JSON.stringify(parsed, null, 2) };
       }
     }

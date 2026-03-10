@@ -28,9 +28,9 @@ export async function runInit({ nonInteractive = false } = {}) {
   printHeader('Step 1/6 — Prerequisites');
   checkPrerequisites();
 
-  // ── Step 2: Instance name ──
+  // ── Step 2: Instance name & description ──
   printHeader('Step 2/6 — Instance Name');
-  const instanceName = await resolveInstanceName(existing, nonInteractive);
+  const { instanceName, instanceDescription } = await resolveInstanceIdentity(existing, nonInteractive);
 
   // ── Step 3: Firebase credentials ──
   printHeader('Step 3/6 — Firebase Credentials');
@@ -50,7 +50,7 @@ export async function runInit({ nonInteractive = false } = {}) {
   const serverName = `planning-game-${instanceName}`;
 
   const config = {
-    instance: { name: instanceName },
+    instance: { name: instanceName, description: instanceDescription },
     firebase: {
       projectId,
       databaseUrl,
@@ -109,14 +109,16 @@ function checkPrerequisites() {
   }
 }
 
-async function resolveInstanceName(existing, nonInteractive) {
+async function resolveInstanceIdentity(existing, nonInteractive) {
   const envInstanceDir = process.env.MCP_INSTANCE_DIR;
   const envName = envInstanceDir ? basename(envInstanceDir) : null;
   const defaultName = existing?.instance?.name || envName || 'default';
+  const defaultDescription = existing?.instance?.description || '';
 
   if (nonInteractive) {
     printInfo(`Instance name: ${defaultName}`);
-    return defaultName;
+    if (defaultDescription) printInfo(`Description: ${defaultDescription}`);
+    return { instanceName: defaultName, instanceDescription: defaultDescription };
   }
 
   const name = await ask('Instance name', {
@@ -128,8 +130,13 @@ async function resolveInstanceName(existing, nonInteractive) {
     }
   });
 
+  const description = await ask('Instance description (what is this instance for?)', {
+    defaultValue: defaultDescription
+  });
+
   printSuccess(`Instance: ${name}`);
-  return name;
+  if (description) printSuccess(`Description: ${description}`);
+  return { instanceName: name, instanceDescription: description };
 }
 
 async function resolveCredentials(existing, nonInteractive) {
