@@ -15,16 +15,27 @@ if (arg === '--version' || arg === '-v') {
 if (arg === '--help' || arg === '-h') {
   console.log(`planning-game-mcp v${getLocalVersion()}`);
   console.log('');
-  console.log('Usage: planning-game-mcp [options]');
+  console.log('Usage: planning-game-mcp [command] [options]');
+  console.log('');
+  console.log('Commands:');
+  console.log('  init             Interactive setup wizard (generates pg.config.yml)');
+  console.log('  (no command)     Start MCP server');
   console.log('');
   console.log('Options:');
-  console.log('  -v, --version  Show version');
-  console.log('  -h, --help     Show this help');
+  console.log('  -v, --version    Show version');
+  console.log('  -h, --help       Show this help');
+  console.log('  --non-interactive  Skip prompts during init (use env vars/defaults)');
   console.log('');
   console.log('Environment variables:');
   console.log('  GOOGLE_APPLICATION_CREDENTIALS  Path to serviceAccountKey.json');
   console.log('  FIREBASE_DATABASE_URL           Firebase RTDB URL (optional)');
   console.log('  MCP_INSTANCE_DIR                Instance directory (multi-instance)');
+  process.exit(0);
+}
+if (arg === 'init') {
+  const { runInit } = await import('./commands/init.js');
+  const nonInteractive = process.argv.includes('--non-interactive');
+  await runInit({ nonInteractive });
   process.exit(0);
 }
 

@@ -2,6 +2,14 @@
 
 All notable changes to the Planning Game MCP server will be documented in this file.
 
+## [1.15.0] - 2026-03-10
+
+### Added
+- **Setup wizard**: `planning-game-mcp init` — Interactive setup wizard that guides through configuration step by step: prerequisites check, serviceAccountKey.json path (supports custom locations), Firebase connectivity test with 10s timeout, user identity setup, and optional Claude Code MCP registration.
+- **pg.config.yml**: New centralized configuration file per instance. Replaces scattered env vars with a single, readable YAML config. Backwards compatible — env vars still work as fallback.
+- **Non-interactive mode**: `planning-game-mcp init --non-interactive` for CI/automation setups.
+- **Archived project filtering**: `list_projects` excludes archived projects. Operations on archived projects are rejected with a clear error message.
+
 ## [1.14.2] - 2026-03-10
 
 ### Added

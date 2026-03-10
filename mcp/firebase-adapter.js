@@ -2,6 +2,7 @@ import admin from 'firebase-admin';
 import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { readConfig, getConfigValue } from './utils/pg-config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -12,11 +13,18 @@ let firebaseProjectId = null;
 
 /**
  * Resolve the path to serviceAccountKey.json.
- * Priority: GOOGLE_APPLICATION_CREDENTIALS > MCP_INSTANCE_DIR/serviceAccountKey.json > repo root/serviceAccountKey.json
+ * Priority: GOOGLE_APPLICATION_CREDENTIALS > pg.config.yml > MCP_INSTANCE_DIR/serviceAccountKey.json > repo root/serviceAccountKey.json
  */
 export function resolveCredentialsPath() {
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     return resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  }
+
+  // Check pg.config.yml
+  const config = readConfig();
+  const configCredPath = getConfigValue(config, 'firebase.credentialsPath');
+  if (configCredPath && existsSync(resolve(configCredPath))) {
+    return resolve(configCredPath);
   }
 
   const instanceDir = process.env.MCP_INSTANCE_DIR;
@@ -65,7 +73,11 @@ export function initFirebase() {
 
   firebaseProjectId = serviceAccount.project_id;
 
+  // Database URL priority: env var > pg.config.yml > auto-detect
+  const pgConfig = readConfig();
+  const configDbUrl = getConfigValue(pgConfig, 'firebase.databaseUrl');
   const databaseURL = process.env.FIREBASE_DATABASE_URL ||
+    configDbUrl ||
     `https://${serviceAccount.project_id}-default-rtdb.europe-west1.firebasedatabase.app`;
 
   app = admin.initializeApp({
