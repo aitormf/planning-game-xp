@@ -46,8 +46,8 @@ function copyMcpSource() {
     }
   }
 
-  // Copy subdirectories (tools/, services/)
-  for (const dir of ['tools', 'services']) {
+  // Copy subdirectories (tools/, services/, utils/, commands/)
+  for (const dir of ['tools', 'services', 'utils', 'commands']) {
     const srcDir = join(MCP_SRC, dir);
     if (existsSync(srcDir)) {
       cpSync(srcDir, join(DIST, dir), { recursive: true });

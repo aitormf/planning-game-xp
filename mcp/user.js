@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { readConfig, getConfigValue } from './utils/pg-config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -22,12 +23,27 @@ let mcpUser = null;
 let loaded = false;
 
 /**
- * Load user config from mcp.user.json
+ * Load user config from pg.config.yml (preferred) or mcp.user.json (fallback).
  */
 function loadUser() {
   if (loaded) return;
   loaded = true;
 
+  // Try pg.config.yml first
+  const pgConfig = readConfig();
+  const configUserId = getConfigValue(pgConfig, 'user.developerId');
+  if (configUserId) {
+    mcpUser = {
+      developerId: configUserId,
+      developerName: getConfigValue(pgConfig, 'user.name') || '',
+      developerEmail: getConfigValue(pgConfig, 'user.email') || '',
+      name: getConfigValue(pgConfig, 'user.name') || '',
+      email: getConfigValue(pgConfig, 'user.email') || ''
+    };
+    return;
+  }
+
+  // Fallback to mcp.user.json
   try {
     const raw = readFileSync(USER_CONFIG_PATH, 'utf8');
     mcpUser = JSON.parse(raw);
