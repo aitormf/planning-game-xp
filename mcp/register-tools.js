@@ -20,6 +20,7 @@ import { isMcpUserConfigured } from './user.js';
 import { pgDoctorSchema, pgDoctor } from './tools/doctor.js';
 import { pgConfigSchema, pgConfig } from './tools/config.js';
 import { getInstanceMetadata } from './instance-metadata.js';
+import { syncGuidelinesSchema, syncGuidelines } from './tools/sync-guidelines.js';
 
 // Track calls for periodic update checks
 let callCount = 0;
@@ -372,6 +373,11 @@ export function createMcpServer(serverName) {
   server.tool('pg_config', 'View MCP server configuration: instance name, Firebase project, credentials path, user config, environment variables. Use action "get" with a key for specific values.', pgConfigSchema.shape, async (params) => {
     return await pgConfig(params);
   });
+
+  // ── Sync Guidelines tool ──
+  server.tool('sync_guidelines', 'Download guidelines from Firebase and write them as local files. Compares versions to only update changed guidelines.', syncGuidelinesSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await syncGuidelines(params);
+  }));
 
   // ── Usage Rules resource ──
   server.resource(
