@@ -1011,6 +1011,43 @@ export async function updateCard({ projectId, type, firebaseId, updates, validat
     updates.endDate = new Date().toISOString().split('T')[0];
   }
 
+  // Work Cycles tracking for tasks
+  // Opens a new cycle when entering "In Progress", closes it when leaving
+  if (type === 'task' && updates.status) {
+    const prevStatus = currentCard.status;
+    const newStatus = updates.status;
+    const now = new Date().toISOString();
+
+    // Open a new work cycle when moving TO "In Progress"
+    if (newStatus === 'In Progress' && prevStatus !== 'In Progress') {
+      const existingCycles = Array.isArray(currentCard.workCycles) ? [...currentCard.workCycles] : [];
+      const cycleNumber = existingCycles.length + 1;
+      existingCycles.push({
+        cycleNumber,
+        startDate: now,
+        endDate: null,
+        durationMs: 0
+      });
+      updates.workCycles = existingCycles;
+      updates.totalWorkDurationMs = currentCard.totalWorkDurationMs || 0;
+    }
+
+    // Close the open work cycle when leaving "In Progress"
+    if (prevStatus === 'In Progress' && newStatus !== 'In Progress') {
+      const existingCycles = Array.isArray(currentCard.workCycles) ? [...currentCard.workCycles] : [];
+      if (existingCycles.length > 0) {
+        const lastCycle = existingCycles[existingCycles.length - 1];
+        if (lastCycle.endDate === null) {
+          lastCycle.endDate = now;
+          lastCycle.durationMs = new Date(now).getTime() - new Date(lastCycle.startDate).getTime();
+        }
+        const totalMs = existingCycles.reduce((sum, c) => sum + (c.durationMs || 0), 0);
+        updates.workCycles = existingCycles;
+        updates.totalWorkDurationMs = totalMs;
+      }
+    }
+  }
+
   // Auto-calculate priority for tasks when devPoints or businessPoints are updated
   if (type === 'task') {
     const finalDevPoints = updates.devPoints !== undefined ? updates.devPoints : currentCard.devPoints;
