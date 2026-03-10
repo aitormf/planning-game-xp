@@ -90,6 +90,9 @@ export async function resolveProjectId(input) {
 
   // Strategy 1: Exact match on key
   if (projects[trimmedInput]) {
+    if (projects[trimmedInput].archived) {
+      throw new Error(`Project "${trimmedInput}" is archived. Unarchive it first if you need to work with it.`);
+    }
     return { resolvedId: trimmedInput, wasResolved: false, input: trimmedInput };
   }
 
@@ -98,6 +101,9 @@ export async function resolveProjectId(input) {
   // Strategy 2: Case-insensitive match on key
   for (const key of projectKeys) {
     if (key.toLowerCase() === inputLower) {
+      if (projects[key].archived) {
+        throw new Error(`Project "${key}" is archived. Unarchive it first if you need to work with it.`);
+      }
       return { resolvedId: key, wasResolved: true, input: trimmedInput };
     }
   }
@@ -107,6 +113,9 @@ export async function resolveProjectId(input) {
     const project = projects[key];
     const projectName = project.name || '';
     if (projectName.toLowerCase() === inputLower) {
+      if (project.archived) {
+        throw new Error(`Project "${key}" is archived. Unarchive it first if you need to work with it.`);
+      }
       return { resolvedId: key, wasResolved: true, input: trimmedInput };
     }
   }
@@ -116,6 +125,9 @@ export async function resolveProjectId(input) {
     const project = projects[key];
     const abbreviation = project.abbreviation || '';
     if (abbreviation.toLowerCase() === inputLower) {
+      if (project.archived) {
+        throw new Error(`Project "${key}" is archived. Unarchive it first if you need to work with it.`);
+      }
       return { resolvedId: key, wasResolved: true, input: trimmedInput };
     }
   }
@@ -127,21 +139,26 @@ export async function resolveProjectId(input) {
       const project = projects[key];
       const projectRepoUrl = normalizeRepoUrl(project.repoUrl || '');
       if (projectRepoUrl && projectRepoUrl === normalizedInput) {
+        if (project.archived) {
+          throw new Error(`Project "${key}" is archived. Unarchive it first if you need to work with it.`);
+        }
         return { resolvedId: key, wasResolved: true, input: trimmedInput };
       }
     }
   }
 
-  // No match found — throw with available projects list
-  const availableProjects = projectKeys.map(key => {
-    const p = projects[key];
-    return {
-      id: key,
-      name: p.name || key,
-      abbreviation: p.abbreviation || null,
-      repoUrl: p.repoUrl || null
-    };
-  });
+  // No match found — throw with available projects list (exclude archived)
+  const availableProjects = projectKeys
+    .filter(key => !projects[key].archived)
+    .map(key => {
+      const p = projects[key];
+      return {
+        id: key,
+        name: p.name || key,
+        abbreviation: p.abbreviation || null,
+        repoUrl: p.repoUrl || null
+      };
+    });
 
   throw new Error(
     `Project "${trimmedInput}" not found. Available projects:\n${JSON.stringify(availableProjects, null, 2)}`
@@ -168,6 +185,7 @@ export async function discoverProjectByRepo(repoUrl) {
   }
 
   for (const [key, project] of Object.entries(projects)) {
+    if (project.archived) continue;
     const projectRepoUrl = normalizeRepoUrl(project.repoUrl || '');
     if (projectRepoUrl && projectRepoUrl === normalizedInput) {
       return { resolvedId: key, project };
@@ -175,7 +193,7 @@ export async function discoverProjectByRepo(repoUrl) {
   }
 
   const availableProjects = Object.entries(projects)
-    .filter(([, p]) => p.repoUrl)
+    .filter(([, p]) => p.repoUrl && !p.archived)
     .map(([key, p]) => ({ id: key, name: p.name || key, repoUrl: p.repoUrl }));
 
   throw new Error(

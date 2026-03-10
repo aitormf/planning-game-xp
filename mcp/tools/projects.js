@@ -40,17 +40,19 @@ export async function listProjects() {
     return { content: [{ type: 'text', text: 'No projects found.' }] };
   }
 
-  const result = Object.entries(projects).map(([id, project]) => {
-    const developers = extractDevelopers(project.developers);
-    return {
-      id,
-      name: project.name || id,
-      abbreviation: project.abbreviation || null,
-      scoringSystem: project.scoringSystem || null,
-      developers,
-      createdAt: project.createdAt || null
-    };
-  });
+  const result = Object.entries(projects)
+    .filter(([, project]) => !project.archived)
+    .map(([id, project]) => {
+      const developers = extractDevelopers(project.developers);
+      return {
+        id,
+        name: project.name || id,
+        abbreviation: project.abbreviation || null,
+        scoringSystem: project.scoringSystem || null,
+        developers,
+        createdAt: project.createdAt || null
+      };
+    });
 
   return {
     content: [{
