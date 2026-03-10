@@ -594,7 +594,14 @@ export async function createCard({ projectId, type, title, description, descript
       );
     }
 
-    await validateSprintExists(projectId, sprint);
+    // AC1: Tasks cannot have sprint assigned at creation time
+    if (sprint) {
+      throw new Error(
+        'Cannot assign sprint when creating a task. ' +
+        'Sprint is assigned when moving the task to "In Progress". ' +
+        'Create the task first, then update it with a sprint when starting work.'
+      );
+    }
 
     // Auto-resolve validator for tasks
     validator = await resolveValidator(db, projectId, validator, developer);
@@ -1002,6 +1009,34 @@ export async function updateCard({ projectId, type, firebaseId, updates, validat
     if (!hasStartDate) {
       const today = new Date().toISOString().split('T')[0];
       updates.startDate = today;
+    }
+
+    // AC3: Validate sprint date range when moving to In Progress
+    const sprintCardId = updates.sprint || currentCard.sprint;
+    if (sprintCardId) {
+      const sprintSectionPath = buildSectionPath(projectId, 'sprint');
+      const sprintSnapshot = await db.ref(sprintSectionPath).once('value');
+      const sprintsData = sprintSnapshot.val();
+
+      if (sprintsData) {
+        const sprintEntry = Object.entries(sprintsData).find(([, s]) => s.cardId === sprintCardId);
+        if (sprintEntry) {
+          const [sprintFbId, sprint] = sprintEntry;
+          if (sprint.startDate && sprint.endDate) {
+            const today = new Date().toISOString().split('T')[0];
+            if (today < sprint.startDate || today > sprint.endDate) {
+              throw new Error(
+                `Cannot move task to "In Progress": today (${today}) is outside sprint "${sprintCardId}" date range ` +
+                `(${sprint.startDate} to ${sprint.endDate}). Update the sprint dates first using update_sprint.`
+              );
+            }
+          }
+
+          // AC5: Auto-lock sprint when task moves to In Progress
+          const sprintRef = db.ref(`${sprintSectionPath}/${sprintFbId}`);
+          await sprintRef.update({ locked: true });
+        }
+      }
     }
   }
 
