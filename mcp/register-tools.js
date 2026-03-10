@@ -265,7 +265,7 @@ export function createMcpServer(serverName) {
   }));
 
   // ── Global Config tools ──
-  server.tool('list_global_config', 'List all global configs of a type (agents, prompts, instructions)', listGlobalConfigSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('list_global_config', 'List all global configs of a type (agents, prompts, instructions, guidelines)', listGlobalConfigSchema.shape, wrapWithUpdateNotice(async (params) => {
     return await listGlobalConfig(params);
   }));
 
@@ -273,11 +273,11 @@ export function createMcpServer(serverName) {
     return await getGlobalConfig(params);
   }));
 
-  server.tool('create_global_config', 'Create a new global config (agent, prompt, or instruction)', createGlobalConfigSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('create_global_config', 'Create a new global config (agent, prompt, instruction, or guideline). Guidelines require content and support auto-versioning.', createGlobalConfigSchema.shape, wrapWithUpdateNotice(async (params) => {
     return await createGlobalConfig(params);
   }));
 
-  server.tool('update_global_config', 'Update an existing global config', updateGlobalConfigSchema.shape, wrapWithUpdateNotice(async (params) => {
+  server.tool('update_global_config', 'Update an existing global config. For guidelines: auto-increments version and saves previous content in history when content changes.', updateGlobalConfigSchema.shape, wrapWithUpdateNotice(async (params) => {
     return await updateGlobalConfig(params);
   }));
 

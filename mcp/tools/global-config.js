@@ -1,37 +1,50 @@
 import { z } from 'zod';
 import { getDatabase } from '../firebase-adapter.js';
 
-export const VALID_CONFIG_TYPES = ['agents', 'prompts', 'instructions'];
+export const VALID_CONFIG_TYPES = ['agents', 'prompts', 'instructions', 'guidelines'];
 export const VALID_CATEGORIES = ['development', 'planning', 'qa', 'documentation', 'architecture'];
 
 export const listGlobalConfigSchema = z.object({
-  type: z.enum(['agents', 'prompts', 'instructions']).describe('Config type'),
+  type: z.enum(['agents', 'prompts', 'instructions', 'guidelines']).describe('Config type'),
   category: z.string().optional().describe('Filter by category')
 });
 
 export const getGlobalConfigSchema = z.object({
-  type: z.enum(['agents', 'prompts', 'instructions']).describe('Config type'),
+  type: z.enum(['agents', 'prompts', 'instructions', 'guidelines']).describe('Config type'),
   configId: z.string().describe('Config ID (the Firebase key)')
 });
 
 export const createGlobalConfigSchema = z.object({
-  type: z.enum(['agents', 'prompts', 'instructions']).describe('Config type'),
+  type: z.enum(['agents', 'prompts', 'instructions', 'guidelines']).describe('Config type'),
   name: z.string().describe('Config name'),
   description: z.string().optional().describe('Config description'),
   content: z.string().optional().describe('Config content'),
-  category: z.string().optional().describe('Category (default: "development")')
+  category: z.string().optional().describe('Category (default: "development")'),
+  targetFile: z.string().optional().describe('Target file path (guidelines only, must be relative path)')
 });
 
 export const updateGlobalConfigSchema = z.object({
-  type: z.enum(['agents', 'prompts', 'instructions']).describe('Config type'),
+  type: z.enum(['agents', 'prompts', 'instructions', 'guidelines']).describe('Config type'),
   configId: z.string().describe('Config ID'),
   updates: z.record(z.unknown()).describe('Fields to update')
 });
 
 export const deleteGlobalConfigSchema = z.object({
-  type: z.enum(['agents', 'prompts', 'instructions']).describe('Config type'),
+  type: z.enum(['agents', 'prompts', 'instructions', 'guidelines']).describe('Config type'),
   configId: z.string().describe('Config ID')
 });
+
+function validateTargetFile(targetFile) {
+  if (!targetFile || typeof targetFile !== 'string') {
+    throw new Error('targetFile must be a non-empty string.');
+  }
+  if (targetFile.startsWith('/')) {
+    throw new Error('targetFile must be a relative path (cannot start with "/").');
+  }
+  if (targetFile.includes('..')) {
+    throw new Error('targetFile cannot contain ".." path traversal.');
+  }
+}
 
 export async function listGlobalConfig({ type, category }) {
   const db = getDatabase();
@@ -54,14 +67,21 @@ export async function listGlobalConfig({ type, category }) {
 
   configs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-  const summary = configs.map(c => ({
-    configId: c.configId,
-    name: c.name,
-    description: c.description || '',
-    category: c.category || 'development',
-    createdAt: c.createdAt,
-    createdBy: c.createdBy
-  }));
+  const summary = configs.map(c => {
+    const item = {
+      configId: c.configId,
+      name: c.name,
+      description: c.description || '',
+      category: c.category || 'development',
+      createdAt: c.createdAt,
+      createdBy: c.createdBy
+    };
+    if (type === 'guidelines') {
+      item.version = c.version || 1;
+      if (c.targetFile) item.targetFile = c.targetFile;
+    }
+    return item;
+  });
 
   return {
     content: [{
@@ -94,12 +114,21 @@ export async function getGlobalConfig({ type, configId }) {
   };
 }
 
-export async function createGlobalConfig({ type, name, description, content, category }) {
+export async function createGlobalConfig({ type, name, description, content, category, targetFile }) {
   const db = getDatabase();
 
   const configCategory = category || 'development';
   if (!VALID_CATEGORIES.includes(configCategory)) {
     throw new Error(`Invalid category "${configCategory}". Valid categories: ${VALID_CATEGORIES.join(', ')}`);
+  }
+
+  if (type === 'guidelines') {
+    if (!content) {
+      throw new Error('Field "content" is required for guidelines.');
+    }
+    if (targetFile !== undefined) {
+      validateTargetFile(targetFile);
+    }
   }
 
   const configsRef = db.ref(`global/${type}`);
@@ -117,6 +146,13 @@ export async function createGlobalConfig({ type, name, description, content, cat
     updatedAt: now,
     updatedBy: 'geniova-mcp'
   };
+
+  if (type === 'guidelines') {
+    configData.version = 1;
+    if (targetFile !== undefined) {
+      configData.targetFile = targetFile;
+    }
+  }
 
   await newConfigRef.set(configData);
 
@@ -150,13 +186,37 @@ export async function updateGlobalConfig({ type, configId, updates }) {
   }
 
   const protectedFields = ['configId', 'type', 'createdAt', 'createdBy'];
+  if (type === 'guidelines') {
+    protectedFields.push('version', 'history');
+  }
   const protectedFieldsInUpdate = protectedFields.filter(field => field in updates);
   for (const field of protectedFieldsInUpdate) {
     throw new Error(`Cannot update protected field: "${field}"`);
   }
 
-  updates.updatedAt = new Date().toISOString();
+  if (type === 'guidelines' && updates.targetFile !== undefined) {
+    validateTargetFile(updates.targetFile);
+  }
+
+  const now = new Date().toISOString();
+  updates.updatedAt = now;
   updates.updatedBy = 'geniova-mcp';
+
+  // Auto-version guidelines when content changes
+  if (type === 'guidelines' && updates.content !== undefined) {
+    const currentData = snapshot.val();
+    const currentVersion = currentData.version || 1;
+
+    // Save previous version to history subnodo
+    const historyRef = db.ref(`global/${type}/${configId}/history/${currentVersion}`);
+    await historyRef.set({
+      content: currentData.content,
+      updatedAt: currentData.updatedAt,
+      updatedBy: currentData.updatedBy
+    });
+
+    updates.version = currentVersion + 1;
+  }
 
   await configRef.update(updates);
 
