@@ -34,6 +34,15 @@ export const deleteGlobalConfigSchema = z.object({
   configId: z.string().describe('Config ID')
 });
 
+export const getGuidelineHistorySchema = z.object({
+  configId: z.string().describe('Guideline config ID')
+});
+
+export const restoreGuidelineVersionSchema = z.object({
+  configId: z.string().describe('Guideline config ID'),
+  version: z.number().describe('Version number to restore')
+});
+
 function validateTargetFile(targetFile) {
   if (!targetFile || typeof targetFile !== 'string') {
     throw new Error('targetFile must be a non-empty string.');
@@ -158,16 +167,22 @@ export async function createGlobalConfig({ type, name, description, content, cat
 
   await saveConfigHistory(db, type, configId, configData, 'create');
 
+  const response = {
+    message: `${type.slice(0, -1)} created successfully`,
+    configId,
+    type,
+    name,
+    category: configCategory
+  };
+
+  if (type === 'guidelines') {
+    response.version = 1;
+  }
+
   return {
     content: [{
       type: 'text',
-      text: JSON.stringify({
-        message: `${type.slice(0, -1)} created successfully`,
-        configId,
-        type,
-        name,
-        category: configCategory
-      }, null, 2)
+      text: JSON.stringify(response, null, 2)
     }]
   };
 }
@@ -207,12 +222,12 @@ export async function updateGlobalConfig({ type, configId, updates }) {
     const currentData = snapshot.val();
     const currentVersion = currentData.version || 1;
 
-    // Save previous version to history subnodo
+    // Save previous version to history subnode
     const historyRef = db.ref(`global/${type}/${configId}/history/${currentVersion}`);
     await historyRef.set({
-      content: currentData.content,
-      updatedAt: currentData.updatedAt,
-      updatedBy: currentData.updatedBy
+      content: currentData.content || '',
+      updatedAt: currentData.updatedAt || currentData.createdAt,
+      updatedBy: currentData.updatedBy || currentData.createdBy
     });
 
     updates.version = currentVersion + 1;
@@ -265,6 +280,98 @@ export async function deleteGlobalConfig({ type, configId }) {
         message: `${type.slice(0, -1)} deleted successfully`,
         configId,
         type
+      }, null, 2)
+    }]
+  };
+}
+
+export async function getGuidelineHistory({ configId }) {
+  const db = getDatabase();
+  const configRef = db.ref(`global/guidelines/${configId}`);
+  const snapshot = await configRef.once('value');
+
+  if (!snapshot.exists()) {
+    throw new Error(`Guideline "${configId}" not found.`);
+  }
+
+  const config = snapshot.val();
+  const currentVersion = {
+    version: config.version || 1,
+    content: config.content || '',
+    updatedAt: config.updatedAt || config.createdAt,
+    updatedBy: config.updatedBy || config.createdBy
+  };
+
+  const history = config.history || {};
+  const previousVersions = Object.entries(history)
+    .map(([version, data]) => ({
+      version: parseInt(version, 10),
+      content: data.content,
+      updatedAt: data.updatedAt,
+      updatedBy: data.updatedBy
+    }))
+    .sort((a, b) => b.version - a.version);
+
+  return {
+    content: [{
+      type: 'text',
+      text: JSON.stringify({
+        configId,
+        name: config.name,
+        current: currentVersion,
+        previousVersions,
+        totalVersions: previousVersions.length + 1
+      }, null, 2)
+    }]
+  };
+}
+
+export async function restoreGuidelineVersion({ configId, version }) {
+  const db = getDatabase();
+  const configRef = db.ref(`global/guidelines/${configId}`);
+  const snapshot = await configRef.once('value');
+
+  if (!snapshot.exists()) {
+    throw new Error(`Guideline "${configId}" not found.`);
+  }
+
+  const config = snapshot.val();
+  const history = config.history || {};
+
+  if (!history[version]) {
+    throw new Error(`Version ${version} not found in history for guideline "${configId}". Available versions: ${Object.keys(history).join(', ') || 'none'}`);
+  }
+
+  const restoredContent = history[version].content;
+  const currentVersion = config.version || 1;
+  const now = new Date().toISOString();
+
+  // Save current version to history before restoring
+  const currentHistoryRef = db.ref(`global/guidelines/${configId}/history/${currentVersion}`);
+  await currentHistoryRef.set({
+    content: config.content || '',
+    updatedAt: config.updatedAt || config.createdAt,
+    updatedBy: config.updatedBy || config.createdBy
+  });
+
+  const newVersion = currentVersion + 1;
+
+  await configRef.update({
+    content: restoredContent,
+    version: newVersion,
+    updatedAt: now,
+    updatedBy: 'geniova-mcp'
+  });
+
+  return {
+    content: [{
+      type: 'text',
+      text: JSON.stringify({
+        message: `Guideline restored successfully from version ${version}`,
+        configId,
+        restoredFromVersion: version,
+        newVersion,
+        content: restoredContent
       }, null, 2)
     }]
   };
