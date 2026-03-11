@@ -3,6 +3,7 @@ import { resolve, basename, isAbsolute } from 'path';
 import { execSync } from 'child_process';
 import { ask, confirm, printHeader, printSuccess, printError, printWarning, printInfo } from '../utils/wizard.js';
 import { readConfig, writeConfig, resolveConfigPath } from '../utils/pg-config.js';
+import { syncGuidelines } from '../tools/sync-guidelines.js';
 
 /**
  * Run the interactive setup wizard.
@@ -25,28 +26,28 @@ export async function runInit({ nonInteractive = false } = {}) {
   }
 
   // ── Step 1: Prerequisites ──
-  printHeader('Step 1/6 — Prerequisites');
+  printHeader('Step 1/7 — Prerequisites');
   checkPrerequisites();
 
   // ── Step 2: Instance name & description ──
-  printHeader('Step 2/6 — Instance Name');
+  printHeader('Step 2/7 — Instance Name');
   const { instanceName, instanceDescription } = await resolveInstanceIdentity(existing, nonInteractive);
 
   // ── Step 3: Firebase credentials ──
-  printHeader('Step 3/6 — Firebase Credentials');
+  printHeader('Step 3/7 — Firebase Credentials');
   const { credentialsPath, projectId } = await resolveCredentials(existing, nonInteractive);
 
   // ── Step 4: Database URL + connectivity ──
-  printHeader('Step 4/6 — Firebase Database');
+  printHeader('Step 4/7 — Firebase Database');
   const databaseUrl = await resolveDatabaseUrl(projectId, existing, nonInteractive);
   await testConnectivity(credentialsPath, databaseUrl);
 
   // ── Step 5: User identity ──
-  printHeader('Step 5/6 — User Identity');
+  printHeader('Step 5/7 — User Identity');
   const user = await resolveUser(existing, nonInteractive);
 
   // ── Step 6: Generate config ──
-  printHeader('Step 6/6 — Save Configuration');
+  printHeader('Step 6/7 — Save Configuration');
   const serverName = `planning-game-${instanceName}`;
 
   const config = {
@@ -77,6 +78,10 @@ export async function runInit({ nonInteractive = false } = {}) {
   if (!nonInteractive) {
     await offerClaudeRegistration(config);
   }
+
+  // ── Step 7: Sync Guidelines ──
+  printHeader('Step 7/7 — Sync Guidelines');
+  await syncGuidelinesStep(credentialsPath, databaseUrl, nonInteractive);
 
   // Final summary
   printHeader('Setup Complete');
@@ -327,6 +332,54 @@ function resolveUserConfigPathCompat() {
     return resolve(instanceDir, 'mcp.user.json');
   }
   return resolve(process.cwd(), 'mcp.user.json');
+}
+
+async function syncGuidelinesStep(credentialsPath, databaseUrl, nonInteractive) {
+  let shouldSync = true;
+
+  if (!nonInteractive) {
+    shouldSync = await confirm('Sync project guidelines from Firebase?', true);
+  }
+
+  if (!shouldSync) {
+    printInfo('Guidelines sync skipped.');
+    return;
+  }
+
+  let tempApp;
+  try {
+    const admin = (await import('firebase-admin')).default;
+
+    tempApp = admin.initializeApp({
+      credential: admin.credential.cert(JSON.parse(readFileSync(credentialsPath, 'utf-8'))),
+      databaseURL: databaseUrl
+    }, `init-guidelines-${Date.now()}`);
+
+    const db = tempApp.database();
+    const result = await syncGuidelines({ force: true, db });
+
+    const parsed = JSON.parse(result.content[0].text);
+
+    if (parsed.synced > 0) {
+      printSuccess(`${parsed.synced} guideline(s) synced successfully.`);
+      for (const detail of parsed.details || []) {
+        if (detail.action !== 'skipped') {
+          printInfo(`  → ${detail.targetFile} (${detail.name || detail.configId})`);
+        }
+      }
+    } else if (parsed.errors > 0) {
+      printWarning(`Guidelines sync completed with ${parsed.errors} error(s).`);
+    } else {
+      printInfo('No guidelines found in Firebase. You can add them later.');
+    }
+  } catch (err) {
+    printWarning(`Could not sync guidelines: ${err.message}`);
+    printInfo('You can sync later with the sync_guidelines MCP tool.');
+  } finally {
+    if (tempApp) {
+      try { await tempApp.delete(); } catch { /* ignore cleanup errors */ }
+    }
+  }
 }
 
 async function offerClaudeRegistration(config) {

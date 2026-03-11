@@ -63,8 +63,8 @@ function writeLocalVersions(versions) {
  * Sync guidelines from Firebase to local files.
  * Downloads guidelines from global/guidelines and writes them to their targetFile paths.
  */
-export async function syncGuidelines({ dryRun = false, force = false }) {
-  const db = getDatabase();
+export async function syncGuidelines({ dryRun = false, force = false, db: externalDb } = {}) {
+  const db = externalDb || getDatabase();
   const snapshot = await db.ref('global/guidelines').once('value');
   const guidelinesData = snapshot.val();
 
