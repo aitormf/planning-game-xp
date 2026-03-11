@@ -18,8 +18,12 @@ describe('Global Config Service constants', () => {
       expect(CONFIG_TYPES).toContain('instructions');
     });
 
-    it('should have exactly 3 types', () => {
-      expect(CONFIG_TYPES).toHaveLength(3);
+    it('should include guidelines', () => {
+      expect(CONFIG_TYPES).toContain('guidelines');
+    });
+
+    it('should have exactly 4 types', () => {
+      expect(CONFIG_TYPES).toHaveLength(4);
     });
   });
 
@@ -102,6 +106,7 @@ describe('Global Config Service unit tests', () => {
       expect(() => service._validateType('agents')).not.toThrow();
       expect(() => service._validateType('prompts')).not.toThrow();
       expect(() => service._validateType('instructions')).not.toThrow();
+      expect(() => service._validateType('guidelines')).not.toThrow();
     });
 
     it('should reject invalid type', () => {
@@ -212,6 +217,29 @@ describe('Global Config data model', () => {
     expect(validInstruction.id).toBeDefined();
     expect(validInstruction.name).toBeDefined();
     expect(CONFIG_CATEGORIES).toContain(validInstruction.category);
+  });
+
+  it('should define expected guideline structure with targetFile and version', () => {
+    const validGuideline = {
+      id: 'guide_001',
+      type: 'guidelines',
+      name: 'Claude Code Guidelines',
+      description: 'Guidelines for Claude Code agents',
+      content: '## Claude Code\n\nFollow these rules...',
+      category: 'development',
+      targetFile: 'CLAUDE.md',
+      version: '1.2.0',
+      createdAt: '2026-03-01T10:00:00Z',
+      createdBy: 'admin@example.com',
+      updatedAt: '2026-03-10T15:00:00Z',
+      updatedBy: 'admin@example.com'
+    };
+
+    expect(validGuideline.id).toBeDefined();
+    expect(validGuideline.name).toBeDefined();
+    expect(validGuideline.targetFile).toBe('CLAUDE.md');
+    expect(validGuideline.version).toBe('1.2.0');
+    expect(CONFIG_CATEGORIES).toContain(validGuideline.category);
   });
 });
 
