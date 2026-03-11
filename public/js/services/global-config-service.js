@@ -1,6 +1,6 @@
 /**
  * Global Configuration Service
- * Handles CRUD operations for global AGENTS, PROMPTS, and INSTRUCTIONS
+ * Handles CRUD operations for global AGENTS, PROMPTS, INSTRUCTIONS, and GUIDELINES
  * These are shared across projects and can be selectively assigned to each project
  *
  * Structure:
@@ -10,16 +10,20 @@
  *   id, name, description, content, category, createdAt, createdBy, updatedAt, updatedBy
  * /global/instructions/{instructionId}/
  *   id, name, description, content, category, createdAt, createdBy, updatedAt, updatedBy
+ * /global/guidelines/{guidelineId}/
+ *   id, name, description, content, category, targetFile, version,
+ *   createdAt, createdBy, updatedAt, updatedBy
  *
  * /global-history/agents/{agentId}/{historyId}/...
  * /global-history/prompts/{promptId}/{historyId}/...
  * /global-history/instructions/{instructionId}/{historyId}/...
+ * /global-history/guidelines/{guidelineId}/{historyId}/...
  */
 
 /**
  * Valid configuration types
  */
-export const CONFIG_TYPES = ['agents', 'prompts', 'instructions'];
+export const CONFIG_TYPES = ['agents', 'prompts', 'instructions', 'guidelines'];
 
 /**
  * Valid categories for global configs
@@ -205,6 +209,12 @@ class GlobalConfigService {
         updatedBy: currentUser.email
       };
 
+      // Guidelines-specific fields
+      if (type === 'guidelines') {
+        configData.targetFile = config.targetFile || '';
+        configData.version = config.version || '1.0.0';
+      }
+
       if (isNew) {
         configData.createdAt = now;
         configData.createdBy = currentUser.email;
@@ -297,7 +307,7 @@ class GlobalConfigService {
       const historyRef = ref(database, `global-history/${type}/${configId}`);
       const newHistoryRef = push(historyRef);
 
-      await set(newHistoryRef, {
+      const historyEntry = {
         name: configData.name,
         description: configData.description,
         content: configData.content,
@@ -305,7 +315,17 @@ class GlobalConfigService {
         timestamp: new Date().toISOString(),
         changedBy: userEmail,
         action: action
-      });
+      };
+
+      // Include guidelines-specific fields in history
+      if (configData.targetFile !== undefined) {
+        historyEntry.targetFile = configData.targetFile;
+      }
+      if (configData.version !== undefined) {
+        historyEntry.version = configData.version;
+      }
+
+      await set(newHistoryRef, historyEntry);
     } catch (error) {
       console.error('Error saving history:', error);
       // Don't throw - history is secondary
@@ -381,6 +401,80 @@ class GlobalConfigService {
    */
   async getAllInstructions() {
     return this.getAllConfigs('instructions');
+  }
+
+  /**
+   * Get all guidelines
+   * @returns {Promise<Array>}
+   */
+  async getAllGuidelines() {
+    return this.getAllConfigs('guidelines');
+  }
+
+  /**
+   * Restore a config to a previous version from history
+   * @param {string} type - Config type
+   * @param {string} configId - Config ID
+   * @param {string} historyId - History entry ID to restore
+   * @returns {Promise<Object>} Restored config
+   */
+  async restoreConfigVersion(type, configId, historyId) {
+    this._validateType(type);
+
+    try {
+      const { database, ref, get, auth } = await this.getFirebaseModules();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        throw new Error('User must be authenticated to restore configs');
+      }
+
+      // Get history entry
+      const historyRef = ref(database, `global-history/${type}/${configId}/${historyId}`);
+      const snapshot = await get(historyRef);
+
+      if (!snapshot.exists()) {
+        throw new Error(`History entry ${historyId} not found for ${type}/${configId}`);
+      }
+
+      const historyData = snapshot.val();
+
+      // Build config from history data
+      const restoredConfig = {
+        id: configId,
+        name: historyData.name,
+        description: historyData.description,
+        content: historyData.content,
+        category: historyData.category
+      };
+
+      // Include guidelines-specific fields
+      if (type === 'guidelines') {
+        restoredConfig.targetFile = historyData.targetFile || '';
+        // Increment version on restore
+        const currentConfig = await this.getConfig(type, configId);
+        const currentVersion = currentConfig?.version || '1.0.0';
+        restoredConfig.version = this._incrementVersion(currentVersion);
+      }
+
+      return await this.saveConfig(type, restoredConfig);
+    } catch (error) {
+      console.error(`Error restoring ${type}/${configId} from history ${historyId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Increment a semver-like version string
+   * @param {string} version - Current version (e.g. '1.2.3')
+   * @returns {string} Incremented version (e.g. '1.2.4')
+   */
+  _incrementVersion(version) {
+    const parts = version.split('.').map(Number);
+    if (parts.length === 3) {
+      parts[2] += 1;
+    }
+    return parts.join('.');
   }
 
   /**

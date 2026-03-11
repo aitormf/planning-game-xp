@@ -8,6 +8,9 @@ import { globalConfigService, CONFIG_TYPES, CONFIG_CATEGORIES } from '../service
 import { demoModeService } from '../services/demo-mode-service.js';
 import './GlobalConfigCard.js';
 
+// Guidelines have their own dedicated manager component (GuidelinesManager)
+const LIST_CONFIG_TYPES = CONFIG_TYPES.filter(t => t !== 'guidelines');
+
 export class GlobalConfigList extends LitElement {
   static get properties() {
     return {
@@ -44,7 +47,7 @@ export class GlobalConfigList extends LitElement {
    * Load counts for all types
    */
   async loadAllCounts() {
-    for (const type of CONFIG_TYPES) {
+    for (const type of LIST_CONFIG_TYPES) {
       try {
         const items = await globalConfigService.getAllConfigs(type);
         this.typeCounts = {
@@ -217,7 +220,7 @@ export class GlobalConfigList extends LitElement {
         <aside class="sidebar">
           <div class="sidebar-title">Configuration Types</div>
           <div class="type-tabs">
-            ${CONFIG_TYPES.map(type => html`
+            ${LIST_CONFIG_TYPES.map(type => html`
               <button
                 class="type-tab ${this.activeType === type ? 'active' : ''}"
                 @click=${() => this._handleTypeChange(type)}
