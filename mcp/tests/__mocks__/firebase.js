@@ -43,7 +43,9 @@ export function setMockRtdbData(path, data) {
  * @returns {any} Data at path
  */
 export function getMockRtdbData(path) {
-  return mockRtdbData[path];
+  const flat = mockRtdbData[path];
+  if (flat !== undefined) return flat;
+  return getNestedValue(mockRtdbData, path);
 }
 
 /**
@@ -122,16 +124,13 @@ class MockRef {
     return {
       key,
       set: async (data) => {
-        if (!mockRtdbData[parentPath]) {
-          mockRtdbData[parentPath] = {};
-        }
-        mockRtdbData[parentPath][key] = data;
+        setNestedValue(mockRtdbData, `${parentPath}/${key}`, data);
       }
     };
   }
 
   async set(data) {
-    mockRtdbData[this.path] = data;
+    setNestedValue(mockRtdbData, this.path, data);
   }
 
   async remove() {

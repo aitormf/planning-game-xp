@@ -10,7 +10,7 @@ import { listStakeholdersSchema, listStakeholders } from './tools/stakeholders.j
 import { listAdrsSchema, listAdrs, getAdrSchema, getAdr, createAdrSchema, createAdr, updateAdrSchema, updateAdr, deleteAdrSchema, deleteAdr } from './tools/adrs.js';
 import { listPlansSchema, listPlans, getPlanSchema, getPlan, createPlanSchema, createPlan, updatePlanSchema, updatePlan, deletePlanSchema, deletePlan } from './tools/plans.js';
 import { listPlanProposalsSchema, listPlanProposals, getPlanProposalSchema, getPlanProposal, createPlanProposalSchema, createPlanProposal, updatePlanProposalSchema, updatePlanProposal, deletePlanProposalSchema, deletePlanProposal } from './tools/plan-proposals.js';
-import { listGlobalConfigSchema, listGlobalConfig, getGlobalConfigSchema, getGlobalConfig, createGlobalConfigSchema, createGlobalConfig, updateGlobalConfigSchema, updateGlobalConfig, deleteGlobalConfigSchema, deleteGlobalConfig } from './tools/global-config.js';
+import { listGlobalConfigSchema, listGlobalConfig, getGlobalConfigSchema, getGlobalConfig, createGlobalConfigSchema, createGlobalConfig, updateGlobalConfigSchema, updateGlobalConfig, deleteGlobalConfigSchema, deleteGlobalConfig, getGuidelineHistorySchema, getGuidelineHistory, restoreGuidelineVersionSchema, restoreGuidelineVersion } from './tools/global-config.js';
 import { setupMcpUserSchema, setupMcpUser } from './tools/setup-user.js';
 import { provisionUserSchema, provisionUser } from './tools/provision-user.js';
 import { deleteUserSchema, deleteUser } from './tools/delete-user.js';
@@ -294,6 +294,15 @@ export function createMcpServer(serverName) {
 
   server.tool('delete_global_config', 'Delete a global config (moves to trash)', deleteGlobalConfigSchema.shape, wrapWithUpdateNotice(async (params) => {
     return await deleteGlobalConfig(params);
+  }));
+
+  // ── Guideline Versioning tools ──
+  server.tool('get_guideline_history', 'Get version history of a guideline including current version and all previous versions with timestamps', getGuidelineHistorySchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await getGuidelineHistory(params);
+  }));
+
+  server.tool('restore_guideline_version', 'Restore a guideline to a previous version. Creates a new version with the content from the specified historical version, preserving full history', restoreGuidelineVersionSchema.shape, wrapWithUpdateNotice(async (params) => {
+    return await restoreGuidelineVersion(params);
   }));
 
   // ── MCP Status & Update tools ──
