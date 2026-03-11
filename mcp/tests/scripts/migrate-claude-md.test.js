@@ -235,6 +235,31 @@ describe('executeMigration', () => {
     expect(total).toBeLessThanOrEqual(plan.length);
     expect(results.errors).toHaveLength(0);
   });
+
+  it('should store targetFile when creating new guidelines', async () => {
+    const sections = parseSections(SAMPLE_MD);
+    const plan = buildMigrationPlan(sections);
+    const devEntry = plan.filter(e => e.target.configId === 'instr_dev_commands');
+
+    const db = createMockDb();
+    await executeMigration(devEntry, db);
+
+    expect(db._store.instr_dev_commands).toBeDefined();
+    expect(db._store.instr_dev_commands.targetFile).toBe('CLAUDE.md');
+  });
+
+  it('should store targetFile when creating from merge fallback', async () => {
+    const sections = parseSections(SAMPLE_MD);
+    const plan = buildMigrationPlan(sections);
+    const mergeOnly = plan.filter(e => e.target.action === 'merge');
+
+    // No existing configs — will fallback to create
+    const db = createMockDb();
+    await executeMigration(mergeOnly, db);
+
+    expect(db._store.instr_code_style).toBeDefined();
+    expect(db._store.instr_code_style.targetFile).toBe('CLAUDE.md');
+  });
 });
 
 describe('buildMigrationPlan with subsection extraction', () => {

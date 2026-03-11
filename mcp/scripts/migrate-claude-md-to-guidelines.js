@@ -129,7 +129,7 @@ export async function executeMigration(plan, db, options = {}) {
           .join(MERGE_SEPARATOR);
 
         if (!dryRun) {
-          await ref.set({
+          const data = {
             name: group.sections[0].name,
             description: `Migrated from CLAUDE.md (sections: ${group.sections.map(s => s.name).join(', ')})`,
             content: combinedContent,
@@ -139,7 +139,11 @@ export async function executeMigration(plan, db, options = {}) {
             createdBy: 'migration-script',
             updatedAt: now,
             updatedBy: 'migration-script',
-          });
+          };
+          if (group.target.targetFile) {
+            data.targetFile = group.target.targetFile;
+          }
+          await ref.set(data);
         }
         results.created.push(configId);
         continue;
@@ -164,13 +168,17 @@ export async function executeMigration(plan, db, options = {}) {
         : newContent;
 
       if (!dryRun) {
-        await ref.update({
+        const updateData = {
           content: mergedContent,
           sourceSection: [existing.sourceSection, ...group.sections.map(s => s.name)]
             .filter(Boolean).join(', '),
           updatedAt: now,
           updatedBy: 'migration-script',
-        });
+        };
+        if (group.target.targetFile && !existing.targetFile) {
+          updateData.targetFile = group.target.targetFile;
+        }
+        await ref.update(updateData);
       }
       results.merged.push(configId);
     } catch (error) {
@@ -198,7 +206,7 @@ export async function executeMigration(plan, db, options = {}) {
       const content = `## ${section.name}\n\n${section.content}`;
 
       if (!dryRun) {
-        await ref.set({
+        const data = {
           name: section.name,
           description: target.description || `Migrated from CLAUDE.md section: ${section.name}`,
           content,
@@ -208,7 +216,11 @@ export async function executeMigration(plan, db, options = {}) {
           createdBy: 'migration-script',
           updatedAt: now,
           updatedBy: 'migration-script',
-        });
+        };
+        if (target.targetFile) {
+          data.targetFile = target.targetFile;
+        }
+        await ref.set(data);
       }
       results.created.push(configId);
     } catch (error) {
