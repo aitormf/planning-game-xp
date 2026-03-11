@@ -5,6 +5,7 @@ import { basename } from 'path';
 import { initFirebase } from './firebase-adapter.js';
 import { createMcpServer } from './register-tools.js';
 import { checkVersionAtStartup, getLocalVersion } from './version-check.js';
+import { checkGuidelinesAtStartup } from './guidelines-check.js';
 
 // ── CLI flags ──
 const arg = process.argv[2];
@@ -61,6 +62,9 @@ try {
 
 // Check for updates at startup (non-blocking, logs to stderr if update available)
 checkVersionAtStartup().catch(() => {});
+
+// Check guidelines freshness at startup (non-blocking)
+checkGuidelinesAtStartup().catch(() => {});
 
 // Derive server name from instance directory
 const instanceName = getInstanceName();
