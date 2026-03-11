@@ -120,3 +120,4 @@ planning-game-instances/*
 # Test coverage
 coverage/
 functions/.env
+.kj/run.log

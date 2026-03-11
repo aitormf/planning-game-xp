@@ -2,7 +2,8 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { execSync } from 'child_process';
-import { getDatabase, getFirebaseProjectId } from './firebase-adapter.js';
+import { getDatabase } from './firebase-adapter.js';
+import { getInstanceMetadata } from './instance-metadata.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -169,14 +170,14 @@ export async function getMcpStatus() {
   const result = await checkForUpdates(true);
   const localChanges = hasLocalChanges();
 
-  const instanceDir = process.env.MCP_INSTANCE_DIR || null;
-  const instanceName = instanceDir ? instanceDir.split('/').pop() : null;
+  const instance = getInstanceMetadata();
 
   return {
     name: 'planning-game-mcp',
-    instanceName,
-    instanceDir,
-    firebaseProjectId: getFirebaseProjectId(),
+    instanceName: instance.name,
+    instanceDir: process.env.MCP_INSTANCE_DIR || null,
+    description: instance.description,
+    firebaseProjectId: instance.firebaseProjectId,
     localVersion: result.localVersion,
     remoteVersion: result.remoteVersion,
     commitsBehind: result.commitsBehind || 0,

@@ -1,8 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('../firebase-adapter.js', () => ({
-  resolveCredentialsPath: vi.fn(() => '/fake/path/serviceAccountKey.json'),
-  getFirebaseProjectId: vi.fn(() => 'test-project-id')
+  resolveCredentialsPath: vi.fn(() => '/fake/path/serviceAccountKey.json')
+}));
+
+vi.mock('../instance-metadata.js', () => ({
+  getInstanceMetadata: vi.fn(() => ({
+    name: 'test-instance',
+    firebaseProjectId: 'test-project-id',
+    description: 'Test instance description'
+  }))
 }));
 
 vi.mock('../user.js', () => ({
@@ -71,5 +78,19 @@ describe('pg_config', () => {
     expect(config.env).toHaveProperty('GOOGLE_APPLICATION_CREDENTIALS');
     expect(config.env).toHaveProperty('FIREBASE_DATABASE_URL');
     expect(config.env).toHaveProperty('NODE_ENV');
+  });
+
+  it('should include description from pg.config.yml', async () => {
+    const result = await pgConfig({ action: 'view' });
+    const config = JSON.parse(result.content[0].text);
+
+    expect(config).toHaveProperty('description', 'Test instance description');
+  });
+
+  it('should return description with action "get"', async () => {
+    const result = await pgConfig({ action: 'get', key: 'description' });
+    const data = JSON.parse(result.content[0].text);
+
+    expect(data).toEqual({ description: 'Test instance description' });
   });
 });
