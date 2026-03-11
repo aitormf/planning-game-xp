@@ -5,6 +5,87 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Add guidelines admin UI in project administration
+- Integrate sync_guidelines into MCP setup wizard
+- Add guidelines auto-check on MCP startup
+- Add guideline versioning, history and restore capabilities
+- Add migration script for CLAUDE.md to Firebase guidelines
+- Add CLAUDE.md to Firebase guidelines migration script
+- Add sync_guidelines MCP tool for local file synchronization
+- Add guidelines type to global_config with versioning and history
+- Add instance metadata for MCP instance awareness
+- Add work cycles tracking for reopened tasks
+- Add sprint validation rules for dates, locking, and task creation
+- Add setup wizard (planning-game-mcp init) with pg.config.yml
+- Exclude archived projects from MCP operations
+- Add --version and --help CLI flags to MCP server
+- Add pre-flight checks, pg_doctor and pg_config MCP tools (#155)
+- Add velocity metrics, completion rates, and sprint filtering to dashboard (#135)
+- Add team specs checklist to tasks and project config (#133)
+- Add GitHub Release pipeline for latest-version.json (#131)
+- Add public project toggle in admin settings (#130)
+- Add public API Cloud Function for project cards (#129)
+- Improve epic inference with task-title context and per-phase epics (#128)
+- Integrate mcp.user.json setup into wizard Step 9 (#127)
+- Auto-generate mcp.user.json with stakeholder info during setup (#126)
+- Add DAL service for web client with browser Firebase SDK adapters
+- Add Firestore-only factory and mark RTDB backends as deprecated
+- Add read-switch repositories for Firestore-first reads with RTDB fallback
+- Add dual-write repositories for shadow writing to secondary backend
+- Add RTDB to Firestore backfill migration script
+- Add Cloud Functions to mirror RTDB changes to Firestore
+- Implement Firestore repository layer for DAL
+- Implement RTDB repository layer for DAL
+- Define DAL interfaces and contracts for database abstraction
+- Implement multi-instance MCP setup in wizard step 9 (#115)
+- Add MCP smoke test for post-installation verification (#114)
+- Add example instance with placeholder configuration (#113)
+- Add demo mode with emulators and capped configurations (#112)
+- Add demo mode with emulators and capped configurations
+- PLN-TSK-0285: Create page-lifecycle.js with cleanup registry for View Tr
+- Add quick access icons next to notification bell (#111)
+- Make Microsoft Auth optional for Cloud Functions deployment (#110)
+- Enforce date coherence across all card types (#109)
+- Add PDF export for monthly hours report (#108)
+- Add developer detail list in hours report
+- Add Hours Report tab in admin console
+- Add report-hours-service for dev vs maintenance hours calculation
+- Accumulate time entries on task reopens with totalEffectiveHours
+- Recalculate effective hours on Done&Validated when timestamps are estimated
+- Remove Users tab and EntityDirectoryManager from /adminproject
+
+### Changed
+
+- Migrate view-factory and app-controller to unified-filters (#134)
+- Simplify UpdateService to version check notification (#132)
+
+### Fixed
+
+- Add timeouts to Firebase queries to prevent MCP hanging on bad database URL
+- Replace ReDoS-vulnerable regex in BugCard Gherkin parser (#107)
+- Resolve merge conflict in functions/index.js adding both handlers
+- Resolve SPA navigation instability with listener lifecycle and date validation
+- Fall back to project-level developer/stakeholder arrays when /users/ has no project assignments
+
+### Performance
+
+- Load only user-assigned projects instead of downloading all
+- Optimize page load with lazy WC imports, deferred services and skeleton loaders
+
+### Documentation
+
+- Add MCP v1.14.0 changelog, update README and installation guide with pg_doctor/pg_config tools
+- Add Firestore migration architecture document and ADR
+
+### Other
+
+- Bump MCP version to 1.14.1
+- Bump MCP version to 1.14.0
+
+## [1.164.10] - 2026-03-07
+
 ### Fixed
 
 - Show default tab immediately after partial HTML injection
