@@ -248,7 +248,12 @@ function registerClaudeCode(serverName, env, mcpIndex) {
   }
 
   if (!claudeAvailable) {
-    print('  Claude CLI no disponible. Registra manualmente con: claude mcp add');
+    print('\nClaude CLI no disponible. Registra manualmente:');
+    print(`  claude mcp add \\`);
+    print(`    -e MCP_INSTANCE_DIR=${mcpEnv.MCP_INSTANCE_DIR} \\`);
+    print(`    -e GOOGLE_APPLICATION_CREDENTIALS=${mcpEnv.GOOGLE_APPLICATION_CREDENTIALS} \\`);
+    print(`    -e FIREBASE_DATABASE_URL=${mcpEnv.FIREBASE_DATABASE_URL} \\`);
+    print(`    -s user "${serverName}" -- node "${MCP_INDEX}"`);
   }
 }
 
