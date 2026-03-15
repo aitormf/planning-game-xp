@@ -174,49 +174,23 @@ async function main() {
   const confirmedUrl = await question(rl, 'Database URL', databaseURL);
   databaseURL = confirmedUrl;
 
-  // Register with Claude Code CLI
-  print(`\nRegistrando MCP server "${serverName}"...`);
+  // Register with AI CLIs
+  print(`\nRegistrando MCP server "${serverName}" en CLIs detectados...`);
 
-  let claudeAvailable = true;
-  try {
-    execSync('which claude', { stdio: 'pipe' });
-  } catch {
-    claudeAvailable = false;
-  }
+  const mcpEnv = {
+    MCP_INSTANCE_DIR: instanceDir,
+    GOOGLE_APPLICATION_CREDENTIALS: keyPath,
+    FIREBASE_DATABASE_URL: databaseURL
+  };
 
-  if (claudeAvailable) {
-    try {
-      // Remove existing entry
-      try {
-        execSync(`claude mcp remove "${serverName}" -s user`, { stdio: 'pipe' });
-      } catch { /* may not exist */ }
+  // Claude Code
+  registerClaudeCode(serverName, mcpEnv, MCP_INDEX);
 
-      const addCmd = [
-        'claude', 'mcp', 'add',
-        '-e', `MCP_INSTANCE_DIR=${instanceDir}`,
-        '-e', `GOOGLE_APPLICATION_CREDENTIALS=${keyPath}`,
-        '-e', `FIREBASE_DATABASE_URL=${databaseURL}`,
-        '-s', 'user',
-        `"${serverName}"`,
-        '--', 'node', `"${MCP_INDEX}"`
-      ].join(' ');
+  // OpenCode
+  registerOpenCode(serverName, mcpEnv, MCP_INDEX);
 
-      execSync(addCmd, { stdio: 'pipe', cwd: ROOT_DIR });
-      print(`  OK: "${serverName}" registrado en Claude Code`);
-    } catch (error) {
-      print(`  Error registrando: ${error.message}`);
-      claudeAvailable = false;
-    }
-  }
-
-  if (!claudeAvailable) {
-    print('\nClaude CLI no disponible. Registra manualmente:');
-    print(`  claude mcp add \\`);
-    print(`    -e MCP_INSTANCE_DIR=${instanceDir} \\`);
-    print(`    -e GOOGLE_APPLICATION_CREDENTIALS=${keyPath} \\`);
-    print(`    -e FIREBASE_DATABASE_URL=${databaseURL} \\`);
-    print(`    -s user "${serverName}" -- node "${MCP_INDEX}"`);
-  }
+  // Codex CLI
+  registerCodex(serverName, mcpEnv, MCP_INDEX);
 
   // Configure mcp.user.json
   await setupMcpUser({
@@ -247,6 +221,115 @@ async function main() {
 
   print('Setup MCP completado.\n');
   rl.close();
+}
+
+function registerClaudeCode(serverName, env, mcpIndex) {
+  let claudeAvailable = true;
+  try {
+    execSync('which claude', { stdio: 'pipe' });
+  } catch {
+    claudeAvailable = false;
+  }
+
+  if (claudeAvailable) {
+    try {
+      try {
+        execSync(`claude mcp remove "${serverName}" -s user`, { stdio: 'pipe' });
+      } catch { /* may not exist */ }
+
+      const envFlags = Object.entries(env).map(([k, v]) => `-e ${k}=${v}`).join(' ');
+      const addCmd = `claude mcp add ${envFlags} -s user "${serverName}" -- node "${mcpIndex}"`;
+      execSync(addCmd, { stdio: 'pipe', cwd: ROOT_DIR });
+      print(`  OK: "${serverName}" registrado en Claude Code`);
+    } catch (error) {
+      print(`  Error registrando en Claude Code: ${error.message}`);
+      claudeAvailable = false;
+    }
+  }
+
+  if (!claudeAvailable) {
+    print('  Claude CLI no disponible. Registra manualmente con: claude mcp add');
+  }
+}
+
+function registerOpenCode(serverName, env, mcpIndex) {
+  try {
+    const homedir = process.env.HOME || process.env.USERPROFILE;
+    const configDir = path.join(homedir, '.config', 'opencode');
+    const configPath = path.join(configDir, 'opencode.json');
+
+    if (!fs.existsSync(configDir)) {
+      // OpenCode not installed - skip silently
+      return;
+    }
+
+    let openCodeConfig = {};
+    if (fs.existsSync(configPath)) {
+      openCodeConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    }
+
+    if (!openCodeConfig.mcp) {
+      openCodeConfig.mcp = {};
+    }
+
+    openCodeConfig.mcp[serverName] = {
+      type: 'local',
+      command: ['node', mcpIndex],
+      environment: env,
+      enabled: true
+    };
+
+    fs.writeFileSync(configPath, JSON.stringify(openCodeConfig, null, 2) + '\n', 'utf8');
+    print(`  OK: "${serverName}" registrado en OpenCode (${configPath})`);
+  } catch (error) {
+    print(`  Error registrando en OpenCode: ${error.message}`);
+  }
+}
+
+function registerCodex(serverName, env, mcpIndex) {
+  try {
+    const homedir = process.env.HOME || process.env.USERPROFILE;
+    const codexDir = path.join(homedir, '.codex');
+    const configPath = path.join(codexDir, 'config.toml');
+
+    if (!fs.existsSync(codexDir)) {
+      // Codex not installed - skip silently
+      return;
+    }
+
+    let tomlContent = '';
+    if (fs.existsSync(configPath)) {
+      tomlContent = fs.readFileSync(configPath, 'utf8');
+    }
+
+    const sectionHeader = `[mcp_servers.${serverName}]`;
+    const envHeader = `[mcp_servers.${serverName}.env]`;
+
+    const newSection = [
+      sectionHeader,
+      `command = "node"`,
+      `args = [${JSON.stringify(mcpIndex)}]`,
+      '',
+      envHeader,
+      ...Object.entries(env).map(([k, v]) => `${k} = ${JSON.stringify(v)}`),
+    ].join('\n');
+
+    const escaped = serverName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const sectionRegex = new RegExp(
+      `\\[mcp_servers\\.${escaped}\\][\\s\\S]*?(?=\\n\\[(?!mcp_servers\\.${escaped}\\.)|\n*$)`,
+    );
+
+    if (sectionRegex.test(tomlContent)) {
+      tomlContent = tomlContent.replace(sectionRegex, newSection);
+    } else {
+      tomlContent = tomlContent.trimEnd() + (tomlContent ? '\n\n' : '') + newSection + '\n';
+    }
+
+    fs.writeFileSync(configPath, tomlContent, 'utf8');
+    print(`  OK: "${serverName}" registrado en Codex (${configPath})`);
+  } catch (error) {
+    print(`  Error registrando en Codex: ${error.message}`);
+  }
 }
 
 main().catch(err => {

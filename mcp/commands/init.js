@@ -1,7 +1,7 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { resolve, basename, isAbsolute } from 'path';
 import { execSync } from 'child_process';
-import { ask, confirm, printHeader, printSuccess, printError, printWarning, printInfo } from '../utils/wizard.js';
+import { ask, confirm, multiSelect, printHeader, printSuccess, printError, printWarning, printInfo } from '../utils/wizard.js';
 import { readConfig, writeConfig, resolveConfigPath } from '../utils/pg-config.js';
 import { syncGuidelines } from '../tools/sync-guidelines.js';
 
@@ -74,9 +74,9 @@ export async function runInit({ nonInteractive = false } = {}) {
   // Write mcp.user.json for backwards compatibility
   writeMcpUserCompat(config);
 
-  // Offer to register in Claude Code
+  // Offer to register in AI CLIs
   if (!nonInteractive) {
-    await offerClaudeRegistration(config);
+    await offerCliRegistrations(config);
   }
 
   // ── Step 7: Sync Guidelines ──
@@ -382,10 +382,83 @@ async function syncGuidelinesStep(credentialsPath, databaseUrl, nonInteractive) 
   }
 }
 
-async function offerClaudeRegistration(config) {
-  const register = await confirm('Register this MCP in Claude Code (~/.claude.json)?', true);
+// ── CLI Registration ──
+
+const CLI_DEFINITIONS = [
+  {
+    id: 'claude',
+    label: 'Claude Code',
+    detect: () => {
+      const homedir = process.env.HOME || process.env.USERPROFILE;
+      return existsSync(resolve(homedir, '.claude.json')) || commandExists('claude');
+    },
+    register: registerInClaudeCode
+  },
+  {
+    id: 'opencode',
+    label: 'OpenCode',
+    detect: () => {
+      const homedir = process.env.HOME || process.env.USERPROFILE;
+      return existsSync(resolve(homedir, '.config', 'opencode')) || commandExists('opencode');
+    },
+    register: registerInOpenCode
+  },
+  {
+    id: 'codex',
+    label: 'Codex CLI',
+    detect: () => {
+      const homedir = process.env.HOME || process.env.USERPROFILE;
+      return existsSync(resolve(homedir, '.codex')) || commandExists('codex');
+    },
+    register: registerInCodex
+  }
+];
+
+function commandExists(cmd) {
+  try {
+    execSync(`which ${cmd}`, { stdio: 'pipe', timeout: 3000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function offerCliRegistrations(config) {
+  const detected = CLI_DEFINITIONS.filter(cli => cli.detect());
+
+  if (detected.length === 0) {
+    printInfo('No AI CLIs detected (Claude Code, OpenCode, Codex).');
+    printInfo('You can register manually later.');
+    return;
+  }
+
+  const register = await confirm('Register this MCP in an AI CLI?', true);
   if (!register) return;
 
+  let selected;
+  if (detected.length === 1) {
+    printInfo(`Detected: ${detected[0].label}`);
+    selected = [detected[0].id];
+  } else {
+    const options = detected.map(cli => ({ label: cli.label, value: cli.id }));
+    selected = await multiSelect('Which AI CLIs do you want to configure?', options);
+  }
+
+  for (const cliId of selected) {
+    const cli = CLI_DEFINITIONS.find(c => c.id === cliId);
+    await cli.register(config);
+  }
+}
+
+function buildMcpEnv(config) {
+  const instanceDir = process.env.MCP_INSTANCE_DIR || process.cwd();
+  return {
+    MCP_INSTANCE_DIR: instanceDir,
+    GOOGLE_APPLICATION_CREDENTIALS: config.firebase.credentialsPath
+  };
+}
+
+function registerInClaudeCode(config) {
   try {
     const homedir = process.env.HOME || process.env.USERPROFILE;
     const claudeConfigPath = resolve(homedir, '.claude.json');
@@ -400,22 +473,108 @@ async function offerClaudeRegistration(config) {
     }
 
     const serverName = config.mcp.serverName;
-    const instanceDir = process.env.MCP_INSTANCE_DIR || process.cwd();
-
     claudeConfig.mcpServers[serverName] = {
       type: 'stdio',
       command: 'node',
       args: [resolve(process.cwd(), 'index.js')],
-      env: {
-        MCP_INSTANCE_DIR: instanceDir,
-        GOOGLE_APPLICATION_CREDENTIALS: config.firebase.credentialsPath
-      }
+      env: buildMcpEnv(config)
     };
 
     writeFileSync(claudeConfigPath, JSON.stringify(claudeConfig, null, 2) + '\n', 'utf-8');
     printSuccess(`Registered "${serverName}" in ${claudeConfigPath}`);
   } catch (err) {
-    printWarning(`Could not update Claude config: ${err.message}`);
+    printWarning(`Could not update Claude Code config: ${err.message}`);
     printInfo('You can register manually with: claude mcp add');
   }
+}
+
+function registerInOpenCode(config) {
+  try {
+    const homedir = process.env.HOME || process.env.USERPROFILE;
+    const configDir = resolve(homedir, '.config', 'opencode');
+    const configPath = resolve(configDir, 'opencode.json');
+
+    if (!existsSync(configDir)) {
+      mkdirSync(configDir, { recursive: true });
+    }
+
+    let openCodeConfig = {};
+    if (existsSync(configPath)) {
+      openCodeConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
+    }
+
+    if (!openCodeConfig.mcp) {
+      openCodeConfig.mcp = {};
+    }
+
+    const serverName = config.mcp.serverName;
+    const env = buildMcpEnv(config);
+
+    openCodeConfig.mcp[serverName] = {
+      type: 'local',
+      command: ['node', resolve(process.cwd(), 'index.js')],
+      environment: env,
+      enabled: true
+    };
+
+    writeFileSync(configPath, JSON.stringify(openCodeConfig, null, 2) + '\n', 'utf-8');
+    printSuccess(`Registered "${serverName}" in ${configPath}`);
+  } catch (err) {
+    printWarning(`Could not update OpenCode config: ${err.message}`);
+    printInfo('You can register manually in ~/.config/opencode/opencode.json');
+  }
+}
+
+function registerInCodex(config) {
+  try {
+    const homedir = process.env.HOME || process.env.USERPROFILE;
+    const codexDir = resolve(homedir, '.codex');
+    const configPath = resolve(codexDir, 'config.toml');
+
+    if (!existsSync(codexDir)) {
+      mkdirSync(codexDir, { recursive: true });
+    }
+
+    let tomlContent = '';
+    if (existsSync(configPath)) {
+      tomlContent = readFileSync(configPath, 'utf-8');
+    }
+
+    const serverName = config.mcp.serverName;
+    const env = buildMcpEnv(config);
+    const indexPath = resolve(process.cwd(), 'index.js');
+
+    const sectionHeader = `[mcp_servers.${serverName}]`;
+    const envHeader = `[mcp_servers.${serverName}.env]`;
+
+    const newSection = [
+      sectionHeader,
+      `command = "node"`,
+      `args = [${JSON.stringify(indexPath)}]`,
+      '',
+      envHeader,
+      ...Object.entries(env).map(([k, v]) => `${k} = ${JSON.stringify(v)}`),
+    ].join('\n');
+
+    // Remove existing section if present
+    const sectionRegex = new RegExp(
+      `\\[mcp_servers\\.${escapeRegex(serverName)}\\][\\s\\S]*?(?=\\n\\[(?!mcp_servers\\.${escapeRegex(serverName)}\\.)|\n*$)`,
+    );
+
+    if (sectionRegex.test(tomlContent)) {
+      tomlContent = tomlContent.replace(sectionRegex, newSection);
+    } else {
+      tomlContent = tomlContent.trimEnd() + (tomlContent ? '\n\n' : '') + newSection + '\n';
+    }
+
+    writeFileSync(configPath, tomlContent, 'utf-8');
+    printSuccess(`Registered "${serverName}" in ${configPath}`);
+  } catch (err) {
+    printWarning(`Could not update Codex config: ${err.message}`);
+    printInfo('You can register manually in ~/.codex/config.toml');
+  }
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

@@ -91,6 +91,41 @@ export async function select(question, options, defaultValue) {
 }
 
 /**
+ * Ask the user to select multiple options from a list.
+ * @param {string} question - Prompt text
+ * @param {Array<{label: string, value: string}>} options - Choices
+ * @returns {Promise<string[]>} Selected values
+ */
+export async function multiSelect(question, options) {
+  process.stderr.write(`\n${question}\n`);
+  options.forEach((opt, i) => {
+    process.stderr.write(`  ${i + 1}. ${opt.label}\n`);
+  });
+
+  const answer = await ask('Select (comma-separated, or "all")', {
+    defaultValue: 'all',
+    validate: (val) => {
+      if (val.toLowerCase() === 'all') return null;
+      const parts = val.split(',').map(s => s.trim());
+      for (const part of parts) {
+        const num = parseInt(part, 10);
+        if (isNaN(num) || num < 1 || num > options.length) {
+          return `Each value must be a number between 1 and ${options.length}`;
+        }
+      }
+      return null;
+    }
+  });
+
+  if (answer.toLowerCase() === 'all') {
+    return options.map(o => o.value);
+  }
+
+  const indices = answer.split(',').map(s => parseInt(s.trim(), 10) - 1);
+  return [...new Set(indices)].map(i => options[i].value);
+}
+
+/**
  * Print a section header.
  * @param {string} title
  */
