@@ -44,11 +44,18 @@ export async function runInit({ nonInteractive = false } = {}) {
 
   // ── Step 5: User identity ──
   printHeader('Step 5/7 — User Identity');
-  const user = await resolveUser(existing, nonInteractive);
+  const user = await resolveUser(existing, nonInteractive, credentialsPath, databaseUrl);
 
   // ── Step 6: Generate config ──
   printHeader('Step 6/7 — Save Configuration');
   const serverName = `planning-game-${instanceName}`;
+
+  const userConfig = {
+    name: user.name,
+    email: user.email
+  };
+  if (user.developerId) userConfig.developerId = user.developerId;
+  if (user.stakeholderId) userConfig.stakeholderId = user.stakeholderId;
 
   const config = {
     instance: { name: instanceName, description: instanceDescription },
@@ -57,11 +64,7 @@ export async function runInit({ nonInteractive = false } = {}) {
       databaseUrl,
       credentialsPath
     },
-    user: {
-      developerId: user.developerId,
-      name: user.name,
-      email: user.email
-    },
+    user: userConfig,
     mcp: {
       serverName,
       autoUpdate: true
@@ -88,7 +91,11 @@ export async function runInit({ nonInteractive = false } = {}) {
   printSuccess(`Instance: ${instanceName}`);
   printSuccess(`Firebase project: ${projectId}`);
   printSuccess(`Database URL: ${databaseUrl}`);
-  printSuccess(`User: ${user.name} (${user.developerId})`);
+  const userRoles = [
+    user.developerId ? user.developerId : null,
+    user.stakeholderId ? user.stakeholderId : null
+  ].filter(Boolean).join(' / ');
+  printSuccess(`User: ${user.name} (${userRoles})`);
   printSuccess(`Config: ${configPath}`);
   printInfo('Run "planning-game-mcp --version" to verify installation.');
   printInfo('The MCP server will use pg.config.yml on next startup.');
@@ -270,20 +277,102 @@ async function testConnectivity(credentialsPath, databaseUrl) {
   }
 }
 
-async function resolveUser(existing, nonInteractive) {
+/**
+ * Fetch user list from Firebase /users.
+ * Returns array of { name, email, developerId, stakeholderId } or empty on failure.
+ */
+async function fetchUsersFromFirebase(credentialsPath, databaseUrl) {
+  try {
+    const admin = (await import('firebase-admin')).default;
+    const tempApp = admin.initializeApp({
+      credential: admin.credential.cert(JSON.parse(readFileSync(credentialsPath, 'utf-8'))),
+      databaseURL: databaseUrl
+    }, `init-users-${Date.now()}`);
+
+    const snapshot = await Promise.race([
+      tempApp.database().ref('/users').once('value'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+    ]);
+
+    const usersData = snapshot.val();
+    await tempApp.delete();
+
+    if (!usersData) return [];
+
+    const users = [];
+    for (const userData of Object.values(usersData)) {
+      if (!userData || typeof userData !== 'object') continue;
+      if (userData.active === false) continue;
+      if (!userData.developerId && !userData.stakeholderId) continue;
+      users.push({
+        name: userData.name || '',
+        email: userData.email || '',
+        developerId: userData.developerId || null,
+        stakeholderId: userData.stakeholderId || null
+      });
+    }
+    return users.sort((a, b) => a.name.localeCompare(b.name));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Try to auto-detect the user from the list by name or email match.
+ */
+function findMatchingUser(users, name, email) {
+  if (!users.length) return null;
+
+  if (email) {
+    const match = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (match) return match;
+  }
+
+  if (name) {
+    const lower = name.toLowerCase();
+    const exact = users.find(u => u.name.toLowerCase() === lower);
+    if (exact) return exact;
+    const partial = users.find(u => u.name.toLowerCase().includes(lower) || lower.includes(u.name.toLowerCase()));
+    if (partial) return partial;
+  }
+
+  return null;
+}
+
+async function resolveUser(existing, nonInteractive, credentialsPath, databaseUrl) {
   const defaults = {
     name: existing?.user?.name || '',
     email: existing?.user?.email || '',
-    developerId: existing?.user?.developerId || ''
+    developerId: existing?.user?.developerId || '',
+    stakeholderId: existing?.user?.stakeholderId || ''
   };
 
   if (nonInteractive) {
-    if (!defaults.developerId) {
+    if (!defaults.developerId && !defaults.stakeholderId) {
       printWarning('User not configured. Run "planning-game-mcp init" interactively to set up.');
     }
     return defaults;
   }
 
+  // Fetch users from Firebase to help identify the user
+  printInfo('Fetching user list from Firebase...');
+  const users = await fetchUsersFromFirebase(credentialsPath, databaseUrl);
+
+  if (users.length > 0) {
+    printSuccess(`Found ${users.length} user(s):`);
+    for (const u of users) {
+      const roles = [
+        u.developerId ? u.developerId : null,
+        u.stakeholderId ? u.stakeholderId : null
+      ].filter(Boolean).join(' / ');
+      printInfo(`  ${roles} — ${u.name} <${u.email}>`);
+    }
+    console.log('');
+  } else {
+    printWarning('Could not fetch developer list. You will need to enter your ID manually.');
+  }
+
+  // Ask name and email first
   const name = await ask('Your name', {
     defaultValue: defaults.name,
     validate: (val) => val ? null : 'Name is required'
@@ -298,26 +387,80 @@ async function resolveUser(existing, nonInteractive) {
     }
   });
 
-  const developerId = await ask('Your developer ID (e.g., dev_001)', {
+  // Try auto-detect from user list
+  if (users.length > 0) {
+    const match = findMatchingUser(users, name, email);
+    if (match) {
+      const roles = [
+        match.developerId ? `developer: ${match.developerId}` : null,
+        match.stakeholderId ? `stakeholder: ${match.stakeholderId}` : null
+      ].filter(Boolean).join(', ');
+
+      const confirmed = await confirm(`Are you ${match.name} (${roles})?`, true);
+      if (confirmed) {
+        printSuccess(`User: ${match.name} <${email}> (${roles})`);
+        return {
+          name: match.name,
+          email,
+          developerId: match.developerId || '',
+          stakeholderId: match.stakeholderId || ''
+        };
+      }
+    }
+  }
+
+  // Manual entry — ask for roles
+  printInfo('Enter your IDs. Leave blank if you don\'t have that role.');
+
+  const allDevIds = users.filter(u => u.developerId).map(u => u.developerId);
+  const allStkIds = users.filter(u => u.stakeholderId).map(u => u.stakeholderId);
+
+  const developerId = await ask('Your developer ID (e.g., dev_001) — leave empty if stakeholder only', {
     defaultValue: defaults.developerId,
     validate: (val) => {
-      if (!val) return 'Developer ID is required';
+      if (!val) return null; // optional
       if (!val.startsWith('dev_')) return 'Developer ID must start with "dev_"';
+      if (allDevIds.length > 0 && !allDevIds.includes(val)) {
+        return `Developer "${val}" not found. Available: ${allDevIds.join(', ')}`;
+      }
       return null;
     }
   });
 
-  printSuccess(`User: ${name} <${email}> (${developerId})`);
-  return { name, email, developerId };
+  const stakeholderId = await ask('Your stakeholder ID (e.g., stk_001) — leave empty if developer only', {
+    defaultValue: defaults.stakeholderId,
+    validate: (val) => {
+      if (!val) return null; // optional
+      if (!val.startsWith('stk_')) return 'Stakeholder ID must start with "stk_"';
+      if (allStkIds.length > 0 && !allStkIds.includes(val)) {
+        return `Stakeholder "${val}" not found. Available: ${allStkIds.join(', ')}`;
+      }
+      return null;
+    }
+  });
+
+  if (!developerId && !stakeholderId) {
+    printError('You must have at least one role (developer or stakeholder).');
+    process.exit(1);
+  }
+
+  const roles = [
+    developerId ? `developer: ${developerId}` : null,
+    stakeholderId ? `stakeholder: ${stakeholderId}` : null
+  ].filter(Boolean).join(', ');
+  printSuccess(`User: ${name} <${email}> (${roles})`);
+
+  return { name, email, developerId: developerId || '', stakeholderId: stakeholderId || '' };
 }
 
 function writeMcpUserCompat(config) {
   try {
     const userConfigPath = resolveUserConfigPathCompat();
     const userData = {
-      developerId: config.user.developerId,
-      developerName: config.user.name,
-      developerEmail: config.user.email
+      developerId: config.user.developerId || null,
+      stakeholderId: config.user.stakeholderId || null,
+      name: config.user.name,
+      email: config.user.email
     };
     writeFileSync(userConfigPath, JSON.stringify(userData, null, 2) + '\n', 'utf-8');
     printSuccess(`mcp.user.json updated at: ${userConfigPath}`);

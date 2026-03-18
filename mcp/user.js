@@ -31,10 +31,12 @@ function loadUser() {
 
   // Try pg.config.yml first
   const pgConfig = readConfig();
-  const configUserId = getConfigValue(pgConfig, 'user.developerId');
-  if (configUserId) {
+  const configDevId = getConfigValue(pgConfig, 'user.developerId');
+  const configStkId = getConfigValue(pgConfig, 'user.stakeholderId');
+  if (configDevId || configStkId) {
     mcpUser = {
-      developerId: configUserId,
+      developerId: configDevId || null,
+      stakeholderId: configStkId || null,
       developerName: getConfigValue(pgConfig, 'user.name') || '',
       developerEmail: getConfigValue(pgConfig, 'user.email') || '',
       name: getConfigValue(pgConfig, 'user.name') || '',
@@ -54,7 +56,7 @@ function loadUser() {
 
 export function isMcpUserConfigured() {
   loadUser();
-  return mcpUser !== null && !!mcpUser.developerId;
+  return mcpUser !== null && (!!mcpUser.developerId || !!mcpUser.stakeholderId);
 }
 
 export function getMcpUser() {
