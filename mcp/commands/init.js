@@ -402,10 +402,18 @@ async function offerClaudeRegistration(config) {
     const serverName = config.mcp.serverName;
     const instanceDir = process.env.MCP_INSTANCE_DIR || process.cwd();
 
+    // Use the installed binary name so it works regardless of where the
+    // package was installed (global, npx cache, etc.). Falls back to
+    // `node <this-file's-dir>/index.js` only when running from source.
+    const runningFromSource = !process.argv[1]?.includes('node_modules');
+    const mcpEntryPoint = runningFromSource
+      ? resolve(import.meta.dirname, '..', 'index.js')
+      : null;
+
     claudeConfig.mcpServers[serverName] = {
       type: 'stdio',
-      command: 'node',
-      args: [resolve(process.cwd(), 'index.js')],
+      command: mcpEntryPoint ? 'node' : 'planning-game-mcp',
+      args: mcpEntryPoint ? [mcpEntryPoint] : [],
       env: {
         MCP_INSTANCE_DIR: instanceDir,
         GOOGLE_APPLICATION_CREDENTIALS: config.firebase.credentialsPath

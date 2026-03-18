@@ -1,7 +1,13 @@
 {
-  "allowedPackages": [],
+  "allowedPackages": [
+    "@tootallnate/once",
+    "@google-cloud/storage",
+    "fast-xml-parser",
+    "firebase-admin",
+    "http-proxy-agent"
+  ],
   "allowedAdvisories": [],
-  "reason": "",
-  "lastReviewed": "2026-02-18",
+  "reason": "Transitive deps of firebase-admin >=12. No fix without breaking downgrade to v11.",
+  "lastReviewed": "2026-03-18",
   "reviewedBy": "Team"
 }
