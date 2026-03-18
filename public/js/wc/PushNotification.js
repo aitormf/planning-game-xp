@@ -190,9 +190,9 @@ return;
     }
 
     this.textContent = payload.notification.body || 'Nueva notificación';
-    this.style.top = '20px';
+    this.style.transform = 'translate(-50%, 20px)';
     setTimeout(() => {
-      this.style.top = '-100%';
+      this.style.transform = 'translate(-50%, -100%)';
     }, 5000);
   }
 }

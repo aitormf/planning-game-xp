@@ -2,11 +2,12 @@ export const PushNotificationStyles = `
   :host {
     display: block;
     position: fixed;
-    top: -100%;
+    top: 0;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -100%);
     z-index: 1000;
-    transition: top 0.3s ease-in-out;
+    transition: transform 0.3s ease-in-out;
+    will-change: transform;
   }
   .notification {
     background: var(--bg-primary, white);
@@ -18,6 +19,6 @@ export const PushNotificationStyles = `
     color: var(--text-primary, inherit);
   }
   .notification.show {
-    top: 20px;
+    transform: translate(-50%, 20px);
   }
 `;

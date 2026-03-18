@@ -457,7 +457,9 @@ export const StateHistoryViewerStyles = css`
   .time-bar {
     height: 100%;
     border-radius: 4px;
-    transition: width 0.5s ease;
+    transform-origin: left;
+    transition: transform 0.5s ease;
+    will-change: transform;
   }
 
   .time-value {

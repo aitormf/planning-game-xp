@@ -899,3 +899,37 @@ npm run build:update-package  # Build with package updates
 npm run build:installer       # Build installer package
 npm run test:ui              # Run unit tests with UI interface
 ```
+
+## Design Context
+
+### Users
+- **Primary**: Development teams (5-30 people) practicing eXtreme Programming (XP)
+- **Roles**: Developers, Stakeholders, SuperAdmins, Consultants
+- **Context**: Daily tool for sprint planning, task tracking, backlog grooming, and delivery pipeline visibility
+- **Job to be done**: Manage agile workflow end-to-end — from planning poker to deployment tracking — with full traceability and real-time collaboration
+
+### Brand Personality
+- **Three words**: Robusto, serio, enterprise
+- **Voice**: Professional, precise, no-nonsense. The tool speaks through its data, not decoration
+- **Emotional goals**: Confidence and control (everything organized and visible), Productivity and flow (fast, frictionless interactions), Calm and clarity (clean interface, no visual noise)
+
+### Aesthetic Direction
+- **Visual tone**: Enterprise-grade with Linear-inspired polish. Dense information display without clutter. Serious but not boring
+- **Primary reference**: **Linear** — minimal, fast, elegant dark mode, keyboard-first, powerful shortcuts, restrained color use
+- **Anti-references**: None explicitly rejected, but avoid: excessive decoration, gratuitous animations, consumer-app simplicity that doesn't scale, or corporate dashboard blandness
+- **Theme**: Light and dark mode supported. Primary brand color `#4a9eff` (blue), secondary `#ec3e95` (pink). Status colors are semantic and must remain highly distinguishable
+- **Typography**: Inter (UI) + JetBrains Mono (code/IDs). Clean hierarchy with restrained size scale
+
+### Design Principles
+1. **Information density over whitespace** — Users need to see many cards, statuses, and metrics at once. Optimize for scanability, not spaciousness
+2. **Color communicates status, not decoration** — Every color must mean something (status, priority, role). Avoid decorative color that dilutes the signal
+3. **Speed is a feature** — Interactions must feel instant. Keyboard shortcuts, quick filters, bulk actions. Minimize clicks to reach any card
+4. **Consistency over creativity** — Every card type, modal, and view should follow the same visual grammar. Predictability builds trust
+5. **Progressive disclosure** — Show essential info by default, reveal detail on demand. Cards show title/status/developer; click to expand full story, criteria, commits
+
+### Design Token Architecture
+- **3-layer system**: Primitives (raw values) → Semantic (meaningful names) → Components (scoped to UI elements)
+- **Key files**: `public/js/ui/styles/tokens/primitives.js`, `semantic.js`, `components.js`
+- **Dark theme**: `public/js/ui/styles/themes/dark-theme.js`
+- **Runtime config**: `public/theme-config.json` (per-instance branding, status colors)
+- **FOUC prevention**: Blocking inline script in `Layout.astro` applies cached tokens before first paint

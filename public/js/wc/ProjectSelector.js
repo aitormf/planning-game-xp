@@ -41,18 +41,29 @@ export class ProjectSelector extends LitElement {
     const selectedName = this.projects[this.selectedProject]?.name || this.selectedProject;
     return html`
       <div class="selector-container">
-        <div class="selector" @click=${this.toggleOptions}>
-          <h2 class="selected-value">
+        <div class="selector"
+             role="combobox"
+             tabindex="0"
+             aria-expanded="${this.isOpen}"
+             aria-haspopup="listbox"
+             aria-label="Select project"
+             @click=${this.toggleOptions}
+             @keydown=${this._handleSelectorKeydown}>
+          <span class="selected-value">
             ${selectedName ? selectedName : 'Selecciona proyecto'}
-          </h2>
-          <span class="arrow ${this.isOpen ? 'open' : ''}">▼</span>
+          </span>
+          <span class="arrow ${this.isOpen ? 'open' : ''}" aria-hidden="true">▼</span>
         </div>
       </div>
       ${this.isOpen ? html`
-        <div class="options">
+        <div class="options" role="listbox">
           ${this.activeProjects.map(([id, project]) => html`
             <div class="option ${id === this.selectedProject ? 'selected' : ''}"
-                 @click=${() => this.selectProject(id)}>
+                 role="option"
+                 tabindex="-1"
+                 aria-selected="${id === this.selectedProject}"
+                 @click=${() => this.selectProject(id)}
+                 @keydown=${(e) => this._handleOptionKeydown(e, id)}>
               ${project.name || id}
             </div>
           `)}
@@ -62,12 +73,67 @@ export class ProjectSelector extends LitElement {
   }
 
   toggleOptions() {
+    const wasOpen = this.isOpen;
     this.isOpen = !this.isOpen;
+    if (!wasOpen) {
+      this._focusFirstOption();
+    } else {
+      this._focusTrigger();
+    }
+  }
+
+  _focusFirstOption() {
+    this.updateComplete.then(() => {
+      const firstOption = this.shadowRoot.querySelector('.option');
+      if (firstOption) {
+        firstOption.focus();
+      }
+    });
+  }
+
+  _focusTrigger() {
+    this.updateComplete.then(() => {
+      const trigger = this.shadowRoot.querySelector('.selector');
+      if (trigger) {
+        trigger.focus();
+      }
+    });
+  }
+
+  _handleSelectorKeydown(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      this.toggleOptions();
+    } else if (e.key === 'Escape' && this.isOpen) {
+      e.preventDefault();
+      this.isOpen = false;
+      this._focusTrigger();
+    }
+  }
+
+  _handleOptionKeydown(e, id) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      this.selectProject(id);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      this.isOpen = false;
+      this._focusTrigger();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = e.target.nextElementSibling;
+      if (next) next.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = e.target.previousElementSibling;
+      if (prev) prev.focus();
+    }
   }
 
   selectProject(projectId) {
     this.selectedProject = projectId;
     this.isOpen = false;
+    this._focusTrigger();
     this.dispatchEvent(new CustomEvent('project-changed', {
       detail: { projectId },
       bubbles: true,
