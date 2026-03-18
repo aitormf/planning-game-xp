@@ -1,19 +1,39 @@
 #!/usr/bin/env node
 /**
- * Initialize required list data in the personal (manufosela) RTDB instance.
+ * Initialize required list data in the active RTDB instance(s).
  * This sets up bugpriorityList, statusList, and other required config
  * that the MCP server needs to function properly.
+ *
+ * Reads PUBLIC_FIREBASE_DATABASE_URL from .env.dev and .env.prod (symlinked
+ * from the active instance). Both are initialized if they have different URLs.
  *
  * Usage: node scripts/init-personal-rtdb-lists.cjs [--dry-run]
  */
 
 const admin = require('firebase-admin');
 const path = require('path');
+const fs = require('fs');
 
-const INSTANCE_DIR = path.join(__dirname, '..', 'planning-game-instances', 'manufosela');
-const SERVICE_ACCOUNT = path.join(INSTANCE_DIR, 'serviceAccountKey.json');
-const DATABASE_URL = 'https://planning-game-xp-default-rtdb.europe-west1.firebasedatabase.app';
+const ROOT_DIR = path.join(__dirname, '..');
+const SERVICE_ACCOUNT = path.join(ROOT_DIR, 'serviceAccountKey.json');
 
+function loadDatabaseUrls() {
+  const envFiles = ['.env.dev', '.env.prod'];
+  const urls = new Set();
+  for (const envFile of envFiles) {
+    const envPath = path.join(ROOT_DIR, envFile);
+    if (!fs.existsSync(envPath)) continue;
+    const content = fs.readFileSync(envPath, 'utf8');
+    const match = content.match(/PUBLIC_FIREBASE_DATABASE_URL=(.+)/);
+    if (match) urls.add(match[1].trim());
+  }
+  if (urls.size === 0) {
+    throw new Error('PUBLIC_FIREBASE_DATABASE_URL not found in .env.dev or .env.prod. Run "npm run instance:select" first.');
+  }
+  return [...urls];
+}
+
+const DATABASE_URLS = loadDatabaseUrls();
 const DRY_RUN = process.argv.includes('--dry-run');
 
 const LISTS_DATA = {
@@ -65,43 +85,48 @@ const LISTS_DATA = {
   }
 };
 
-async function main() {
-  console.log(`\n=== Init RTDB Lists for manufosela (planning-game-xp) ===`);
+async function initForDatabase(databaseURL) {
+  console.log(`\n=== Init RTDB Lists: ${databaseURL} ===`);
   console.log(`Mode: ${DRY_RUN ? 'DRY RUN' : 'REAL'}\n`);
 
-  if (!DRY_RUN) {
-    const serviceAccount = require(SERVICE_ACCOUNT);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      databaseURL: DATABASE_URL
-    });
+  if (DRY_RUN) {
+    for (const [listName, data] of Object.entries(LISTS_DATA)) {
+      console.log(`[dry-run] Would set /data/${listName}:`);
+      console.log(`  ${JSON.stringify(data, null, 2).substring(0, 200)}...`);
+    }
+    return;
   }
+
+  const app = admin.initializeApp({
+    credential: admin.credential.cert(require(SERVICE_ACCOUNT)),
+    databaseURL
+  }, databaseURL);
+
+  const db = admin.database(app);
 
   for (const [listName, data] of Object.entries(LISTS_DATA)) {
     const dbPath = `/data/${listName}`;
     console.log(`Setting ${dbPath}...`);
+    const ref = db.ref(dbPath);
+    const snapshot = await ref.once('value');
 
-    if (DRY_RUN) {
-      console.log(`  Would write: ${JSON.stringify(data, null, 2).substring(0, 200)}...`);
-    } else {
-      const ref = admin.database().ref(dbPath);
-      const snapshot = await ref.once('value');
-
-      if (snapshot.exists()) {
-        console.log(`  Already exists, skipping (use --force to overwrite)`);
-        continue;
-      }
-
-      await ref.set(data);
-      console.log(`  Done.`);
+    if (snapshot.exists()) {
+      console.log(`  Already exists, skipping.`);
+      continue;
     }
+
+    await ref.set(data);
+    console.log(`  Done.`);
   }
 
+  await app.delete();
+}
+
+async function main() {
+  for (const url of DATABASE_URLS) {
+    await initForDatabase(url);
+  }
   console.log('\nCompleted!');
-
-  if (!DRY_RUN) {
-    await admin.app().delete();
-  }
 }
 
 main().catch(err => {

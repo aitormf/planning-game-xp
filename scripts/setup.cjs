@@ -104,7 +104,7 @@ class SetupWizard {
       return;
     }
 
-    const totalSteps = 9;
+    const totalSteps = 10;
 
     // Step 1: Instance name
     this.printStep(1, totalSteps, 'Nombre de la instancia');
@@ -134,12 +134,16 @@ class SetupWizard {
     this.printStep(7, totalSteps, 'Despliegue inicial');
     await this.deploy();
 
-    // Step 8: First App Admin
-    this.printStep(8, totalSteps, 'Configuración del primer App Admin');
+    // Step 8: Data lists
+    this.printStep(8, totalSteps, 'Inicialización de listas de datos en RTDB');
+    await this.setupDataLists();
+
+    // Step 9: First App Admin
+    this.printStep(9, totalSteps, 'Configuración del primer App Admin');
     await this.setupFirstAdmin();
 
-    // Step 9: MCP Server (optional)
-    this.printStep(9, totalSteps, 'MCP Server (opcional)');
+    // Step 10: MCP Server (optional)
+    this.printStep(10, totalSteps, 'MCP Server (opcional)');
     await this.setupMCP();
 
     // Done
@@ -438,6 +442,25 @@ class SetupWizard {
     } catch (error) {
       this.print(`\n  ❌ Error en el despliegue: ${error.message}`);
       this.print('  Puedes intentar desplegar manualmente después.');
+    }
+  }
+
+  async setupDataLists() {
+    this.print('Inicializa las listas requeridas (statusList, bugpriorityList) en la RTDB.\n');
+
+    if (!await this.confirm('¿Inicializar las listas de datos en la base de datos?')) {
+      this.print('  ⏭️  Puedes hacerlo después con: npm run setup:data-lists');
+      return;
+    }
+
+    try {
+      execSync('node scripts/init-personal-rtdb-lists.cjs', {
+        stdio: 'inherit',
+        cwd: ROOT_DIR
+      });
+    } catch (error) {
+      this.print('\n  ⚠️  No se pudieron inicializar las listas de datos automáticamente.');
+      this.print('  Ejecuta después: npm run setup:data-lists');
     }
   }
 

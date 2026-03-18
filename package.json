@@ -57,6 +57,7 @@
     "migrate:tasks": "node scripts/migrate-tasks-to-new-year.js",
     "migrate:tasks:help": "node scripts/migrate-tasks-to-new-year.js --help",
     "setup": "node scripts/setup.cjs",
+    "setup:data-lists": "node scripts/init-personal-rtdb-lists.cjs",
     "setup:app-admin": "node scripts/setup-app-admin.cjs",
     "setup:mcp": "node scripts/setup-mcp.cjs",
     "verify-setup": "node scripts/verify-setup.cjs",
@@ -81,8 +82,9 @@
     "astro": "^5.16.16",
     "date-fns": "^3.3.1",
     "firebase": "^11.6.1",
-    "firebase-admin": "^13.4.0",
+    "firebase-admin": "^13.7.0",
     "firebase-functions": "^7.0.3",
+    "glob": "^13.0.6",
     "sinsole-log": "^1.0.0",
     "system-capabilities": "^2.0.0"
   },
@@ -97,7 +99,7 @@
     "vitest": "^3.2.4"
   },
   "overrides": {
-    "fast-xml-parser": "5.4.1",
+    "fast-xml-parser": "5.5.6",
     "minimatch": "10.2.4"
   }
 }
