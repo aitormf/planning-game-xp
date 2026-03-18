@@ -80,18 +80,15 @@ export class GlobalDataManager {
 
   async _performLoad() {
     try {
-// Cargar datos en paralelo para mejor rendimiento
-const [
-        statusLists,
+// Cargar datos en paralelo — getProjectLists already fetches status lists
+      // so loadAllStatusLists is redundant (saves 1 Firebase read)
+      const [
         projectLists,
         sprintList,
         epicsData,
         suitesData,
         tasksData
       ] = await Promise.all([
-        this.firebaseService.loadAllStatusLists().catch(err => {
-return null;
-        }),
         this.firebaseService.getProjectLists(this.projectId),
         this.firebaseService.getSprintList(this.projectId),
         this._loadEpics(),
@@ -99,43 +96,14 @@ return null;
         this._loadTasks()
       ]);
 
-      // Debug status lists
-
-      // Procesar y almacenar datos
-      this.complexData.statusLists = statusLists || {};
-      
-      // Fallback para statusLists si está vacío o falló la carga
-      if (!statusLists || Object.keys(statusLists).length === 0) {
-// Intentar usar variables globales existentes como fallback
-        const fallbackStatusLists = {};
-        
-        if (window.statusTasksList && Object.keys(window.statusTasksList).length > 0) {
-          fallbackStatusLists['task-card'] = window.statusTasksList;
-}
-        
-        if (window.statusBugList && Object.keys(window.statusBugList).length > 0) {
-          fallbackStatusLists['bug-card'] = window.statusBugList;
-}
-        
-        // Si no hay variables globales, crear una lista básica por defecto
-        if (Object.keys(fallbackStatusLists).length === 0) {
-fallbackStatusLists['task-card'] = {
-            'To Do': 'To Do',
-            'In Progress': 'In Progress',
-            'To Validate': 'To Validate',
-            'Done&Validated': 'Done&Validated',
-            'Blocked': 'Blocked'
-          };
-          fallbackStatusLists['bug-card'] = {
-            'Open': 'Open',
-            'In Progress': 'In Progress',
-            'Fixed': 'Fixed',
-            'Closed': 'Closed'
-          };
-        }
-        
-        this.complexData.statusLists = fallbackStatusLists;
-}
+      // Build statusLists from getProjectLists results
+      this.complexData.statusLists = {};
+      if (projectLists?.statusTasksList) {
+        this.complexData.statusLists['task-card'] = projectLists.statusTasksList;
+      }
+      if (projectLists?.statusBugList) {
+        this.complexData.statusLists['bug-card'] = projectLists.statusBugList;
+      }
       
       // Usar listas del proyecto actual (derivadas de /projects)
       this.complexData.developerList = projectLists?.developerList || [];
