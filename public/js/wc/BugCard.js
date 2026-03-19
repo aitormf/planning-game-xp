@@ -1747,10 +1747,6 @@ if (this.userAuthorizedEmails.includes(this.userEmail)) {
 
   _handleEndDateChange(e) {
     const newEnd = generateTimestamp(e.target.value, 'end');
-    if (!this._validateEndDateChange(newEnd)) {
-      e.target.value = this.endDate ? extractDateTimeLocal(this.endDate, 'end') : '';
-      return;
-    }
     this.endDate = newEnd;
   }
 

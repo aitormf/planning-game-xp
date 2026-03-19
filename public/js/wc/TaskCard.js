@@ -3620,10 +3620,6 @@ this._showNotification(`No se pudo generar Acceptance Criteria con IA: ${reason}
 
   _handleEndDateChange(e) {
     const newEnd = generateTimestamp(e.target.value, 'end');
-    if (!this._validateEndDateChange(newEnd)) {
-      e.target.value = this.endDate ? extractDateTimeLocal(this.endDate, 'end') : '';
-      return;
-    }
     this.endDate = newEnd;
   }
   _handleSprintChange(e) {

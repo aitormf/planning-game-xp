@@ -465,20 +465,7 @@ this.canEditPermission = permissions.canEdit || false;
    */
   _validateDates() {
     if (!this.startDate || !this.endDate) return true;
-    const endLocal = this._toLocalDate(this.endDate, 'end');
-    const startLocal = this._toLocalDate(this.startDate, 'start');
-    const result = endLocal >= startLocal;
-    if (!result) {
-      console.warn('[DateValidation] _validateDates REJECTED', {
-        rawStart: this.startDate,
-        rawEnd: this.endDate,
-        normalizedStart: extractDateTimeLocal(this.startDate, 'start'),
-        normalizedEnd: extractDateTimeLocal(this.endDate, 'end'),
-        startLocal: startLocal.toISOString(),
-        endLocal: endLocal.toISOString()
-      });
-    }
-    return result;
+    return this._toLocalDate(this.endDate, 'end') >= this._toLocalDate(this.startDate, 'start');
   }
 
   /**
@@ -497,18 +484,7 @@ this.canEditPermission = permissions.canEdit || false;
    */
   _validateEndDateChange(newEndDate) {
     if (!this.startDate || !newEndDate) return true;
-    const endLocal = this._toLocalDate(newEndDate, 'end');
-    const startLocal = this._toLocalDate(this.startDate, 'start');
-    console.warn('[DateValidation] _validateEndDateChange', {
-      rawStart: this.startDate,
-      rawEnd: newEndDate,
-      normalizedStart: extractDateTimeLocal(this.startDate, 'start'),
-      normalizedEnd: extractDateTimeLocal(newEndDate, 'end'),
-      startLocal: startLocal.toISOString(),
-      endLocal: endLocal.toISOString(),
-      result: endLocal >= startLocal ? 'VALID' : 'REJECTED'
-    });
-    if (endLocal < startLocal) {
+    if (this._toLocalDate(newEndDate, 'end') < this._toLocalDate(this.startDate, 'start')) {
       this._showNotification('La fecha de fin no puede ser anterior a la fecha de inicio', 'error');
       return false;
     }
