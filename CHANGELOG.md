@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Convert UTC timestamps to local time in datetime inputs (#172)
+
+## [1.166.0] - 2026-03-19
+
 ### Added
 
 - Auto-detect user from Firebase in init wizard and support stakeholder role
