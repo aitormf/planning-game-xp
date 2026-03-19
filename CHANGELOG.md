@@ -7,6 +7,17 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Auto-detect user from Firebase in init wizard and support stakeholder role
+
+### Fixed
+
+- Add SPRINT_SCHEMA to CARD_SCHEMAS and add missing filter constant fallbacks (#171)
+- Use binary name in init Claude registration instead of cwd
+
+## [1.165.0] - 2026-03-11
+
+### Added
+
 - Add guidelines admin UI in project administration
 - Integrate sync_guidelines into MCP setup wizard
 - Add guidelines auto-check on MCP startup
