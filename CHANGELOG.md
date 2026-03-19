@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Fixed
+
+- Remove on-change date validation that blocks intermediate input values
+
 ## [1.166.2] - 2026-03-19
 
 ### Fixed
