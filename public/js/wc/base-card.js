@@ -3,6 +3,7 @@ import { format, parse, isValid } from 'https://cdn.jsdelivr.net/npm/date-fns@3.
 import { ServiceCommunicator } from '../utils/service-communicator.js';
 import { entityDirectoryService } from '../services/entity-directory-service.js';
 import { demoModeService } from '../services/demo-mode-service.js';
+import { extractDateTimeLocal } from '../utils/timestamp-utils.js';
 
 /**
  * Clase base para todos los componentes de tarjetas (Cards)
@@ -445,19 +446,33 @@ this.canEditPermission = permissions.canEdit || false;
    * @param {string} type - Tipo de notificación ('success', 'error', 'info')
    */
   /**
+   * Normalize a date string to local time for consistent comparison.
+   * Handles timezone suffixes (Z, +HH:mm) by converting to local time,
+   * and date-only strings by appending a default time.
+   * @param {string} dateStr - Date string in any supported format
+   * @param {'start'|'end'} context - Context for default time on date-only values
+   * @returns {Date} Date object in local time
+   */
+  _toLocalDate(dateStr, context = 'start') {
+    const normalized = extractDateTimeLocal(dateStr, context);
+    if (!normalized) return new Date(NaN);
+    return new Date(normalized);
+  }
+
+  /**
    * Validates that endDate is not before startDate
    * @returns {boolean} true if dates are valid
    */
   _validateDates() {
     if (!this.startDate || !this.endDate) return true;
-    return new Date(this.endDate) >= new Date(this.startDate);
+    return this._toLocalDate(this.endDate, 'end') >= this._toLocalDate(this.startDate, 'start');
   }
 
   /**
    * Call after startDate changes. If endDate exists and is now before startDate, clear it.
    */
   _enforceDateCoherence() {
-    if (this.startDate && this.endDate && new Date(this.endDate) < new Date(this.startDate)) {
+    if (this.startDate && this.endDate && this._toLocalDate(this.endDate, 'end') < this._toLocalDate(this.startDate, 'start')) {
       this.endDate = '';
       this._showNotification('Fecha de fin borrada: era anterior a la nueva fecha de inicio', 'warning');
     }
@@ -469,7 +484,7 @@ this.canEditPermission = permissions.canEdit || false;
    */
   _validateEndDateChange(newEndDate) {
     if (!this.startDate || !newEndDate) return true;
-    if (new Date(newEndDate) < new Date(this.startDate)) {
+    if (this._toLocalDate(newEndDate, 'end') < this._toLocalDate(this.startDate, 'start')) {
       this._showNotification('La fecha de fin no puede ser anterior a la fecha de inicio', 'error');
       return false;
     }
