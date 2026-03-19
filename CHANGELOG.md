@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Normalize date comparison in BaseCard validation to prevent false rejections
+
+## [1.166.1] - 2026-03-19
+
+### Fixed
+
 - Convert UTC timestamps to local time in datetime inputs (#172)
 
 ## [1.166.0] - 2026-03-19
