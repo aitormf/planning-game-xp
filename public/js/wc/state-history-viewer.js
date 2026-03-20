@@ -293,7 +293,7 @@ export class StateHistoryViewer extends LitElement {
               <div class="status-time-row">
                 <span class="status-badge" style="background-color: ${this._getStatusColor(status)}">${status}</span>
                 <div class="time-bar-container">
-                  <div class="time-bar" style="width: ${this._calculateBarWidth(time, metrics)}%; background-color: ${this._getStatusColor(status)}"></div>
+                  <div class="time-bar" style="transform: scaleX(${this._calculateBarWidth(time, metrics) / 100}); background-color: ${this._getStatusColor(status)}"></div>
                 </div>
                 <span class="time-value">${this._formatDuration(time)}</span>
               </div>

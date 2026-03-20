@@ -23,6 +23,9 @@ class NotificationBell extends LitElement {
         this.currentUser = null;
         this.unsubscribe = null;
         this.boundCloseModal = this.closeModal.bind(this);
+        this.boundHandleKeydown = this._handleKeydown.bind(this);
+        this.boundHandleUserAuthenticated = this._handleUserAuthenticated.bind(this);
+        this.boundHandleUserSignedOut = this._handleUserSignedOut.bind(this);
         this.isInitialized = false; // Flag to prevent duplicate initialization
         this.previousUnreadCount = 0; // Track changes to reduce logging
         this.previousNotificationCount = 0; // Track changes to reduce logging
@@ -31,26 +34,13 @@ class NotificationBell extends LitElement {
     connectedCallback() {
         super.connectedCallback();
         document.addEventListener('click', this.boundCloseModal);
-        
+        document.addEventListener('keydown', this.boundHandleKeydown);
+
         // Listen for user authentication changes
-        document.addEventListener('user-authenticated', (e) => {
-            this.currentUser = e.detail.user;
-            this.initializeNotifications();
-        });
-        
+        document.addEventListener('user-authenticated', this.boundHandleUserAuthenticated);
+
         // Listen for user sign out
-        document.addEventListener('user-signed-out', () => {
-if (this.unsubscribe) {
-                this.unsubscribe();
-                this.unsubscribe = null;
-            }
-            this.currentUser = null;
-            this.currentUserKey = null;
-            this.notifications = [];
-            this.unreadCount = 0;
-            this.isInitialized = false;
-            this.requestUpdate();
-        });
+        document.addEventListener('user-signed-out', this.boundHandleUserSignedOut);
 
         // Initialize if user already exists
         if (window.currentUser) {
@@ -62,12 +52,52 @@ if (this.unsubscribe) {
     disconnectedCallback() {
         super.disconnectedCallback();
         document.removeEventListener('click', this.boundCloseModal);
+        document.removeEventListener('keydown', this.boundHandleKeydown);
+        document.removeEventListener('user-authenticated', this.boundHandleUserAuthenticated);
+        document.removeEventListener('user-signed-out', this.boundHandleUserSignedOut);
         if (this.unsubscribe) {
             this.unsubscribe();
         }
         // Reset initialization flag to allow fresh initialization if reconnected
         this.isInitialized = false;
         this.currentUserKey = null;
+    }
+
+    _handleUserAuthenticated(e) {
+        this.currentUser = e.detail.user;
+        this.initializeNotifications();
+    }
+
+    _handleUserSignedOut() {
+        if (this.unsubscribe) {
+            this.unsubscribe();
+            this.unsubscribe = null;
+        }
+        this.currentUser = null;
+        this.currentUserKey = null;
+        this.notifications = [];
+        this.unreadCount = 0;
+        this.isInitialized = false;
+        this.requestUpdate();
+    }
+
+    _handleNotificationItemKeydown(e, notification) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.markAsRead(notification);
+        }
+    }
+
+    _handleKeydown(e) {
+        if (e.key === 'Escape' && this.isOpen) {
+            this.isOpen = false;
+            this.requestUpdate();
+            // Return focus to the bell button
+            const bellButton = this.shadowRoot?.querySelector('.bell-container');
+            if (bellButton) {
+                bellButton.focus();
+            }
+        }
     }
 
     sanitizeEmail(email) {
@@ -136,6 +166,22 @@ this.previousUnreadCount = this.unreadCount;
     toggleModal() {
         this.isOpen = !this.isOpen;
         this.requestUpdate();
+
+        if (this.isOpen) {
+            // Focus first focusable element inside modal after render
+            this.updateComplete.then(() => {
+                const firstItem = this.shadowRoot?.querySelector('.notification-item, .action-button, .empty-state');
+                if (firstItem) {
+                    firstItem.focus();
+                }
+            });
+        } else {
+            // Return focus to the bell button
+            const bellButton = this.shadowRoot?.querySelector('.bell-container');
+            if (bellButton) {
+                bellButton.focus();
+            }
+        }
     }
 
     closeModal(event) {
@@ -223,16 +269,26 @@ this.previousUnreadCount = this.unreadCount;
         const totalRead = this.notifications.filter(n => n.read).length;
 
         return html`
-            <div class="bell-container" @click="${this.toggleModal}">
-                <svg class="bell-icon" viewBox="0 0 24 24">
+            <div class="bell-container"
+                 role="button"
+                 tabindex="0"
+                 aria-label="Notifications (${this.unreadCount} unread)"
+                 aria-haspopup="dialog"
+                 aria-expanded="${this.isOpen}"
+                 @click="${this.toggleModal}"
+                 @keydown="${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.toggleModal(); } }}">
+                <svg class="bell-icon" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 19V20H3V19L5 17V11C5 7.9 7 5.2 10 4.3C10 4.2 10 4.1 10 4C10 2.9 10.9 2 12 2S14 2.9 14 4C14 4.1 14 4.2 14 4.3C17 5.2 19 7.9 19 11V17L21 19ZM12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22Z"/>
                 </svg>
                 ${this.unreadCount > 0 ? html`
-                    <div class="badge">${this.unreadCount > 99 ? '99+' : this.unreadCount}</div>
+                    <div class="badge" aria-hidden="true">${this.unreadCount > 99 ? '99+' : this.unreadCount}</div>
                 ` : ''}
             </div>
 
-            <div class="notification-modal ${this.isOpen ? 'open' : ''}">
+            <div class="notification-modal ${this.isOpen ? 'open' : ''}"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-label="Notifications">
                 <div class="modal-header">
                     <h3 class="modal-title">
                         Notificaciones 
@@ -251,9 +307,13 @@ this.previousUnreadCount = this.unreadCount;
                             No tienes notificaciones
                         </div>
                     ` : notificationsToDisplay.map(notification => html`
-                        <div 
+                        <div
                             class="notification-item ${notification.read ? '' : 'unread'}"
+                            role="button"
+                            tabindex="0"
+                            aria-label="${notification.title || 'Notification'}${notification.read ? '' : ' (unread)'}"
                             @click="${() => this.markAsRead(notification)}"
+                            @keydown="${(e) => this._handleNotificationItemKeydown(e, notification)}"
                         >
                             <div class="notification-header">
                                 <div class="notification-title">${notification.title || 'Notificación'}</div>

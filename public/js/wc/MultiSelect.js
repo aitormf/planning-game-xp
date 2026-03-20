@@ -33,6 +33,7 @@ export class MultiSelect extends LitElement {
     if (changedProperties.has('isOpen')) {
       if (this.isOpen) {
         this._addGlobalClickListener();
+        this._focusOptionAtIndex(0);
       } else {
         this._removeGlobalClickListener();
       }
@@ -47,28 +48,115 @@ export class MultiSelect extends LitElement {
 
     return html`
       <div class="multi-select ${this.isOpen ? 'open' : ''}">
-        <div class="select-header" @click=${this.toggleDropdown}>
+        <div class="select-header"
+             role="combobox"
+             tabindex="0"
+             aria-expanded="${this.isOpen}"
+             aria-haspopup="listbox"
+             aria-label="${this.label || this.placeholder}"
+             @click=${this.toggleDropdown}
+             @keydown=${this._handleHeaderKeydown}>
           <div class="selected-values">
             ${selectedLabels.length > 0
         ? selectedLabels.join(', ')
         : this.placeholder}
           </div>
-          <div class="select-arrow">▼</div>
+          <div class="select-arrow" aria-hidden="true">▼</div>
         </div>
-        
-        <div class="options-container">
-          ${this.options.map(option => html`
-            <div class="option ${this.selectedValues.includes(option.value) ? 'selected' : ''}"
-                 @click=${() => this.toggleOption(option.value)}>
-              <input type="checkbox"
-                     ?checked=${this.selectedValues.includes(option.value)}
-                     @click=${(e) => { e.stopPropagation(); this.toggleOption(option.value); }}>
-              <span>${option.label}</span>
+
+        <div class="options-container" role="listbox" aria-label="${this.label || this.placeholder}">
+          ${this.options.map((option, index) => {
+            const isSelected = this.selectedValues.includes(option.value);
+            const optionId = `option-${index}`;
+            return html`
+            <div class="option ${isSelected ? 'selected' : ''}"
+                 role="option"
+                 tabindex="-1"
+                 aria-selected="${isSelected}"
+                 id="${optionId}"
+                 @click=${() => this.toggleOption(option.value)}
+                 @keydown=${(e) => this._handleOptionKeydown(e, option.value, index)}>
+              <label>
+                <input type="checkbox"
+                       tabindex="-1"
+                       ?checked=${isSelected}
+                       aria-hidden="true"
+                       @click=${(e) => { e.stopPropagation(); this.toggleOption(option.value); }}>
+                <span>${option.label}</span>
+              </label>
             </div>
-          `)}
+          `;})}
         </div>
       </div>
     `;
+  }
+
+  _handleHeaderKeydown(e) {
+    switch (e.key) {
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        this.toggleDropdown();
+        if (!this.isOpen) {
+          this._focusHeader();
+        }
+        break;
+      case 'Escape':
+        if (this.isOpen) {
+          e.preventDefault();
+          this.isOpen = false;
+          this._focusHeader();
+        }
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        if (!this.isOpen) {
+          this.isOpen = true;
+        }
+        this.updateComplete.then(() => this._focusOptionAtIndex(0));
+        break;
+    }
+  }
+
+  _handleOptionKeydown(e, value, index) {
+    switch (e.key) {
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        this.toggleOption(value);
+        break;
+      case 'Escape':
+        e.preventDefault();
+        this.isOpen = false;
+        this._focusHeader();
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        this._focusOptionAtIndex(index + 1);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        if (index === 0) {
+          this._focusHeader();
+        } else {
+          this._focusOptionAtIndex(index - 1);
+        }
+        break;
+    }
+  }
+
+  _focusHeader() {
+    const header = this.shadowRoot.querySelector('.select-header');
+    if (header) {
+      header.focus();
+    }
+  }
+
+  _focusOptionAtIndex(index) {
+    const options = this.shadowRoot.querySelectorAll('.option[role="option"]');
+    if (index >= 0 && index < options.length) {
+      options[index].focus();
+    }
   }
 
   toggleOption(value) {
