@@ -91,7 +91,7 @@ This creates a `.mcp-user.json` file with your developer ID, used to track who c
 
 \* Either this env var or a `serviceAccountKey.json` file in the MCP directory.
 
-## Available Tools (36)
+## Available Tools (48)
 
 ### Project Management
 | Tool | Description |
@@ -100,6 +100,7 @@ This creates a `.mcp-user.json` file with your developer ID, used to track who c
 | `get_project` | Get project details (team, repos, guidelines) |
 | `update_project` | Update project settings |
 | `create_project` | Create a new project |
+| `discover_project` | Discover a project by its repository URL (HTTPS, SSH, with/without .git) |
 
 ### Cards (Tasks, Bugs, Epics, Proposals, QA)
 | Tool | Description |
@@ -141,6 +142,12 @@ This creates a `.mcp-user.json` file with your developer ID, used to track who c
 |------|-------------|
 | `list_global_config` / `get_global_config` / `create_global_config` / `update_global_config` / `delete_global_config` | Shared instructions, prompts, agent configs |
 
+### Guideline Versioning
+| Tool | Description |
+|------|-------------|
+| `get_guideline_history` | Get version history of a guideline (current + all previous versions with timestamps) |
+| `restore_guideline_version` | Restore a guideline to a previous version (creates new version preserving full history) |
+
 ### Diagnostics
 | Tool | Description |
 |------|-------------|
@@ -153,6 +160,18 @@ This creates a `.mcp-user.json` file with your developer ID, used to track who c
 | `setup_mcp_user` | Configure your developer identity |
 | `get_mcp_status` | Server status, version, Firebase project |
 | `update_mcp` | Pull latest changes from git |
+| `publish_mcp_version` | Publish MCP version to Firebase so other users get update notifications |
+
+### User Management
+| Tool | Description |
+|------|-------------|
+| `provision_user` | Provision a new user or update existing one (auto-generates developer/stakeholder IDs, assigns projects) |
+| `delete_user` | Delete a user from /users/ and clean up legacy permission paths |
+
+### Sync
+| Tool | Description |
+|------|-------------|
+| `sync_guidelines` | Download guidelines from Firebase and write them as local files (compares versions, only updates changed) |
 
 ## Multi-Instance Setup
 

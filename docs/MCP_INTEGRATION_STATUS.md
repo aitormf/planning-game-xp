@@ -1,8 +1,10 @@
 # MCP Integration Status
 
+> **ARCHIVADO** — Este documento refleja el estado de la integracion inicial del MCP (PR #26), que fue completada y mergeada en febrero 2026. Se mantiene como referencia historica. Para la documentacion actual del MCP, consultar `mcp/README.md`.
+
 ## Estado actual
 
-Las 3 fases del plan de integracion del MCP estan completadas y subidas en la rama `feat/mcp-integration-shared-module` (PR #26).
+Las 3 fases del plan de integracion del MCP estan completadas y mergeadas en main (PR #26, mergeado).
 
 ### Commits incluidos
 
@@ -30,70 +32,19 @@ Las 3 fases del plan de integracion del MCP estan completadas y subidas en la ra
 
 ---
 
-## Siguientes pasos para verificar
+## Pasos de verificacion (completados)
 
-### 1. Configurar entorno (instancias)
+Todos los pasos fueron verificados y completados tras el merge del PR #26:
 
-```bash
-# Copiar .env.dev desde tu portatil personal o Google Drive (APP-CONFIG/Planning-GameXP)
-# Generar firebase-config.js:
-npm run dev  # o npm run emulator
-```
-
-### 2. Verificar tests completos
-
-```bash
-npm run dev &       # genera firebase-config.js
-npm test            # deberia dar 1048/1048 pass
-```
-
-### 3. Probar el MCP integrado
-
-Configurar en `.claude/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "planning-game": {
-      "command": "node",
-      "args": ["mcp/index.js"],
-      "env": { "MCP_INSTANCE_DIR": "/path/to/tu-instancia" }
-    }
-  }
-}
-```
-
-Probar: `list_projects`, `get_card`, `create_card`
-
-### 4. Verificar UI con emulador
-
-- Arrancar emulador + dev server
-- Abrir vista kanban de bugs -> debe mostrar solo 5 columnas: **Created, Assigned, Fixed, Verified, Closed**
-- Verificar filtros de bugs -> solo 5 opciones de status
-- Verificar que colores de status se aplican correctamente en tablas y cards
-
-### 5. Migracion de datos (si hay bugs con statuses viejos)
-
-```bash
-node scripts/migrate-bug-statuses.js  # contra emulador primero
-```
-
-El script convierte:
-- Triaged -> Assigned
-- In Progress -> Assigned
-- In Testing -> Fixed
-- Blocked -> Assigned (con nota)
-- Rejected -> Closed
-
-### 6. Pendientes menores
-
-- `MCP_SERVER_PROMPT.md` esta untracked (documentacion temporal, no incluido en commits)
-- Los 49 tests que fallan sin `firebase-config.js` son preexistentes, se resuelven generando el fichero con `npm run dev`
-- Tras verificar todo, mergear PR #26 a main
+- Entorno configurado y tests completos pasando
+- MCP integrado probado con `list_projects`, `get_card`, `create_card`
+- UI verificada con emulador (5 columnas de bugs: Created, Assigned, Fixed, Verified, Closed)
+- Migracion de datos ejecutada con `scripts/migrate-bug-statuses.js`
+- PR #26 mergeado a main
 
 ---
 
-## Estructura de ficheros nuevos
+## Estructura de ficheros (referencia historica)
 
 ```
 shared/                          # Single source of truth
@@ -105,7 +56,7 @@ shared/                          # Single source of truth
 
 mcp/                             # MCP server local integrado
   index.js                       # Entry point stdio
-  register-tools.js              # Registro de 28 tools
+  register-tools.js              # Registro de tools (36 en la version actual)
   firebase-adapter.js            # Firebase Admin init
   user.js                        # .mcp-user.json management
   version-check.js               # Version checking y update
