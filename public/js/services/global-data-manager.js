@@ -213,8 +213,8 @@ return [];
     this._addEventListenerOnce('request-taskcard-data', (e) => {
       const { cardId, cardType } = e.detail || {};
       
-      // Debug logging for TaskCard status list
-const statusList = Object.keys(this.complexData.statusLists[cardType] || {});
+      const rawStatus = this.complexData.statusLists[cardType] || {};
+      const statusList = Array.isArray(rawStatus) ? rawStatus : Object.keys(rawStatus);
 document.dispatchEvent(new CustomEvent('provide-taskcard-data', {
         detail: {
           cardId,
@@ -232,7 +232,8 @@ document.dispatchEvent(new CustomEvent('provide-taskcard-data', {
       const { cardId, cardType } = e.detail || {};
       
       // Provide robust fallback data for bug cards
-      const statusList = Object.keys(this.complexData.statusLists['bug-card'] || {});
+      const rawBugStatus = this.complexData.statusLists['bug-card'] || {};
+      const statusList = Array.isArray(rawBugStatus) ? rawBugStatus : Object.keys(rawBugStatus);
       const priorityList = this.complexData.bugPriorityList || [];
       
       // Fallback status list if empty
