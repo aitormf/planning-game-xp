@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Handle statusLists as Array in provide-taskcard/bugcard-data events
+
+## [1.166.5] - 2026-03-26
+
 ### Documentation
 
 - Enrich v1.166.4 changelog with detailed performance descriptions
