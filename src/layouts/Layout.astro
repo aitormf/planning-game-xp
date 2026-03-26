@@ -212,8 +212,6 @@ let user = null;
     </script>
 
     <script type="module">
-      performance.mark('layout-module-start');
-      console.warn('⏱ Layout module script start');
       import { LazyLoader } from '/js/utils/lazy-loader.js';
       import { UserDisplayUtils } from '/js/utils/user-display-utils.js';
       import { APP_CONSTANTS } from '/js/constants/app-constants.js';
@@ -229,8 +227,6 @@ let user = null;
       import '/js/wc/ThemeToggle.js';
       import { ThemeLoaderService } from '/js/services/theme-loader-service.js';
       import { ThemeManagerService } from '/js/services/theme-manager-service.js';
-
-      console.warn(`⏱ Layout imports done: ${performance.now().toFixed(0)}ms`);
 
       // Initialize theme services (design tokens + dark/light mode)
       // Non-blocking: init tokens synchronously, load config in background
@@ -841,9 +837,7 @@ let user = null;
           }
 
           // Subscribe to auth state changes (only once)
-          console.warn(`⏱ onAuthStateChanged subscribing: ${performance.now().toFixed(0)}ms`);
           _authUnsubscribe = auth.onAuthStateChanged((user) => {
-            console.warn(`⏱ onAuthStateChanged fired: ${performance.now().toFixed(0)}ms | user=${!!user}`);
             if (user) {
               signedIn(user);
             } else {
@@ -888,7 +882,6 @@ let user = null;
         LazyLoader.loadPageComponents(currentPage);
 
         if (!window.appShellRouter) {
-          console.warn(`⏱ AppShellRouter init start: ${performance.now().toFixed(0)}ms`);
           const router = initAppShellRouterFromDataset();
           if (router) {
             window.appShellRouter = router;
@@ -896,7 +889,6 @@ let user = null;
         }
 
         DOMisLoaded = true;
-        console.warn(`⏱ DOMContentLoadedActions done: ${performance.now().toFixed(0)}ms`);
       }
 
       function getProjectIdFromURLparamProjectId() {

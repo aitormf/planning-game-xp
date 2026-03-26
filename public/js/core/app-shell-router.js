@@ -202,13 +202,11 @@ export class AppShellRouter {
 
       let html = cacheEnabled ? this._cache.get(normalizedPartial) : null;
       if (!html) {
-        const _tFetch = performance.now();
         const response = await fetch(normalizedPartial, { signal: controller.signal });
         if (!response.ok) {
           throw new Error(`Failed to load partial: ${response.status}`);
         }
         html = await response.text();
-        console.warn(`⏱ Router fetch partial (${normalizedPartial}): ${(performance.now() - _tFetch).toFixed(0)}ms | ${(html.length/1024).toFixed(0)}KB`);
         if (cacheEnabled) {
           this._cache.set(normalizedPartial, html);
         }
@@ -224,10 +222,8 @@ export class AppShellRouter {
       this._showDefaultTabContent();
 
       this._clearShellScripts();
-      console.warn(`⏱ Router executing scripts: ${performance.now().toFixed(0)}ms`);
       await this._executeScripts(scripts);
       await new Promise((resolve) => requestAnimationFrame(() => resolve()));
-      console.warn(`⏱ Router dispatching astro:page-load: ${performance.now().toFixed(0)}ms`);
       document.dispatchEvent(new Event('astro:page-load'));
       if (this._activeLoad === controller) {
         this._activeLoad = null;
