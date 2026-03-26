@@ -74,6 +74,7 @@ function showInitialTabEarly() {
 
 async function initializeApplication() {
   try {
+    console.warn(`⏱ initializeApplication start: ${performance.now().toFixed(0)}ms`);
     // Show tab content as soon as DOM has the partial HTML,
     // before waiting for slow service initialization
     showInitialTabEarly();
