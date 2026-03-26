@@ -94,8 +94,8 @@ let user = null;
     <!-- Precargar módulos críticos para evitar retrasos en el renderizado -->
     <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/lit@3.2.1/+esm" />
     <link rel="modulepreload" href="/firebase-config.js" />
-    <!-- System Capabilities Lit Components - UMD Bundle para SSG -->
-    <script src="https://cdn.jsdelivr.net/npm/@system-capabilities/lit@1.1.1/dist/system-capabilities-lit.umd.min.js"></script>
+    <!-- System Capabilities Lit Components - UMD Bundle para SSG (deferred to not block critical path) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@system-capabilities/lit@1.1.1/dist/system-capabilities-lit.umd.min.js"></script>
   </head>
   <body
     data-user-email={user || ''}

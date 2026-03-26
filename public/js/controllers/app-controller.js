@@ -112,6 +112,9 @@ export class AppController {
     this.isPastYear = this.selectedYear < new Date().getFullYear();
     this.isYearReadOnly = false; // Will be computed based on year and user permissions
 
+    // Cache for request-project-tasks to avoid redundant Firebase reads
+    this._projectTasksCache = {};
+
     this.handleAppAdminStatusChange = this.handleAppAdminStatusChange.bind(this);
     this.handleYearChanged = this.handleYearChanged.bind(this);
   }
@@ -387,12 +390,16 @@ export class AppController {
     // Listen for year change to filter sprints and epics
     document.addEventListener('year-changed', this.handleYearChanged);
 
-    // Project tasks requests for related tasks
+    // Project tasks requests for related tasks (cached to avoid redundant Firebase reads)
     document.addEventListener('request-project-tasks', async (e) => {
       const { projectId, currentTaskId, callback, fullData = false } = e.detail;
 
       try {
-        const tasks = await this.firebaseService.getCards(projectId, 'tasks');
+        // Use cached tasks if available for this project
+        if (!this._projectTasksCache[projectId]) {
+          this._projectTasksCache[projectId] = await this.firebaseService.getCards(projectId, 'tasks');
+        }
+        const tasks = this._projectTasksCache[projectId];
 
         let taskList;
         if (fullData) {
@@ -1158,6 +1165,10 @@ this.showNotification('No se pudo generar el enlace IA', 'error');
     if (targetSection) {
       this.sectionsNeedReload[targetSection] = true;
     }
+    // Invalidate tasks cache when cards change (create/delete/move)
+    if (targetSection === 'tasks') {
+      this._projectTasksCache = {};
+    }
     this.reloadCards(targetSection, preserveFilters);
   }
 
@@ -1695,6 +1706,9 @@ try {
           container.innerHTML = '';
         }
       });
+
+      // Clear project tasks cache on project change
+      this._projectTasksCache = {};
 
       // Reinitialize global data manager with new project
       this.globalDataManager.reset();
