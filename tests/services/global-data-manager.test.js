@@ -179,4 +179,124 @@ describe('GlobalDataManager', () => {
       expect(receivedStatusList).not.toContain('0');
     });
   });
+
+  describe('_setupEventListeners() developer and stakeholder lists', () => {
+    const devList = {
+      dev_001: { name: 'Ana García', email: 'ana@test.com' },
+      dev_002: { name: 'Luis Pérez', email: 'luis@test.com' }
+    };
+    const stkList = {
+      stk_001: { name: 'María López', email: 'maria@test.com' },
+      stk_002: { name: 'Carlos Ruiz', email: 'carlos@test.com' }
+    };
+
+    it('should provide developerList as Object with name/email for task card selects (dev, codev)', () => {
+      manager.complexData.statusLists = { 'task-card': ['To Do'] };
+      manager.complexData.developerList = devList;
+      manager.complexData.stakeholders = stkList;
+      manager.complexData.sprintList = {};
+
+      manager._setupEventListeners();
+
+      let received = null;
+      const listener = (e) => { received = e.detail; };
+      document.addEventListener('provide-taskcard-data', listener);
+
+      document.dispatchEvent(new CustomEvent('request-taskcard-data', {
+        detail: { cardId: 'TSK-001', cardType: 'task-card' }
+      }));
+
+      document.removeEventListener('provide-taskcard-data', listener);
+
+      expect(received.developerList).toBe(devList);
+      expect(received.developerList.dev_001.name).toBe('Ana García');
+      expect(received.developerList.dev_002.name).toBe('Luis Pérez');
+    });
+
+    it('should provide stakeholders as Object with name/email for task card selects (validator, covalidator)', () => {
+      manager.complexData.statusLists = { 'task-card': ['To Do'] };
+      manager.complexData.developerList = devList;
+      manager.complexData.stakeholders = stkList;
+      manager.complexData.sprintList = {};
+
+      manager._setupEventListeners();
+
+      let received = null;
+      const listener = (e) => { received = e.detail; };
+      document.addEventListener('provide-taskcard-data', listener);
+
+      document.dispatchEvent(new CustomEvent('request-taskcard-data', {
+        detail: { cardId: 'TSK-002', cardType: 'task-card' }
+      }));
+
+      document.removeEventListener('provide-taskcard-data', listener);
+
+      expect(received.stakeholders).toBe(stkList);
+      expect(received.stakeholders.stk_001.name).toBe('María López');
+      expect(received.stakeholders.stk_002.name).toBe('Carlos Ruiz');
+    });
+
+    it('should provide developerList as Object for bug card selects', () => {
+      manager.complexData.statusLists = { 'bug-card': ['Open'] };
+      manager.complexData.developerList = devList;
+      manager.complexData.bugPriorityList = [];
+
+      manager._setupEventListeners();
+
+      let received = null;
+      const listener = (e) => { received = e.detail; };
+      document.addEventListener('provide-bugcard-data', listener);
+
+      document.dispatchEvent(new CustomEvent('request-bugcard-data', {
+        detail: { cardId: 'BUG-002', cardType: 'bug-card' }
+      }));
+
+      document.removeEventListener('provide-bugcard-data', listener);
+
+      expect(received.developerList).toBe(devList);
+      expect(received.developerList.dev_001.name).toBe('Ana García');
+    });
+
+    it('should provide stakeholders as Object for epic card selects', () => {
+      manager.complexData.stakeholders = stkList;
+
+      manager._setupEventListeners();
+
+      let received = null;
+      const listener = (e) => { received = e.detail; };
+      document.addEventListener('provide-epiccard-data', listener);
+
+      document.dispatchEvent(new CustomEvent('request-epiccard-data', {
+        detail: { cardId: 'EPC-001', cardType: 'epic-card' }
+      }));
+
+      document.removeEventListener('provide-epiccard-data', listener);
+
+      expect(received.stakeholders).toBe(stkList);
+      expect(received.stakeholders.stk_001.name).toBe('María López');
+    });
+
+    it('should not lose developer data when list is empty Object from Firebase', () => {
+      manager.complexData.statusLists = { 'task-card': ['To Do'] };
+      manager.complexData.developerList = {};
+      manager.complexData.stakeholders = {};
+      manager.complexData.sprintList = {};
+
+      manager._setupEventListeners();
+
+      let received = null;
+      const listener = (e) => { received = e.detail; };
+      document.addEventListener('provide-taskcard-data', listener);
+
+      document.dispatchEvent(new CustomEvent('request-taskcard-data', {
+        detail: { cardId: 'TSK-003', cardType: 'task-card' }
+      }));
+
+      document.removeEventListener('provide-taskcard-data', listener);
+
+      // Empty object should pass through, not become empty array
+      expect(received.developerList).toEqual({});
+      expect(received.stakeholders).toEqual({});
+    });
+  });
 });
