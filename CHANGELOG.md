@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Performance
+
+- Replace 2s timeout with rAF for inline module script execution
+
 ## [1.166.7] - 2026-03-26
 
 ### Performance
