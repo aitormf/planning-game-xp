@@ -5,6 +5,16 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Performance
+
+- Optimize initial load by removing redundant Firebase queries
+
+### Documentation
+
+- Update outdated MCP documentation across all guides
+
+## [1.166.3] - 2026-03-19
+
 ### Fixed
 
 - Remove on-change date validation that blocks intermediate input values
@@ -30,6 +40,8 @@ Auto-generated from git commits on each build.
 ### Fixed
 
 - Add SPRINT_SCHEMA to CARD_SCHEMAS and add missing filter constant fallbacks (#171)
+- Status filters not loading - use getProjectLists status data
+- Accessibility and performance audit fixes
 - Use binary name in init Claude registration instead of cwd
 
 ## [1.165.0] - 2026-03-11
