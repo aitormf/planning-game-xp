@@ -7,7 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Performance
 
-- Optimize initial load by removing redundant Firebase queries
+- **Carga inicial optimizada**: eliminadas 2 queries redundantes a Firebase en la ruta crítica
+- **Tasks lazy-loaded**: la lista de tasks ya no se carga en el arranque, solo bajo demanda (QACard)
+- **Cache de project tasks**: `request-project-tasks` cacheado por sesión, evitando lecturas repetidas
+- **bugPriorityList deduplicada**: eliminada lectura duplicada en `getProjectLists()`
+- **Sort optimizado**: sprint numbers pre-computados en Map antes del sort (O(n) vs O(n log n) regex)
+- **UMD script deferred**: `@system-capabilities/lit` ya no bloquea el parser HTML (~50-100ms)
 
 ### Documentation
 
