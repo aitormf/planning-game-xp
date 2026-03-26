@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
-## [Unreleased]
+## [1.166.4] - 2026-03-26
 
 ### Performance
 
