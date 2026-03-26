@@ -285,6 +285,13 @@ export class AppController {
       // Initialize GlobalDataManager (needs projects loaded)
       this.globalDataManager.init(this.firebaseService, this.projectId);
 
+      // Start table view Firebase subscription early — only needs projectId.
+      // This runs in parallel with GDM loading so the table renders ASAP.
+      const activeSection = this.section || 'tasks';
+      if (this._isTableViewActive(activeSection)) {
+        this._startEarlyTableView(activeSection);
+      }
+
       // Load GDM data; sprint list and points are non-blocking
       const [globalData] = await Promise.all([
         this.globalDataManager.loadAll(),
@@ -643,6 +650,19 @@ return filters;
     } else {
       this.cardRenderer.renderCollapsedCards(filtered, section, updatedConfig);
     }
+  }
+
+  /**
+   * Start table view Firebase subscription before GDM finishes loading.
+   * Only needs projectId — filters render later when full config is available.
+   */
+  _startEarlyTableView(section) {
+    const minimalConfig = { projectId: this.projectId };
+    this.sectionsLoaded[section] = true;
+    this.sectionsNeedReload[section] = false;
+    this.initialViewApplied[section] = true;
+    loadSectionWCs(section); // fire-and-forget preload
+    this.viewFactory.switchView('table', section, minimalConfig);
   }
 
   /**
