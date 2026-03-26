@@ -18,7 +18,7 @@ MCP (Model Context Protocol) es un proceso local que conecta tu IA con la base d
 
 ## Requisitos
 
-- Node.js v18+
+- Node.js v20+
 - Claude Code o Cursor instalado
 - `serviceAccountKey.json` de tu proyecto Firebase
 
@@ -101,18 +101,23 @@ Una vez activo, puedes pedir cosas como:
 - "Cambia la tarea a To Validate con estos commits: ..."
 - "Que sprints hay para 2026?"
 
-### Herramientas disponibles
+### Herramientas disponibles (48)
 
 | Categoria | Herramientas |
 |-----------|-------------|
-| Proyectos | `list_projects`, `get_project`, `update_project`, `create_project` |
+| Proyectos | `list_projects`, `get_project`, `update_project`, `create_project`, `discover_project` |
 | Cards | `list_cards`, `get_card`, `create_card`, `update_card`, `relate_cards`, `get_transition_rules` |
 | Sprints | `list_sprints`, `get_sprint`, `create_sprint`, `update_sprint` |
 | Equipo | `list_developers`, `list_stakeholders` |
 | ADRs | `list_adrs`, `get_adr`, `create_adr`, `update_adr`, `delete_adr` |
 | Planes | `list_plans`, `get_plan`, `create_plan`, `update_plan`, `delete_plan` |
+| Proposals | `list_plan_proposals`, `get_plan_proposal`, `create_plan_proposal`, `update_plan_proposal`, `delete_plan_proposal` |
 | Config Global | `list_global_config`, `get_global_config`, `create_global_config`, `update_global_config`, `delete_global_config` |
-| Sistema | `setup_mcp_user`, `get_mcp_status`, `update_mcp` |
+| Versionado Guidelines | `get_guideline_history`, `restore_guideline_version` |
+| Diagnostico | `pg_doctor`, `pg_config` |
+| Sistema | `setup_mcp_user`, `get_mcp_status`, `update_mcp`, `publish_mcp_version` |
+| Gestion Usuarios | `provision_user`, `delete_user` |
+| Sync | `sync_guidelines` |
 
 ## Multi-instancia
 

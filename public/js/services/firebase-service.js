@@ -1736,25 +1736,24 @@ document.dispatchEvent(new CustomEvent('show-slide-notification', { detail: { op
       this.getStatusList('task-card'),
       this.getStatusList('bug-card'),
       this.getDeveloperList(projectId),
-      this.getBugPriorityList(),
+      // bugPriorityList already loaded by loadGlobalData() — reuse instead of fetching again
       this.getStakeholders(projectId),
       (async () => {
         const refAdmin = ref(database, '/data/userAdminEmails');
         const snap = await get(refAdmin);
         const val = snap.exists() ? snap.val() : [];
-        // Debug log removed
         if (Array.isArray(val)) return val;
         if (val && typeof val === 'object') return Object.keys(val);
         return [];
       })()
     ];
 
-    const [statusTasksList, statusBugList, developerList, bugpriorityList, stakeholders, userAdminEmails] = await Promise.all(promises);
-return {
+    const [statusTasksList, statusBugList, developerList, stakeholders, userAdminEmails] = await Promise.all(promises);
+    return {
       statusTasksList: this.sortStatusList(statusTasksList),
       statusBugList: this.sortStatusList(statusBugList),
       developerList,
-      bugpriorityList: this.sortBugPriorityList(bugpriorityList),
+      bugpriorityList: window.globalBugPriorityList || [],
       stakeholders,
       userAdminEmails
     };

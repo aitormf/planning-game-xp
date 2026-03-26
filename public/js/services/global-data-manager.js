@@ -80,20 +80,17 @@ export class GlobalDataManager {
 
   async _performLoad() {
     try {
-// Cargar datos en paralelo — getProjectLists already fetches status lists
-      // so loadAllStatusLists is redundant (saves 1 Firebase read)
+      // Cargar datos en paralelo — tasks removed from critical path (lazy-loaded on demand)
       const [
         projectLists,
         sprintList,
         epicsData,
-        suitesData,
-        tasksData
+        suitesData
       ] = await Promise.all([
         this.firebaseService.getProjectLists(this.projectId),
         this.firebaseService.getSprintList(this.projectId),
         this._loadEpics(),
-        this._loadSuites(),
-        this._loadTasks()
+        this._loadSuites()
       ]);
 
       // Build statusLists from getProjectLists results
@@ -113,7 +110,6 @@ export class GlobalDataManager {
       this.complexData.sprintList = sprintList || {};
       this.complexData.epicList = epicsData || [];
       this.complexData.suites = suitesData || {};
-      this.complexData.tasksList = tasksData || [];
 
       // Almacenar datos simples
 this.simpleData.userAdminEmails = projectLists?.userAdminEmails || [];
@@ -167,7 +163,16 @@ return [];
     }
   }
 
-  // Funciones eliminadas - no cargar datos globales
+  /**
+   * Lazy-loads tasks list on first demand (removed from critical path)
+   */
+  async _ensureTasksLoaded() {
+    if (this.complexData.tasksList.length > 0) return this.complexData.tasksList;
+    const tasksData = await this._loadTasks();
+    this.complexData.tasksList = tasksData || [];
+    window.globalTasksList = this.complexData.tasksList;
+    return this.complexData.tasksList;
+  }
 
   /**
    * Configura variables globales para compatibilidad con código existente
@@ -261,16 +266,16 @@ document.dispatchEvent(new CustomEvent('provide-bugcard-data', {
       }));
     });
 
-    // QACard data requests
-    this._addEventListenerOnce('request-qacard-data', (e) => {
+    // QACard data requests — tasks loaded lazily on first request
+    this._addEventListenerOnce('request-qacard-data', async (e) => {
       const { cardId, cardType } = e.detail || {};
-      
+      const tasksList = await this._ensureTasksLoaded();
       document.dispatchEvent(new CustomEvent('provide-qacard-data', {
         detail: {
           cardId,
           cardType,
           suitesList: this.complexData.suites,
-          taskIdList: this.complexData.tasksList
+          taskIdList: tasksList
         }
       }));
     });

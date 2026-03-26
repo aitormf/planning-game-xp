@@ -1,8 +1,8 @@
 # Propuesta: MCP Multi-Firebase (instancia unica)
 
 **Fecha:** 2026-02-26
-**Estado:** Pendiente de discusion
-**Contexto:** Actualmente se ejecutan N instancias MCP, una por cada proyecto Firebase. Esto genera confusion en Claude CLI al cruzar proyectos entre instancias.
+**Estado:** Implementado (Opcion B) — Marzo 2026
+**Contexto:** Se ejecutan N instancias MCP, una por cada proyecto Firebase. La Opcion B (multi-instancia con deteccion cruzada) es el modelo en uso actualmente. La Opcion A (instancia unica multi-Firebase) queda como posible mejora futura.
 
 ---
 
@@ -130,11 +130,18 @@ Si "PlanningGame" existe en ambas Firebase (geniova y personal), hay conflicto d
 3. **Proyecto por defecto**: Usar la instancia `default` si no se especifica, preguntar si hay ambiguedad
 4. **Nombres unicos**: Renombrar proyectos para que sean unicos globalmente (ej: `PlanningGame-Personal`)
 
-## Siguiente paso
+## Estado de implementacion
 
-Discutir cual opcion seguir y, si es la A, priorizar como tarea en el sprint.
+Se implemento la **Opcion B** (multi-instancia independiente). Cada instancia MCP se conecta a una sola Firebase y se registra por separado en Claude Code con `claude mcp add`. La configuracion en `CLAUDE.md` global indica como elegir la instancia correcta mediante `get_mcp_status`.
+
+Instancias activas:
+- `planning-game-pro` → Firebase `planning-gamexp` (Geniova)
+- `planning-game-personal` → Firebase `planning-game-xp` (Personal)
+
+### Posible mejora futura
+
+La **Opcion A** (instancia unica multi-Firebase) sigue siendo viable si la experiencia con multiples instancias resulta confusa a largo plazo.
 
 ### Tareas relacionadas
 
-- **PLN-TSK-0212**: Installer - seed initial data model for new instances (ya creada)
-- Crear nueva tarea si se aprueba esta propuesta
+- **PLN-TSK-0212**: Installer - seed initial data model for new instances (completada)

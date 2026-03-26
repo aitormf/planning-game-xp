@@ -64,7 +64,7 @@ firebase --version
 
 ## Paso 2: Copiar el proyecto (fork)
 
-1. Ve a [github.com/AgilePlanning-io/planning-game-xp](https://github.com/AgilePlanning-io/planning-game-xp)
+1. Ve a [github.com/AgilePlanning-io/planning-game-xp](https://github.com/manufosela/planning-game-xp)
 2. Si no tienes cuenta en GitHub, creala (es gratis)
 3. Haz click en el boton **Fork** (esquina superior derecha)
 4. Esto crea una copia del proyecto en tu cuenta de GitHub
@@ -198,7 +198,7 @@ Tu app local estara en `http://localhost:4321`
 Cuando el proyecto original publique mejoras:
 
 ```bash
-git remote add upstream https://github.com/AgilePlanning-io/planning-game-xp.git
+git remote add upstream https://github.com/manufosela/planning-game-xp.git
 git fetch upstream
 git merge upstream/main
 npm install
@@ -217,7 +217,7 @@ Necesito que me ayudes a instalar y desplegar Planning Game XP, una aplicacion
 de gestion de proyectos agiles. Soy un usuario no tecnico y necesito que me
 guies paso a paso, explicando cada comando antes de que lo ejecute.
 
-El repositorio esta en: https://github.com/AgilePlanning-io/planning-game-xp
+El repositorio esta en: https://github.com/manufosela/planning-game-xp
 
 Lo que necesito hacer (en este orden):
 

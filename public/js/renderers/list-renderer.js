@@ -59,66 +59,57 @@ export class ListRenderer {
 
   applySorting(cards) {
     const entries = Object.entries(cards);
-    
-    
-    entries.sort(([idA, cardA], [idB, cardB]) => {
-      // Default sorting: by sprint (most recent first), tasks without sprint at the end
-      if (!this.sortOrder.field) {
-        return this.sortBySprint(cardA, cardB);
+
+    if (!this.sortOrder.field) {
+      // Pre-compute sprint numbers once O(n) to avoid regex in O(n log n) comparisons
+      const sprintNumbers = new Map();
+      for (const [, card] of entries) {
+        const sprint = card.sprint || '';
+        if (sprint && !sprintNumbers.has(sprint)) {
+          const match = sprint.match(/sprint\s*(\d+)/i);
+          sprintNumbers.set(sprint, match ? parseInt(match[1]) : 0);
+        }
       }
+      entries.sort(([, cardA], [, cardB]) => this._sortBySprintPrecomputed(cardA, cardB, sprintNumbers));
+    } else {
+      entries.sort(([, cardA], [, cardB]) => {
+        let valueA = cardA[this.sortOrder.field];
+        let valueB = cardB[this.sortOrder.field];
 
-      // Custom field sorting
-      let valueA = cardA[this.sortOrder.field];
-      let valueB = cardB[this.sortOrder.field];
+        if (this.sortOrder.field === 'priority') {
+          valueA = this.calculatePriority(cardA);
+          valueB = this.calculatePriority(cardB);
+        }
 
-      // Handle special sorting cases
-      if (this.sortOrder.field === 'priority') {
-        valueA = this.calculatePriority(cardA);
-        valueB = this.calculatePriority(cardB);
-      }
+        if (typeof valueA === 'string') valueA = valueA.toLowerCase();
+        if (typeof valueB === 'string') valueB = valueB.toLowerCase();
 
-      // Convert to comparable values
-      if (typeof valueA === 'string') valueA = valueA.toLowerCase();
-      if (typeof valueB === 'string') valueB = valueB.toLowerCase();
+        let comparison = 0;
+        if (valueA < valueB) comparison = -1;
+        if (valueA > valueB) comparison = 1;
 
-      let comparison = 0;
-      if (valueA < valueB) comparison = -1;
-      if (valueA > valueB) comparison = 1;
-
-      return this.sortOrder.direction === 'desc' ? -comparison : comparison;
-    });
+        return this.sortOrder.direction === 'desc' ? -comparison : comparison;
+      });
+    }
 
     return Object.fromEntries(entries);
   }
 
-  sortBySprint(cardA, cardB) {
+  _sortBySprintPrecomputed(cardA, cardB, sprintNumbers) {
     const sprintA = cardA.sprint || '';
     const sprintB = cardB.sprint || '';
 
-    // Tasks without sprint go to the end
     if (!sprintA && !sprintB) return 0;
     if (!sprintA) return 1;
     if (!sprintB) return -1;
 
-    // Extract sprint number for comparison (e.g., "Sprint 3" -> 3)
-    const getSprintNumber = (sprintName) => {
-      const match = sprintName.match(/sprint\s*(\d+)/i);
-      return match ? parseInt(match[1]) : 0;
-    };
+    const numberA = sprintNumbers.get(sprintA) || 0;
+    const numberB = sprintNumbers.get(sprintB) || 0;
 
-    const numberA = getSprintNumber(sprintA);
-    const numberB = getSprintNumber(sprintB);
-
-    // If both have numbers, sort by number (descending - most recent first)
-    if (numberA && numberB) {
-      return numberB - numberA;
-    }
-
-    // If only one has a number, prioritize the numbered one
+    if (numberA && numberB) return numberB - numberA;
     if (numberA && !numberB) return -1;
     if (!numberA && numberB) return 1;
 
-    // If neither has numbers, sort alphabetically (descending)
     return sprintB.localeCompare(sprintA);
   }
 

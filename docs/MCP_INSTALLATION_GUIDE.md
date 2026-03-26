@@ -202,16 +202,16 @@ claude mcp add planning-game --scope user \
 **Opción C: Desde el código fuente**
 
 ```bash
-git clone https://github.com/AnotherPlanningGame/planning-game-mcp.git
-cd planning-game-mcp && npm install
+git clone https://github.com/manufosela/planning-game-xp.git
+cd planning-game-xp/mcp && npm install
 
 claude mcp add planning-game --scope user \
   -e GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/planning-game/serviceAccountKey.json \
   -e FIREBASE_DATABASE_URL=https://tu-proyecto-default-rtdb.europe-west1.firebasedatabase.app \
-  -- node /ruta/absoluta/planning-game-mcp/index.js
+  -- node /ruta/absoluta/planning-game-xp/mcp/index.js
 ```
 
-> **Nota:** El MCP server es un paquete independiente (`planning-game-mcp`), no un subdirectorio de este repositorio.
+> **Nota:** El MCP server está integrado como subdirectorio `mcp/` de este repositorio. También se publica como paquete npm independiente (`planning-game-mcp`) para las opciones A y B.
 
 #### Paso 4: Configurar identidad (primera vez)
 
@@ -255,11 +255,11 @@ Cada instancia mantiene su propio `.mcp-user.json` en su `MCP_INSTANCE_DIR`.
 
 \* O bien esta variable, o un `serviceAccountKey.json` en el directorio del MCP.
 
-#### Herramientas disponibles (34)
+#### Herramientas disponibles (48)
 
 | Categoría | Herramientas |
 |-----------|-------------|
-| Proyectos | `list_projects`, `get_project`, `update_project`, `create_project` |
+| Proyectos | `list_projects`, `get_project`, `update_project`, `create_project`, `discover_project` |
 | Cards | `list_cards`, `get_card`, `create_card`, `update_card`, `relate_cards`, `get_transition_rules` |
 | Sprints | `list_sprints`, `get_sprint`, `create_sprint`, `update_sprint` |
 | Equipo | `list_developers`, `list_stakeholders` |
@@ -267,8 +267,11 @@ Cada instancia mantiene su propio `.mcp-user.json` en su `MCP_INSTANCE_DIR`.
 | Planes | `list_plans`, `get_plan`, `create_plan`, `update_plan`, `delete_plan` |
 | Proposals | `list_plan_proposals`, `get_plan_proposal`, `create_plan_proposal`, `update_plan_proposal`, `delete_plan_proposal` |
 | Config Global | `list_global_config`, `get_global_config`, `create_global_config`, `update_global_config`, `delete_global_config` |
+| Versionado Guidelines | `get_guideline_history`, `restore_guideline_version` |
 | Diagnóstico | `pg_doctor`, `pg_config` |
-| Sistema | `setup_mcp_user`, `get_mcp_status`, `update_mcp` |
+| Sistema | `setup_mcp_user`, `get_mcp_status`, `update_mcp`, `publish_mcp_version` |
+| Gestión Usuarios | `provision_user`, `delete_user` |
+| Sync | `sync_guidelines` |
 
 **Uso**: Claude puede leer/crear/actualizar tarjetas del proyecto desde cualquier directorio.
 
