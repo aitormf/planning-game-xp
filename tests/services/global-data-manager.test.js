@@ -109,4 +109,74 @@ describe('GlobalDataManager', () => {
       expect(manager.eventListeners.size).toBe(1);
     });
   });
+
+  describe('_setupEventListeners() status list format', () => {
+    it('should provide status names when statusLists is an Array (from sortStatusList)', () => {
+      const statuses = ['To Do', 'In Progress', 'To Validate', 'Done', 'Done&Validated'];
+      manager.complexData.statusLists = { 'task-card': statuses };
+      manager.complexData.developerList = [];
+      manager.complexData.stakeholders = [];
+      manager.complexData.sprintList = {};
+
+      manager._setupEventListeners();
+
+      let receivedStatusList = null;
+      const listener = (e) => { receivedStatusList = e.detail.statusList; };
+      document.addEventListener('provide-taskcard-data', listener);
+
+      document.dispatchEvent(new CustomEvent('request-taskcard-data', {
+        detail: { cardId: 'TEST-001', cardType: 'task-card' }
+      }));
+
+      document.removeEventListener('provide-taskcard-data', listener);
+
+      expect(receivedStatusList).toEqual(statuses);
+      expect(receivedStatusList).not.toContain('0');
+      expect(receivedStatusList).not.toContain('1');
+    });
+
+    it('should provide status names when statusLists is an Object (raw Firebase format)', () => {
+      const statusObj = { 'To Do': 1, 'In Progress': 2, 'Done': 3 };
+      manager.complexData.statusLists = { 'task-card': statusObj };
+      manager.complexData.developerList = [];
+      manager.complexData.stakeholders = [];
+      manager.complexData.sprintList = {};
+
+      manager._setupEventListeners();
+
+      let receivedStatusList = null;
+      const listener = (e) => { receivedStatusList = e.detail.statusList; };
+      document.addEventListener('provide-taskcard-data', listener);
+
+      document.dispatchEvent(new CustomEvent('request-taskcard-data', {
+        detail: { cardId: 'TEST-002', cardType: 'task-card' }
+      }));
+
+      document.removeEventListener('provide-taskcard-data', listener);
+
+      expect(receivedStatusList).toEqual(['To Do', 'In Progress', 'Done']);
+    });
+
+    it('should provide bug status names when statusLists is an Array', () => {
+      const bugStatuses = ['Open', 'In Progress', 'Fixed', 'Closed'];
+      manager.complexData.statusLists = { 'bug-card': bugStatuses };
+      manager.complexData.developerList = [];
+      manager.complexData.bugPriorityList = [];
+
+      manager._setupEventListeners();
+
+      let receivedStatusList = null;
+      const listener = (e) => { receivedStatusList = e.detail.statusList; };
+      document.addEventListener('provide-bugcard-data', listener);
+
+      document.dispatchEvent(new CustomEvent('request-bugcard-data', {
+        detail: { cardId: 'BUG-001', cardType: 'bug-card' }
+      }));
+
+      document.removeEventListener('provide-bugcard-data', listener);
+
+      expect(receivedStatusList).toEqual(bugStatuses);
+      expect(receivedStatusList).not.toContain('0');
+    });
+  });
 });
