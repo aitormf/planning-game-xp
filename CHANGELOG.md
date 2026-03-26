@@ -3,16 +3,17 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Documentation
+
+- Enrich v1.166.4 changelog with detailed performance descriptions
+
 ## [1.166.4] - 2026-03-26
 
 ### Performance
 
-- **Carga inicial optimizada**: eliminadas 2 queries redundantes a Firebase en la ruta crítica
-- **Tasks lazy-loaded**: la lista de tasks ya no se carga en el arranque, solo bajo demanda (QACard)
-- **Cache de project tasks**: `request-project-tasks` cacheado por sesión, evitando lecturas repetidas
-- **bugPriorityList deduplicada**: eliminada lectura duplicada en `getProjectLists()`
-- **Sort optimizado**: sprint numbers pre-computados en Map antes del sort (O(n) vs O(n log n) regex)
-- **UMD script deferred**: `@system-capabilities/lit` ya no bloquea el parser HTML (~50-100ms)
+- Optimize initial load by removing redundant Firebase queries
 
 ### Documentation
 
