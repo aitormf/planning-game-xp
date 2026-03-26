@@ -129,12 +129,14 @@ function executeScript(script, markerAttr) {
     }
 
     if (!hasSrc && isModule) {
-      timeoutId = setTimeout(() => {
+      // Inline module scripts execute once their imports resolve (already cached).
+      // Resolve on next animation frame instead of a 2s timeout.
+      requestAnimationFrame(() => {
         if (settled) return;
         settled = true;
         cleanup();
         resolve();
-      }, 2000);
+      });
     }
   });
 }
