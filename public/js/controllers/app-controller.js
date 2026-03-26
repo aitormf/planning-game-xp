@@ -269,6 +269,7 @@ export class AppController {
 
   async loadInitialData() {
     try {
+      const _t0 = performance.now();
       const userEmail = document.body.dataset.userEmail;
 
       // Register user in background (fire-and-forget)
@@ -281,6 +282,7 @@ export class AppController {
         this.firebaseService.loadGlobalData(),
         this.firebaseService.loadProjects(userEmail)
       ]);
+      console.warn(`⏱ Phase1 (globalData+projects): ${(performance.now() - _t0).toFixed(0)}ms`);
 
       // Initialize GlobalDataManager (needs projects loaded)
       this.globalDataManager.init(this.firebaseService, this.projectId);
@@ -289,15 +291,18 @@ export class AppController {
       // This runs in parallel with GDM loading so the table renders ASAP.
       const activeSection = this.section || 'tasks';
       if (this._isTableViewActive(activeSection)) {
+        console.warn(`⏱ Early table subscription start: ${(performance.now() - _t0).toFixed(0)}ms`);
         this._startEarlyTableView(activeSection);
       }
 
       // Load GDM data; sprint list and points are non-blocking
+      const _t2 = performance.now();
       const [globalData] = await Promise.all([
         this.globalDataManager.loadAll(),
         updateGlobalSprintList(this.projectId).catch(() => {}),
         FirebaseService.updateSprintPoints({ projectId: this.projectId }).catch(() => {})
       ]);
+      console.warn(`⏱ Phase2 (GDM.loadAll): ${(performance.now() - _t2).toFixed(0)}ms | total: ${(performance.now() - _t0).toFixed(0)}ms`);
 
       // Sync counters in background
       if (this.projectId && !demoModeService.isDemo()) {

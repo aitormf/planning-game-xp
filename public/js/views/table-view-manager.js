@@ -707,12 +707,15 @@ export class TableViewManager {
     });
 
     // Suscribirse a cambios en tiempo real (primero intentar vistas optimizadas)
+    this._subscribeTime = performance.now();
+    console.warn(`⏱ TableView subscribing to: ${viewPath}`);
     this.unsubscribe = this.firebaseService.subscribeToPath(viewPath, (snapshot) => {
       // If already using fallback, ignore view updates
       if (this._usingFallback) {
         return;
       }
 
+      console.warn(`⏱ TableView onValue fired: ${(performance.now() - this._subscribeTime).toFixed(0)}ms | exists=${snapshot.exists()} | size=${snapshot.exists() ? Object.keys(snapshot.val() || {}).length : 0} cards`);
       this.isLoading = false;
       this.tableRenderer.setLoaded();
 
@@ -748,9 +751,12 @@ export class TableViewManager {
     }
 
     this._usingFallback = true;
+    this._fallbackTime = performance.now();
+    console.warn(`⏱ TableView FALLBACK to: ${cardsPath}`);
 
     // Subscribe to full cards data
     this.unsubscribe = this.firebaseService.subscribeToPath(cardsPath, (snapshot) => {
+      console.warn(`⏱ TableView FALLBACK onValue: ${(performance.now() - this._fallbackTime).toFixed(0)}ms | size=${snapshot.exists() ? Object.keys(snapshot.val() || {}).length : 0} cards`);
       this.isLoading = false;
       this.tableRenderer.setLoaded();
 
@@ -863,6 +869,7 @@ return filteredCards;
     if (!this.currentContainer || !this.currentConfig || !this.currentSection) {
       return;
     }
+    const _tRender = performance.now();
 
     // First filter by year
     const yearFilteredCards = this._filterByYear(this.cardsCache);
@@ -918,6 +925,8 @@ return filteredCards;
         }
       }));
     }
+
+    console.warn(`⏱ TableView render: ${(performance.now() - _tRender).toFixed(0)}ms | ${Object.keys(filteredCards).length} cards displayed`);
 
     // Emit TABLE_RENDERED event for components waiting for render completion
     AppEventBus.emit(AppEvents.TABLE_RENDERED, {
