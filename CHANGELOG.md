@@ -5,6 +5,17 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Performance
+
+- Start table view Firebase subscription before GDM finishes loading
+
+### Testing
+
+- Add regression tests for developer and stakeholder list formats in event data
+- Add regression tests for statusList format in provide-taskcard/bugcard-data
+
+## [1.166.6] - 2026-03-26
+
 ### Fixed
 
 - Handle statusLists as Array in provide-taskcard/bugcard-data events
