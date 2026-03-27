@@ -204,15 +204,16 @@ describe('BaseCard - Date Validation', () => {
   });
 
   describe('toLocalDate() normalization', () => {
-    it('should normalize date-only to datetime with default time', () => {
+    it('should normalize date-only to datetime with current time', () => {
       const startDate = toLocalDate('2026-03-16', 'start');
       const endDate = toLocalDate('2026-03-16', 'end');
 
-      // start defaults to 09:00, end defaults to 17:00
-      expect(startDate.getHours()).toBe(9);
-      expect(startDate.getMinutes()).toBe(0);
-      expect(endDate.getHours()).toBe(17);
-      expect(endDate.getMinutes()).toBe(0);
+      // Both use current client time (no fake 09:00/17:00 defaults)
+      const now = new Date();
+      expect(startDate.getHours()).toBe(now.getHours());
+      expect(startDate.getMinutes()).toBe(now.getMinutes());
+      expect(endDate.getHours()).toBe(now.getHours());
+      expect(endDate.getMinutes()).toBe(now.getMinutes());
     });
 
     it('should preserve time for datetime strings without timezone', () => {

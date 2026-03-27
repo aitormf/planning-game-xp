@@ -13,39 +13,21 @@ describe('timestamp-utils', () => {
       const now = new Date(2026, 1, 9, 14, 30, 45); // Feb 9, 2026 14:30:45
       vi.setSystemTime(now);
 
-      const result = generateTimestamp(now, 'start');
+      const result = generateTimestamp(now);
 
       expect(result).toBe('2026-02-09T14:30:45');
     });
 
-    it('should return timestamp with 09:00:00 for past date with start context', () => {
-      vi.setSystemTime(new Date(2026, 1, 9));
+    it('should use the Date objects actual time for past dates', () => {
+      vi.setSystemTime(new Date(2026, 1, 9, 10, 0, 0));
 
-      const pastDate = new Date(2026, 1, 7); // Feb 7, 2026
-      const result = generateTimestamp(pastDate, 'start');
-
-      expect(result).toBe('2026-02-07T09:00:00');
-    });
-
-    it('should return timestamp with 17:00:00 for past date with end context', () => {
-      vi.setSystemTime(new Date(2026, 1, 9));
-
-      const pastDate = new Date(2026, 1, 7); // Feb 7, 2026
-      const result = generateTimestamp(pastDate, 'end');
-
-      expect(result).toBe('2026-02-07T17:00:00');
-    });
-
-    it('should default to start context when not specified', () => {
-      vi.setSystemTime(new Date(2026, 1, 9));
-
-      const pastDate = new Date(2026, 1, 5);
+      const pastDate = new Date(2026, 1, 7, 15, 22, 33); // Feb 7, 15:22:33
       const result = generateTimestamp(pastDate);
 
-      expect(result).toBe('2026-02-05T09:00:00');
+      expect(result).toBe('2026-02-07T15:22:33');
     });
 
-    it('should default to current date when no date provided', () => {
+    it('should default to current date and time when no date provided', () => {
       const now = new Date(2026, 1, 9, 10, 15, 30);
       vi.setSystemTime(now);
 
@@ -54,36 +36,20 @@ describe('timestamp-utils', () => {
       expect(result).toBe('2026-02-09T10:15:30');
     });
 
-    it('should handle date string in YYYY-MM-DD format for today', () => {
+    it('should use current time for date-only string (YYYY-MM-DD)', () => {
       const now = new Date(2026, 1, 9, 16, 45, 12);
       vi.setSystemTime(now);
 
-      const result = generateTimestamp('2026-02-09', 'end');
+      const result = generateTimestamp('2026-02-01');
 
-      expect(result).toBe('2026-02-09T16:45:12');
+      expect(result).toBe('2026-02-01T16:45:12');
     });
 
-    it('should handle date string in YYYY-MM-DD format for past date', () => {
-      vi.setSystemTime(new Date(2026, 1, 9));
-
-      const result = generateTimestamp('2026-02-01', 'start');
-
-      expect(result).toBe('2026-02-01T09:00:00');
-    });
-
-    it('should pad single-digit months and days', () => {
-      vi.setSystemTime(new Date(2026, 0, 5)); // Jan 5
-
-      const result = generateTimestamp(new Date(2026, 0, 3), 'start');
-
-      expect(result).toBe('2026-01-03T09:00:00');
-    });
-
-    it('should pad single-digit hours, minutes and seconds for today', () => {
+    it('should pad single-digit hours, minutes and seconds', () => {
       const now = new Date(2026, 1, 9, 8, 5, 3);
       vi.setSystemTime(now);
 
-      const result = generateTimestamp(now, 'start');
+      const result = generateTimestamp(now);
 
       expect(result).toBe('2026-02-09T08:05:03');
     });
@@ -91,7 +57,7 @@ describe('timestamp-utils', () => {
     it('should preserve explicit time from datetime-local input (YYYY-MM-DDTHH:mm)', () => {
       vi.setSystemTime(new Date(2026, 1, 9));
 
-      const result = generateTimestamp('2026-02-07T14:30', 'start');
+      const result = generateTimestamp('2026-02-07T14:30');
 
       expect(result).toBe('2026-02-07T14:30:00');
     });
@@ -99,13 +65,13 @@ describe('timestamp-utils', () => {
     it('should preserve explicit time even for today from datetime-local', () => {
       vi.setSystemTime(new Date(2026, 1, 9, 10, 0, 0));
 
-      const result = generateTimestamp('2026-02-09T08:15', 'start');
+      const result = generateTimestamp('2026-02-09T08:15');
 
       expect(result).toBe('2026-02-09T08:15:00');
     });
 
     it('should handle datetime-local with seconds already present', () => {
-      const result = generateTimestamp('2026-02-07T14:30:45', 'start');
+      const result = generateTimestamp('2026-02-07T14:30:45');
 
       expect(result).toBe('2026-02-07T14:30:45');
     });
@@ -114,14 +80,25 @@ describe('timestamp-utils', () => {
       const input = '2026-02-09T14:30:00Z';
       const date = new Date(input);
       const expected = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
-      expect(generateTimestamp(input, 'start')).toBe(expected);
+      expect(generateTimestamp(input)).toBe(expected);
     });
 
     it('should convert timezone offset timestamp to local time', () => {
       const input = '2026-02-09T14:30:00+05:00';
       const date = new Date(input);
       const expected = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
-      expect(generateTimestamp(input, 'start')).toBe(expected);
+      expect(generateTimestamp(input)).toBe(expected);
+    });
+
+    it('should never produce 09:00:00 or 17:00:00 from a Date object', () => {
+      vi.setSystemTime(new Date(2026, 1, 9, 10, 0, 0));
+
+      const pastDate = new Date(2026, 1, 5, 0, 0, 0);
+      const result = generateTimestamp(pastDate);
+
+      expect(result).toBe('2026-02-05T00:00:00');
+      expect(result).not.toContain('09:00:00');
+      expect(result).not.toContain('17:00:00');
     });
   });
 
@@ -130,16 +107,10 @@ describe('timestamp-utils', () => {
       expect(extractDateTimeLocal('2026-02-09T14:30:45')).toBe('2026-02-09T14:30');
     });
 
-    it('should add default start time for date-only values', () => {
-      expect(extractDateTimeLocal('2026-02-09', 'start')).toBe('2026-02-09T09:00');
-    });
+    it('should use current time for date-only values', () => {
+      vi.setSystemTime(new Date(2026, 1, 9, 11, 22, 0));
 
-    it('should add default end time for date-only values', () => {
-      expect(extractDateTimeLocal('2026-02-09', 'end')).toBe('2026-02-09T17:00');
-    });
-
-    it('should default to start context', () => {
-      expect(extractDateTimeLocal('2026-02-09')).toBe('2026-02-09T09:00');
+      expect(extractDateTimeLocal('2026-02-09')).toBe('2026-02-09T11:22');
     });
 
     it('should handle empty string', () => {

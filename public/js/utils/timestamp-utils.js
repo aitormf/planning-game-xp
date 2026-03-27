@@ -2,23 +2,23 @@
  * Utility functions for generating timestamps with time components.
  *
  * Dates are stored as YYYY-MM-DDTHH:mm:ss where:
- * - If the date is today → actual client time is used
- * - If the date is in the past → 09:00:00 (start) or 17:00:00 (end)
+ * - If the input already has a time component (T separator), it is preserved
+ * - If the input is date-only (YYYY-MM-DD), the current client time is appended
+ * - A Date object always uses its actual time
+ *
+ * No fake default times (09:00 / 17:00) — timestamps must be real.
  *
  * UI date inputs use datetime-local via extractDateTimeLocal().
  * Backward compatible: old YYYY-MM-DD values still work everywhere.
  */
 
-const DEFAULT_START_TIME = '09:00:00';
-const DEFAULT_END_TIME = '17:00:00';
-
 /**
  * Generate a timestamp string with time component.
+ * Always uses real time — never fabricates a default time.
  * @param {Date|string} [date=new Date()] - Date object, YYYY-MM-DD, or YYYY-MM-DDTHH:mm string
- * @param {'start'|'end'} [context='start'] - Context for default time on past dates
  * @returns {string} Formatted as YYYY-MM-DDTHH:mm:ss
  */
-export function generateTimestamp(date = new Date(), context = 'start') {
+export function generateTimestamp(date = new Date()) {
   // If the string already includes a time part (from datetime-local input), preserve it
   if (typeof date === 'string' && date.includes('T')) {
     // If timestamp has UTC indicator (Z) or timezone offset, convert to local time
@@ -36,17 +36,16 @@ export function generateTimestamp(date = new Date(), context = 'start') {
     return `${datePart}T${normalizedTime}`;
   }
 
-  const dateObj = typeof date === 'string' ? _parseDate(date) : date;
-  const datePart = _formatDate(dateObj);
-
-  if (isToday(dateObj)) {
-    const now = new Date();
-    const timePart = _formatTime(now);
-    return `${datePart}T${timePart}`;
+  // Date object (or anything that's not a string) → use its actual time
+  if (typeof date !== 'string') {
+    const d = date instanceof Date ? date : new Date(date);
+    return `${_formatDate(d)}T${_formatTime(d)}`;
   }
 
-  const defaultTime = context === 'end' ? DEFAULT_END_TIME : DEFAULT_START_TIME;
-  return `${datePart}T${defaultTime}`;
+  // Date-only string (YYYY-MM-DD) → append current time
+  const dateObj = _parseDate(date);
+  const now = new Date();
+  return `${_formatDate(dateObj)}T${_formatTime(now)}`;
 }
 
 /**
@@ -63,16 +62,17 @@ export function extractDatePart(timestamp) {
 /**
  * Extract a value suitable for <input type="datetime-local"> from a timestamp.
  * Returns YYYY-MM-DDTHH:mm format.
- * For date-only values (no T separator), appends a default time.
+ * For date-only values (no T separator), appends current time.
  * @param {string|null|undefined} timestamp
- * @param {'start'|'end'} [context='start'] - Context for default time on date-only values
  * @returns {string} YYYY-MM-DDTHH:mm or empty string
  */
-export function extractDateTimeLocal(timestamp, context = 'start') {
+export function extractDateTimeLocal(timestamp) {
   if (!timestamp) return '';
   if (!timestamp.includes('T')) {
-    const defaultTime = context === 'end' ? '17:00' : '09:00';
-    return `${timestamp}T${defaultTime}`;
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    return `${timestamp}T${h}:${m}`;
   }
   // If timestamp has UTC indicator (Z) or timezone offset, convert to local time
   // datetime-local inputs work in local time, so UTC must be converted
