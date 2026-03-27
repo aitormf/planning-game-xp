@@ -40,14 +40,15 @@ Si ya tienes un Planning Game desplegado y solo quieres que tu IA (Claude Code, 
 
 ```bash
 npm install -g planning-game-mcp
-
-claude mcp add planning-game -s user \
-  -e GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/planning-game/serviceAccountKey.json \
-  -e FIREBASE_DATABASE_URL=https://TU-PROYECTO-default-rtdb.europe-west1.firebasedatabase.app \
-  -- planning-game-mcp
+planning-game-mcp init
 ```
 
-Solo necesitas el `serviceAccountKey.json` de tu proyecto Firebase. Ver [guía completa de instalación MCP](./docs/MCP_INSTALLATION_GUIDE.md).
+El wizard de configuración valida credenciales, detecta tu usuario, y registra el MCP en Claude Code.
+Solo necesitas el `serviceAccountKey.json` de tu proyecto Firebase.
+
+- [MCP Installation Guide](https://pgamexp.com/docs/mcp/install/)
+- [Multi-instance Setup](https://pgamexp.com/docs/mcp/multi-instance/)
+- [Full Documentation](https://pgamexp.com/docs/)
 
 ---
 

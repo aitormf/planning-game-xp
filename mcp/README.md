@@ -12,39 +12,19 @@ Integrates with Claude Code, Cline, and any MCP-compatible AI client to manage s
 
 ## Quick Start
 
-### 1. Install the MCP server
-
-**Option A: npm (recommended)**
-
 ```bash
+# 1. Install
 npm install -g planning-game-mcp
+
+# 2. Run the setup wizard (validates credentials, registers in Claude Code)
+planning-game-mcp init
 ```
 
-**Option B: npx (no install)**
+You need a `serviceAccountKey.json` from your Firebase project ([Firebase Console](https://console.firebase.google.com) > Project Settings > Service Accounts > Generate new private key).
 
-```bash
-# Use directly with npx — see step 3 below
-```
+The init wizard handles everything: credential validation, connectivity test, user detection, Claude Code registration, and guidelines sync.
 
-**Option C: From source**
-
-```bash
-git clone https://github.com/manufosela/planning-game-xp.git
-cd planning-game-xp/mcp
-npm install
-```
-
-### 2. Set up credentials
-
-You need a `serviceAccountKey.json` from your Firebase project:
-
-1. Go to [Firebase Console](https://console.firebase.google.com) > Project Settings > Service Accounts
-2. Click "Generate new private key"
-3. Save the file somewhere safe (never commit it to git)
-
-### 3. Register in Claude Code
-
-**If installed via npm (Option A):**
+**Alternative: manual registration (skip the wizard)**
 
 ```bash
 claude mcp add planning-game \
