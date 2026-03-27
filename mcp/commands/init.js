@@ -171,23 +171,39 @@ async function resolveCredentials(existing, nonInteractive, instanceDir) {
     return result;
   }
 
-  let credPath = await ask('Path to serviceAccountKey.json', {
-    defaultValue: defaultPath || '',
-    validate: (val) => {
-      if (!val) return 'Path is required';
-      const resolved = isAbsolute(val) ? val : resolve(process.cwd(), val);
-      if (!existsSync(resolved)) return `File not found: ${resolved}`;
-      return null;
+  // Explain why this is mandatory before asking
+  printInfo('The serviceAccountKey.json is REQUIRED to connect to Firebase.');
+  printInfo('Get it from: Firebase Console > Project Settings > Service Accounts > Generate new private key.');
+  console.log('');
+
+  // Keep asking until we get a valid file — no way to skip this step
+  while (true) {
+    let credPath = await ask('Path to serviceAccountKey.json', {
+      defaultValue: defaultPath || '',
+      validate: (val) => {
+        if (!val) return 'Path is required. Cannot continue without a serviceAccountKey.json.';
+        const resolved = isAbsolute(val) ? val : resolve(process.cwd(), val);
+        if (!existsSync(resolved)) return `File not found: ${resolved}. Check the path and try again.`;
+        return null;
+      }
+    });
+
+    credPath = isAbsolute(credPath) ? credPath : resolve(process.cwd(), credPath);
+
+    try {
+      const result = validateCredentialsFile(credPath);
+      copyCredentialsToInstance(result.credentialsPath, instanceDir);
+      return result;
+    } catch {
+      // validateCredentialsFile calls process.exit on invalid JSON/missing project_id.
+      // If we somehow get here, ask again.
+      const retry = await confirm('Try again with a different file?', true);
+      if (!retry) {
+        printError('Cannot continue without valid Firebase credentials.');
+        process.exit(1);
+      }
     }
-  });
-
-  credPath = isAbsolute(credPath) ? credPath : resolve(process.cwd(), credPath);
-  const result = validateCredentialsFile(credPath);
-
-  // Copy credentials to instance directory if not already there
-  copyCredentialsToInstance(result.credentialsPath, instanceDir);
-
-  return result;
+  }
 }
 
 function validateCredentialsFile(credPath) {
@@ -196,13 +212,13 @@ function validateCredentialsFile(credPath) {
     content = JSON.parse(readFileSync(credPath, 'utf-8'));
   } catch (err) {
     printError(`Invalid JSON in ${credPath}: ${err.message}`);
-    process.exit(1);
+    throw new Error(`Invalid JSON: ${err.message}`);
   }
 
   if (!content.project_id) {
     printError('serviceAccountKey.json is missing the "project_id" field.');
     printInfo('Download a fresh key from Firebase Console > Project Settings > Service Accounts.');
-    process.exit(1);
+    throw new Error('Missing project_id');
   }
 
   printSuccess(`Credentials valid — project: ${content.project_id}`);
