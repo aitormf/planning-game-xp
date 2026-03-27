@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'fs';
 import { resolve, basename, isAbsolute } from 'path';
 import { execSync } from 'child_process';
 import { ask, confirm, printHeader, printSuccess, printError, printWarning, printInfo } from '../utils/wizard.js';
@@ -29,13 +29,14 @@ export async function runInit({ nonInteractive = false } = {}) {
   printHeader('Step 1/7 — Prerequisites');
   checkPrerequisites();
 
-  // ── Step 2: Instance name & description ──
+  // ── Step 2: Instance name & directory ──
   printHeader('Step 2/7 — Instance Name');
   const { instanceName, instanceDescription } = await resolveInstanceIdentity(existing, nonInteractive);
+  const instanceDir = await resolveInstanceDirectory(instanceName, nonInteractive);
 
   // ── Step 3: Firebase credentials ──
   printHeader('Step 3/7 — Firebase Credentials');
-  const { credentialsPath, projectId } = await resolveCredentials(existing, nonInteractive);
+  const { credentialsPath, projectId } = await resolveCredentials(existing, nonInteractive, instanceDir);
 
   // ── Step 4: Database URL + connectivity ──
   printHeader('Step 4/7 — Firebase Database');
@@ -57,12 +58,15 @@ export async function runInit({ nonInteractive = false } = {}) {
   if (user.developerId) userConfig.developerId = user.developerId;
   if (user.stakeholderId) userConfig.stakeholderId = user.stakeholderId;
 
+  // Point credentialsPath to the copy inside the instance directory
+  const instanceCredentialsPath = resolve(instanceDir, 'serviceAccountKey.json');
+
   const config = {
     instance: { name: instanceName, description: instanceDescription },
     firebase: {
       projectId,
       databaseUrl,
-      credentialsPath
+      credentialsPath: instanceCredentialsPath
     },
     user: userConfig,
     mcp: {
@@ -71,15 +75,17 @@ export async function runInit({ nonInteractive = false } = {}) {
     }
   };
 
-  writeConfig(config, configPath);
-  printSuccess(`Config saved to: ${configPath}`);
+  // Write config to the instance directory
+  const instanceConfigPath = resolve(instanceDir, 'pg.config.yml');
+  writeConfig(config, instanceConfigPath);
+  printSuccess(`Config saved to: ${instanceConfigPath}`);
 
   // Write mcp.user.json for backwards compatibility
-  writeMcpUserCompat(config);
+  writeMcpUserCompat(config, instanceDir);
 
   // Offer to register in Claude Code
   if (!nonInteractive) {
-    await offerClaudeRegistration(config);
+    await offerClaudeRegistration(config, instanceDir);
   }
 
   // ── Step 7: Sync Guidelines ──
@@ -96,9 +102,10 @@ export async function runInit({ nonInteractive = false } = {}) {
     user.stakeholderId ? user.stakeholderId : null
   ].filter(Boolean).join(' / ');
   printSuccess(`User: ${user.name} (${userRoles})`);
-  printSuccess(`Config: ${configPath}`);
+  printSuccess(`Instance dir: ${instanceDir}`);
+  printSuccess(`Config: ${instanceConfigPath}`);
   printInfo('Run "planning-game-mcp --version" to verify installation.');
-  printInfo('The MCP server will use pg.config.yml on next startup.');
+  printInfo('To add another instance, run "planning-game-mcp init" again with a different name.');
 }
 
 // ── Step implementations ──
@@ -151,7 +158,7 @@ async function resolveInstanceIdentity(existing, nonInteractive) {
   return { instanceName: name, instanceDescription: description };
 }
 
-async function resolveCredentials(existing, nonInteractive) {
+async function resolveCredentials(existing, nonInteractive, instanceDir) {
   const defaultPath = existing?.firebase?.credentialsPath || findServiceAccountKey();
 
   if (nonInteractive) {
@@ -159,7 +166,9 @@ async function resolveCredentials(existing, nonInteractive) {
       printError('serviceAccountKey.json not found. Provide path via pg.config.yml or GOOGLE_APPLICATION_CREDENTIALS.');
       process.exit(1);
     }
-    return validateCredentialsFile(defaultPath);
+    const result = validateCredentialsFile(defaultPath);
+    copyCredentialsToInstance(result.credentialsPath, instanceDir);
+    return result;
   }
 
   let credPath = await ask('Path to serviceAccountKey.json', {
@@ -173,7 +182,12 @@ async function resolveCredentials(existing, nonInteractive) {
   });
 
   credPath = isAbsolute(credPath) ? credPath : resolve(process.cwd(), credPath);
-  return validateCredentialsFile(credPath);
+  const result = validateCredentialsFile(credPath);
+
+  // Copy credentials to instance directory if not already there
+  copyCredentialsToInstance(result.credentialsPath, instanceDir);
+
+  return result;
 }
 
 function validateCredentialsFile(credPath) {
@@ -193,6 +207,56 @@ function validateCredentialsFile(credPath) {
 
   printSuccess(`Credentials valid — project: ${content.project_id}`);
   return { credentialsPath: credPath, projectId: content.project_id };
+}
+
+/**
+ * Create or resolve the instance directory at ~/pg-instances/{name}/.
+ */
+async function resolveInstanceDirectory(instanceName, nonInteractive) {
+  const envDir = process.env.MCP_INSTANCE_DIR;
+  if (envDir && existsSync(envDir)) {
+    printInfo(`Using existing instance directory: ${envDir}`);
+    return resolve(envDir);
+  }
+
+  const homedir = process.env.HOME || process.env.USERPROFILE;
+  const defaultDir = resolve(homedir, 'pg-instances', instanceName);
+
+  if (nonInteractive) {
+    mkdirSync(defaultDir, { recursive: true });
+    return defaultDir;
+  }
+
+  const dir = await ask('Instance directory', {
+    defaultValue: defaultDir,
+    validate: (val) => {
+      if (!val) return 'Directory is required';
+      return null;
+    }
+  });
+
+  const resolved = isAbsolute(dir) ? dir : resolve(process.cwd(), dir);
+  mkdirSync(resolved, { recursive: true });
+  printSuccess(`Instance directory: ${resolved}`);
+  return resolved;
+}
+
+/**
+ * Copy serviceAccountKey.json to the instance directory if it's not already there.
+ */
+function copyCredentialsToInstance(credPath, instanceDir) {
+  const target = resolve(instanceDir, 'serviceAccountKey.json');
+  const source = resolve(credPath);
+
+  // Already in the instance dir
+  if (source === target) return;
+
+  try {
+    copyFileSync(source, target);
+    printSuccess(`Credentials copied to: ${target}`);
+  } catch (err) {
+    printWarning(`Could not copy credentials to instance dir: ${err.message}`);
+  }
 }
 
 /**
@@ -453,9 +517,9 @@ async function resolveUser(existing, nonInteractive, credentialsPath, databaseUr
   return { name, email, developerId: developerId || '', stakeholderId: stakeholderId || '' };
 }
 
-function writeMcpUserCompat(config) {
+function writeMcpUserCompat(config, instanceDir) {
   try {
-    const userConfigPath = resolveUserConfigPathCompat();
+    const userConfigPath = resolve(instanceDir, 'mcp.user.json');
     const userData = {
       developerId: config.user.developerId || null,
       stakeholderId: config.user.stakeholderId || null,
@@ -467,14 +531,6 @@ function writeMcpUserCompat(config) {
   } catch {
     // Not critical — pg.config.yml is the source of truth
   }
-}
-
-function resolveUserConfigPathCompat() {
-  const instanceDir = process.env.MCP_INSTANCE_DIR;
-  if (instanceDir) {
-    return resolve(instanceDir, 'mcp.user.json');
-  }
-  return resolve(process.cwd(), 'mcp.user.json');
 }
 
 async function syncGuidelinesStep(credentialsPath, databaseUrl, nonInteractive) {
@@ -525,7 +581,7 @@ async function syncGuidelinesStep(credentialsPath, databaseUrl, nonInteractive) 
   }
 }
 
-async function offerClaudeRegistration(config) {
+async function offerClaudeRegistration(config, instanceDir) {
   const register = await confirm('Register this MCP in Claude Code (~/.claude.json)?', true);
   if (!register) return;
 
@@ -543,7 +599,7 @@ async function offerClaudeRegistration(config) {
     }
 
     const serverName = config.mcp.serverName;
-    const instanceDir = process.env.MCP_INSTANCE_DIR || process.cwd();
+    const credentialsInInstance = resolve(instanceDir, 'serviceAccountKey.json');
 
     // Use the installed binary name so it works regardless of where the
     // package was installed (global, npx cache, etc.). Falls back to
@@ -559,12 +615,13 @@ async function offerClaudeRegistration(config) {
       args: mcpEntryPoint ? [mcpEntryPoint] : [],
       env: {
         MCP_INSTANCE_DIR: instanceDir,
-        GOOGLE_APPLICATION_CREDENTIALS: config.firebase.credentialsPath
+        GOOGLE_APPLICATION_CREDENTIALS: credentialsInInstance
       }
     };
 
     writeFileSync(claudeConfigPath, JSON.stringify(claudeConfig, null, 2) + '\n', 'utf-8');
     printSuccess(`Registered "${serverName}" in ${claudeConfigPath}`);
+    printInfo(`Instance dir: ${instanceDir}`);
   } catch (err) {
     printWarning(`Could not update Claude config: ${err.message}`);
     printInfo('You can register manually with: claude mcp add');
