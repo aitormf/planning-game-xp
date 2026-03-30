@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Use query params instead of dynamic route for public view page
+
+## [1.168.0] - 2026-03-30
+
 ### Added
 
 - Add protected project access with shareable token URLs
