@@ -100,7 +100,7 @@ describe('publicProjectCards', () => {
       expect(res.body.error).toBe('Project not found');
     });
 
-    it('should return 403 for non-public project', async () => {
+    it('should return 403 for non-public project without token', async () => {
       const db = createMockDb({
         projects: {
           MyProject: { name: 'My Project', public: false }
@@ -110,7 +110,6 @@ describe('publicProjectCards', () => {
       const res = createMockRes();
       await handlePublicProjectCards(req, res, { db, logger: mockLogger });
       expect(res.statusCode).toBe(403);
-      expect(res.body.error).toBe('Project is not public');
     });
 
     it('should return 403 for project without public field', async () => {
@@ -123,6 +122,39 @@ describe('publicProjectCards', () => {
       const res = createMockRes();
       await handlePublicProjectCards(req, res, { db, logger: mockLogger });
       expect(res.statusCode).toBe(403);
+    });
+
+    it('should return 403 for protected project with wrong token', async () => {
+      const db = createMockDb({
+        projects: {
+          MyProject: { name: 'My Project', public: false, publicToken: 'correct-token-123' }
+        }
+      });
+      const req = createMockReq({ path: '/MyProject/cards', query: { token: 'wrong-token' } });
+      const res = createMockRes();
+      await handlePublicProjectCards(req, res, { db, logger: mockLogger });
+      expect(res.statusCode).toBe(403);
+    });
+
+    it('should allow access to protected project with valid token', async () => {
+      const db = createMockDb({
+        projects: {
+          MyProject: { name: 'My Project', public: false, publicToken: 'secret-uuid-456' }
+        },
+        cards: {
+          MyProject: {
+            TASKS_MyProject: {
+              '-t1': { cardId: 'MP-TSK-0001', title: 'Protected Task', status: 'In Progress', cardType: 'task-card' }
+            }
+          }
+        }
+      });
+      const req = createMockReq({ path: '/MyProject/cards', query: { token: 'secret-uuid-456' } });
+      const res = createMockRes();
+      await handlePublicProjectCards(req, res, { db, logger: mockLogger });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.cards).toHaveLength(1);
+      expect(res.body.cards[0].title).toBe('Protected Task');
     });
 
     it('should return cards for public project', async () => {
@@ -246,7 +278,7 @@ describe('publicProjectCards', () => {
   describe('PUBLIC_CARD_FIELDS whitelist', () => {
     it('should not include sensitive fields', () => {
       const sensitiveFields = ['description', 'developer', 'commits', 'acceptanceCriteria',
-        'notes', 'codeveloper', 'validator', 'devPoints', 'businessPoints',
+        'notes', 'codeveloper', 'validator',
         'descriptionStructured', 'acceptanceCriteriaStructured', 'implementationPlan',
         'pipelineStatus', 'aiUsage', 'blockedByBusiness', 'blockedByDevelopment'];
       for (const field of sensitiveFields) {
@@ -254,12 +286,17 @@ describe('publicProjectCards', () => {
       }
     });
 
-    it('should include only safe fields', () => {
+    it('should include safe fields for public display', () => {
       expect(PUBLIC_CARD_FIELDS).toContain('cardId');
       expect(PUBLIC_CARD_FIELDS).toContain('title');
       expect(PUBLIC_CARD_FIELDS).toContain('status');
       expect(PUBLIC_CARD_FIELDS).toContain('cardType');
       expect(PUBLIC_CARD_FIELDS).toContain('epic');
+      expect(PUBLIC_CARD_FIELDS).toContain('devPoints');
+      expect(PUBLIC_CARD_FIELDS).toContain('businessPoints');
+      expect(PUBLIC_CARD_FIELDS).toContain('startDate');
+      expect(PUBLIC_CARD_FIELDS).toContain('endDate');
+      expect(PUBLIC_CARD_FIELDS).toContain('priority');
     });
   });
 });

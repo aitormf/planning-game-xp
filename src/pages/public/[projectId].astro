@@ -1,0 +1,448 @@
+---
+// Public read-only view — no auth, no Firebase SDK, no service workers
+// Fetches data from the publicProjectCards Cloud Function
+const { projectId } = Astro.params;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Board</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="/images/icono_PGame.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #080b14;
+      --bg-surface: #0d1121;
+      --border: #1a2035;
+      --text: #dfe4ee;
+      --text-secondary: #8892a8;
+      --text-dim: #4a5268;
+      --accent: #6366f1;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --blue: #3b82f6;
+      --rose: #f43f5e;
+      --font: 'DM Sans', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-left img { height: 32px; width: auto; }
+
+    .header h1 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .header h1 span {
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      padding: 0.25rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .badge.live { color: var(--green); border-color: rgba(16,185,129,0.3); }
+
+    .btn-refresh {
+      font-family: var(--font);
+      font-size: 0.82rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-refresh:hover { border-color: var(--accent); color: var(--text); }
+    .btn-refresh:disabled { opacity: 0.5; cursor: default; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
+    }
+
+    .tab {
+      font-family: var(--font);
+      font-size: 0.82rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      background: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s;
+    }
+    .tab:hover { color: var(--text-secondary); }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+    .tab .count {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-left: 0.3rem;
+    }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+
+    th {
+      text-align: left;
+      font-weight: 500;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+    th:hover { color: var(--text-secondary); }
+    th.sorted { color: var(--accent); }
+    th .arrow { font-size: 0.65rem; margin-left: 0.2rem; }
+
+    td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid rgba(26,32,53,0.5);
+      vertical-align: middle;
+    }
+
+    tr:hover td { background: rgba(13,17,33,0.6); }
+
+    .card-id {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .status-badge {
+      font-size: 0.73rem;
+      font-weight: 500;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .status-todo { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    .status-inprogress { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .status-tovalidate { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    .status-done, .status-donevalidated { background: rgba(16,185,129,0.15); color: #34d399; }
+    .status-blocked { background: rgba(244,63,94,0.15); color: #fb7185; }
+    .status-reopened { background: rgba(139,92,246,0.15); color: #a78bfa; }
+
+    .points {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+
+    .date {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .priority {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+    }
+
+    /* States */
+    .loading, .error, .empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-dim);
+    }
+
+    .error { color: var(--rose); }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .container { padding: 1rem; }
+      .header { flex-direction: column; align-items: flex-start; }
+      th, td { padding: 0.4rem 0.5rem; }
+      .hide-mobile { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-left">
+        <img src="/images/icono_PGame.png" alt="PG" width="32" height="32">
+        <h1 id="projectTitle">Loading... <span id="projectName"></span></h1>
+      </div>
+      <div class="header-right">
+        <span class="badge live" id="statusBadge">&#9679; Live</span>
+        <span class="badge" id="countBadge">0 cards</span>
+        <button class="btn-refresh" id="refreshBtn" title="Refresh now">&#8635; Refresh</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-type="task">Tasks <span class="count" id="count-task">0</span></button>
+      <button class="tab" data-type="bug">Bugs <span class="count" id="count-bug">0</span></button>
+      <button class="tab" data-type="epic">Epics <span class="count" id="count-epic">0</span></button>
+    </div>
+
+    <div id="content">
+      <div class="loading"><div class="spinner"></div>Loading project data...</div>
+    </div>
+  </div>
+
+  <script define:vars={{ projectId }}>
+    const PROJECT_ID = projectId;
+    // Resolve the Cloud Function URL from the current hostname
+    // In production: https://europe-west1-{firebaseProject}.cloudfunctions.net/publicProjectCards
+    // We read it from a meta tag or derive from current host
+    const FIREBASE_PROJECT = document.querySelector('meta[name="firebase-project"]')?.content;
+
+    // Read token from URL if present (protected projects)
+    const urlParams = new URLSearchParams(location.search);
+    const accessToken = urlParams.get('token') || '';
+
+    // Build API URL with optional token
+    function getApiUrl() {
+      const tokenParam = accessToken ? `?token=${encodeURIComponent(accessToken)}` : '';
+      // If we're on the PG domain, use relative URL via Firebase rewrites
+      if (location.hostname.includes('planning-game') || location.hostname.includes('pgamexp')) {
+        return `/api/public/${encodeURIComponent(PROJECT_ID)}/cards${tokenParam}`;
+      }
+      // Fallback: direct Cloud Function URL
+      return `https://europe-west1-planning-gamexp.cloudfunctions.net/publicProjectCards/${encodeURIComponent(PROJECT_ID)}/cards${tokenParam}`;
+    }
+
+    let allCards = [];
+    let currentType = 'task';
+    let sortField = 'priority';
+    let sortAsc = true;
+    let pollTimer = null;
+
+    const content = document.getElementById('content');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const tabs = document.getElementById('tabs');
+
+    async function fetchCards() {
+      try {
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = '⟳ ...';
+
+        const res = await fetch(getApiUrl());
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        allCards = data.cards || [];
+
+        document.getElementById('projectTitle').innerHTML =
+          `${data.projectName} <span>Public Board</span>`;
+        document.getElementById('countBadge').textContent = `${allCards.length} cards`;
+
+        // Update tab counts
+        ['task', 'bug', 'epic'].forEach(t => {
+          const el = document.getElementById(`count-${t}`);
+          if (el) el.textContent = allCards.filter(c => c.type === t).length;
+        });
+
+        renderTable();
+      } catch (err) {
+        content.innerHTML = `<div class="error">${err.message}</div>`;
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '⟳ Refresh';
+      }
+    }
+
+    function statusClass(status) {
+      if (!status) return '';
+      const s = status.toLowerCase().replace(/[^a-z]/g, '');
+      if (s.includes('todo')) return 'status-todo';
+      if (s.includes('inprogress')) return 'status-inprogress';
+      if (s.includes('tovalidate')) return 'status-tovalidate';
+      if (s.includes('donevalidated') || s === 'done') return 'status-done';
+      if (s.includes('blocked')) return 'status-blocked';
+      if (s.includes('reopened')) return 'status-reopened';
+      if (s.includes('fixed') || s.includes('closed') || s.includes('verified')) return 'status-done';
+      if (s.includes('assigned') || s.includes('created')) return 'status-todo';
+      return '';
+    }
+
+    function formatDate(d) {
+      if (!d) return '';
+      const date = d.split('T')[0];
+      const parts = date.split('-');
+      if (parts.length !== 3) return d;
+      return `${parts[2]}/${parts[1]}`;
+    }
+
+    function sortCards(cards) {
+      return [...cards].sort((a, b) => {
+        let va = a[sortField], vb = b[sortField];
+        if (va == null) va = sortAsc ? Infinity : -Infinity;
+        if (vb == null) vb = sortAsc ? Infinity : -Infinity;
+        if (typeof va === 'string') va = va.toLowerCase();
+        if (typeof vb === 'string') vb = vb.toLowerCase();
+        if (va < vb) return sortAsc ? -1 : 1;
+        if (va > vb) return sortAsc ? 1 : -1;
+        return 0;
+      });
+    }
+
+    function renderTable() {
+      const filtered = allCards.filter(c => c.type === currentType);
+      const sorted = sortCards(filtered);
+
+      if (sorted.length === 0) {
+        content.innerHTML = `<div class="empty">No ${currentType}s found</div>`;
+        return;
+      }
+
+      const arrow = (field) => sortField === field
+        ? `<span class="arrow">${sortAsc ? '▲' : '▼'}</span>`
+        : '';
+
+      const cls = (field) => sortField === field ? 'sorted' : '';
+
+      content.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="${cls('cardId')}" data-sort="cardId">ID${arrow('cardId')}</th>
+                <th class="${cls('title')}" data-sort="title">Title${arrow('title')}</th>
+                <th class="${cls('status')}" data-sort="status">Status${arrow('status')}</th>
+                <th class="${cls('priority')}" data-sort="priority">Pri${arrow('priority')}</th>
+                <th class="${cls('devPoints')}" data-sort="devPoints">Dev${arrow('devPoints')}</th>
+                <th class="${cls('businessPoints')}" data-sort="businessPoints">Biz${arrow('businessPoints')}</th>
+                <th class="${cls('startDate')} hide-mobile" data-sort="startDate">Start${arrow('startDate')}</th>
+                <th class="${cls('endDate')} hide-mobile" data-sort="endDate">End${arrow('endDate')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sorted.map(c => `
+                <tr>
+                  <td class="card-id">${c.cardId || ''}</td>
+                  <td>${c.title || ''}</td>
+                  <td><span class="status-badge ${statusClass(c.status)}">${c.status || ''}</span></td>
+                  <td class="points priority">${c.priority != null ? c.priority : ''}</td>
+                  <td class="points">${c.devPoints != null ? c.devPoints : ''}</td>
+                  <td class="points">${c.businessPoints != null ? c.businessPoints : ''}</td>
+                  <td class="date hide-mobile">${formatDate(c.startDate)}</td>
+                  <td class="date hide-mobile">${formatDate(c.endDate)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      // Bind sort headers
+      content.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.getAttribute('data-sort');
+          if (sortField === field) { sortAsc = !sortAsc; }
+          else { sortField = field; sortAsc = true; }
+          renderTable();
+        });
+      });
+    }
+
+    // Tab switching
+    tabs.addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (!tab) return;
+      tabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentType = tab.getAttribute('data-type');
+      renderTable();
+    });
+
+    // Refresh button
+    refreshBtn.addEventListener('click', fetchCards);
+
+    // Initial load + polling
+    fetchCards();
+    pollTimer = setInterval(fetchCards, 60000);
+  </script>
+</body>
+</html>
