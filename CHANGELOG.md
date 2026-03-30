@@ -5,6 +5,22 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Init wizard creates ~/pg-instances/{name}/ directory structure
+
+### Fixed
+
+- Update express to resolve path-to-regexp ReDoS vulnerability (GHSA-37ch)
+- Remove fake 09:00/17:00 default times from timestamps
+- Make serviceAccountKey.json mandatory in init wizard
+
+### Documentation
+
+- Update READMEs to point to pgamexp.com docs and init wizard
+
+## [1.166.8] - 2026-03-26
+
 ### Performance
 
 - Replace 2s timeout with rAF for inline module script execution
