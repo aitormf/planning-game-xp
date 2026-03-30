@@ -1,7 +1,6 @@
 ---
 // Public read-only view — no auth, no Firebase SDK, no service workers
-// Fetches data from the publicProjectCards Cloud Function
-const { projectId } = Astro.params;
+// projectId and token are read from URL query params via client JS
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -268,16 +267,17 @@ const { projectId } = Astro.params;
     </div>
   </div>
 
-  <script define:vars={{ projectId }}>
-    const PROJECT_ID = projectId;
-    // Resolve the Cloud Function URL from the current hostname
-    // In production: https://europe-west1-{firebaseProject}.cloudfunctions.net/publicProjectCards
-    // We read it from a meta tag or derive from current host
-    const FIREBASE_PROJECT = document.querySelector('meta[name="firebase-project"]')?.content;
-
-    // Read token from URL if present (protected projects)
+  <script>
+    // Read projectId and token from URL query params
+    // Usage: /public/?project=MyProject  or  /public/?project=MyProject&token=uuid
     const urlParams = new URLSearchParams(location.search);
+    const PROJECT_ID = urlParams.get('project') || '';
     const accessToken = urlParams.get('token') || '';
+
+    if (!PROJECT_ID) {
+      document.getElementById('content').innerHTML =
+        '<div class="error">Missing project parameter.<br>Use: /public/?project=ProjectName</div>';
+    }
 
     // Build API URL with optional token
     function getApiUrl() {
