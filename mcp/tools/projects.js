@@ -179,6 +179,12 @@ export async function updateProject({ projectId, updates }) {
     }
   }
 
+  // Auto-generate publicToken when set to "generate" or true
+  if (cleanUpdates.publicToken === 'generate' || cleanUpdates.publicToken === true) {
+    const { randomUUID } = await import('crypto');
+    cleanUpdates.publicToken = randomUUID();
+  }
+
   cleanUpdates.updatedAt = new Date().toISOString();
   cleanUpdates.updatedBy = getMcpUserId();
 

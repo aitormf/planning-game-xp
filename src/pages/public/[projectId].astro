@@ -275,14 +275,19 @@ const { projectId } = Astro.params;
     // We read it from a meta tag or derive from current host
     const FIREBASE_PROJECT = document.querySelector('meta[name="firebase-project"]')?.content;
 
-    // Try multiple URL patterns
+    // Read token from URL if present (protected projects)
+    const urlParams = new URLSearchParams(location.search);
+    const accessToken = urlParams.get('token') || '';
+
+    // Build API URL with optional token
     function getApiUrl() {
+      const tokenParam = accessToken ? `?token=${encodeURIComponent(accessToken)}` : '';
       // If we're on the PG domain, use relative URL via Firebase rewrites
       if (location.hostname.includes('planning-game') || location.hostname.includes('pgamexp')) {
-        return `/api/public/${encodeURIComponent(PROJECT_ID)}/cards`;
+        return `/api/public/${encodeURIComponent(PROJECT_ID)}/cards${tokenParam}`;
       }
       // Fallback: direct Cloud Function URL
-      return `https://europe-west1-planning-gamexp.cloudfunctions.net/publicProjectCards/${encodeURIComponent(PROJECT_ID)}/cards`;
+      return `https://europe-west1-planning-gamexp.cloudfunctions.net/publicProjectCards/${encodeURIComponent(PROJECT_ID)}/cards${tokenParam}`;
     }
 
     let allCards = [];

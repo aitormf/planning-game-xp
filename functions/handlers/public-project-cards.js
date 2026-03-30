@@ -70,9 +70,12 @@ async function handlePublicProjectCards(req, res, { db, logger }) {
 
     const project = projectSnap.val();
 
-    // Check if project is public
+    // Access control: public projects are open, protected projects require a token
     if (!project.public) {
-      return res.status(403).json({ error: 'Project is not public' });
+      const token = req.query.token;
+      if (!project.publicToken || !token || token !== project.publicToken) {
+        return res.status(403).json({ error: 'Project is not public. Use a shared link with token to access protected projects.' });
+      }
     }
 
     // Optional type filter
