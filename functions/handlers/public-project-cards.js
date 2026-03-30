@@ -5,7 +5,7 @@
 'use strict';
 
 // Fields allowed in the public API response (whitelist approach)
-const PUBLIC_CARD_FIELDS = ['cardId', 'title', 'status', 'cardType', 'epic', 'year', 'sprint'];
+const PUBLIC_CARD_FIELDS = ['cardId', 'title', 'status', 'cardType', 'epic', 'year', 'sprint', 'devPoints', 'businessPoints', 'startDate', 'endDate', 'priority'];
 
 // Card type sections in RTDB
 const CARD_SECTIONS = {

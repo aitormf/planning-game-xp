@@ -246,7 +246,7 @@ describe('publicProjectCards', () => {
   describe('PUBLIC_CARD_FIELDS whitelist', () => {
     it('should not include sensitive fields', () => {
       const sensitiveFields = ['description', 'developer', 'commits', 'acceptanceCriteria',
-        'notes', 'codeveloper', 'validator', 'devPoints', 'businessPoints',
+        'notes', 'codeveloper', 'validator',
         'descriptionStructured', 'acceptanceCriteriaStructured', 'implementationPlan',
         'pipelineStatus', 'aiUsage', 'blockedByBusiness', 'blockedByDevelopment'];
       for (const field of sensitiveFields) {
@@ -254,12 +254,17 @@ describe('publicProjectCards', () => {
       }
     });
 
-    it('should include only safe fields', () => {
+    it('should include safe fields for public display', () => {
       expect(PUBLIC_CARD_FIELDS).toContain('cardId');
       expect(PUBLIC_CARD_FIELDS).toContain('title');
       expect(PUBLIC_CARD_FIELDS).toContain('status');
       expect(PUBLIC_CARD_FIELDS).toContain('cardType');
       expect(PUBLIC_CARD_FIELDS).toContain('epic');
+      expect(PUBLIC_CARD_FIELDS).toContain('devPoints');
+      expect(PUBLIC_CARD_FIELDS).toContain('businessPoints');
+      expect(PUBLIC_CARD_FIELDS).toContain('startDate');
+      expect(PUBLIC_CARD_FIELDS).toContain('endDate');
+      expect(PUBLIC_CARD_FIELDS).toContain('priority');
     });
   });
 });

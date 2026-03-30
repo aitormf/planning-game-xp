@@ -26,6 +26,12 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "rewrites": [
+      {
+        "source": "/api/public/**",
+        "function": "publicProjectCards"
+      }
+    ],
     "headers": [
       {
         "source": "**/*.js",
