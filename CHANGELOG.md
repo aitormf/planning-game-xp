@@ -7,6 +7,13 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Add protected project access with shareable token URLs
+- Add public read-only view with polling from Cloud Function API
+
+## [1.167.0] - 2026-03-30
+
+### Added
+
 - Init wizard creates ~/pg-instances/{name}/ directory structure
 
 ### Fixed
