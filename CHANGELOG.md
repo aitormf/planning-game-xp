@@ -7,6 +7,22 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Init wizard asks to add new or reconfigure existing instance
+- Init wizard detects existing instances for easy multi-instance setup
+- Add response compressor middleware to reduce token consumption
+
+### Performance
+
+- Return only summary fields from update_card response
+
+### Other
+
+- Bump version to 1.18.0
+
+## [1.169.0] - 2026-03-31
+
+### Added
+
 - Sync project team roles to /users/ on create and update
 - Email notification when Cloud Function reverts invalid status transition
 
