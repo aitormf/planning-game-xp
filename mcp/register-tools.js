@@ -21,6 +21,7 @@ import { pgDoctorSchema, pgDoctor } from './tools/doctor.js';
 import { pgConfigSchema, pgConfig } from './tools/config.js';
 import { getInstanceMetadata } from './instance-metadata.js';
 import { syncGuidelinesSchema, syncGuidelines } from './tools/sync-guidelines.js';
+import { compressResponse, compactStringify } from './response-compressor.js';
 
 // Track calls for periodic update checks
 let callCount = 0;
@@ -75,12 +76,15 @@ function wrapWithUpdateNotice(handler) {
       }
     }
 
-    // Inject _instance metadata into every JSON response
+    // Inject _instance metadata and compress response to reduce token consumption
     if (result.content && result.content.length > 0) {
       const parsed = safeJsonParse(result.content[0].text);
       if (parsed) {
         parsed._instance = getInstanceMetadata();
-        result.content[0] = { type: 'text', text: JSON.stringify(parsed, null, 2) };
+        // Detect tool type from response structure for context-specific compression
+        const toolHint = parsed.card && parsed.availableTransitions ? 'get_card' : '';
+        const compressed = compressResponse(parsed, toolHint);
+        result.content[0] = { type: 'text', text: compactStringify(compressed) };
       }
     }
 
