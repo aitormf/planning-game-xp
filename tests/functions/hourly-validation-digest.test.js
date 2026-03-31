@@ -49,6 +49,9 @@ describe('hourly-validation-digest', () => {
       if (path === '/emailQueue/bugFixed') {
         return { once: vi.fn().mockResolvedValue({ val: () => bugFixed }) };
       }
+      if (path === '/emailQueue/validationRevert') {
+        return { once: vi.fn().mockResolvedValue({ val: () => null }) };
+      }
       // Root ref for cleanup
       return { update: vi.fn().mockResolvedValue(undefined) };
     });
@@ -119,7 +122,7 @@ describe('hourly-validation-digest', () => {
             '-k1': { recipientEmail: 'a@test.com', cardId: 'TSK-1', projectId: 'P1', taskTitle: 'T1' }
           }) }) };
         }
-        if (path === '/emailQueue/bugFixed') {
+        if (path === '/emailQueue/bugFixed' || path === '/emailQueue/validationRevert') {
           return { once: vi.fn().mockResolvedValue({ val: () => null }) };
         }
         // Root ref
@@ -144,7 +147,7 @@ describe('hourly-validation-digest', () => {
             '-k1': { recipientEmail: 'a@test.com', cardId: 'TSK-1', projectId: 'P1', taskTitle: 'T1' }
           }) }) };
         }
-        if (path === '/emailQueue/bugFixed') {
+        if (path === '/emailQueue/bugFixed' || path === '/emailQueue/validationRevert') {
           return { once: vi.fn().mockResolvedValue({ val: () => null }) };
         }
         return mockRootRef;

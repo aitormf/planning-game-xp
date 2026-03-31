@@ -137,10 +137,43 @@ function groupByProject(entries) {
   return groups;
 }
 
+/**
+ * Add a validation revert notification to the email queue.
+ * Sent when a Cloud Function reverts an invalid status transition.
+ * @param {Object} db - Firebase RTDB instance
+ * @param {Object} data - Queue entry data
+ * @param {string} data.recipientEmail - Developer/codeveloper email
+ * @param {string} data.cardId - Card ID
+ * @param {string} data.projectId - Project ID
+ * @param {string} data.taskTitle - Task title
+ * @param {string} data.attemptedStatus - Status that was attempted
+ * @param {string} data.revertedToStatus - Status it was reverted to
+ * @param {string} data.reason - Why the transition was rejected
+ * @param {string[]} [data.missingFields] - Missing fields if applicable
+ * @returns {Promise<string>} Queue entry key
+ */
+async function queueRevertEmail(db, data) {
+  const ref = db.ref(`${QUEUE_PATH}/validationRevert`).push();
+  await ref.set({
+    type: 'validationRevert',
+    recipientEmail: data.recipientEmail,
+    cardId: data.cardId,
+    projectId: data.projectId,
+    taskTitle: data.taskTitle || '',
+    attemptedStatus: data.attemptedStatus,
+    revertedToStatus: data.revertedToStatus,
+    reason: data.reason,
+    missingFields: data.missingFields || [],
+    timestamp: Date.now()
+  });
+  return ref.key;
+}
+
 module.exports = {
   QUEUE_PATH,
   queueValidationEmail,
   queueBugFixedEmail,
+  queueRevertEmail,
   readQueue,
   removeFromQueue,
   groupByRecipient,
