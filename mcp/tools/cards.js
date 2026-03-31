@@ -1103,11 +1103,34 @@ export async function updateCard({ projectId, type, firebaseId, updates, validat
 
   await cardRef.update(updates);
 
+  // Return only essential fields + what was updated (not the full card)
+  // This drastically reduces token consumption for bulk operations
   const updatedSnapshot = await cardRef.once('value');
+  const fullCard = updatedSnapshot.val();
 
   const response = {
     message: 'Card updated successfully',
-    card: updatedSnapshot.val()
+    card: {
+      cardId: fullCard.cardId,
+      cardType: fullCard.cardType,
+      title: fullCard.title,
+      status: fullCard.status,
+      developer: fullCard.developer || null,
+      codeveloper: fullCard.codeveloper || fullCard.coDeveloper || null,
+      validator: fullCard.validator || null,
+      sprint: fullCard.sprint || null,
+      startDate: fullCard.startDate || null,
+      endDate: fullCard.endDate || null,
+      firebaseId: firebaseId,
+      projectId: fullCard.projectId,
+      priority: fullCard.priority || null,
+      devPoints: fullCard.devPoints || null,
+      businessPoints: fullCard.businessPoints || null,
+      epic: fullCard.epic || null,
+      updatedAt: fullCard.updatedAt,
+      ...(fullCard.workCycles && { workCycles: fullCard.workCycles }),
+      ...(fullCard.totalWorkDurationMs != null && { totalWorkDurationMs: fullCard.totalWorkDurationMs })
+    }
   };
 
   if (warnings && warnings.length > 0) {

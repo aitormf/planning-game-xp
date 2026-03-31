@@ -359,13 +359,16 @@ describe('workCycles feature', () => {
       const cycle1Duration = response.card.workCycles[0].durationMs;
 
       // Step 3: Simulate Reopened status (set directly, as MCP can't do this transition)
-      // Reconstruct card state with closed cycle and Reopened status
-      const cardAfterValidate = response.card;
+      // Reconstruct full card (response.card is now summary-only) with closed cycle and Reopened status
+      const fullCardData = createCompleteTask({
+        status: 'Reopened',
+        startDate: '2026-03-10T09:00:00',
+        endDate: '2026-03-10T17:00:00',
+        workCycles: response.card.workCycles,
+        totalWorkDurationMs: response.card.totalWorkDurationMs || 0
+      });
       setMockRtdbData('/cards/TestProject/TASKS_TestProject', {
-        'task1': {
-          ...cardAfterValidate,
-          status: 'Reopened'
-        }
+        'task1': fullCardData
       });
 
       // Step 4: Reopened → In Progress (opens cycle 2)
