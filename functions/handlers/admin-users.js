@@ -148,18 +148,22 @@ async function handleCreateOrUpdateUser(request, deps) {
     updates[`/users/${encodedEmail}/createdBy`] = callerEmail;
   }
 
-  // Handle developer ID
+  // Handle developer ID — assign when checked, remove when unchecked
   const isDeveloper = developer === true;
   if (isDeveloper && !existingData.developerId) {
     const newDevId = await generateNextId('dev_', 'developerId', db);
     updates[`/users/${encodedEmail}/developerId`] = newDevId;
+  } else if (!isDeveloper && existingData.developerId) {
+    updates[`/users/${encodedEmail}/developerId`] = null;
   }
 
-  // Handle stakeholder ID
+  // Handle stakeholder ID — assign when checked, remove when unchecked
   const isStakeholder = stakeholder === true;
   if (isStakeholder && !existingData.stakeholderId) {
     const newStkId = await generateNextId('stk_', 'stakeholderId', db);
     updates[`/users/${encodedEmail}/stakeholderId`] = newStkId;
+  } else if (!isStakeholder && existingData.stakeholderId) {
+    updates[`/users/${encodedEmail}/stakeholderId`] = null;
   }
 
   // Handle project assignment

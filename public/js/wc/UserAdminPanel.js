@@ -140,8 +140,8 @@ class UserAdminPanel extends LitElement {
     this._formName = user.name || '';
     this._formEmail = user.email || '';
     this._formProjectIds = Object.keys(user.projects || {});
-    this._formDeveloper = true;
-    this._formStakeholder = false;
+    this._formDeveloper = Boolean(user.developerId);
+    this._formStakeholder = Boolean(user.stakeholderId);
     this._showForm = true;
   }
 
