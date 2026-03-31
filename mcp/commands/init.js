@@ -13,16 +13,60 @@ import { syncGuidelines } from '../tools/sync-guidelines.js';
 export async function runInit({ nonInteractive = false } = {}) {
   printHeader('Planning Game MCP — Setup Wizard');
 
-  const configPath = resolveConfigPath();
-  const existing = readConfig(configPath);
+  // ── Step 0: Detect existing instances and ask what to do ──
+  let existing = null;
+  let reconfigureInstance = null;
 
-  if (existing && !nonInteractive) {
-    printInfo(`Config found at: ${configPath}`);
-    const reconfigure = await confirm('Reconfigure existing setup?', false);
-    if (!reconfigure) {
-      printInfo('Setup cancelled. Existing config preserved.');
-      process.exit(0);
+  if (!nonInteractive) {
+    const existingInstances = listExistingInstances();
+
+    if (existingInstances.length > 0) {
+      printInfo(`Found ${existingInstances.length} existing instance${existingInstances.length > 1 ? 's' : ''}:`);
+      existingInstances.forEach((inst, i) => {
+        printInfo(`  ${i + 1}. ${inst.name} → ${inst.project || 'unknown project'}`);
+      });
+      console.log('');
+
+      const options = [
+        ...existingInstances.map((inst, i) => ({
+          label: `Reconfigure "${inst.name}"`,
+          value: `reconfig-${i}`
+        })),
+        { label: 'Add a new instance', value: 'new' }
+      ];
+
+      process.stderr.write('What would you like to do?\n');
+      options.forEach((opt, i) => {
+        process.stderr.write(`  ${i + 1}. ${opt.label}\n`);
+      });
+
+      const choice = await ask('Select option', {
+        defaultValue: String(options.length),
+        validate: (val) => {
+          const num = parseInt(val, 10);
+          if (isNaN(num) || num < 1 || num > options.length) {
+            return `Enter a number between 1 and ${options.length}`;
+          }
+          return null;
+        }
+      });
+
+      const selectedIdx = parseInt(choice, 10) - 1;
+      const selected = options[selectedIdx];
+
+      if (selected.value.startsWith('reconfig-')) {
+        const instIdx = parseInt(selected.value.split('-')[1], 10);
+        reconfigureInstance = existingInstances[instIdx];
+        if (reconfigureInstance.dir) {
+          const configPath = resolve(reconfigureInstance.dir, 'pg.config.yml');
+          existing = readConfig(configPath);
+        }
+      }
+      // If 'new', existing stays null — fresh setup
     }
+  } else {
+    const configPath = resolveConfigPath();
+    existing = readConfig(configPath);
   }
 
   // ── Step 1: Prerequisites ──
@@ -32,7 +76,9 @@ export async function runInit({ nonInteractive = false } = {}) {
   // ── Step 2: Instance name & directory ──
   printHeader('Step 2/7 — Instance Name');
   const { instanceName, instanceDescription } = await resolveInstanceIdentity(existing, nonInteractive);
-  const instanceDir = await resolveInstanceDirectory(instanceName, nonInteractive);
+  const instanceDir = reconfigureInstance?.dir
+    ? resolve(reconfigureInstance.dir)
+    : await resolveInstanceDirectory(instanceName, nonInteractive);
 
   // ── Step 3: Firebase credentials ──
   printHeader('Step 3/7 — Firebase Credentials');
