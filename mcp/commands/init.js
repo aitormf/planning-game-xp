@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync, readdirSync, statSync } from 'fs';
 import { resolve, basename, isAbsolute } from 'path';
 import { execSync } from 'child_process';
 import { ask, confirm, printHeader, printSuccess, printError, printWarning, printInfo } from '../utils/wizard.js';
@@ -140,6 +140,18 @@ async function resolveInstanceIdentity(existing, nonInteractive) {
     return { instanceName: defaultName, instanceDescription: defaultDescription };
   }
 
+  // Detect and show existing instances
+  const existingInstances = listExistingInstances();
+  if (existingInstances.length > 0) {
+    printInfo(`Existing instance${existingInstances.length > 1 ? 's' : ''}:`);
+    for (const inst of existingInstances) {
+      printInfo(`  ${inst.name} → ${inst.project || 'unknown project'}`);
+    }
+    console.log('');
+    printInfo('Adding another instance? Just pick a different name.');
+    console.log('');
+  }
+
   const name = await ask('Instance name', {
     defaultValue: defaultName,
     validate: (val) => {
@@ -156,6 +168,52 @@ async function resolveInstanceIdentity(existing, nonInteractive) {
   printSuccess(`Instance: ${name}`);
   if (description) printSuccess(`Description: ${description}`);
   return { instanceName: name, instanceDescription: description };
+}
+
+/**
+ * List existing PG instances from ~/pg-instances/ and ~/.claude.json
+ */
+function listExistingInstances() {
+  const instances = [];
+  const homedir = process.env.HOME || process.env.USERPROFILE;
+
+  // Check ~/pg-instances/
+  const pgInstancesDir = resolve(homedir, 'pg-instances');
+  if (existsSync(pgInstancesDir)) {
+    try {
+      for (const entry of readdirSync(pgInstancesDir)) {
+        const fullPath = resolve(pgInstancesDir, entry);
+        if (!statSync(fullPath).isDirectory()) continue;
+
+        let project = null;
+        const configPath = resolve(fullPath, 'pg.config.yml');
+        if (existsSync(configPath)) {
+          const config = readConfig(configPath);
+          project = config?.firebase?.projectId || null;
+        }
+        instances.push({ name: entry, dir: fullPath, project });
+      }
+    } catch { /* ignore */ }
+  }
+
+  // Also check ~/.claude.json for planning-game-* servers
+  if (instances.length === 0) {
+    try {
+      const claudeConfigPath = resolve(homedir, '.claude.json');
+      if (existsSync(claudeConfigPath)) {
+        const claudeConfig = JSON.parse(readFileSync(claudeConfigPath, 'utf-8'));
+        const servers = claudeConfig.mcpServers || {};
+        for (const [name, config] of Object.entries(servers)) {
+          if (name.startsWith('planning-game')) {
+            const instanceDir = config.env?.MCP_INSTANCE_DIR || null;
+            instances.push({ name, dir: instanceDir, project: null });
+          }
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  return instances;
 }
 
 async function resolveCredentials(existing, nonInteractive, instanceDir) {

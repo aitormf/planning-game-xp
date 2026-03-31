@@ -79,10 +79,10 @@ describe('BaseCard - Date Validation', () => {
     });
 
     it('should handle mixed formats: date-only startDate vs datetime endDate', () => {
-      // date-only gets default start time (09:00)
-      expect(validateDates('2026-03-16', '2026-03-16T17:05:00')).toBe(true);
-      // date-only gets default start time (09:00), endDate at 08:00 same day
-      expect(validateDates('2026-03-16', '2026-03-16T08:00:00')).toBe(false);
+      // date-only gets current time appended. Use different days to avoid time-of-day sensitivity
+      expect(validateDates('2026-03-15', '2026-03-16T17:05:00')).toBe(true);
+      // endDate before startDate (different days)
+      expect(validateDates('2026-03-17', '2026-03-16T08:00:00')).toBe(false);
     });
   });
 
