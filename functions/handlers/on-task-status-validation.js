@@ -216,6 +216,32 @@ function validateStatusDateTransition(beforeData, afterData, afterStatus) {
 }
 
 /**
+ * Resolve a developer/stakeholder ID (dev_XXX) to an email address.
+ * Checks /users/ first, then falls back to /data/developers/.
+ */
+async function resolveEmailFromId(db, entityId) {
+  if (!entityId) return null;
+
+  // Check /users/ (iterate to find by developerId or stakeholderId)
+  try {
+    const usersSnap = await db.ref('/users').orderByChild('developerId').equalTo(entityId).limitToFirst(1).once('value');
+    const users = usersSnap.val();
+    if (users) {
+      const firstUser = Object.values(users)[0];
+      if (firstUser?.email) return firstUser.email;
+    }
+  } catch (_) { /* ignore */ }
+
+  // Fallback: /data/developers/{id}/email
+  try {
+    const devSnap = await db.ref(`/data/developers/${entityId}/email`).once('value');
+    if (devSnap.exists()) return devSnap.val();
+  } catch (_) { /* ignore */ }
+
+  return null;
+}
+
+/**
  * Main handler for task status validation
  * @param {Object} params - { projectId, section, cardId }
  * @param {Object} beforeData - Card data before the change
@@ -334,6 +360,48 @@ async function handleTaskStatusValidation(params, beforeData, afterData, deps) {
       logger.info('onTaskStatusValidation: Notification sent', {
         recipient: afterData.updatedBy,
         error: validationError.type
+      });
+    }
+
+    // Queue email notifications to developer and codeveloper
+    try {
+      const { queueRevertEmail } = require('./email-queue.js');
+      const emailData = {
+        cardId: afterData.cardId || cardId,
+        projectId,
+        taskTitle: afterData.title || '',
+        attemptedStatus: afterStatus,
+        revertedToStatus: beforeStatus,
+        reason: validationError.message,
+        missingFields: validationError.missingFields || []
+      };
+
+      // Resolve developer email from /users/ or /data/developers/
+      const devId = afterData.developer;
+      if (devId) {
+        const devEmail = await resolveEmailFromId(db, devId);
+        if (devEmail) {
+          await queueRevertEmail(db, { ...emailData, recipientEmail: devEmail });
+        }
+      }
+
+      // Also notify codeveloper if different from developer
+      const coDevId = afterData.coDeveloper || afterData.codeveloper;
+      if (coDevId && coDevId !== devId) {
+        const coDevEmail = await resolveEmailFromId(db, coDevId);
+        if (coDevEmail) {
+          await queueRevertEmail(db, { ...emailData, recipientEmail: coDevEmail });
+        }
+      }
+
+      logger.info('onTaskStatusValidation: Revert emails queued', {
+        cardId: emailData.cardId,
+        developer: devId,
+        codeveloper: coDevId
+      });
+    } catch (emailErr) {
+      logger.warn('onTaskStatusValidation: Failed to queue revert email', {
+        error: emailErr.message
       });
     }
 

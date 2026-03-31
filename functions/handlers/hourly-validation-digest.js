@@ -34,9 +34,48 @@ function getAppUrl() {
  * @param {Array} params.bugFixedEntries - Bug fixed queue entries
  * @returns {string} HTML email body
  */
-function generateDigestHtml({ validationEntries, bugFixedEntries }) {
+function generateDigestHtml({ validationEntries, bugFixedEntries, revertEntries = [] }) {
   const appUrl = getAppUrl();
   const sections = [];
+
+  // Revert warnings (urgent — shown first with red styling)
+  if (revertEntries.length > 0) {
+    const revertRows = revertEntries.map(entry => {
+      const d = entry.data;
+      const taskUrl = `${appUrl}/adminproject/?projectId=${encodeURIComponent(d.projectId)}&cardId=${encodeURIComponent(d.cardId)}#tasks`;
+      return `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">
+            <a href="${taskUrl}" style="color: #dc3545; text-decoration: none; font-weight: 500;">${d.cardId}</a>
+          </td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${d.taskTitle || 'Sin titulo'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${d.attemptedStatus} → ${d.revertedToStatus}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; color: #dc3545;">${d.reason}</td>
+        </tr>`;
+    }).join('');
+
+    sections.push(`
+      <div style="margin-bottom: 24px; background: #fff5f5; border: 1px solid #dc3545; border-radius: 4px; padding: 16px;">
+        <h3 style="color: #dc3545; margin: 0 0 12px 0;">
+          ⚠ Transiciones revertidas (${revertEntries.length})
+        </h3>
+        <p style="color: #666; font-size: 13px; margin: 0 0 12px;">
+          Un agente IA o una escritura directa intentó cambiar el estado de estas tareas sin cumplir los requisitos.
+          El cambio fue revertido automáticamente.
+        </p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <thead>
+            <tr style="background: #f1f3f5;">
+              <th style="padding: 8px; text-align: left; width: 130px;">ID</th>
+              <th style="padding: 8px; text-align: left;">Titulo</th>
+              <th style="padding: 8px; text-align: left; width: 150px;">Transicion</th>
+              <th style="padding: 8px; text-align: left;">Motivo</th>
+            </tr>
+          </thead>
+          <tbody>${revertRows}</tbody>
+        </table>
+      </div>`);
+  }
 
   // Group validation entries by project
   if (validationEntries.length > 0) {
@@ -126,7 +165,7 @@ function generateDigestHtml({ validationEntries, bugFixedEntries }) {
       </div>`);
   }
 
-  const totalItems = validationEntries.length + bugFixedEntries.length;
+  const totalItems = validationEntries.length + bugFixedEntries.length + revertEntries.length;
 
   return `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 700px; margin: 0 auto;">
@@ -161,13 +200,14 @@ async function handleHourlyDigest(deps, filterEmail = null) {
 
   logger.info('hourlyDigest: Starting digest processing');
 
-  // Read both queues
-  const [validationEntries, bugFixedEntries] = await Promise.all([
+  // Read all queues
+  const [validationEntries, bugFixedEntries, revertEntries] = await Promise.all([
     readQueue(db, 'toValidate'),
-    readQueue(db, 'bugFixed')
+    readQueue(db, 'bugFixed'),
+    readQueue(db, 'validationRevert')
   ]);
 
-  const totalEntries = validationEntries.length + bugFixedEntries.length;
+  const totalEntries = validationEntries.length + bugFixedEntries.length + revertEntries.length;
 
   if (totalEntries === 0) {
     logger.info('hourlyDigest: No pending notifications, skipping');
@@ -176,19 +216,21 @@ async function handleHourlyDigest(deps, filterEmail = null) {
 
   logger.info('hourlyDigest: Found pending notifications', {
     validationCount: validationEntries.length,
-    bugFixedCount: bugFixedEntries.length
+    bugFixedCount: bugFixedEntries.length,
+    revertCount: revertEntries.length
   });
 
   // Merge all entries for grouping by recipient
   const allEntries = [
     ...validationEntries.map(e => ({ ...e, queueType: 'toValidate' })),
-    ...bugFixedEntries.map(e => ({ ...e, queueType: 'bugFixed' }))
+    ...bugFixedEntries.map(e => ({ ...e, queueType: 'bugFixed' })),
+    ...revertEntries.map(e => ({ ...e, queueType: 'validationRevert' }))
   ];
 
   const byRecipient = groupByRecipient(allEntries);
 
   let emailsSent = 0;
-  const processedKeys = { toValidate: [], bugFixed: [] };
+  const processedKeys = { toValidate: [], bugFixed: [], validationRevert: [] };
   let accessToken = null;
 
   for (const [recipientEmail, entries] of byRecipient) {
@@ -197,9 +239,10 @@ async function handleHourlyDigest(deps, filterEmail = null) {
       continue;
     }
 
-    // Split back into validation and bug entries for this recipient
+    // Split back into types for this recipient
     const recipientValidation = entries.filter(e => e.queueType === 'toValidate');
     const recipientBugs = entries.filter(e => e.queueType === 'bugFixed');
+    const recipientReverts = entries.filter(e => e.queueType === 'validationRevert');
 
     try {
       // Lazy token acquisition
@@ -209,7 +252,8 @@ async function handleHourlyDigest(deps, filterEmail = null) {
 
       const html = generateDigestHtml({
         validationEntries: recipientValidation,
-        bugFixedEntries: recipientBugs
+        bugFixedEntries: recipientBugs,
+        revertEntries: recipientReverts
       });
 
       const itemCount = recipientValidation.length + recipientBugs.length;
@@ -224,6 +268,9 @@ async function handleHourlyDigest(deps, filterEmail = null) {
       }
       for (const entry of recipientBugs) {
         processedKeys.bugFixed.push(entry.key);
+      }
+      for (const entry of recipientReverts) {
+        processedKeys.validationRevert.push(entry.key);
       }
 
       logger.info('hourlyDigest: Email sent', {
@@ -243,7 +290,8 @@ async function handleHourlyDigest(deps, filterEmail = null) {
   // Clean up processed entries
   await Promise.all([
     removeFromQueue(db, 'toValidate', processedKeys.toValidate),
-    removeFromQueue(db, 'bugFixed', processedKeys.bugFixed)
+    removeFromQueue(db, 'bugFixed', processedKeys.bugFixed),
+    removeFromQueue(db, 'validationRevert', processedKeys.validationRevert)
   ]);
 
   logger.info('hourlyDigest: Completed', {
