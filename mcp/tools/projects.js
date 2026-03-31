@@ -179,6 +179,9 @@ export async function updateProject({ projectId, updates }) {
     }
   }
 
+  // Sync project roles to /users/ (prevents legacy desync)
+  await syncProjectRolesToUsers(db, projectId, cleanUpdates.developers, cleanUpdates.stakeholders);
+
   // Auto-generate publicToken when set to "generate" or true
   if (cleanUpdates.publicToken === 'generate' || cleanUpdates.publicToken === true) {
     const { randomUUID } = await import('crypto');
@@ -206,6 +209,53 @@ export async function updateProject({ projectId, updates }) {
       }, null, 2)
     }]
   };
+}
+
+/**
+ * Sync developer/stakeholder project assignments to /users/{email}/projects/{projectId}.
+ * Ensures entityDirectoryService can find team members without fallback.
+ * Only ADDS roles — never removes.
+ */
+async function syncProjectRolesToUsers(db, projectId, developers, stakeholders) {
+  if (!projectId) return;
+
+  const updates = {};
+
+  // Helper: find encoded email key in /users/ for a dev/stk ID
+  async function resolveEncodedEmail(entityId) {
+    if (!entityId) return null;
+    const prefix = entityId.startsWith('dev_') ? 'developerId' : 'stakeholderId';
+    const snap = await db.ref('/users').orderByChild(prefix).equalTo(entityId).limitToFirst(1).once('value');
+    const val = snap.val();
+    if (!val) return null;
+    return Object.keys(val)[0]; // encoded email key
+  }
+
+  if (developers && Array.isArray(developers)) {
+    for (const dev of developers) {
+      const devId = typeof dev === 'string' ? dev : dev?.id;
+      if (!devId || !devId.startsWith('dev_')) continue;
+      const encodedEmail = await resolveEncodedEmail(devId);
+      if (encodedEmail) {
+        updates[`/users/${encodedEmail}/projects/${projectId}/developer`] = true;
+      }
+    }
+  }
+
+  if (stakeholders && Array.isArray(stakeholders)) {
+    for (const stk of stakeholders) {
+      const stkId = typeof stk === 'string' ? stk : stk?.id;
+      if (!stkId || !stkId.startsWith('stk_')) continue;
+      const encodedEmail = await resolveEncodedEmail(stkId);
+      if (encodedEmail) {
+        updates[`/users/${encodedEmail}/projects/${projectId}/stakeholder`] = true;
+      }
+    }
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await db.ref().update(updates);
+  }
 }
 
 const DEFAULT_DEVELOPERS = ['dev_010', 'dev_016'];
@@ -292,6 +342,9 @@ export async function createProject({ projectId, name, abbreviation, description
 
   await projectRef.set(project);
   invalidateProjectCache();
+
+  // Sync project roles to /users/ so entityDirectoryService finds them
+  await syncProjectRolesToUsers(db, projectId, developers, stakeholders);
 
   const epicSectionPath = buildSectionPath(projectId, 'epic');
   const sectionAbbr = getAbbrId(SECTION_MAP['epic']);
