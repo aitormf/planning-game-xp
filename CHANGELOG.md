@@ -5,6 +5,13 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Sync project team roles to /users/ on create and update
+- Email notification when Cloud Function reverts invalid status transition
+
+## [1.168.2] - 2026-03-31
+
 ### Fixed
 
 - Admin panel checkboxes not reading actual user roles
