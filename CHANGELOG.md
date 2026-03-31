@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Admin panel checkboxes not reading actual user roles
+
+## [1.168.1] - 2026-03-30
+
+### Fixed
+
 - Use query params instead of dynamic route for public view page
 
 ## [1.168.0] - 2026-03-30

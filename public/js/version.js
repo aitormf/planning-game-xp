@@ -1,5 +1,5 @@
 // Auto-generated version file - Do not edit manually
-export const version = '1.168.1';
-export const lastUpdated = '2026-03-30T14:22:27.931Z';
-export const lastBuildCommit = '0726daf0969eb701be5489b6889a936f0e7cbb36';
+export const version = '1.168.2';
+export const lastUpdated = '2026-03-31T10:20:54.236Z';
+export const lastBuildCommit = 'e51ca04860967ffefb3779ae47e1133c40393803';
 export const instance = 'geniova';
