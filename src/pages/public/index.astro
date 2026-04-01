@@ -196,13 +196,13 @@
     }
 
     /* Column widths via nth-child since colgroup doesn't get scoped attrs */
-    th:nth-child(1), td:nth-child(1) { width: 145px; min-width: 145px; }
-    th:nth-child(3), td:nth-child(3) { width: 140px; min-width: 140px; }
-    th:nth-child(4), td:nth-child(4) { width: 55px; }
-    th:nth-child(5), td:nth-child(5) { width: 50px; }
-    th:nth-child(6), td:nth-child(6) { width: 50px; }
-    th:nth-child(7), td:nth-child(7) { width: 75px; }
-    th:nth-child(8), td:nth-child(8) { width: 75px; }
+    th:nth-child(1), td:nth-child(1) { white-space: nowrap; }
+    th:nth-child(3), td:nth-child(3) { white-space: nowrap; }
+    th:nth-child(4), td:nth-child(4) { white-space: nowrap; text-align: center; }
+    th:nth-child(5), td:nth-child(5) { white-space: nowrap; text-align: center; }
+    th:nth-child(6), td:nth-child(6) { white-space: nowrap; text-align: center; }
+    th:nth-child(7), td:nth-child(7) { white-space: nowrap; text-align: right; }
+    th:nth-child(8), td:nth-child(8) { white-space: nowrap; text-align: right; }
 
     thead { position: sticky; top: 0; z-index: 1; }
 
@@ -308,6 +308,37 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── PAGER ── */
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-top: 1px solid var(--border);
+      margin-top: 0;
+    }
+
+    .pager-btn {
+      font-family: var(--font);
+      font-size: 0.78rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .pager-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+    .pager-btn:disabled { opacity: 0.3; cursor: default; }
+
+    .pager-info {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--text-dim);
+    }
+
     /* ── FOOTER ── */
     .footer {
       margin-top: 2rem;
@@ -412,6 +443,8 @@
     }
 
     let cards = [], type = 'task', sortBy = 'priority', sortAsc = true, timer = null;
+    let page = 0;
+    const PAGE_SIZE = 50;
     const $ = (id) => document.getElementById(id);
     const content = $('content'), refreshBtn = $('refreshBtn'), tabs = $('tabs');
 
@@ -465,8 +498,11 @@
     function sort(arr) {
       return [...arr].sort((a, b) => {
         let x = a[sortBy], y = b[sortBy];
-        if (x == null) x = sortAsc ? Infinity : -Infinity;
-        if (y == null) y = sortAsc ? Infinity : -Infinity;
+        // Nulls always go to the end regardless of sort direction
+        if (x == null && y == null) return 0;
+        if (x == null) return 1;
+        if (y == null) return -1;
+        // For date fields, compare as strings (ISO format sorts naturally)
         if (typeof x === 'string') x = x.toLowerCase();
         if (typeof y === 'string') y = y.toLowerCase();
         return x < y ? (sortAsc ? -1 : 1) : x > y ? (sortAsc ? 1 : -1) : 0;
@@ -474,11 +510,17 @@
     }
 
     function render() {
-      const f = sort(cards.filter(c => c.type === type));
-      if (!f.length) {
+      const all = sort(cards.filter(c => c.type === type));
+      if (!all.length) {
         content.innerHTML = `<div class="state"><span class="state-text">No ${type}s in this project</span></div>`;
         return;
       }
+
+      const totalPages = Math.ceil(all.length / PAGE_SIZE);
+      if (page >= totalPages) page = totalPages - 1;
+      if (page < 0) page = 0;
+      const f = all.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+      const showing = `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, all.length)} of ${all.length}`;
 
       const a = (fld) => sortBy === fld ? `<span class="arr">${sortAsc ? '\u25B2' : '\u25BC'}</span>` : '';
       const s = (fld) => sortBy === fld ? 'sorted' : '';
@@ -486,20 +528,15 @@
       content.innerHTML = `
         <div class="table-wrap fade-up">
           <table>
-            <colgroup>
-              <col class="col-id"><col class="col-title"><col class="col-status">
-              <col class="col-pri"><col class="col-pts"><col class="col-pts">
-              <col class="col-date"><col class="col-date">
-            </colgroup>
             <thead><tr>
               <th class="${s('cardId')}" data-s="cardId">id${a('cardId')}</th>
               <th class="${s('title')}" data-s="title">title${a('title')}</th>
               <th class="${s('status')}" data-s="status">status${a('status')}</th>
-              <th class="${s('priority')} r" data-s="priority">pri${a('priority')}</th>
-              <th class="${s('devPoints')} r" data-s="devPoints">dev${a('devPoints')}</th>
-              <th class="${s('businessPoints')} r" data-s="businessPoints">biz${a('businessPoints')}</th>
-              <th class="${s('startDate')} r hide-sm" data-s="startDate">start${a('startDate')}</th>
-              <th class="${s('endDate')} r hide-sm" data-s="endDate">end${a('endDate')}</th>
+              <th class="${s('priority')}" data-s="priority">pri${a('priority')}</th>
+              <th class="${s('devPoints')}" data-s="devPoints">dev${a('devPoints')}</th>
+              <th class="${s('businessPoints')}" data-s="businessPoints">biz${a('businessPoints')}</th>
+              <th class="${s('startDate')} hide-sm" data-s="startDate">start${a('startDate')}</th>
+              <th class="${s('endDate')} hide-sm" data-s="endDate">end${a('endDate')}</th>
             </tr></thead>
             <tbody>${f.map(c => `<tr>
               <td class="cell-id">${c.cardId || ''}</td>
@@ -512,12 +549,24 @@
               <td class="cell-date hide-sm">${fd(c.endDate)}</td>
             </tr>`).join('')}</tbody>
           </table>
-        </div>`;
+        </div>
+        ${totalPages > 1 ? `<div class="pager">
+          <button class="pager-btn" id="prevPage" ${page === 0 ? 'disabled' : ''}>&#8592; Prev</button>
+          <span class="pager-info">${showing}</span>
+          <button class="pager-btn" id="nextPage" ${page >= totalPages - 1 ? 'disabled' : ''}>Next &#8594;</button>
+        </div>` : ''}`;
+
+      // Pagination buttons
+      const prevBtn = content.querySelector('#prevPage');
+      const nextBtn = content.querySelector('#nextPage');
+      if (prevBtn) prevBtn.addEventListener('click', () => { page--; render(); });
+      if (nextBtn) nextBtn.addEventListener('click', () => { page++; render(); });
 
       content.querySelectorAll('th[data-s]').forEach(th => {
         th.addEventListener('click', () => {
           const f = th.getAttribute('data-s');
           if (sortBy === f) sortAsc = !sortAsc; else { sortBy = f; sortAsc = true; }
+          page = 0;
           render();
         });
       });
@@ -529,6 +578,7 @@
       tabs.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
       t.classList.add('active');
       type = t.dataset.type;
+      page = 0;
       render();
     });
 
