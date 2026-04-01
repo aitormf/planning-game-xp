@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Other
+
+- Remove publicApi/publicView split and sharing UI (PRs #179, #180)
+
+## [1.173.0] - 2026-04-01
+
 ### Added
 
 - Split public access into publicView and publicApi toggles (#180)
