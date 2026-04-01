@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Add public app versions API endpoints (#181)
+
+## [1.173.1] - 2026-04-01
+
 ### Other
 
 - Remove publicApi/publicView split and sharing UI (PRs #179, #180)
