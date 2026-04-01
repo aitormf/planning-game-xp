@@ -1,6 +1,6 @@
 export const appShellRoutes = {
   '/projects/': '/partials/projects',
-  '/adminproject/': '/partials/adminproject',
+  '/adminproject/': { partial: '/partials/adminproject', cache: false },
   '/dashboard/': '/partials/dashboard',
   '/proposals/': '/partials/proposals',
   '/wip/': '/partials/wip',
