@@ -12,22 +12,26 @@
   <link rel="icon" type="image/png" href="/images/icono_PGame.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg: #080b14;
-      --bg-surface: #0d1121;
-      --border: #1a2035;
-      --text: #dfe4ee;
-      --text-secondary: #8892a8;
-      --text-dim: #4a5268;
+      --bg: #06080f;
+      --bg-raised: #0c1019;
+      --bg-row-hover: #101525;
+      --border: #151c2e;
+      --border-active: #252e48;
+      --text: #c8ceda;
+      --text-secondary: #6b7590;
+      --text-dim: #3d4560;
       --accent: #6366f1;
-      --green: #10b981;
-      --amber: #f59e0b;
+      --accent-muted: rgba(99, 102, 241, 0.12);
+      --green: #22c55e;
+      --amber: #eab308;
       --blue: #3b82f6;
-      --rose: #f43f5e;
+      --rose: #ef4444;
+      --violet: #8b5cf6;
       --font: 'DM Sans', system-ui, sans-serif;
       --mono: 'JetBrains Mono', monospace;
     }
@@ -36,413 +40,498 @@
       font-family: var(--font);
       background: var(--bg);
       color: var(--text);
-      line-height: 1.5;
+      line-height: 1.45;
       -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
     }
 
-    .container {
-      max-width: 1100px;
+    .shell {
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 2rem;
+      padding: 1.5rem 2rem;
     }
 
-    /* Header */
-    .header {
+    /* ── TOPBAR ── */
+    .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
-      margin-bottom: 2rem;
-      flex-wrap: wrap;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .header-left img { height: 32px; width: auto; }
-
-    .header h1 {
-      font-size: 1.3rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
-
-    .header h1 span {
-      color: var(--text-secondary);
-      font-weight: 400;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .badge {
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      color: var(--text-dim);
-      padding: 0.25rem 0.6rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-    }
-
-    .badge.live { color: var(--green); border-color: rgba(16,185,129,0.3); }
-
-    .btn-refresh {
-      font-family: var(--font);
-      font-size: 0.82rem;
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--bg-surface);
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .btn-refresh:hover { border-color: var(--accent); color: var(--text); }
-    .btn-refresh:disabled { opacity: 0.5; cursor: default; }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 0.25rem;
-      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .topbar-logo {
+      width: 24px;
+      height: 24px;
+      opacity: 0.7;
+    }
+
+    .topbar-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-sep {
+      color: var(--text-dim);
+      font-weight: 300;
+      margin: 0 0.15rem;
+    }
+
+    .topbar-subtitle {
+      font-size: 0.88rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .pill {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 0.2rem 0.55rem;
+      border-radius: 3px;
+      letter-spacing: 0.02em;
+    }
+
+    .pill-live {
+      color: var(--green);
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .pill-count {
+      color: var(--text-secondary);
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+    }
+
+    .btn-icon {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: border-color 0.12s, color 0.12s;
+    }
+    .btn-icon:hover { border-color: var(--border-active); color: var(--text-secondary); }
+    .btn-icon:disabled { opacity: 0.35; cursor: default; }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-group {
+      display: flex;
+      gap: 0;
     }
 
     .tab {
       font-family: var(--font);
-      font-size: 0.82rem;
-      padding: 0.5rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.4rem 0.85rem;
       border: none;
       background: none;
       color: var(--text-dim);
       cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      transition: color 0.15s;
+      position: relative;
+      transition: color 0.12s;
     }
     .tab:hover { color: var(--text-secondary); }
-    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
-    .tab .count {
-      font-family: var(--mono);
-      font-size: 0.7rem;
-      color: var(--text-dim);
-      margin-left: 0.3rem;
+    .tab.active { color: var(--text); }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -0.65rem;
+      left: 0.85rem;
+      right: 0.85rem;
+      height: 1.5px;
+      background: var(--accent);
+      border-radius: 1px;
     }
 
-    /* Table */
-    .table-wrap {
-      overflow-x: auto;
+    .tab-count {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      margin-left: 0.25rem;
+      vertical-align: 1px;
     }
+
+    .toolbar-meta {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+    }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.84rem;
+      table-layout: fixed;
     }
 
+    col.col-id { width: 120px; }
+    col.col-title { width: auto; }
+    col.col-status { width: 115px; }
+    col.col-pri { width: 50px; }
+    col.col-pts { width: 45px; }
+    col.col-date { width: 70px; }
+
+    thead { position: sticky; top: 0; z-index: 1; }
+
     th {
-      text-align: left;
+      font-family: var(--mono);
+      font-size: 0.65rem;
       font-weight: 500;
-      font-size: 0.75rem;
       color: var(--text-dim);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.6rem 0.75rem;
+      letter-spacing: 0.06em;
+      text-align: left;
+      padding: 0.5rem 0.6rem;
+      background: var(--bg);
       border-bottom: 1px solid var(--border);
       white-space: nowrap;
       cursor: pointer;
       user-select: none;
+      transition: color 0.1s;
     }
     th:hover { color: var(--text-secondary); }
     th.sorted { color: var(--accent); }
-    th .arrow { font-size: 0.65rem; margin-left: 0.2rem; }
+    th .arr { font-size: 0.55rem; margin-left: 0.15rem; opacity: 0.7; }
+    th.r { text-align: right; }
 
     td {
-      padding: 0.55rem 0.75rem;
-      border-bottom: 1px solid rgba(26,32,53,0.5);
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid var(--border);
       vertical-align: middle;
-    }
-
-    tr:hover td { background: rgba(13,17,33,0.6); }
-
-    .card-id {
-      font-family: var(--mono);
-      font-size: 0.75rem;
-      color: var(--text-dim);
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .status-badge {
-      font-size: 0.73rem;
+    tbody tr { transition: background 0.08s; }
+    tbody tr:hover { background: var(--bg-row-hover); }
+
+    .cell-id {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    .cell-title {
+      font-size: 0.82rem;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    .cell-status {
+      font-size: 0.7rem;
       font-weight: 500;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      white-space: nowrap;
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+      display: inline-block;
+      line-height: 1.4;
     }
 
-    .status-todo { background: rgba(148,163,184,0.15); color: #94a3b8; }
-    .status-inprogress { background: rgba(59,130,246,0.15); color: #60a5fa; }
-    .status-tovalidate { background: rgba(245,158,11,0.15); color: #fbbf24; }
-    .status-done, .status-donevalidated { background: rgba(16,185,129,0.15); color: #34d399; }
-    .status-blocked { background: rgba(244,63,94,0.15); color: #fb7185; }
-    .status-reopened { background: rgba(139,92,246,0.15); color: #a78bfa; }
+    .s-todo { background: rgba(107,117,144,0.12); color: #7b86a0; }
+    .s-inprogress { background: rgba(59,130,246,0.12); color: #60a5fa; }
+    .s-tovalidate { background: rgba(234,179,8,0.1); color: #d4a90a; }
+    .s-done { background: rgba(34,197,94,0.1); color: #4ade80; }
+    .s-blocked { background: rgba(239,68,68,0.1); color: #f87171; }
+    .s-reopened { background: rgba(139,92,246,0.1); color: #a78bfa; }
 
-    .points {
+    .cell-num {
       font-family: var(--mono);
-      font-size: 0.78rem;
-      text-align: center;
-    }
-
-    .date {
-      font-family: var(--mono);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
+      text-align: right;
       color: var(--text-secondary);
-      white-space: nowrap;
     }
 
-    .priority {
+    .cell-date {
       font-family: var(--mono);
-      font-size: 0.75rem;
-    }
-
-    /* States */
-    .loading, .error, .empty {
-      text-align: center;
-      padding: 4rem 2rem;
+      font-size: 0.68rem;
       color: var(--text-dim);
+      text-align: right;
     }
 
-    .error { color: var(--rose); }
+    /* ── STATES ── */
+    .state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      gap: 0.75rem;
+    }
+
+    .state-text { color: var(--text-dim); font-size: 0.85rem; }
+    .state-error { color: var(--rose); font-size: 0.85rem; }
 
     .spinner {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       border: 2px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 1rem;
+      animation: spin 0.7s linear infinite;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Responsive */
-    @media (max-width: 640px) {
-      .container { padding: 1rem; }
-      .header { flex-direction: column; align-items: flex-start; }
-      th, td { padding: 0.4rem 0.5rem; }
-      .hide-mobile { display: none; }
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 2rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      text-decoration: none;
+    }
+    .footer-brand:hover { color: var(--text-secondary); }
+    .footer-brand img { width: 14px; height: 14px; opacity: 0.5; }
+
+    .footer-update {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .shell { padding: 1rem; }
+      .topbar { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      .hide-sm { display: none; }
+      col.col-id { width: 90px; }
+      col.col-status { width: 95px; }
+      col.col-pri { width: 40px; }
+      col.col-pts { width: 38px; }
+    }
+
+    /* ── ENTRY ANIMATION ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(6px);
+      animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div class="header-left">
-        <img src="/images/icono_PGame.png" alt="PG" width="32" height="32">
-        <h1 id="projectTitle">Loading... <span id="projectName"></span></h1>
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <img src="/images/icono_PGame.png" alt="" class="topbar-logo" width="24" height="24">
+        <span class="topbar-title" id="pTitle">Loading</span>
+        <span class="topbar-sep">/</span>
+        <span class="topbar-subtitle" id="pSub">Board</span>
       </div>
-      <div class="header-right">
-        <span class="badge live" id="statusBadge">&#9679; Live</span>
-        <span class="badge" id="countBadge">0 cards</span>
-        <button class="btn-refresh" id="refreshBtn" title="Refresh now">&#8635; Refresh</button>
+      <div class="topbar-right">
+        <span class="pill pill-live" id="livePill">&#9679; live</span>
+        <span class="pill pill-count" id="countPill">0</span>
+        <button class="btn-icon" id="refreshBtn" title="Refresh">&#8635;</button>
       </div>
-    </div>
+    </header>
 
-    <div class="tabs" id="tabs">
-      <button class="tab active" data-type="task">Tasks <span class="count" id="count-task">0</span></button>
-      <button class="tab" data-type="bug">Bugs <span class="count" id="count-bug">0</span></button>
-      <button class="tab" data-type="epic">Epics <span class="count" id="count-epic">0</span></button>
+    <div class="toolbar">
+      <div class="tab-group" id="tabs">
+        <button class="tab active" data-type="task">Tasks <span class="tab-count" id="ct-task">0</span></button>
+        <button class="tab" data-type="bug">Bugs <span class="tab-count" id="ct-bug">0</span></button>
+        <button class="tab" data-type="epic">Epics <span class="tab-count" id="ct-epic">0</span></button>
+      </div>
+      <span class="toolbar-meta" id="lastUpdate"></span>
     </div>
 
     <div id="content">
-      <div class="loading"><div class="spinner"></div>Loading project data...</div>
+      <div class="state"><div class="spinner"></div><span class="state-text">Loading project data...</span></div>
     </div>
+
+    <footer class="footer">
+      <a href="https://pgamexp.com" class="footer-brand" target="_blank" rel="noopener">
+        <img src="/images/icono_PGame.png" alt="" width="14" height="14">
+        Planning Game XP
+      </a>
+      <span class="footer-update" id="nextUpdate"></span>
+    </footer>
   </div>
 
   <script>
-    // Read projectId and token from URL query params
-    // Usage: /public/?project=MyProject  or  /public/?project=MyProject&token=uuid
-    const urlParams = new URLSearchParams(location.search);
-    const PROJECT_ID = urlParams.get('project') || '';
-    const accessToken = urlParams.get('token') || '';
+    const P = new URLSearchParams(location.search);
+    const PID = P.get('project') || '';
+    const TOK = P.get('token') || '';
 
-    if (!PROJECT_ID) {
+    if (!PID) {
       document.getElementById('content').innerHTML =
-        '<div class="error">Missing project parameter.<br>Use: /public/?project=ProjectName</div>';
+        '<div class="state"><span class="state-error">Missing ?project= parameter</span></div>';
     }
 
-    // Build API URL with optional token
-    function getApiUrl() {
-      const tokenParam = accessToken ? `?token=${encodeURIComponent(accessToken)}` : '';
-      // If we're on the PG domain, use relative URL via Firebase rewrites
-      if (location.hostname.includes('planning-game') || location.hostname.includes('pgamexp')) {
-        return `/api/public/${encodeURIComponent(PROJECT_ID)}/cards${tokenParam}`;
-      }
-      // Fallback: direct Cloud Function URL
-      return `https://europe-west1-planning-gamexp.cloudfunctions.net/publicProjectCards/${encodeURIComponent(PROJECT_ID)}/cards${tokenParam}`;
+    function apiUrl() {
+      const t = TOK ? `?token=${encodeURIComponent(TOK)}` : '';
+      const base = (location.hostname.includes('planning-game') || location.hostname.includes('pgamexp'))
+        ? `/api/public/${encodeURIComponent(PID)}/cards${t}`
+        : `https://europe-west1-planning-gamexp.cloudfunctions.net/publicProjectCards/${encodeURIComponent(PID)}/cards${t}`;
+      return base;
     }
 
-    let allCards = [];
-    let currentType = 'task';
-    let sortField = 'priority';
-    let sortAsc = true;
-    let pollTimer = null;
+    let cards = [], type = 'task', sortBy = 'priority', sortAsc = true, timer = null;
+    const $ = (id) => document.getElementById(id);
+    const content = $('content'), refreshBtn = $('refreshBtn'), tabs = $('tabs');
 
-    const content = document.getElementById('content');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const tabs = document.getElementById('tabs');
-
-    async function fetchCards() {
+    async function load() {
       try {
         refreshBtn.disabled = true;
-        refreshBtn.textContent = '⟳ ...';
+        refreshBtn.textContent = '...';
+        const r = await fetch(apiUrl());
+        if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || r.statusText); }
+        const d = await r.json();
+        cards = d.cards || [];
 
-        const res = await fetch(getApiUrl());
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: res.statusText }));
-          throw new Error(err.error || `HTTP ${res.status}`);
-        }
-
-        const data = await res.json();
-        allCards = data.cards || [];
-
-        document.getElementById('projectTitle').innerHTML =
-          `${data.projectName} <span>Public Board</span>`;
-        document.getElementById('countBadge').textContent = `${allCards.length} cards`;
-
-        // Update tab counts
-        ['task', 'bug', 'epic'].forEach(t => {
-          const el = document.getElementById(`count-${t}`);
-          if (el) el.textContent = allCards.filter(c => c.type === t).length;
+        $('pTitle').textContent = d.projectName || PID;
+        $('countPill').textContent = cards.length;
+        ['task','bug','epic'].forEach(t => {
+          const el = $(`ct-${t}`);
+          if (el) el.textContent = cards.filter(c => c.type === t).length;
         });
 
-        renderTable();
-      } catch (err) {
-        content.innerHTML = `<div class="error">${err.message}</div>`;
+        const now = new Date();
+        $('lastUpdate').textContent = `Updated ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+        $('nextUpdate').textContent = `Auto-refresh in 60s`;
+
+        render();
+      } catch (e) {
+        content.innerHTML = `<div class="state"><span class="state-error">${e.message}</span></div>`;
       } finally {
         refreshBtn.disabled = false;
-        refreshBtn.textContent = '⟳ Refresh';
+        refreshBtn.textContent = '\u21BB';
       }
     }
 
-    function statusClass(status) {
-      if (!status) return '';
-      const s = status.toLowerCase().replace(/[^a-z]/g, '');
-      if (s.includes('todo')) return 'status-todo';
-      if (s.includes('inprogress')) return 'status-inprogress';
-      if (s.includes('tovalidate')) return 'status-tovalidate';
-      if (s.includes('donevalidated') || s === 'done') return 'status-done';
-      if (s.includes('blocked')) return 'status-blocked';
-      if (s.includes('reopened')) return 'status-reopened';
-      if (s.includes('fixed') || s.includes('closed') || s.includes('verified')) return 'status-done';
-      if (s.includes('assigned') || s.includes('created')) return 'status-todo';
+    function sc(s) {
+      if (!s) return '';
+      const n = s.toLowerCase().replace(/[^a-z]/g, '');
+      if (n.includes('todo') || n.includes('created') || n.includes('assigned')) return 's-todo';
+      if (n.includes('inprogress')) return 's-inprogress';
+      if (n.includes('tovalidate')) return 's-tovalidate';
+      if (n.includes('donevalidated') || n === 'done' || n.includes('fixed') || n.includes('closed') || n.includes('verified')) return 's-done';
+      if (n.includes('blocked')) return 's-blocked';
+      if (n.includes('reopened')) return 's-reopened';
       return '';
     }
 
-    function formatDate(d) {
-      if (!d) return '';
-      const date = d.split('T')[0];
-      const parts = date.split('-');
-      if (parts.length !== 3) return d;
-      return `${parts[2]}/${parts[1]}`;
+    function fd(d) {
+      if (!d) return '\u2014';
+      const p = d.split('T')[0].split('-');
+      return p.length === 3 ? `${p[2]}/${p[1]}` : d;
     }
 
-    function sortCards(cards) {
-      return [...cards].sort((a, b) => {
-        let va = a[sortField], vb = b[sortField];
-        if (va == null) va = sortAsc ? Infinity : -Infinity;
-        if (vb == null) vb = sortAsc ? Infinity : -Infinity;
-        if (typeof va === 'string') va = va.toLowerCase();
-        if (typeof vb === 'string') vb = vb.toLowerCase();
-        if (va < vb) return sortAsc ? -1 : 1;
-        if (va > vb) return sortAsc ? 1 : -1;
-        return 0;
+    function sort(arr) {
+      return [...arr].sort((a, b) => {
+        let x = a[sortBy], y = b[sortBy];
+        if (x == null) x = sortAsc ? Infinity : -Infinity;
+        if (y == null) y = sortAsc ? Infinity : -Infinity;
+        if (typeof x === 'string') x = x.toLowerCase();
+        if (typeof y === 'string') y = y.toLowerCase();
+        return x < y ? (sortAsc ? -1 : 1) : x > y ? (sortAsc ? 1 : -1) : 0;
       });
     }
 
-    function renderTable() {
-      const filtered = allCards.filter(c => c.type === currentType);
-      const sorted = sortCards(filtered);
-
-      if (sorted.length === 0) {
-        content.innerHTML = `<div class="empty">No ${currentType}s found</div>`;
+    function render() {
+      const f = sort(cards.filter(c => c.type === type));
+      if (!f.length) {
+        content.innerHTML = `<div class="state"><span class="state-text">No ${type}s in this project</span></div>`;
         return;
       }
 
-      const arrow = (field) => sortField === field
-        ? `<span class="arrow">${sortAsc ? '▲' : '▼'}</span>`
-        : '';
-
-      const cls = (field) => sortField === field ? 'sorted' : '';
+      const a = (fld) => sortBy === fld ? `<span class="arr">${sortAsc ? '\u25B2' : '\u25BC'}</span>` : '';
+      const s = (fld) => sortBy === fld ? 'sorted' : '';
 
       content.innerHTML = `
-        <div class="table-wrap">
+        <div class="table-wrap fade-up">
           <table>
-            <thead>
-              <tr>
-                <th class="${cls('cardId')}" data-sort="cardId">ID${arrow('cardId')}</th>
-                <th class="${cls('title')}" data-sort="title">Title${arrow('title')}</th>
-                <th class="${cls('status')}" data-sort="status">Status${arrow('status')}</th>
-                <th class="${cls('priority')}" data-sort="priority">Pri${arrow('priority')}</th>
-                <th class="${cls('devPoints')}" data-sort="devPoints">Dev${arrow('devPoints')}</th>
-                <th class="${cls('businessPoints')}" data-sort="businessPoints">Biz${arrow('businessPoints')}</th>
-                <th class="${cls('startDate')} hide-mobile" data-sort="startDate">Start${arrow('startDate')}</th>
-                <th class="${cls('endDate')} hide-mobile" data-sort="endDate">End${arrow('endDate')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${sorted.map(c => `
-                <tr>
-                  <td class="card-id">${c.cardId || ''}</td>
-                  <td>${c.title || ''}</td>
-                  <td><span class="status-badge ${statusClass(c.status)}">${c.status || ''}</span></td>
-                  <td class="points priority">${c.priority != null ? c.priority : ''}</td>
-                  <td class="points">${c.devPoints != null ? c.devPoints : ''}</td>
-                  <td class="points">${c.businessPoints != null ? c.businessPoints : ''}</td>
-                  <td class="date hide-mobile">${formatDate(c.startDate)}</td>
-                  <td class="date hide-mobile">${formatDate(c.endDate)}</td>
-                </tr>
-              `).join('')}
-            </tbody>
+            <colgroup>
+              <col class="col-id"><col class="col-title"><col class="col-status">
+              <col class="col-pri"><col class="col-pts"><col class="col-pts">
+              <col class="col-date"><col class="col-date">
+            </colgroup>
+            <thead><tr>
+              <th class="${s('cardId')}" data-s="cardId">id${a('cardId')}</th>
+              <th class="${s('title')}" data-s="title">title${a('title')}</th>
+              <th class="${s('status')}" data-s="status">status${a('status')}</th>
+              <th class="${s('priority')} r" data-s="priority">pri${a('priority')}</th>
+              <th class="${s('devPoints')} r" data-s="devPoints">dev${a('devPoints')}</th>
+              <th class="${s('businessPoints')} r" data-s="businessPoints">biz${a('businessPoints')}</th>
+              <th class="${s('startDate')} r hide-sm" data-s="startDate">start${a('startDate')}</th>
+              <th class="${s('endDate')} r hide-sm" data-s="endDate">end${a('endDate')}</th>
+            </tr></thead>
+            <tbody>${f.map(c => `<tr>
+              <td class="cell-id">${c.cardId || ''}</td>
+              <td class="cell-title">${c.title || ''}</td>
+              <td><span class="cell-status ${sc(c.status)}">${c.status || ''}</span></td>
+              <td class="cell-num">${c.priority != null ? c.priority : '\u2014'}</td>
+              <td class="cell-num">${c.devPoints != null ? c.devPoints : '\u2014'}</td>
+              <td class="cell-num">${c.businessPoints != null ? c.businessPoints : '\u2014'}</td>
+              <td class="cell-date hide-sm">${fd(c.startDate)}</td>
+              <td class="cell-date hide-sm">${fd(c.endDate)}</td>
+            </tr>`).join('')}</tbody>
           </table>
-        </div>
-      `;
+        </div>`;
 
-      // Bind sort headers
-      content.querySelectorAll('th[data-sort]').forEach(th => {
+      content.querySelectorAll('th[data-s]').forEach(th => {
         th.addEventListener('click', () => {
-          const field = th.getAttribute('data-sort');
-          if (sortField === field) { sortAsc = !sortAsc; }
-          else { sortField = field; sortAsc = true; }
-          renderTable();
+          const f = th.getAttribute('data-s');
+          if (sortBy === f) sortAsc = !sortAsc; else { sortBy = f; sortAsc = true; }
+          render();
         });
       });
     }
 
-    // Tab switching
-    tabs.addEventListener('click', (e) => {
-      const tab = e.target.closest('.tab');
-      if (!tab) return;
-      tabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      currentType = tab.getAttribute('data-type');
-      renderTable();
+    tabs.addEventListener('click', e => {
+      const t = e.target.closest('.tab');
+      if (!t) return;
+      tabs.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      t.classList.add('active');
+      type = t.dataset.type;
+      render();
     });
 
-    // Refresh button
-    refreshBtn.addEventListener('click', fetchCards);
-
-    // Initial load + polling
-    fetchCards();
-    pollTimer = setInterval(fetchCards, 60000);
+    refreshBtn.addEventListener('click', load);
+    load();
+    timer = setInterval(load, 60000);
   </script>
 </body>
 </html>
