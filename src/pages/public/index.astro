@@ -281,16 +281,13 @@
 
     // Build API URL with optional token
     function getApiUrl() {
-      const params = new URLSearchParams();
-      params.set('source', 'view');
-      if (accessToken) params.set('token', accessToken);
-      const qs = `?${params.toString()}`;
+      const tokenParam = accessToken ? `?token=${encodeURIComponent(accessToken)}` : '';
       // If we're on the PG domain, use relative URL via Firebase rewrites
       if (location.hostname.includes('planning-game') || location.hostname.includes('pgamexp')) {
-        return `/api/public/${encodeURIComponent(PROJECT_ID)}/cards${qs}`;
+        return `/api/public/${encodeURIComponent(PROJECT_ID)}/cards${tokenParam}`;
       }
       // Fallback: direct Cloud Function URL
-      return `https://europe-west1-planning-gamexp.cloudfunctions.net/publicProjectCards/${encodeURIComponent(PROJECT_ID)}/cards${qs}`;
+      return `https://europe-west1-planning-gamexp.cloudfunctions.net/publicProjectCards/${encodeURIComponent(PROJECT_ID)}/cards${tokenParam}`;
     }
 
     let allCards = [];
