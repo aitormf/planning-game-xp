@@ -1484,6 +1484,7 @@ async function syncProjectTeamToUsers(projectName, developers, stakeholders) {
 
 async function updateProject(projectForm, originalProjectName, originalData) {
   const formData = projectForm.getFormData();
+  console.warn('[DEBUG updateProject] formData.isPublicAppApi =', formData.isPublicAppApi, '| formData.isPublic =', formData.isPublic, '| formData.allowExecutables =', formData.allowExecutables);
 
   try {
     // Build project data, excluding undefined values (Firebase doesn't accept undefined)
@@ -1505,6 +1506,7 @@ async function updateProject(projectForm, originalProjectName, originalData) {
       archived: originalData?.archived || false,
       public: formData.isPublic || false,
       publicAppApi: formData.isPublicAppApi || false,
+      _debugSaveTimestamp: new Date().toISOString(),
       teamSpecs: formData.teamSpecs || []
     };
 
