@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
+  <style is:global>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
@@ -195,12 +195,14 @@
       border-collapse: collapse;
     }
 
-    col.col-id { width: 145px; }
-    col.col-title { width: auto; min-width: 250px; }
-    col.col-status { width: 135px; }
-    col.col-pri { width: 55px; }
-    col.col-pts { width: 50px; }
-    col.col-date { width: 75px; }
+    /* Column widths via nth-child since colgroup doesn't get scoped attrs */
+    th:nth-child(1), td:nth-child(1) { width: 145px; min-width: 145px; }
+    th:nth-child(3), td:nth-child(3) { width: 140px; min-width: 140px; }
+    th:nth-child(4), td:nth-child(4) { width: 55px; }
+    th:nth-child(5), td:nth-child(5) { width: 50px; }
+    th:nth-child(6), td:nth-child(6) { width: 50px; }
+    th:nth-child(7), td:nth-child(7) { width: 75px; }
+    th:nth-child(8), td:nth-child(8) { width: 75px; }
 
     thead { position: sticky; top: 0; z-index: 1; }
 
@@ -338,10 +340,8 @@
       .shell { padding: 1rem; }
       .topbar { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
       .hide-sm { display: none; }
-      col.col-id { width: 110px; }
-      col.col-status { width: 110px; }
-      col.col-pri { width: 45px; }
-      col.col-pts { width: 42px; }
+      th:nth-child(1), td:nth-child(1) { width: 110px; min-width: 110px; }
+      th:nth-child(3), td:nth-child(3) { width: 110px; min-width: 110px; }
     }
 
     /* ── ENTRY ANIMATION ── */

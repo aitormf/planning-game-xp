@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Public board — wider ID column, visible status colors, no table-layout:fixed
+
+## [1.177.0] - 2026-04-01
+
 ### Added
 
 - Redesign public board page — dense, utilitarian, Linear-inspired
