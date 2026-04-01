@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Split public access into publicView and publicApi toggles (#180)
+
+## [1.172.0] - 2026-04-01
+
+### Added
+
 - Add shareable URL and token management to project admin settings (#179)
 
 ## [1.171.0] - 2026-04-01
