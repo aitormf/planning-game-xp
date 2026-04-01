@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-const { handlePublicAppVersions, projectPublicVersionFields, PUBLIC_VERSION_FIELDS } = await import('../../functions/handlers/public-app-versions.js');
+const { handlePublicAppVersions, projectPublicVersionFields, extractVersion, PUBLIC_VERSION_FIELDS } = await import('../../functions/handlers/public-app-versions.js');
 
 function createMockDb(data = {}) {
   return {
@@ -73,6 +73,39 @@ describe('publicAppVersions', () => {
     it('should default downloadCount to 0', () => {
       const result = projectPublicVersionFields({ fileName: 'test.exe' }, undefined);
       expect(result.downloadCount).toBe(0);
+    });
+
+    it('should extract and include version from fileName', () => {
+      const result = projectPublicVersionFields({ fileName: 'Cinema4D_17.6.0_1772442476873_1qxs38b.exe' }, 0);
+      expect(result.version).toBe('17.6.0');
+    });
+
+    it('should set version to null when not parseable', () => {
+      const result = projectPublicVersionFields({ fileName: 'readme.txt' }, 0);
+      expect(result.version).toBeNull();
+    });
+  });
+
+  describe('extractVersion', () => {
+    it('should extract version from standard fileName', () => {
+      expect(extractVersion('Cinema4D_17.6.0_1772442476873_1qxs38b.exe')).toBe('17.6.0');
+    });
+
+    it('should extract version with 4 segments', () => {
+      expect(extractVersion('App_1.2.3.4_timestamp_hash.exe')).toBe('1.2.3.4');
+    });
+
+    it('should extract 0.0.0 version', () => {
+      expect(extractVersion('Cinema4D_0.0.0_1768401534861_yl24d6.xlsx')).toBe('0.0.0');
+    });
+
+    it('should return null for no version pattern', () => {
+      expect(extractVersion('readme.txt')).toBeNull();
+    });
+
+    it('should return null for null/undefined', () => {
+      expect(extractVersion(null)).toBeNull();
+      expect(extractVersion(undefined)).toBeNull();
     });
   });
 
@@ -219,6 +252,38 @@ describe('publicAppVersions', () => {
         }
       });
       const req = createMockReq({ path: '/MyProject/versions/-key1' });
+      const res = createMockRes();
+      await handlePublicAppVersions(req, res, { db, logger: mockLogger });
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('should return version detail by version number', async () => {
+      const db = createMockDb({
+        projects: { MyProject: { name: 'Test App', allowExecutables: true, publicAppApi: true } },
+        appMetadata: {
+          MyProject: {
+            '-key1': { fileName: 'App_1.0.0_111_aaa.exe', type: 'release', status: 'approved', changelog: 'v1', uploadedAt: '2026-01-01', approvedAt: '2026-01-02' },
+            '-key2': { fileName: 'App_2.0.0_222_bbb.exe', type: 'release', status: 'approved', changelog: 'v2', uploadedAt: '2026-02-01', approvedAt: '2026-02-02' }
+          }
+        },
+        appDownloads: { MyProject: { '-key2': { count: 10 } } }
+      });
+      const req = createMockReq({ path: '/MyProject/versions/2.0.0' });
+      const res = createMockRes();
+      await handlePublicAppVersions(req, res, { db, logger: mockLogger });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.version.version).toBe('2.0.0');
+      expect(res.body.version.fileName).toBe('App_2.0.0_222_bbb.exe');
+      expect(res.body.version.downloadCount).toBe(10);
+    });
+
+    it('should return 404 for non-existent version number', async () => {
+      const db = createMockDb({
+        projects: { MyProject: { name: 'Test App', allowExecutables: true, publicAppApi: true } },
+        appMetadata: { MyProject: { '-key1': { fileName: 'App_1.0.0_111_aaa.exe', type: 'release', status: 'approved' } } }
+      });
+      const req = createMockReq({ path: '/MyProject/versions/9.9.9' });
       const res = createMockRes();
       await handlePublicAppVersions(req, res, { db, logger: mockLogger });
       expect(res.statusCode).toBe(404);
