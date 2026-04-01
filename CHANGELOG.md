@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Separate public project view and public app API toggles (#182)
+
+## [1.174.0] - 2026-04-01
+
+### Added
+
 - Add public app versions API endpoints (#181)
 
 ## [1.173.1] - 2026-04-01
