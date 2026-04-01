@@ -257,6 +257,69 @@ describe('publicAppVersions', () => {
       expect(res.statusCode).toBe(404);
     });
 
+    it('should return latest recommended version', async () => {
+      const db = createMockDb({
+        projects: { MyProject: { name: 'Test App', allowExecutables: true, publicAppApi: true } },
+        appMetadata: {
+          MyProject: {
+            '-k1': { fileName: 'App_1.0.0_111_a.exe', type: 'release', status: 'approved', approvedAt: '2026-01-01' },
+            '-k2': { fileName: 'App_2.0.0_222_b.exe', type: 'beta', status: 'approved', approvedAt: '2026-03-01' },
+            '-k3': { fileName: 'App_1.5.0_333_c.exe', type: 'release', status: 'approved', approvedAt: '2026-02-01' }
+          }
+        },
+        appDownloads: { MyProject: { '-k3': { count: 7 } } }
+      });
+      const req = createMockReq({ path: '/MyProject/versions/latest' });
+      const res = createMockRes();
+      await handlePublicAppVersions(req, res, { db, logger: mockLogger });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.version.version).toBe('1.5.0');
+      expect(res.body.version.type).toBe('release');
+      expect(res.body.version.recommended).toBe(true);
+      expect(res.body.version.downloadCount).toBe(7);
+    });
+
+    it('should return 404 for latest when no approved releases exist', async () => {
+      const db = createMockDb({
+        projects: { MyProject: { name: 'Test App', allowExecutables: true, publicAppApi: true } },
+        appMetadata: {
+          MyProject: {
+            '-k1': { fileName: 'App_1.0.0_111_a.exe', type: 'beta', status: 'approved' }
+          }
+        }
+      });
+      const req = createMockReq({ path: '/MyProject/versions/latest' });
+      const res = createMockRes();
+      await handlePublicAppVersions(req, res, { db, logger: mockLogger });
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('should mark recommended in list endpoint', async () => {
+      const db = createMockDb({
+        projects: { MyProject: { name: 'Test', allowExecutables: true, publicAppApi: true } },
+        appMetadata: {
+          MyProject: {
+            '-k1': { fileName: 'App_1.0.0_111_a.exe', type: 'release', status: 'approved', approvedAt: '2026-01-01' },
+            '-k2': { fileName: 'App_2.0.0_222_b.exe', type: 'beta', status: 'approved', approvedAt: '2026-02-01' },
+            '-k3': { fileName: 'App_3.0.0_333_c.exe', type: 'release', status: 'approved', approvedAt: '2026-03-01' }
+          }
+        },
+        appDownloads: { MyProject: {} }
+      });
+      const req = createMockReq({ path: '/MyProject/versions' });
+      const res = createMockRes();
+      await handlePublicAppVersions(req, res, { db, logger: mockLogger });
+
+      expect(res.statusCode).toBe(200);
+      const recommended = res.body.versions.filter(v => v.recommended);
+      expect(recommended).toHaveLength(1);
+      expect(recommended[0].version).toBe('3.0.0');
+      expect(recommended[0].type).toBe('release');
+      const nonRecommended = res.body.versions.filter(v => !v.recommended);
+      expect(nonRecommended).toHaveLength(2);
+    });
+
     it('should return version detail by version number', async () => {
       const db = createMockDb({
         projects: { MyProject: { name: 'Test App', allowExecutables: true, publicAppApi: true } },

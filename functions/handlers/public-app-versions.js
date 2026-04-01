@@ -94,6 +94,34 @@ async function handlePublicAppVersions(req, res, { db, logger }) {
 
     if (fileKey) {
       // ── Detail endpoint ──
+      // "latest" returns the recommended version (latest approved release)
+      if (fileKey === 'latest') {
+        const allSnap = await db.ref(`/appMetadata/${projectId}`).once('value');
+        const allData = allSnap.exists() ? allSnap.val() : {};
+        const dlAllSnap = await db.ref(`/appDownloads/${projectId}`).once('value');
+        const dlAllData = dlAllSnap.exists() ? dlAllSnap.val() : {};
+
+        let latest = null;
+        let latestKey = null;
+        for (const [key, ver] of Object.entries(allData)) {
+          if (!ver || ver.status !== 'approved' || ver.type !== 'release') continue;
+          if (!latest || (ver.approvedAt || '') > (latest.approvedAt || '')) {
+            latest = ver;
+            latestKey = key;
+          }
+        }
+
+        if (!latest) {
+          return res.status(404).json({ error: 'No approved release version found' });
+        }
+
+        const projected = projectPublicVersionFields(latest, dlAllData[latestKey]?.count || 0);
+        projected.fileKey = latestKey;
+        projected.recommended = true;
+        logger.info('publicAppVersions: served latest', { projectId, version: projected.version });
+        return res.status(200).json({ projectId, projectName: project.name || projectId, version: projected });
+      }
+
       // fileKey can be a Firebase key (-abc123) or a version number (17.6.0)
       const isVersionNumber = /^\d+\.\d+/.test(fileKey);
 
@@ -156,13 +184,26 @@ async function handlePublicAppVersions(req, res, { db, logger }) {
     const dlSnap = await db.ref(`/appDownloads/${projectId}`).once('value');
     const dlData = dlSnap.exists() ? dlSnap.val() : {};
 
+    // Find recommended (latest approved release) while building list
+    let recommendedKey = null;
+    let recommendedApprovedAt = '';
+
     const versions = [];
     for (const [key, version] of Object.entries(metadataData)) {
       if (!version || version.status !== 'approved') continue;
       const downloadCount = dlData[key]?.count || 0;
       const projected = projectPublicVersionFields(version, downloadCount);
       projected.fileKey = key;
+      if (version.type === 'release' && (version.approvedAt || '') > recommendedApprovedAt) {
+        recommendedKey = key;
+        recommendedApprovedAt = version.approvedAt || '';
+      }
       versions.push(projected);
+    }
+
+    // Mark recommended
+    for (const v of versions) {
+      v.recommended = v.fileKey === recommendedKey;
     }
 
     logger.info('publicAppVersions: served list', { projectId, count: versions.length });
