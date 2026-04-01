@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Improve public toggles UI layout and endpoint visibility (#183)
+
+## [1.175.0] - 2026-04-01
+
 ### Added
 
 - Separate public project view and public app API toggles (#182)
