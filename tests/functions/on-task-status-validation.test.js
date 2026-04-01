@@ -93,14 +93,34 @@ describe('onTaskStatusValidation', () => {
   });
 
   describe('handleTaskStatusValidation', () => {
-    it('should skip non-task sections', async () => {
+    it('should skip non-task non-bug sections (epics, proposals)', async () => {
       const result = await handleTaskStatusValidation(
-        { projectId: 'Test', section: 'BUGS_Test', cardId: 'card1' },
+        { projectId: 'Test', section: 'EPICS_Test', cardId: 'card1' },
+        { status: 'To Do' },
         { status: 'In Progress' },
-        { status: 'To Validate' },
         { db: mockDb, logger: mockLogger }
       );
+      expect(result).toBeNull();
+    });
 
+    it('should revert invalid bug status (task status on bug)', async () => {
+      const result = await handleTaskStatusValidation(
+        { projectId: 'Test', section: 'BUGS_Test', cardId: 'bug1' },
+        { status: 'Assigned' },
+        { status: 'Done&Validated', updatedBy: 'test@test.com' },
+        { db: mockDb, logger: mockLogger }
+      );
+      expect(result).not.toBeNull();
+      expect(result.reverted).toBe(true);
+    });
+
+    it('should allow valid bug status transitions', async () => {
+      const result = await handleTaskStatusValidation(
+        { projectId: 'Test', section: 'BUGS_Test', cardId: 'bug1' },
+        { status: 'Assigned' },
+        { status: 'Fixed' },
+        { db: mockDb, logger: mockLogger }
+      );
       expect(result).toBeNull();
     });
 
