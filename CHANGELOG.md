@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 Auto-generated from git commits on each build.
 
+## [Unreleased]
+
+### Added
+
+- Add /versions/latest endpoint and recommended flag
+- Add version field and version-based lookup to app versions API
+
 ## [1.175.1] - 2026-04-01
 
 ### Fixed
