@@ -466,8 +466,15 @@ export class ProjectForm extends LitElement {
                 .checked=${this.isPublic}
                 @change=${this._handleIsPublicChange}
               />
-              <label for="isPublic">Proyecto público (vista read-only para stakeholders)</label>
+              <label for="isPublic">Proyecto público (URL pública de solo lectura)</label>
             </div>
+            ${this.isPublic ? html`
+              <div class="api-endpoints">
+                <div class="endpoint-row">
+                  <code>${location.origin}/public/?project=${encodeURIComponent(this.currentProjectName || this.projectName)}</code>
+                </div>
+              </div>
+            ` : ''}
           ` : ''}
           <div class="checkbox-group">
             <input
