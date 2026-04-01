@@ -7,6 +7,7 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Public board — global styles for dynamic content, visible status badges, no ID wrapping
 - Public board — wider ID column, visible status colors, no table-layout:fixed
 
 ## [1.177.0] - 2026-04-01
