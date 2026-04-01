@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Cloud Function validates bug statuses — reverts task-only statuses on bugs
+
+## [1.177.3] - 2026-04-01
+
 ### Fixed
 
 - Public board — pagination (50/page), fix date sorting, remove horizontal scroll
