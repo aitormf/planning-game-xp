@@ -241,6 +241,85 @@ async function resolveEmailFromId(db, entityId) {
   return null;
 }
 
+// Valid statuses per card type (single source of truth from shared/constants)
+const VALID_BUG_STATUSES_LIST = ['Created', 'Assigned', 'Fixed', 'Verified', 'Closed'];
+const VALID_TASK_STATUSES_LIST = ['To Do', 'In Progress', 'Pausado', 'To Validate', 'Done&Validated', 'Blocked', 'Reopened'];
+
+/**
+ * Validate bug status changes — reject task-only statuses on bugs.
+ */
+async function handleBugStatusValidation(params, beforeData, afterData, deps) {
+  const { projectId, section, cardId } = params;
+  const { db, logger } = deps;
+
+  const afterStatus = afterData?.status;
+  const beforeStatus = beforeData?.status;
+
+  if (!afterStatus || afterStatus === beforeStatus) return null;
+
+  // Skip revert writes
+  if (afterData._validationReverted) return null;
+
+  // Check if the status is valid for bugs
+  if (!VALID_BUG_STATUSES_LIST.includes(afterStatus)) {
+    logger.warn('onTaskStatusValidation: Invalid bug status, reverting', {
+      projectId, cardId, invalidStatus: afterStatus, validStatuses: VALID_BUG_STATUSES_LIST
+    });
+
+    const cardPath = `/cards/${projectId}/${section}/${cardId}`;
+    const revertData = {
+      ...afterData,
+      status: beforeStatus || 'Created',
+      _validationReverted: true,
+      _validationError: `Invalid bug status "${afterStatus}". Valid bug statuses: ${VALID_BUG_STATUSES_LIST.join(', ')}`
+    };
+
+    await db.ref(cardPath).set(revertData);
+
+    // Notification + email (same pattern as task validation)
+    if (afterData.updatedBy && afterData.updatedBy.includes('@')) {
+      const sanitizedKey = sanitizeEmailForKey(afterData.updatedBy);
+      const notificationRef = db.ref(`/notifications/${sanitizedKey}`).push();
+      await notificationRef.set({
+        id: notificationRef.key,
+        title: 'Invalid bug status reverted',
+        message: `Bug ${afterData.cardId || cardId}: "${afterStatus}" is not a valid bug status. Reverted to "${beforeStatus || 'Created'}".`,
+        type: 'validation-error',
+        projectId,
+        taskId: afterData.cardId || cardId,
+        url: `${getAppUrl()}/adminproject/?projectId=${encodeURIComponent(projectId)}&cardId=${encodeURIComponent(afterData.cardId || cardId)}#bugs`,
+        timestamp: Date.now(),
+        read: false,
+        data: { itemType: 'bug', action: 'validation-error', type: 'invalid-status', invalidStatus: afterStatus }
+      });
+    }
+
+    // Queue email
+    try {
+      const { queueRevertEmail } = require('./email-queue.js');
+      const devId = afterData.developer;
+      if (devId) {
+        const devEmail = await resolveEmailFromId(db, devId);
+        if (devEmail) {
+          await queueRevertEmail(db, {
+            recipientEmail: devEmail,
+            cardId: afterData.cardId || cardId,
+            projectId,
+            taskTitle: afterData.title || '',
+            attemptedStatus: afterStatus,
+            revertedToStatus: beforeStatus || 'Created',
+            reason: `Invalid bug status "${afterStatus}". Valid: ${VALID_BUG_STATUSES_LIST.join(', ')}`
+          });
+        }
+      }
+    } catch { /* non-critical */ }
+
+    return { reverted: true, error: { type: 'invalid-bug-status', message: `Invalid bug status: ${afterStatus}` } };
+  }
+
+  return null;
+}
+
 /**
  * Main handler for task status validation
  * @param {Object} params - { projectId, section, cardId }
@@ -253,7 +332,12 @@ async function handleTaskStatusValidation(params, beforeData, afterData, deps) {
   const { projectId, section, cardId } = params;
   const { db, logger, auth } = deps;
 
-  // Only process tasks
+  // Validate bugs: reject task-only statuses on bug cards
+  if (section.toLowerCase().startsWith('bugs_')) {
+    return handleBugStatusValidation(params, beforeData, afterData, deps);
+  }
+
+  // Only process tasks below this point
   if (!section.toLowerCase().startsWith('tasks_')) {
     return null;
   }
