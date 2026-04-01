@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Add shareable URL and token management to project admin settings (#179)
+
+## [1.171.0] - 2026-04-01
+
+### Added
+
 - Add server instructions for AI clients to reduce token waste (#178)
 
 ### Other
