@@ -7,6 +7,16 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Add server instructions for AI clients to reduce token waste (#178)
+
+### Other
+
+- Bump MCP version to 1.21.0 and client to 1.170.1
+
+## [1.170.0] - 2026-04-01
+
+### Added
+
 - Init wizard asks to add new or reconfigure existing instance
 - Init wizard detects existing instances for easy multi-instance setup
 - Add response compressor middleware to reduce token consumption
