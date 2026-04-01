@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Public board — pagination (50/page), fix date sorting, remove horizontal scroll
+
+## [1.177.2] - 2026-04-01
+
+### Fixed
+
 - Public board — global styles for dynamic content, visible status badges, no ID wrapping
 - Public board — wider ID column, visible status colors, no table-layout:fixed
 
