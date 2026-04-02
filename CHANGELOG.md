@@ -7,6 +7,16 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Add light/dark mode toggle to public project page (#187)
+
+### Fixed
+
+- Remove overly restrictive MCP validations on card creation
+
+## [1.180.0] - 2026-04-02
+
+### Added
+
 - Replace polling with RTDB real-time listeners on public project page (#186)
 
 ## [1.179.0] - 2026-04-02
