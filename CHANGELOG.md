@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Revert permissive MCP validations and add strict tool descriptions (#188)
+
+## [1.181.0] - 2026-04-02
+
 ### Added
 
 - Add light/dark mode toggle to public project page (#187)
