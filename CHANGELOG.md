@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Add preflight validation and complete usage rules for MCP tools (#189)
+
+## [1.181.1] - 2026-04-02
+
+### Fixed
+
 - Revert permissive MCP validations and add strict tool descriptions (#188)
 
 ## [1.181.0] - 2026-04-02
