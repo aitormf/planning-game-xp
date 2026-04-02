@@ -7,6 +7,16 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Require startDate on bug Assigned and endDate on bug Fixed
+
+### Fixed
+
+- Strip status and priority fields from epics (#185)
+
+## [1.178.0] - 2026-04-01
+
+### Added
+
 - Cloud Function validates bug statuses — reverts task-only statuses on bugs
 
 ## [1.177.3] - 2026-04-01
