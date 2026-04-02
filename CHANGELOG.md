@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Replace polling with RTDB real-time listeners on public project page (#186)
+
+## [1.179.0] - 2026-04-02
+
+### Added
+
 - Require startDate on bug Assigned and endDate on bug Fixed
 
 ### Fixed
