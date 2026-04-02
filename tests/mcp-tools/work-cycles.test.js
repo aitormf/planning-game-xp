@@ -452,7 +452,7 @@ describe('workCycles feature', () => {
         projectId: 'TestProject',
         type: 'bug',
         firebaseId: 'bug1',
-        updates: { status: 'Assigned' }
+        updates: { status: 'Assigned', startDate: '2026-01-01T09:00:00' }
       });
 
       const response = JSON.parse(result.content[0].text);

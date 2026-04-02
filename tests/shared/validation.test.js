@@ -121,21 +121,29 @@ describe('validateBugFields', () => {
 });
 
 describe('validateBugStatusTransition', () => {
-  it('should allow Fixed with commits and pipelineStatus', () => {
+  it('should allow Fixed with commits, pipelineStatus, startDate and endDate', () => {
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned' },
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' },
       {
         status: 'Fixed',
+        endDate: '2026-01-02T17:00:00',
         commits: [{ hash: 'abc', message: 'fix: bug', date: '2026-01-01', author: 'dev' }],
         pipelineStatus: { prCreated: { prUrl: 'https://github.com/org/repo/pull/1', prNumber: 1 } }
       }
     )).not.toThrow();
   });
 
-  it('should allow non-Fixed transitions without extra fields', () => {
+  it('should require startDate when assigning a bug', () => {
     expect(() => validateBugStatusTransition(
       { status: 'Created' },
       { status: 'Assigned' }
+    )).toThrow(/startDate/);
+  });
+
+  it('should allow Assigned with startDate', () => {
+    expect(() => validateBugStatusTransition(
+      { status: 'Created' },
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' }
     )).not.toThrow();
   });
 
@@ -250,11 +258,12 @@ describe('validateBugStatusTransition - Fixed requires pipelineStatus', () => {
     )).toThrow(/commits.*pipelineStatus|pipelineStatus.*commits/);
   });
 
-  it('should accept Fixed with commits and pipelineStatus.prCreated', () => {
+  it('should accept Fixed with commits, pipelineStatus.prCreated, startDate and endDate', () => {
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned' },
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' },
       {
         status: 'Fixed',
+        endDate: '2026-01-02T17:00:00',
         commits: [{ hash: 'abc', message: 'fix: bug', date: '2026-01-01', author: 'dev' }],
         pipelineStatus: { prCreated: { prUrl: 'https://github.com/org/repo/pull/5', prNumber: 5, date: '2026-01-01' } }
       }
@@ -398,58 +407,71 @@ describe('validateBugStatusTransition — EXHAUSTIVE', () => {
 
   it('Fixed with commits but pipelineStatus missing prUrl — throws', () => {
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned' },
-      { status: 'Fixed', commits: validCommits, pipelineStatus: { prCreated: { prNumber: 5 } } }
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' },
+      { status: 'Fixed', endDate: '2026-01-02T17:00:00', commits: validCommits, pipelineStatus: { prCreated: { prNumber: 5 } } }
     )).toThrow(/pipelineStatus\.prCreated/);
   });
 
   it('Fixed with commits but pipelineStatus missing prNumber — throws', () => {
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned' },
-      { status: 'Fixed', commits: validCommits, pipelineStatus: { prCreated: { prUrl: 'https://github.com/pr/1' } } }
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' },
+      { status: 'Fixed', endDate: '2026-01-02T17:00:00', commits: validCommits, pipelineStatus: { prCreated: { prUrl: 'https://github.com/pr/1' } } }
     )).toThrow(/pipelineStatus\.prCreated/);
   });
 
   it('Fixed with pipelineStatus but empty commits array — throws', () => {
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned' },
-      { status: 'Fixed', commits: [], pipelineStatus: validPipelineStatus }
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' },
+      { status: 'Fixed', endDate: '2026-01-02T17:00:00', commits: [], pipelineStatus: validPipelineStatus }
     )).toThrow(/commits/);
   });
 
   it('Fixed with pipelineStatus.prCreated = null — throws', () => {
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned' },
-      { status: 'Fixed', commits: validCommits, pipelineStatus: { prCreated: null } }
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' },
+      { status: 'Fixed', endDate: '2026-01-02T17:00:00', commits: validCommits, pipelineStatus: { prCreated: null } }
     )).toThrow(/pipelineStatus\.prCreated/);
   });
 
   it('Fixed with pipelineStatus = {} (no prCreated) — throws', () => {
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned' },
-      { status: 'Fixed', commits: validCommits, pipelineStatus: {} }
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' },
+      { status: 'Fixed', endDate: '2026-01-02T17:00:00', commits: validCommits, pipelineStatus: {} }
     )).toThrow(/pipelineStatus\.prCreated/);
+  });
+
+  it('Fixed without startDate — throws', () => {
+    expect(() => validateBugStatusTransition(
+      { status: 'Assigned' },
+      { status: 'Fixed', endDate: '2026-01-02T17:00:00', commits: validCommits, pipelineStatus: validPipelineStatus }
+    )).toThrow(/startDate/);
+  });
+
+  it('Fixed without endDate — throws', () => {
+    expect(() => validateBugStatusTransition(
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' },
+      { status: 'Fixed', commits: validCommits, pipelineStatus: validPipelineStatus }
+    )).toThrow(/endDate/);
   });
 
   it('Fixed with commits in currentBug (not in updates) + pipelineStatus in updates — passes (merge)', () => {
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned', commits: validCommits },
-      { status: 'Fixed', pipelineStatus: validPipelineStatus }
+      { status: 'Assigned', commits: validCommits, startDate: '2026-01-01T09:00:00' },
+      { status: 'Fixed', pipelineStatus: validPipelineStatus, endDate: '2026-01-02T17:00:00' }
     )).not.toThrow();
   });
 
   it('Fixed with pipelineStatus in currentBug (not in updates) + commits in updates — passes (merge)', () => {
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned', pipelineStatus: validPipelineStatus },
-      { status: 'Fixed', commits: validCommits }
+      { status: 'Assigned', pipelineStatus: validPipelineStatus, startDate: '2026-01-01T09:00:00' },
+      { status: 'Fixed', commits: validCommits, endDate: '2026-01-02T17:00:00' }
     )).not.toThrow();
   });
 
   it('Fixed with prNumber = 0 — throws because 0 is falsy', () => {
-    // The code uses !ps.prCreated.prNumber which treats 0 as falsy
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned' },
-      { status: 'Fixed', commits: validCommits, pipelineStatus: { prCreated: { prUrl: 'https://github.com/pr/1', prNumber: 0 } } }
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' },
+      { status: 'Fixed', endDate: '2026-01-02T17:00:00', commits: validCommits, pipelineStatus: { prCreated: { prUrl: 'https://github.com/pr/1', prNumber: 0 } } }
     )).toThrow(/pipelineStatus\.prCreated/);
   });
 
@@ -511,15 +533,22 @@ describe('validateBugStatusTransition — EXHAUSTIVE', () => {
 
   it('Fixed with all fields valid — passes', () => {
     expect(() => validateBugStatusTransition(
-      { status: 'Assigned' },
-      { status: 'Fixed', commits: validCommits, pipelineStatus: validPipelineStatus }
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' },
+      { status: 'Fixed', endDate: '2026-01-02T17:00:00', commits: validCommits, pipelineStatus: validPipelineStatus }
     )).not.toThrow();
   });
 
-  it('Created to Assigned — passes without extra fields', () => {
+  it('Created to Assigned — requires startDate', () => {
     expect(() => validateBugStatusTransition(
       { status: 'Created' },
       { status: 'Assigned' }
+    )).toThrow(/startDate/);
+  });
+
+  it('Created to Assigned — passes with startDate', () => {
+    expect(() => validateBugStatusTransition(
+      { status: 'Created' },
+      { status: 'Assigned', startDate: '2026-01-01T09:00:00' }
     )).not.toThrow();
   });
 

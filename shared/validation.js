@@ -112,9 +112,27 @@ export function validateBugStatusTransition(currentBug, updates) {
   if (!newStatus) return;
   if (currentBug.status === newStatus) return;
 
+  const finalBug = { ...currentBug, ...updates };
+
+  // Assigned: requires startDate (when work begins on the bug)
+  if (newStatus === 'Assigned') {
+    if (!hasValidValue(finalBug, 'startDate')) {
+      throw new Error(
+        'Cannot set bug to "Assigned": startDate is required. ' +
+        'Set startDate to the current date/time when assigning a bug.'
+      );
+    }
+  }
+
+  // Fixed: requires startDate, endDate, commits, PR
   if (newStatus === 'Fixed') {
-    const finalBug = { ...currentBug, ...updates };
     const missingFields = [];
+    if (!hasValidValue(finalBug, 'startDate')) {
+      missingFields.push('startDate (when work started on the bug)');
+    }
+    if (!hasValidValue(finalBug, 'endDate')) {
+      missingFields.push('endDate (when the fix was completed)');
+    }
     if (!(Array.isArray(finalBug.commits) && finalBug.commits.length > 0)) {
       missingFields.push('commits (list of commits that fixed the bug)');
     }
@@ -125,13 +143,13 @@ export function validateBugStatusTransition(currentBug, updates) {
     if (missingFields.length > 0) {
       throw new Error(
         `Cannot set bug to "Fixed": missing required fields: ${missingFields.join(', ')}. ` +
-        'When fixing a bug, you must include commits and PR information.'
+        'When fixing a bug, you must include dates, commits and PR information.'
       );
     }
   }
 
+  // Closed: requires commits, rootCause, resolution
   if (newStatus === 'Closed') {
-    const finalBug = { ...currentBug, ...updates };
     const missingFields = [];
     if (!(Array.isArray(finalBug.commits) && finalBug.commits.length > 0)) {
       missingFields.push('commits (list of commits that fixed the bug)');
