@@ -450,10 +450,8 @@ async function resolveValidator(db, projectId, validator, developer) {
     );
   }
 
-  throw new Error(
-    `No stakeholders found in project "${projectId}". ` +
-    'Add stakeholders to the project before creating tasks, or provide a validator ID explicitly.'
-  );
+  // No stakeholders in project — return null instead of throwing
+  return null;
 }
 
 export async function createCard({ projectId, type, title, description, descriptionStructured, acceptanceCriteria, acceptanceCriteriaStructured, epic, implementationPlan, status, priority, developer, codeveloper, validator, sprint, devPoints, businessPoints, planId, year }) {
@@ -600,14 +598,7 @@ export async function createCard({ projectId, type, title, description, descript
       );
     }
 
-    // AC1: Tasks cannot have sprint assigned at creation time
-    if (sprint) {
-      throw new Error(
-        'Cannot assign sprint when creating a task. ' +
-        'Sprint is assigned when moving the task to "In Progress". ' +
-        'Create the task first, then update it with a sprint when starting work.'
-      );
-    }
+    // Sprint at creation is allowed — no need to force a separate update call
 
     // Auto-resolve validator for tasks
     validator = await resolveValidator(db, projectId, validator, developer);
