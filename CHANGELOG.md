@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Added
 
+- Add validator and coValidator fields to BugCard (#192)
+
+## [1.182.0] - 2026-04-03
+
+### Added
+
 - Auto-inject project context on first MCP call per session (#190)
 
 ### Fixed
