@@ -5,6 +5,16 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Added
+
+- Auto-inject project context on first MCP call per session (#190)
+
+### Fixed
+
+- CleanView codeveloper filter and date wiping on bug save (#191)
+
+## [1.181.2] - 2026-04-02
+
 ### Fixed
 
 - Add preflight validation and complete usage rules for MCP tools (#189)
