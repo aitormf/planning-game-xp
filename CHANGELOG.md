@@ -5,6 +5,12 @@ Auto-generated from git commits on each build.
 
 ## [Unreleased]
 
+### Fixed
+
+- Separate bug card team fields into own row below status/priority (#193)
+
+## [1.183.0] - 2026-04-03
+
 ### Added
 
 - Add validator and coValidator fields to BugCard (#192)
