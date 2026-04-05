@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Sync CleanView project selection to URL query params (#194)
+
+## [1.183.1] - 2026-04-03
+
+### Fixed
+
 - Separate bug card team fields into own row below status/priority (#193)
 
 ## [1.183.0] - 2026-04-03
