@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Propagate projectId to nav links on click (#195)
+
+## [1.183.2] - 2026-04-06
+
+### Fixed
+
 - Sync CleanView project selection to URL query params (#194)
 
 ## [1.183.1] - 2026-04-03
