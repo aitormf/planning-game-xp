@@ -7,6 +7,12 @@ Auto-generated from git commits on each build.
 
 ### Fixed
 
+- Use MCP user email for createdBy/updatedBy instead of geniova-mcp (#196)
+
+## [1.183.3] - 2026-04-06
+
+### Fixed
+
 - Propagate projectId to nav links on click (#195)
 
 ## [1.183.2] - 2026-04-06
